@@ -1,7 +1,9 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 import '../../../../core/locales/app_localizations.dart';
+import '../../../../core/state/app_settings_controller.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -25,121 +27,126 @@ class OnboardingSlideSafety extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final settings = Get.find<AppSettingsController>();
     final colors = context.hc;
     final isDark = colors.isDark;
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final isShortScreen = constraints.maxHeight < 680;
-        final heroHeight = isShortScreen ? 295.0 : 335.0;
-        final minContentHeight = constraints.maxHeight.isFinite
-            ? constraints.maxHeight
-            : 0.0;
+    return Obx(() {
+      final _ = settings.rxLocale.value;
 
-        return SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.symmetric(
-            horizontal: 0, // Edge-to-edge for arched world globe map
-            vertical: AppSpacing.xs,
-          ),
-          child: ConstrainedBox(
-            constraints: BoxConstraints(minHeight: minContentHeight),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                const SizedBox(height: AppSpacing.xs),
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          final isShortScreen = constraints.maxHeight < 680;
+          final heroHeight = isShortScreen ? 295.0 : 335.0;
+          final minContentHeight = constraints.maxHeight.isFinite
+              ? constraints.maxHeight
+              : 0.0;
 
-                // ── 1. Visual Showcase: Full-Width Arched Dotted Globe Map ──
-                OnboardingHeroBanner(
-                  badgeText: context.tr('onboarding.safetySystemBadge'),
-                  stageText: context.tr('onboardingStage2'),
-                  title: context.tr('onboarding.safetySlideTitle'),
-                  icon: Icons.shield_rounded,
-                  height: heroHeight,
-                  child: Stack(
-                    clipBehavior: Clip.none,
-                    alignment: Alignment.center,
-                    children: [
-                      // 1.1 Pure Native Vector Map: Architectural World Dot Matrix
-                      Positioned.fill(
-                        child: CustomPaint(
-                          painter: _WorldDotMatrixMapPainter(isDark: isDark),
-                        ),
-                      ),
-
-                      // 1.2 Three Floating Modern Islamic Art Cards (Arched Fan)
-                      Positioned(
-                        top: isShortScreen ? 6 : 10,
-                        child: _buildArchedCardsShowcase(context, isDark),
-                      ),
-
-                      // 1.3 Floating Location Pill Badge (Right)
-                      Positioned(
-                        bottom: isShortScreen ? 18 : 24,
-                        right: 14,
-                        child: _buildLocationPill(context, isDark),
-                      ),
-
-                      // 1.4 Floating Ka'bah Pin Badge (Left)
-                      Positioned(
-                        bottom: isShortScreen ? 24 : 30,
-                        left: 18,
-                        child: _buildPinBadge(context, isDark),
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: AppSpacing.md),
-
-                // ── 2. Editorial Headline & Narrative Description ───────────
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.screenEdgeGutter,
-                  ),
-                  child: Text(
-                    context.tr('onboarding.safetySlideTitle'),
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: isDark
-                          ? AppColors.darkTextHeading
-                          : AppColors.textHeading,
-                      fontSize: isShortScreen ? 25.0 : 28.0,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: -0.5,
-                      height: 1.2,
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 10),
-
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.screenEdgeGutter + 4,
-                  ),
-                  child: Text(
-                    context.tr('onboarding.safeCompanionDesc'),
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: isDark
-                          ? AppColors.darkTextBody
-                          : AppColors.textBody,
-                      fontSize: 14.0,
-                      fontWeight: FontWeight.w500,
-                      height: 1.45,
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: AppSpacing.xs),
-              ],
+          return SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 0, // Edge-to-edge for arched world globe map
+              vertical: AppSpacing.xs,
             ),
-          ),
-        );
-      },
-    );
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: minContentHeight),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  const SizedBox(height: AppSpacing.xs),
+
+                  // ── 1. Visual Showcase: Full-Width Arched Dotted Globe Map ──
+                  OnboardingHeroBanner(
+                    badgeText: context.tr('onboarding.safetySystemBadge'),
+                    stageText: context.tr('onboardingStage2'),
+                    title: context.tr('onboarding.safetySlideTitle'),
+                    icon: Icons.shield_rounded,
+                    height: heroHeight,
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      alignment: Alignment.center,
+                      children: [
+                        // 1.1 Pure Native Vector Map: Architectural World Dot Matrix
+                        Positioned.fill(
+                          child: CustomPaint(
+                            painter: _WorldDotMatrixMapPainter(isDark: isDark),
+                          ),
+                        ),
+
+                        // 1.2 Three Floating Modern Islamic Art Cards (Arched Fan)
+                        Positioned(
+                          top: isShortScreen ? 6 : 10,
+                          child: _buildArchedCardsShowcase(context, isDark),
+                        ),
+
+                        // 1.3 Floating Location Pill Badge (Right)
+                        Positioned(
+                          bottom: isShortScreen ? 18 : 24,
+                          right: 14,
+                          child: _buildLocationPill(context, isDark),
+                        ),
+
+                        // 1.4 Floating Ka'bah Pin Badge (Left)
+                        Positioned(
+                          bottom: isShortScreen ? 24 : 30,
+                          left: 18,
+                          child: _buildPinBadge(context, isDark),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: AppSpacing.md),
+
+                  // ── 2. Editorial Headline & Narrative Description ───────────
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.screenEdgeGutter,
+                    ),
+                    child: Text(
+                      context.tr('onboarding.safetySlideTitle'),
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: isDark
+                            ? AppColors.darkTextHeading
+                            : AppColors.textHeading,
+                        fontSize: isShortScreen ? 25.0 : 28.0,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: -0.5,
+                        height: 1.2,
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 10),
+
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.screenEdgeGutter + 4,
+                    ),
+                    child: Text(
+                      context.tr('onboarding.safeCompanionDesc'),
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: isDark
+                            ? AppColors.darkTextBody
+                            : AppColors.textBody,
+                        fontSize: 14.0,
+                        fontWeight: FontWeight.w500,
+                        height: 1.45,
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: AppSpacing.xs),
+                ],
+              ),
+            ),
+          );
+        },
+      );
+    });
   }
 
   /// Builds the 3 arched floating cards arranged gracefully over the globe.
@@ -442,28 +449,30 @@ class OnboardingSlideSafety extends StatelessWidget {
           const SizedBox(width: 8),
 
           // Location status text formatted with AppColors tokens
-          RichText(
-            text: TextSpan(
-              text: 'Sedang di ',
-              style: TextStyle(
-                color: isDark
-                    ? AppColors.darkTextBody
-                    : AppColors.textSecondary,
-                fontSize: 11.0,
-                fontWeight: FontWeight.w500,
-              ),
-              children: [
-                TextSpan(
-                  text: 'Masjidil Haram',
-                  style: TextStyle(
-                    color: isDark
-                        ? AppColors.darkTextHeading
-                        : AppColors.textHeading,
-                    fontWeight: FontWeight.w800,
-                  ),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                context.tr('onboarding.currentlyAt'),
+                style: TextStyle(
+                  color: isDark
+                      ? AppColors.darkTextBody
+                      : AppColors.textSecondary,
+                  fontSize: 11.0,
+                  fontWeight: FontWeight.w500,
                 ),
-              ],
-            ),
+              ),
+              Text(
+                context.tr('onboarding.locationHaram'),
+                style: TextStyle(
+                  color: isDark
+                      ? AppColors.darkTextHeading
+                      : AppColors.textHeading,
+                  fontSize: 11.0,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
           ),
         ],
       ),

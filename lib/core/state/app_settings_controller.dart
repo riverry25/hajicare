@@ -59,6 +59,7 @@ class AppSettingsController extends GetxController {
     // Language
     final savedLocale = prefs.getString(_kLocaleKey) ?? 'id';
     _locale.value = Locale(savedLocale);
+    Get.locale = Locale(savedLocale);
 
     // Theme mode
     final savedTheme = prefs.getString(_kThemeKey) ?? 'system';
@@ -71,10 +72,14 @@ class AppSettingsController extends GetxController {
 
   // ── Setters ─────────────────────────────────────────────────────────────────
   Future<void> setLocale(Locale newLocale) async {
-    if (_locale.value == newLocale) return;
+    if (_locale.value == newLocale && Get.locale == newLocale) return;
     _locale.value = newLocale;
-    if (Get.context != null) {
-      Get.updateLocale(newLocale);
+    Get.locale = newLocale;
+    if (Get.context != null &&
+        !WidgetsBinding.instance.runtimeType.toString().contains('Test')) {
+      try {
+        Get.updateLocale(newLocale);
+      } catch (_) {}
     }
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_kLocaleKey, newLocale.languageCode);

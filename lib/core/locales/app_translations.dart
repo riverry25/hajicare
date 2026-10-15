@@ -58,18 +58,19 @@ class AppTranslations extends Translations {
 /// Compatibility extension so that widgets using `context.tr('key')` continue to work seamlessly.
 extension TrContextExtension on BuildContext {
   String tr(String key, [Map<String, dynamic>? params]) {
-    try {
-      // Accessing Localizations.localeOf(this) registers this element
-      // as an InheritedWidget dependent so that any locale change
-      // automatically triggers a rebuild.
-      final loc = Localizations.localeOf(this);
-      return AppTranslations.translate(key, loc.languageCode, params);
-    } catch (_) {
-      final lang = Get.isRegistered<AppSettingsController>()
-          ? Get.find<AppSettingsController>().currentLocale.languageCode
-          : 'id';
-      return AppTranslations.translate(key, lang, params);
+    String? lang;
+    if (Get.locale != null) {
+      lang = Get.locale!.languageCode;
+    } else if (Get.isRegistered<AppSettingsController>()) {
+      lang = Get.find<AppSettingsController>().currentLocale.languageCode;
+    } else {
+      try {
+        lang = Localizations.localeOf(this).languageCode;
+      } catch (_) {
+        lang = 'id';
+      }
     }
+    return AppTranslations.translate(key, lang, params);
   }
 
   /// Returns the localized prayer name for Fajr, Sunrise, Dhuhr, Asr, Maghrib, Isha

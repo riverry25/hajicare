@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 import '../../../core/locales/app_localizations.dart';
+import '../../../core/state/app_settings_controller.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -26,6 +27,7 @@ class OnboardingScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ctrl = Get.find<OnboardingController>();
+    final settings = Get.find<AppSettingsController>();
     final colors = context.hc;
     final isDark = colors.isDark;
 
@@ -125,14 +127,17 @@ class OnboardingScreen extends StatelessWidget {
                                 minimumSize: const Size(48, 36),
                                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                               ),
-                              child: Text(
-                                context.tr('onboarding.skip'),
-                                style: TextStyle(
-                                  color: colors.textSecondary,
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 13.5,
-                                ),
-                              ),
+                              child: Obx(() {
+                                final _ = settings.rxLocale.value;
+                                return Text(
+                                  context.tr('onboarding.skip'),
+                                  style: TextStyle(
+                                    color: colors.textSecondary,
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 13.5,
+                                  ),
+                                );
+                              }),
                             ),
                           ),
                         ],
@@ -224,6 +229,7 @@ class OnboardingScreen extends StatelessWidget {
 
                   // ── 4. Bottom Controls: Single Centered Primary CTA Button ──
                   Obx(() {
+                    final _ = settings.rxLocale.value;
                     final page = ctrl.currentPage.value;
                     final isLastPage = page == _totalPages - 1;
 
@@ -279,7 +285,7 @@ class OnboardingScreen extends StatelessWidget {
                                       Text(
                                         isLastPage
                                             ? context.tr('btnStartNow')
-                                            : 'Lanjut',
+                                            : context.tr('common.next'),
                                         style: context.text.labelLarge.copyWith(
                                           color: isDark
                                               ? AppColors.darkOnPrimary

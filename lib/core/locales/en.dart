@@ -760,6 +760,8 @@ const Map<String, String> enTranslations = {
   'onboarding.mainLanguage': 'Main Language',
   'onboarding.radarActive': 'Active Radar',
   'onboarding.regionalLanguage': 'Regional',
+  'onboarding.currentlyAt': 'Currently at ',
+  'onboarding.locationHaram': 'Masjidil Haram',
   'onboarding.safeCompanion': 'Safe Companion',
   'onboarding.safeCompanionDesc':
       'Monitor groups in real-time and get automated alerts when separated beyond safe boundaries.',

@@ -768,6 +768,8 @@ final Map<String, String> suTranslations = {
   'onboarding.mainLanguage': 'Basa Utama',
   'onboarding.radarActive': 'Radar Aktif',
   'onboarding.regionalLanguage': 'Daérah',
+  'onboarding.currentlyAt': 'Nuju di ',
+  'onboarding.locationHaram': 'Masjidil Haram',
   'onboarding.safeCompanion': 'Pendamping Aman',
   'onboarding.safeCompanionDesc':
       'Pantau rombongan sacara réall-time sareng nampi pépéling nalika papisah ngaleuwihan wates aman.',

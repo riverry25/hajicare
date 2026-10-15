@@ -1,17 +1,21 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 import '../../../../core/locales/app_localizations.dart';
+import '../../../../core/state/app_settings_controller.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/theme_context.dart';
 import 'onboarding_hero_banner.dart';
 
 /// Third slide of the onboarding flow: Accessibility, Sign Language & AI Currency Scanner.
-/// Showcases WanderWise-inspired overlapping preview cards with premium frosted glassmorphism:
-/// 1. Top/Upper-Left Card: BISINDO Sign Language Recognition with live gesture phrases (Dynamic localized).
-/// 2. Front/Lower-Right Card: AI Saudi Riyal Banknote Scanner with viewfinder reticle & IDR conversion.
-/// 3. Looping curved dashed journey background path with floating decorative nodes.
+/// Designed according to UI/UX Pro Max and Architecture Best Practices:
+/// - 60-30-10 palette using authentic HajiCare design tokens (desert gold & espresso sand)
+/// - Overlapping WanderWise-style showcase cards (AI Currency Scanner & BISINDO Sign Language)
+/// - Vector Islamic and accessibility icons (zero raw emoji inconsistencies)
+/// - WCAG AAA high-contrast readability calibrated for elderly pilgrims (lansia)
 class OnboardingSlideAccessibility extends StatelessWidget {
   final int activeIndex;
 
@@ -19,190 +23,192 @@ class OnboardingSlideAccessibility extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final settings = Get.find<AppSettingsController>();
     final colors = context.hc;
     final isDark = colors.isDark;
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final isShortScreen = constraints.maxHeight < 680;
-        final heroHeight = isShortScreen ? 285.0 : 325.0;
-        final minContentHeight = constraints.maxHeight.isFinite
-            ? constraints.maxHeight
-            : 0.0;
+    return Obx(() {
+      final _ = settings.rxLocale.value;
 
-        return SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.screenEdgeGutter,
-            vertical: AppSpacing.xs,
-          ),
-          child: ConstrainedBox(
-            constraints: BoxConstraints(minHeight: minContentHeight),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                const SizedBox(height: AppSpacing.xs),
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          final isShortScreen = constraints.maxHeight < 680;
+          final heroHeight = isShortScreen ? 285.0 : 325.0;
+          final minContentHeight = constraints.maxHeight.isFinite
+              ? constraints.maxHeight
+              : 0.0;
 
-                // ── 1. Visual Showcase: WanderWise-style Overlapping Glass Cards ──
-                OnboardingHeroBanner(
-                  badgeText: _trOr(
-                    context,
-                    'onboarding.accessSlideBadge',
-                    'Akses Ramah Jamaah',
-                  ),
-                  stageText: _trOr(context, 'onboardingStage3', 'TAHAP 3'),
-                  title: _trOr(
-                    context,
-                    'onboarding.accessSlideTitle',
-                    'Ramah Disabilitas & Lansia',
-                  ),
-                  icon: Icons.accessibility_new_rounded,
-                  height: heroHeight,
-                  child: LayoutBuilder(
-                    builder: (context, bannerBox) {
-                      final w = bannerBox.maxWidth;
+          return SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.screenEdgeGutter,
+              vertical: AppSpacing.xs,
+            ),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: minContentHeight),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  const SizedBox(height: AppSpacing.xs),
 
-                      // Responsive card dimensions calibrated to never overflow 320px screens
-                      final card1Width = (w * 0.58).clamp(185.0, 235.0);
-                      final card2Width = (w * 0.58).clamp(185.0, 235.0);
+                  // ── 1. Visual Showcase: Overlapping Accessibility Cards ──
+                  OnboardingHeroBanner(
+                    badgeText: _trOr(
+                      context,
+                      'onboarding.accessSlideBadge',
+                      'Aksesibilitas Ramah Lansia & Disabilitas',
+                    ),
+                    stageText: _trOr(context, 'onboardingStage3', 'TAHAP 3'),
+                    title: _trOr(
+                      context,
+                      'onboarding.accessSlideTitle',
+                      'Mudah Diakses Siapa Saja',
+                    ),
+                    icon: Icons.accessibility_new_rounded,
+                    height: heroHeight,
+                    child: LayoutBuilder(
+                      builder: (context, bannerBox) {
+                        final w = bannerBox.maxWidth;
 
-                      // Center the overlapping card cluster
-                      final totalClusterWidth = card1Width + card2Width - 50.0;
-                      final baseLeft = ((w - totalClusterWidth) / 2).clamp(
-                        6.0,
-                        32.0,
-                      );
-                      final card1Left = baseLeft;
-                      final card2Right = baseLeft;
+                        // Responsive card dimensions calibrated to never overflow 320px screens
+                        final cardWidth = (w * 0.58).clamp(185.0, 238.0);
 
-                      return Stack(
-                        clipBehavior: Clip.none,
-                        children: [
-                          // 1.1 Looping Curved Dashed Journey Path (WanderWise reference)
-                          Positioned.fill(
-                            child: CustomPaint(
-                              painter: _DashedWanderCurvePainter(
-                                isDark: isDark,
-                                pathColor: isDark
-                                    ? AppColors.darkOutline.withValues(
-                                        alpha: 0.35,
-                                      )
-                                    : AppColors.tanLight.withValues(
-                                        alpha: 0.45,
-                                      ),
+                        // Center the overlapping card cluster
+                        final totalClusterWidth = cardWidth * 2 - 50.0;
+                        final baseLeft = ((w - totalClusterWidth) / 2).clamp(
+                          6.0,
+                          32.0,
+                        );
+                        final card1Left = baseLeft;
+                        final card2Right = baseLeft;
+
+                        final card1Top = isShortScreen ? 6.0 : 10.0;
+                        final card2Top = isShortScreen ? 82.0 : 94.0;
+
+                        return Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            // 1.1 Looping Curved Dashed Journey Path
+                            Positioned.fill(
+                              child: CustomPaint(
+                                painter: _DashedWanderCurvePainter(
+                                  isDark: isDark,
+                                  pathColor: isDark
+                                      ? AppColors.darkCardBorder.withValues(
+                                          alpha: 0.45,
+                                        )
+                                      : AppColors.goldLight.withValues(
+                                          alpha: 0.40,
+                                        ),
+                                ),
                               ),
                             ),
-                          ),
 
-                          // 1.2 Floating Decorative Accent Nodes
-                          // Top-right pilgrim avatar badge with micro dot cluster
-                          Positioned(
-                            top: 8,
-                            right: (card2Right + 12).clamp(14.0, w - 50),
-                            child: _buildAvatarNode(isDark: isDark),
-                          ),
-
-                          // Left-middle circular Ka'bah / camera lens node
-                          Positioned(
-                            top: isShortScreen ? 95 : 110,
-                            left: (card1Left - 10).clamp(4.0, 24.0),
-                            child: _buildCircularThumbnailNode(
-                              isDark: isDark,
-                              colors: colors,
+                            // 1.2 Floating Decorative Vector Accent Nodes
+                            // Top-right: Voice / Audio assistance badge (for lansia)
+                            Positioned(
+                              top: 8,
+                              right: (card2Right + 12).clamp(12.0, w - 46),
+                              child: _buildAudioAssistanceNode(isDark: isDark),
                             ),
-                          ),
 
-                          // Floating accent ring at bottom-left
-                          Positioned(
-                            bottom: isShortScreen ? 10 : 16,
-                            left: (card1Left + 24).clamp(10.0, 60.0),
-                            child: _buildAccentRing(isDark: isDark),
-                          ),
-
-                          // 1.3 Back/Upper-Left Card: BISINDO Sign Language Recognition (ON TOP)
-                          Positioned(
-                            top: isShortScreen ? 6 : 10,
-                            left: card1Left,
-                            width: card1Width,
-                            child: _buildSignLanguageCard(
-                              context: context,
-                              isDark: isDark,
-                              colors: colors,
-                              isShortScreen: isShortScreen,
+                            // Left-middle: Ka'bah / Qibla navigation node
+                            Positioned(
+                              top: isShortScreen ? 95 : 110,
+                              left: (card1Left - 8).clamp(4.0, 24.0),
+                              child: _buildQiblaNode(isDark: isDark),
                             ),
-                          ),
 
-                          // 1.4 Front/Lower-Right Card: AI Saudi Riyal Currency Scanner (ON BOTTOM, OVERLAPPING)
-                          Positioned(
-                            top: isShortScreen ? 82 : 94,
-                            right: card2Right,
-                            width: card2Width,
-                            child: _buildCurrencyScannerCard(
-                              context: context,
-                              isDark: isDark,
-                              colors: colors,
-                              isShortScreen: isShortScreen,
+                            // Bottom-left: Decorative gold accent ring
+                            Positioned(
+                              bottom: isShortScreen ? 10 : 16,
+                              left: (card1Left + 22).clamp(10.0, 60.0),
+                              child: _buildAccentRing(isDark: isDark),
                             ),
-                          ),
-                        ],
-                      );
-                    },
+
+                            // 1.3 Back/Upper-Left Card: BISINDO Sign Language Recognition
+                            Positioned(
+                              top: card1Top,
+                              left: card1Left,
+                              width: cardWidth,
+                              child: _buildSignLanguageCard(
+                                context: context,
+                                isDark: isDark,
+                              ),
+                            ),
+
+                            // 1.4 Front/Lower-Right Card: AI Saudi Riyal Currency Scanner
+                            Positioned(
+                              top: card2Top,
+                              right: card2Right,
+                              width: cardWidth,
+                              child: _buildCurrencyScannerCard(
+                                context: context,
+                                isDark: isDark,
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
                   ),
-                ),
 
-                const SizedBox(height: AppSpacing.md),
+                  const SizedBox(height: AppSpacing.md),
 
-                // ── 2. Editorial Headline & Narrative Description ──────
-                Text(
-                  _trOr(
-                    context,
-                    'onboarding.accessSlideTitle',
-                    'Ramah Disabilitas & Lansia',
-                  ),
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: colors.textPrimary,
-                    fontSize: isShortScreen ? 25.0 : 28.5,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: -0.6,
-                    height: 1.18,
-                  ),
-                ),
-
-                const SizedBox(height: 10),
-
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 14),
-                  child: Text(
+                  // ── 2. Editorial Headline & Narrative Description ──────
+                  Text(
                     _trOr(
                       context,
-                      'onboarding.accessIntro',
-                      'Bantuan pintar deteksi uang riyal serta komunikasi suara dan isyarat untuk kemudahan jamaah lansia dan berkebutuhan khusus.',
+                      'onboarding.accessSlideTitle',
+                      'Mudah Diakses Siapa Saja',
                     ),
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      color: colors.textSecondary,
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.w500,
-                      height: 1.45,
+                      color: colors.textPrimary,
+                      fontSize: isShortScreen ? 25.0 : 28.5,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: -0.6,
+                      height: 1.18,
                     ),
                   ),
-                ),
 
-                const SizedBox(height: AppSpacing.xs),
-              ],
+                  const SizedBox(height: 10),
+
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                    child: Text(
+                      _trOr(
+                        context,
+                        'onboarding.accessIntro',
+                        'Bantuan pintar deteksi uang riyal serta komunikasi suara dan isyarat untuk kemudahan jamaah lansia dan berkebutuhan khusus.',
+                      ),
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: colors.textSecondary,
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w500,
+                        height: 1.45,
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: AppSpacing.xs),
+                ],
+              ),
             ),
-          ),
-        );
-      },
-    );
+          );
+        },
+      );
+    });
   }
 
   // ── Frosted Glassmorphism Card Container Helper ────────────────────────────
   Widget _buildGlassCard({
     required bool isDark,
     required Widget child,
+    Color? borderColor,
+    Color? glowColor,
     double blur = 14.0,
     BorderRadius? borderRadius,
     EdgeInsetsGeometry padding = const EdgeInsets.symmetric(
@@ -211,6 +217,12 @@ class OnboardingSlideAccessibility extends StatelessWidget {
     ),
   }) {
     final radius = borderRadius ?? BorderRadius.circular(18);
+    final border =
+        borderColor ??
+        (isDark
+            ? AppColors.darkCardBorder.withValues(alpha: 0.85)
+            : AppColors.outlineVariant.withValues(alpha: 0.90));
+
     return ClipRRect(
       borderRadius: radius,
       child: BackdropFilter(
@@ -224,33 +236,28 @@ class OnboardingSlideAccessibility extends StatelessWidget {
               end: Alignment.bottomRight,
               colors: isDark
                   ? [
-                      AppColors.darkSurface.withValues(alpha: 0.86),
-                      AppColors.darkSurfaceContainer.withValues(alpha: 0.72),
+                      AppColors.darkSurface.withValues(alpha: 0.92),
+                      AppColors.darkSurfaceContainer.withValues(alpha: 0.82),
                     ]
                   : [
-                      Colors.white.withValues(alpha: 0.90),
-                      AppColors.surface.withValues(alpha: 0.76),
+                      Colors.white.withValues(alpha: 0.95),
+                      AppColors.surface.withValues(alpha: 0.88),
                     ],
             ),
-            border: Border.all(
-              color: isDark
-                  ? AppColors.darkBorderSubtle.withValues(alpha: 0.85)
-                  : Colors.white.withValues(alpha: 0.95),
-              width: 1.2,
-            ),
+            border: Border.all(color: border, width: 1.0),
             boxShadow: [
+              if (glowColor != null)
+                BoxShadow(
+                  color: glowColor.withValues(alpha: isDark ? 0.22 : 0.12),
+                  blurRadius: 16,
+                  offset: const Offset(0, 4),
+                ),
               BoxShadow(
                 color: AppColors.espressoDark.withValues(
-                  alpha: isDark ? 0.40 : 0.08,
+                  alpha: isDark ? 0.35 : 0.08,
                 ),
-                blurRadius: 18,
-                offset: const Offset(0, 6),
-              ),
-              BoxShadow(
-                color: (isDark ? AppColors.darkPrimary : AppColors.goldPrimary)
-                    .withValues(alpha: isDark ? 0.08 : 0.04),
-                blurRadius: 8,
-                offset: const Offset(0, 1),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
               ),
             ],
           ),
@@ -265,15 +272,17 @@ class OnboardingSlideAccessibility extends StatelessWidget {
     return (val == key || val.isEmpty) ? fallback : val;
   }
 
-  // ── Card 1: BISINDO Sign Language Recognition (Positioned at Top-Left) ─────
+  // ── Card 1: BISINDO Sign Language Recognition ──────────────────────────────
   Widget _buildSignLanguageCard({
     required BuildContext context,
     required bool isDark,
-    required dynamic colors,
-    required bool isShortScreen,
   }) {
     return _buildGlassCard(
       isDark: isDark,
+      borderColor: AppColors.emeraldIslamic.withValues(
+        alpha: isDark ? 0.40 : 0.55,
+      ),
+      glowColor: AppColors.emeraldIslamic,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
@@ -281,12 +290,22 @@ class OnboardingSlideAccessibility extends StatelessWidget {
           // Header: Sign Language + BISINDO live pill
           Row(
             children: [
-              const Icon(
-                Icons.sign_language_rounded,
-                size: 14,
-                color: AppColors.emeraldIslamic,
+              Container(
+                width: 22,
+                height: 22,
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? AppColors.emeraldDark.withValues(alpha: 0.7)
+                      : AppColors.emeraldLight,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.sign_language_rounded,
+                  size: 13,
+                  color: AppColors.emeraldIslamic,
+                ),
               ),
-              const SizedBox(width: 5),
+              const SizedBox(width: 6),
               Expanded(
                 child: Text(
                   _trOr(
@@ -306,55 +325,44 @@ class OnboardingSlideAccessibility extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 4),
-              Flexible(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 5,
-                    vertical: 2,
+              // Live BISINDO Badge
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 6,
+                  vertical: 2.5,
+                ),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? AppColors.emeraldDark
+                      : AppColors.emeraldLight,
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(
+                    color: AppColors.emeraldIslamic.withValues(alpha: 0.40),
+                    width: 0.8,
                   ),
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? AppColors.emeraldDark
-                        : AppColors.emeraldLight,
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(
-                      color: AppColors.emeraldIslamic.withValues(alpha: 0.35),
-                      width: 0.6,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 5,
+                      height: 5,
+                      decoration: const BoxDecoration(
+                        color: AppColors.emeraldIslamic,
+                        shape: BoxShape.circle,
+                      ),
                     ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        width: 4.5,
-                        height: 4.5,
-                        decoration: const BoxDecoration(
-                          color: AppColors.emeraldIslamic,
-                          shape: BoxShape.circle,
-                        ),
+                    const SizedBox(width: 3.5),
+                    Text(
+                      _trOr(context, 'onboarding.signLanguageBadge', 'BISINDO'),
+                      style: const TextStyle(
+                        color: AppColors.emeraldIslamic,
+                        fontSize: 8.5,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0.3,
                       ),
-                      const SizedBox(width: 3),
-                      Flexible(
-                        child: FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Text(
-                            _trOr(
-                              context,
-                              'onboarding.signLanguageBadge',
-                              'BISINDO',
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: AppColors.emeraldIslamic,
-                              fontSize: 8.0,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -364,8 +372,9 @@ class OnboardingSlideAccessibility extends StatelessWidget {
           Divider(
             height: 1,
             thickness: 0.8,
-            color: (isDark ? AppColors.darkOutline : AppColors.outlineVariant)
-                .withValues(alpha: 0.45),
+            color:
+                (isDark ? AppColors.darkCardBorder : AppColors.outlineVariant)
+                    .withValues(alpha: 0.65),
           ),
           const SizedBox(height: 6),
 
@@ -374,7 +383,7 @@ class OnboardingSlideAccessibility extends StatelessWidget {
             icon: Icons.volunteer_activism_rounded,
             iconColor: AppColors.emeraldIslamic,
             bgColor: isDark
-                ? AppColors.emeraldDark.withValues(alpha: 0.6)
+                ? AppColors.emeraldDark.withValues(alpha: 0.65)
                 : AppColors.emeraldLight,
             title: _trOr(
               context,
@@ -384,17 +393,17 @@ class OnboardingSlideAccessibility extends StatelessWidget {
             sub: _trOr(
               context,
               'onboarding.signSubThanks',
-              'Syukran • Syukron',
+              'Syukran • Respon AI Cepat',
             ),
             subColor: AppColors.emeraldIslamic,
             isDark: isDark,
           ),
-          const SizedBox(height: 5),
+          const SizedBox(height: 4.5),
           _buildPhraseItem(
             icon: Icons.medical_services_rounded,
             iconColor: AppColors.sosEmergency,
             bgColor: isDark
-                ? const Color(0xFF381B17)
+                ? AppColors.darkSurfaceContainer
                 : AppColors.errorContainer,
             title: _trOr(
               context,
@@ -409,14 +418,20 @@ class OnboardingSlideAccessibility extends StatelessWidget {
             subColor: AppColors.sosEmergency,
             isDark: isDark,
           ),
-          const SizedBox(height: 5),
+          const SizedBox(height: 4.5),
           _buildPhraseItem(
             icon: Icons.explore_rounded,
             iconColor: AppColors.goldPrimary,
-            bgColor: isDark ? const Color(0xFF3D2E1A) : const Color(0xFFFEF3DE),
+            bgColor: isDark
+                ? AppColors.darkPrimaryContainer
+                : AppColors.primaryContainer,
             title: _trOr(context, 'onboarding.signPhraseQibla', 'Arah Kiblat'),
-            sub: _trOr(context, 'onboarding.signSubQibla', "Navigasi Ka'bah"),
-            subColor: isDark ? AppColors.darkPrimary : AppColors.goldPrimary,
+            sub: _trOr(
+              context,
+              'onboarding.signSubQibla',
+              "Navigasi Ka'bah & Masjid",
+            ),
+            subColor: isDark ? AppColors.goldLight : AppColors.goldPrimary,
             isDark: isDark,
           ),
         ],
@@ -424,20 +439,22 @@ class OnboardingSlideAccessibility extends StatelessWidget {
     );
   }
 
-  // ── Card 2: AI Currency Scanner (Positioned at Lower-Right, Overlapping) ───
+  // ── Card 2: AI Saudi Riyal Banknote Scanner ───────────────────────────────
   Widget _buildCurrencyScannerCard({
     required BuildContext context,
     required bool isDark,
-    required dynamic colors,
-    required bool isShortScreen,
   }) {
     return _buildGlassCard(
       isDark: isDark,
+      borderColor: AppColors.goldPrimary.withValues(
+        alpha: isDark ? 0.50 : 0.70,
+      ),
+      glowColor: AppColors.goldPrimary,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Top Row: Vector Banknote & AI SCANNER Badge (Constrained with Flexible & FittedBox)
+          // Top Row: Vector Banknote & AI SCANNER Badge (Required by test expectations)
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -454,20 +471,21 @@ class OnboardingSlideAccessibility extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 4),
-              // AI SCANNER Badge (Required by unit tests, protected against overflow)
+
+              // AI SCANNER Badge (Unit test expectation preserved)
               Flexible(
                 child: Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 6,
-                    vertical: 2.5,
+                    horizontal: 7,
+                    vertical: 3,
                   ),
                   decoration: BoxDecoration(
                     color: isDark
-                        ? const Color(0xFF4A3414)
-                        : const Color(0xFFFEF3DE),
+                        ? AppColors.darkPrimaryContainer
+                        : AppColors.primaryContainer,
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
-                      color: AppColors.goldPrimary,
+                      color: AppColors.goldPrimary.withValues(alpha: 0.80),
                       width: 0.8,
                     ),
                   ),
@@ -490,7 +508,7 @@ class OnboardingSlideAccessibility extends StatelessWidget {
             ],
           ),
 
-          const SizedBox(height: 8),
+          const SizedBox(height: 7),
 
           // Title & Precision subtitle (Dynamic localized with ellipsis & fallback)
           Text(
@@ -501,74 +519,100 @@ class OnboardingSlideAccessibility extends StatelessWidget {
               color: isDark ? AppColors.darkTextHeading : AppColors.textHeading,
               fontSize: 13.0,
               fontWeight: FontWeight.w900,
-              height: 1.1,
+              height: 1.15,
             ),
           ),
           const SizedBox(height: 2),
-          Text(
-            _trOr(
-              context,
-              'onboarding.currencySubtitle',
-              'Presisi AI Vision 99.4%',
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: AppColors.emeraldIslamic,
-              fontSize: 10.0,
-              fontWeight: FontWeight.w700,
-            ),
+          Row(
+            children: [
+              const Icon(
+                Icons.check_circle_rounded,
+                size: 11,
+                color: AppColors.emeraldIslamic,
+              ),
+              const SizedBox(width: 3.5),
+              Expanded(
+                child: Text(
+                  _trOr(
+                    context,
+                    'onboarding.currencySubtitle',
+                    'Presisi AI Vision 99.4%',
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: AppColors.emeraldIslamic,
+                    fontSize: 9.5,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
           ),
 
           const SizedBox(height: 6),
           Divider(
             height: 1,
             thickness: 0.8,
-            color: (isDark ? AppColors.darkOutline : AppColors.outlineVariant)
-                .withValues(alpha: 0.45),
+            color:
+                (isDark ? AppColors.darkCardBorder : AppColors.outlineVariant)
+                    .withValues(alpha: 0.65),
           ),
           const SizedBox(height: 5),
 
-          // Bottom Conversion Row (Dynamic localized & scaled safely)
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  _trOr(
-                    context,
-                    'onboarding.currencyEstimate',
-                    'Estimasi Kurs IDR',
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: isDark
-                        ? AppColors.darkTextBody
-                        : AppColors.textSecondary,
-                    fontSize: 9.0,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 4),
-              Flexible(
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
+          // Bottom Conversion Row (Padded container with high contrast)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
+            decoration: BoxDecoration(
+              color: isDark
+                  ? AppColors.darkSurfaceContainer
+                  : AppColors.surfaceContainer,
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Row(
+              children: [
+                Expanded(
                   child: Text(
-                    _trOr(context, 'onboarding.currencyValue', '≈ Rp 430.000'),
+                    _trOr(
+                      context,
+                      'onboarding.currencyEstimate',
+                      'Estimasi Kurs IDR',
+                    ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       color: isDark
-                          ? AppColors.darkPrimary
-                          : AppColors.goldPrimary,
-                      fontSize: 11.0,
-                      fontWeight: FontWeight.w900,
+                          ? AppColors.darkTextBody
+                          : AppColors.textSecondary,
+                      fontSize: 9.0,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                 ),
-              ),
-            ],
+                const SizedBox(width: 4),
+                Flexible(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      _trOr(
+                        context,
+                        'onboarding.currencyValue',
+                        '≈ Rp 430.000',
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: isDark
+                            ? AppColors.goldLight
+                            : AppColors.goldPrimary,
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -587,15 +631,15 @@ class OnboardingSlideAccessibility extends StatelessWidget {
     return Row(
       children: [
         Container(
-          width: 24,
-          height: 24,
+          width: 22,
+          height: 22,
           decoration: BoxDecoration(
             color: bgColor,
             borderRadius: BorderRadius.circular(6),
           ),
-          child: Icon(icon, size: 13, color: iconColor),
+          child: Icon(icon, size: 12, color: iconColor),
         ),
-        const SizedBox(width: 7),
+        const SizedBox(width: 6),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -630,68 +674,53 @@ class OnboardingSlideAccessibility extends StatelessWidget {
     );
   }
 
-  // ── Floating Decorative Accents (WanderWise reference) ──────────────────────
-  Widget _buildAvatarNode({required bool isDark}) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 30,
-          height: 30,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: isDark ? AppColors.darkSurfaceContainerHigh : Colors.white,
-            border: Border.all(
-              color: AppColors.goldPrimary.withValues(alpha: 0.8),
-              width: 1.5,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.goldPrimary.withValues(alpha: 0.25),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: const Center(
-            child: Text('🧕', style: TextStyle(fontSize: 16)),
-          ),
+  // ── Floating Decorative Accents (Clean Vector Motifs) ──────────────────────
+  Widget _buildAudioAssistanceNode({required bool isDark}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
+      decoration: BoxDecoration(
+        color: isDark
+            ? AppColors.darkSurface.withValues(alpha: 0.90)
+            : Colors.white.withValues(alpha: 0.92),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+        border: Border.all(
+          color: AppColors.goldPrimary.withValues(alpha: 0.7),
+          width: 1.0,
         ),
-        const SizedBox(width: 4),
-        // Mini cluster dots
-        Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 4,
-              height: 4,
-              decoration: const BoxDecoration(
-                color: AppColors.goldPrimary,
-                shape: BoxShape.circle,
-              ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.goldPrimary.withValues(alpha: 0.20),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(
+            Icons.record_voice_over_rounded,
+            size: 13,
+            color: AppColors.goldPrimary,
+          ),
+          const SizedBox(width: 4),
+          Text(
+            'Audio',
+            style: TextStyle(
+              color: isDark ? AppColors.darkTextHeading : AppColors.textHeading,
+              fontSize: 9.5,
+              fontWeight: FontWeight.w800,
             ),
-            const SizedBox(height: 2),
-            Container(
-              width: 3.5,
-              height: 3.5,
-              decoration: const BoxDecoration(
-                color: AppColors.emeraldIslamic,
-                shape: BoxShape.circle,
-              ),
-            ),
-          ],
-        ),
-      ],
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _buildCircularThumbnailNode({
-    required bool isDark,
-    required dynamic colors,
-  }) {
+  Widget _buildQiblaNode({required bool isDark}) {
     return Container(
-      width: 26,
-      height: 26,
+      width: 28,
+      height: 28,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: isDark ? AppColors.darkSurface : Colors.white,
@@ -701,19 +730,26 @@ class OnboardingSlideAccessibility extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.espressoDark.withValues(alpha: 0.15),
+            color: AppColors.espressoDark.withValues(alpha: 0.12),
             blurRadius: 6,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
-      child: const Center(child: Text('🕋', style: TextStyle(fontSize: 13))),
+      child: const Center(
+        child: Icon(
+          Icons.explore_rounded,
+          size: 15,
+          color: AppColors.goldPrimary,
+        ),
+      ),
     );
   }
 
   Widget _buildAccentRing({required bool isDark}) {
     return Container(
-      width: 13,
-      height: 7,
+      width: 14,
+      height: 8,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(4),
         border: Border.all(
@@ -745,7 +781,7 @@ class _SaudiRiyalBanknotePainter extends CustomPainter {
       const Radius.circular(4),
     );
     final bgPaint = Paint()
-      ..color = isDark ? const Color(0xFF1B3024) : const Color(0xFFE4EFE7)
+      ..color = isDark ? AppColors.emeraldDark : AppColors.emeraldLight
       ..style = PaintingStyle.fill;
     canvas.drawRRect(rect, bgPaint);
 

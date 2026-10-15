@@ -772,6 +772,8 @@ final Map<String, String> jvTranslations = {
   'onboarding.mainLanguage': 'Basa Baku',
   'onboarding.radarActive': 'Radar Aktif',
   'onboarding.regionalLanguage': 'Lokal',
+  'onboarding.currentlyAt': 'Saweg wonten ing ',
+  'onboarding.locationHaram': 'Masjidil Haram',
   'onboarding.safeCompanion': 'Pendamping Aman',
   'onboarding.safeCompanionDesc':
       'Pantau rombongan kanthi wekdal nyata lan nampi pepènget nalika pisah langkung wates aman.',

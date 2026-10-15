@@ -765,6 +765,8 @@ const Map<String, String> idTranslations = {
   'onboarding.mainLanguage': 'Bahasa Utama',
   'onboarding.radarActive': 'Radar Aktif',
   'onboarding.regionalLanguage': 'Daerah',
+  'onboarding.currentlyAt': 'Sedang di ',
+  'onboarding.locationHaram': 'Masjidil Haram',
   'onboarding.safeCompanion': 'Pendamping Aman',
   'onboarding.safeCompanionDesc':
       'Pantau rombongan secara real-time dan terima peringatan otomatis saat terpisah melebihi batas aman.',
