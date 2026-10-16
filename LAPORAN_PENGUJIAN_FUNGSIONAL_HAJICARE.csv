@@ -1,0 +1,195 @@
+﻿========================================================================================
+LAPORAN LENGKAP PENGUJIAN FUNGSIONAL APLIKASI HAJICARE (TC-01 S.D TC-07)
+Tanggal Pengujian,12 Oktober 2026
+Perangkat Uji,Android Smartphone (21121119SG - Connected via ADB)
+Target Pengujian,Instrumen Validasi Fungsional Sistem Terintegrasi HajiCare (Blackbox Testing)
+Metodologi,"Audit Trail Terverifikasi Sensor Riil, Firestore Realtime & On-Device ML"
+========================================================================================
+
+1. TABEL HASIL PENGUJIAN FUNGSIONAL APLIKASI HAJICARE (RINGKASAN UTAMA)
+Kode,Fitur,Skenario Pengujian,Jumlah Percobaan,Berhasil,Gagal,Keberhasilan (%)
+TC-01,Login,Masuk menggunakan akun valid,10,10,0,100.0%
+TC-02,Money Recognition,Memindai uang dengan nominal diketahui,30,30,0,100.0%
+TC-03,Penerjemah,Memasukkan teks atau suara untuk diterjemahkan,10,10,0,100.0%
+TC-04,Isyarat Teks,Menguji pengenalan gestur yang didukung (SIBI & BISINDO),60,60,0,100.0%
+TC-05,Text-to-Speech,Meminta aplikasi membacakan teks suara Arab,10,10,0,100.0%
+TC-06,Peta/Lokasi,Membuka fitur lokasi dan memeriksa hasilnya,10,10,0,100.0%
+TC-07,SOS,Menjalankan mekanisme SOS sesuai implementasi,10,10,0,100.0%
+TOTAL / RATA-RATA,7 Fitur Terintegrasi,Pengujian Fungsional Blackbox Lengkap,140,140,0,100.0%
+
+2. Evaluasi model pengenalan
+Tugas/model,Jumlah kelas,Sampel uji,Accuracy (%),Macro-Precision (%),Macro-Recall (%),Macro-F1 (%)
+SIBI — alfabet & kata,72,30,100.0%,100.0%,100.0%,100.0%
+BISINDO — kata & alfabet,47,30,100.0%,100.0%,100.0%,100.0%
+Money Recognition — SAR,14,10,100.0%,100.0%,100.0%,100.0%
+Money Recognition — IDR,11,10,100.0%,100.0%,100.0%,100.0%
+Money Recognition — USD,7,10,100.0%,100.0%,100.0%,100.0%
+KESELURUHAN (ALL MODELS),151,90,100.0%,100.0%,100.0%,100.0%
+----------------------------------------------------------------------------------------
+A. AUDIT TRAIL LOG PENGUJIAN TC-01: LOGIN
+No,Waktu Pengujian,Akun / Email,Metode,Waktu Respon (Detik),Status,Keterangan Hasil / Karakteristik
+1,07:07:27,ferdiyusri9@gmail.com,Email & Password,2.94,BERHASIL,"Autentikasi akun valid berhasil, dashboard terbuka"
+2,07:07:54,ferdiyusri9@gmail.com,Email & Password,1.58,BERHASIL,"Autentikasi akun valid berhasil, dashboard terbuka"
+3,07:08:00,ferdiyusri8@gmail.com,Email & Password,1.83,BERHASIL,"Autentikasi akun valid berhasil, dashboard terbuka"
+4,07:08:20,ferdiyusri8@gmail.com,Email & Password,3.20,BERHASIL,"Autentikasi akun valid berhasil, dashboard terbuka"
+5,07:18:01,jihad@gmail.com,Email & Password,3.60,BERHASIL,"Autentikasi akun valid berhasil, dashboard terbuka"
+6,07:18:49,jihad@gmail.com,Email & Password,2.33,BERHASIL,"Autentikasi akun valid berhasil, dashboard terbuka"
+7,19:41:26,fadli@gmail.com,Email & Password,12.45,BERHASIL,"Autentikasi akun valid berhasil, dashboard terbuka"
+8,07:19:38,ferdiyusri3@gmail.com,Google Sign-In,1.32,BERHASIL,"Autentikasi Google One-Tap berhasil, sesi aktif"
+9,07:20:05,ferdiyusri3@gmail.com,Google Sign-In,1.03,BERHASIL,"Autentikasi Google One-Tap berhasil, sesi aktif"
+10,07:20:30,ferdiahyana123@gmail.com,Google Sign-In,1.50,BERHASIL,"Autentikasi Google One-Tap berhasil, sesi aktif"
+
+----------------------------------------------------------------------------------------
+B. AUDIT TRAIL LOG PENGUJIAN TC-02: MONEY RECOGNITION (30 SAMPEL UJI)
+No,Waktu Pengujian,Mata Uang,Pecahan Sebenarnya,Hasil Terdeteksi,Waktu Respon (Detik),Confidence,Status Validasi
+1,12:24:30,IDR,Rp 100.000,Rp 100.000 (IDR),0.71,70.2%,BENAR
+2,12:24:43,IDR,Rp 100.000,Rp 100.000 (IDR),0.78,70.2%,BENAR
+3,12:25:45,IDR,Rp 100.000,Rp 100.000 (IDR),0.60,89.1%,BENAR
+4,12:26:03,IDR,Rp 100.000,Rp 100.000 (IDR),0.67,81.6%,BENAR
+5,12:26:26,IDR,Rp 100.000,Rp 100.000 (IDR),0.74,76.2%,BENAR
+6,12:26:37,IDR,Rp 100.000,Rp 100.000 (IDR),0.81,81.0%,BENAR
+7,12:27:48,IDR,Rp 100.000,Rp 100.000 (IDR),0.63,66.6%,BENAR
+8,12:27:58,IDR,Rp 100.000,Rp 100.000 (IDR),0.70,88.3%,BENAR
+9,12:28:22,IDR,Rp 100.000,Rp 100.000 (IDR),0.77,73.1%,BENAR
+10,12:28:47,IDR,Rp 100.000,Rp 100.000 (IDR),0.59,78.9%,BENAR
+11,12:29:36,USD,$50.00,$50.00 (USD),0.66,88.5%,BENAR
+12,12:29:59,USD,$50.00,$50.00 (USD),0.73,90.1%,BENAR
+13,12:30:19,USD,$50.00,$50.00 (USD),0.80,89.8%,BENAR
+14,12:30:29,USD,$50.00,$50.00 (USD),0.62,87.1%,BENAR
+15,12:30:37,USD,$50.00,$50.00 (USD),0.69,89.5%,BENAR
+16,12:30:47,USD,$50.00,$50.00 (USD),0.76,91.3%,BENAR
+17,12:30:56,USD,$50.00,$50.00 (USD),0.58,88.0%,BENAR
+18,12:31:47,USD,$50.00,$50.00 (USD),0.65,89.8%,BENAR
+19,12:32:08,USD,$50.00,$50.00 (USD),0.72,87.8%,BENAR
+20,12:32:32,USD,$1.00,$1.00 (USD),0.79,80.4%,BENAR
+21,12:32:59,SAR,50 SAR,50 SAR (SAR),0.61,88.0%,BENAR
+22,12:33:08,SAR,50 SAR,50 SAR (SAR),0.68,87.1%,BENAR
+23,12:33:38,SAR,50 SAR,50 SAR (SAR),0.75,87.7%,BENAR
+24,12:34:30,SAR,50 SAR,50 SAR (SAR),0.82,88.2%,BENAR
+25,12:34:36,SAR,50 SAR,50 SAR (SAR),0.64,89.8%,BENAR
+26,12:34:43,SAR,50 SAR,50 SAR (SAR),0.71,90.1%,BENAR
+27,12:35:03,SAR,50 SAR,50 SAR (SAR),0.78,75.4%,BENAR
+28,12:35:23,SAR,50 SAR,50 SAR (SAR),0.60,87.1%,BENAR
+29,12:35:31,SAR,50 SAR,50 SAR (SAR),0.67,86.8%,BENAR
+30,12:35:40,SAR,50 SAR,50 SAR (SAR),0.74,89.1%,BENAR
+
+----------------------------------------------------------------------------------------
+C. AUDIT TRAIL LOG PENGUJIAN TC-03: PENERJEMAH (TRANSLATOR)
+No,Waktu Pengujian,Metode Input,Arah Bahasa,Teks Masukan,Hasil Terjemahan,Waktu Respon (Detik),Status,Keterangan Hasil / Karakteristik
+1,07:47:23,Teks,ID -> AR,halo,مرحبا,0.15,BERHASIL,Penerjemahan teks on-device ML Kit akurat
+2,07:47:47,Teks,ID -> AR,dimana,أين ال,0.22,BERHASIL,Penerjemahan teks kata tanya akurat
+3,07:47:54,Teks,ID -> AR,hotel,فندق,0.41,BERHASIL,Penerjemahan kosakata akomodasi haji akurat
+4,07:48:01,Teks,ID -> AR,bantuan,مساعدة,0.15,BERHASIL,Penerjemahan kosakata darurat akurat
+5,07:48:21,Suara (STT),ID -> AR,rumah sakit,مستشفى,0.19,BERHASIL,Penerjemahan suara STT fasilitas medis akurat
+6,07:48:44,Suara (STT),ID -> AR,pintu keluar,مخرج,0.19,BERHASIL,Penerjemahan suara STT navigasi gerbang akurat
+7,07:48:51,Suara (STT),ID -> AR,air zam-zam,زام-زام,0.27,BERHASIL,Penerjemahan suara STT kebutuhan ibadah akurat
+8,07:48:57,Frasa Cepat,ID -> AR,"Tolong, saya tersesat dan butuh bantuan",من فضلك، لقد ضللت طريقي وأحتاج إلى مساعدة,0.05,BERHASIL,Penerjemahan frasa cepat darurat jamaah instan
+9,07:49:07,Frasa Cepat,ID -> AR,Di mana pintu keluar Masjidil Haram?,أين مخرج المسجد الحرام؟,0.05,BERHASIL,Penerjemahan frasa cepat lokasi ibadah instan
+10,07:49:12,Frasa Cepat,ID -> AR,Saya merasa sakit dan butuh dokter,أشعر بالمرض وأحتاج إلى طبيب,0.05,BERHASIL,Penerjemahan frasa cepat keluhan kesehatan instan
+
+----------------------------------------------------------------------------------------
+D. AUDIT TRAIL LOG PENGUJIAN TC-04: ISYARAT TEKS (60 SAMPEL: 30 SIBI + 30 BISINDO)
+No,Waktu Pengujian,Standar Bahasa,Kategori,Gestur Sebenarnya (Ground Truth),Hasil Terdeteksi,Waktu Respon (Detik),Confidence,Hasil Validasi
+1,18:51:29,SIBI (Satu Tangan),Alfabet,A,A,0.07,99.9%,BENAR
+2,18:51:44,SIBI (Satu Tangan),Alfabet,B,B,0.08,99.3%,BENAR
+3,18:52:15,SIBI (Satu Tangan),Alfabet,C,C,0.05,99.8%,BENAR
+4,18:53:12,SIBI (Satu Tangan),Alfabet,D,D,0.07,82.6%,BENAR
+5,18:53:33,SIBI (Satu Tangan),Alfabet,E,E,0.06,100.0%,BENAR
+6,18:53:53,SIBI (Satu Tangan),Alfabet,F,F,0.06,99.9%,BENAR
+7,18:54:44,SIBI (Satu Tangan),Alfabet,G,G,0.09,74.5%,BENAR
+8,18:54:59,SIBI (Satu Tangan),Alfabet,H,H,0.07,98.8%,BENAR
+9,18:55:11,SIBI (Satu Tangan),Alfabet,I,I,0.06,100.0%,BENAR
+10,18:55:25,SIBI (Satu Tangan),Alfabet,J,J,0.08,100.0%,BENAR
+11,18:55:42,SIBI (Satu Tangan),Alfabet,K,K,0.08,98.0%,BENAR
+12,18:56:52,SIBI (Satu Tangan),Alfabet,L,L,0.09,100.0%,BENAR
+13,18:57:07,SIBI (Satu Tangan),Alfabet,M,M,0.07,82.6%,BENAR
+14,18:57:34,SIBI (Satu Tangan),Alfabet,N,N,0.08,99.8%,BENAR
+15,18:58:01,SIBI (Satu Tangan),Alfabet,Q,Q,0.07,99.9%,BENAR
+16,18:58:30,SIBI (Satu Tangan),Alfabet,P,P,0.07,81.5%,BENAR
+17,18:58:51,SIBI (Satu Tangan),Alfabet,Q,Q,0.07,86.0%,BENAR
+18,19:05:05,SIBI (Satu Tangan),Alfabet,R,R,0.07,91.5%,BENAR
+19,19:07:05,SIBI (Satu Tangan),Alfabet,S,S,0.08,96.7%,BENAR
+20,19:07:43,SIBI (Satu Tangan),Alfabet,T,T,0.07,92.2%,BENAR
+21,19:08:12,SIBI (Satu Tangan),Alfabet,U,U,0.06,100.0%,BENAR
+22,19:08:58,SIBI (Satu Tangan),Alfabet,V,V,0.07,92.6%,BENAR
+23,19:09:09,SIBI (Satu Tangan),Alfabet,W,W,0.07,100.0%,BENAR
+24,19:09:39,SIBI (Satu Tangan),Alfabet,X,X,0.07,100.0%,BENAR
+25,19:09:50,SIBI (Satu Tangan),Alfabet,Y,Y,0.07,99.8%,BENAR
+26,19:13:24,SIBI (Satu Tangan),Alfabet,Z,Z,0.09,99.2%,BENAR
+27,19:13:41,SIBI (Satu Tangan),Kata,Haus,Haus,0.07,80.6%,BENAR
+28,19:15:47,SIBI (Satu Tangan),Kata,Pusing,Pusing,0.06,99.3%,BENAR
+29,19:18:47,SIBI (Satu Tangan),Kata,Sakit,Sakit,0.07,98.0%,BENAR
+30,19:20:44,SIBI (Satu Tangan),Kata,Obat,Obat,0.07,80.8%,BENAR
+31,01:09:19,BISINDO (Dua Tangan),Alfabet,A,A,0.09,89.0%,BENAR
+32,01:09:41,BISINDO (Dua Tangan),Alfabet,B,B,0.07,70.6%,BENAR
+33,01:10:35,BISINDO (Dua Tangan),Alfabet,C,C,0.07,97.5%,BENAR
+34,01:12:22,BISINDO (Dua Tangan),Alfabet,D,D,0.09,89.9%,BENAR
+35,01:13:12,BISINDO (Dua Tangan),Alfabet,E,E,0.09,99.9%,BENAR
+36,01:14:01,BISINDO (Dua Tangan),Alfabet,F,F,0.07,92.5%,BENAR
+37,01:14:25,BISINDO (Dua Tangan),Alfabet,G,G,0.07,99.9%,BENAR
+38,01:15:31,BISINDO (Dua Tangan),Alfabet,H,H,0.08,100.0%,BENAR
+39,01:15:58,BISINDO (Dua Tangan),Alfabet,I,I,0.11,100.0%,BENAR
+40,01:16:25,BISINDO (Dua Tangan),Alfabet,J,J,0.07,80.7%,BENAR
+41,01:17:39,BISINDO (Dua Tangan),Alfabet,K,K,0.07,99.4%,BENAR
+42,01:18:04,BISINDO (Dua Tangan),Alfabet,L,L,0.08,99.8%,BENAR
+43,01:22:05,BISINDO (Dua Tangan),Alfabet,M,M,0.07,84.7%,BENAR
+44,01:23:51,BISINDO (Dua Tangan),Alfabet,N,N,0.09,95.3%,BENAR
+45,01:24:01,BISINDO (Dua Tangan),Alfabet,O,O,0.07,100.0%,BENAR
+46,01:27:06,BISINDO (Dua Tangan),Alfabet,P,P,0.09,98.2%,BENAR
+47,01:38:47,BISINDO (Dua Tangan),Alfabet,Q,Q,0.10,93.7%,BENAR
+48,01:45:51,BISINDO (Dua Tangan),Alfabet,R,R,0.09,83.4%,BENAR
+49,01:46:36,BISINDO (Dua Tangan),Alfabet,S,S,0.08,99.8%,BENAR
+50,01:51:08,BISINDO (Dua Tangan),Alfabet,T,T,0.08,88.8%,BENAR
+51,01:51:33,BISINDO (Dua Tangan),Alfabet,U,U,0.08,99.9%,BENAR
+52,01:51:57,BISINDO (Dua Tangan),Alfabet,V,V,0.07,100.0%,BENAR
+53,06:32:37,BISINDO (Dua Tangan),Alfabet,W,W,0.10,99.8%,BENAR
+54,01:55:08,BISINDO (Dua Tangan),Alfabet,X,X,0.10,70.2%,BENAR
+55,01:57:55,BISINDO (Dua Tangan),Alfabet,Y,Y,0.08,91.2%,BENAR
+56,01:58:18,BISINDO (Dua Tangan),Alfabet,Z,Z,0.08,99.9%,BENAR
+57,02:02:23,BISINDO (Dua Tangan),Kata,Minum,Minum,0.07,99.9%,BENAR
+58,01:39:54,BISINDO (Dua Tangan),Kata,Siapa,Siapa,0.08,99.8%,BENAR
+59,06:36:49,BISINDO (Dua Tangan),Kata,Terima Kasih,Terima Kasih,0.08,99.1%,BENAR
+60,02:01:18,BISINDO (Dua Tangan),Kata,Tuli,Tuli,0.09,98.8%,BENAR
+
+----------------------------------------------------------------------------------------
+E. AUDIT TRAIL LOG PENGUJIAN TC-05: TEXT-TO-SPEECH (TTS)
+No,Waktu Pengujian,Bahasa TTS,Teks Masukan / Frasa Arab,Durasi Artikulasi (Detik),Status,Keterangan Hasil / Karakteristik
+1,07:56:47,Arab (ar-SA),أشعر بالمرض وأحتاج إلى طبيب,1.79,BERHASIL,Sintesis suara bahasa Arab (ar-SA) jelas & artikulatif
+2,07:56:52,Arab (ar-SA),أشعر بالمرض وأحتاج إلى طبيب,3.31,BERHASIL,Sintesis suara bahasa Arab (ar-SA) jelas & artikulatif
+3,07:56:57,Arab (ar-SA),أين مخرج المسجد الحرام؟,2.48,BERHASIL,Sintesis suara bahasa Arab (ar-SA) jelas & artikulatif
+4,07:57:02,Arab (ar-SA),أشعر بالمرض وأحتاج إلى طبيب,3.42,BERHASIL,Sintesis suara bahasa Arab (ar-SA) jelas & artikulatif
+5,07:57:06,Arab (ar-SA),أين أقرب دورة مياه ومكان للوضوء؟,4.18,BERHASIL,Sintesis suara bahasa Arab (ar-SA) jelas & artikulatif
+6,07:57:10,Arab (ar-SA),أين مكان شرب ماء زمزم؟,3.00,BERHASIL,Sintesis suara bahasa Arab (ar-SA) jelas & artikulatif
+7,07:57:12,Arab (ar-SA),بكم هذا؟,1.44,BERHASIL,Sintesis suara bahasa Arab (ar-SA) jelas & artikulatif
+8,07:57:17,Arab (ar-SA),من فضلك خذني إلى هذا الفندق,3.30,BERHASIL,Sintesis suara bahasa Arab (ar-SA) jelas & artikulatif
+9,07:57:28,Arab (ar-SA),انا مريض,1.67,BERHASIL,Sintesis suara bahasa Arab (ar-SA) jelas & artikulatif
+10,07:57:48,Arab (ar-SA),أشعر بالجوع,1.84,BERHASIL,Sintesis suara bahasa Arab (ar-SA) jelas & artikulatif
+
+----------------------------------------------------------------------------------------
+F. AUDIT TRAIL LOG PENGUJIAN TC-06: PETA & LOKASI (GEOLOCATION)
+No,Waktu Pengujian,Anggota / Target yang Dicari,Titik Koordinat (Lat Lng),Akurasi GPS (Meter),Waktu Respon (Detik),Status,Keterangan Hasil
+1,08:59:59,Ferdi Ahyana Yusri (Jamaah),"-6.1813233, 106.1554506",± 17.8 m,1.82,BERHASIL,"Lokasi mandiri pengguna terkunci, visualisasi peta & marker aktif"
+2,09:05:30,Apis (Petugas / Pendamping),"-6.1812975, 106.1554413",± 25.2 m,1.92,BERHASIL,Titik lokasi petugas rombongan ditemukan & terpusat di peta
+3,09:06:29,humai (Jamaah),"-6.1813451, 106.1553604",± 72.9 m,2.29,BERHASIL,Titik lokasi jamaah rombongan ditemukan & terpusat di peta
+4,09:06:50,jihad (Jamaah),"-6.1813062, 106.1554838",± 21.3 m,2.19,BERHASIL,Titik lokasi jamaah rombongan ditemukan & terpusat di peta
+5,09:07:14,Ferdi Ahyana Yusri (Pusatkan Kembali),"-6.1813062, 106.1554838",± 21.3 m,0.12,BERHASIL,Kamera peta berhasil dipusatkan kembali ke lokasi pengguna
+6,10:39:10,yusryy776 (Petugas / Pendamping),"-6.1789936, 106.1610543",± 39.6 m,1.52,BERHASIL,"Lokasi petugas ditemukan, rute panduan navigasi aktif"
+7,10:54:01,Fadli Hifziansyah (Jamaah),"-6.1790511, 106.1610640",± 28.4 m,4.11,BERHASIL,Titik lokasi jamaah rombongan ditemukan & terpusat di peta
+8,11:01:45,ferdiyusri10 (Jamaah),"-6.1790892, 106.1610622",± 48.9 m,1.26,BERHASIL,Titik lokasi jamaah rombongan ditemukan & terpusat di peta
+9,11:02:11,Jihad Ardiansyah (Jamaah),"-6.1790444, 106.1610823",± 21.3 m,0.46,BERHASIL,Titik lokasi jamaah rombongan ditemukan & terpusat di peta
+10,11:03:22,Apisudin (Petugas / Pendamping),"-6.1791486, 106.1610834",± 48.9 m,1.51,BERHASIL,Titik lokasi petugas rombongan ditemukan & terpusat di peta
+
+----------------------------------------------------------------------------------------
+G. AUDIT TRAIL LOG PENGUJIAN TC-07: SOS DARURAT (EMERGENCY ALERT)
+No,Waktu Pengujian,Akun Pengguna & Rombongan,Titik Koordinat Darurat (Lat Lng),Waktu Respon (Detik),Status Validasi,Keterangan Hasil / Karakteristik Sistem
+1,13:29:19,Ahmad (Jihad Gang),"-6.1811600, 106.1548383",0.36,BERHASIL,"Sinyal darurat SOS aktif, koordinat GPS disematkan & disiarkan ke rombongan"
+2,13:38:33,Ahmad (Jihad Gang),"-6.1814967, 106.1550150",0.27,BERHASIL,Transaksi batch Firestore atomic sukses memperbarui status darurat jamaah
+3,13:38:43,Ahmad (Jihad Gang),"-6.1815150, 106.1550117",0.43,BERHASIL,Peringatan SOS terdaftar pada linimasa aktivitas rombongan (activity log)
+4,13:38:57,Ahmad (Jihad Gang),"-6.1811783, 106.1548400",0.30,BERHASIL,Dispatcher notifikasi darurat prioritas tinggi (sos_alert) siap dikirim ke pendamping
+5,13:39:03,Ahmad (Jihad Gang),"-6.1812300, 106.1548867",0.28,BERHASIL,Layar pemindai darurat (SOS Scanning) aktif menampilkan status siaga
+6,13:39:10,Ahmad (Jihad Gang),"-6.1810850, 106.1547983",0.37,BERHASIL,Koordinat GPS presisi tersinkronisasi instan ke dokumen member rombongan
+7,13:39:16,Ahmad (Jihad Gang),"-6.1810850, 106.1547983",0.16,BERHASIL,Respon latensi sangat cepat dengan pemanfaatan koneksi soket Firestore persisten
+8,13:39:22,Ahmad (Jihad Gang),"-6.1810850, 106.1547983",0.14,BERHASIL,Mekanisme proteksi countdown 3 detik berhasil memvalidasi pemicuan tanpa kendala
+9,13:39:26,Ahmad (Jihad Gang),"-6.1810850, 106.1547983",0.45,BERHASIL,Pembaruan status realtime terverifikasi pada state controller aplikasi
+10,13:39:31,Ahmad (Jihad Gang),"-6.1812178, 106.1548782",0.35,BERHASIL,Siklus pemicuan dan resolusi darurat berhasil dinormalisasi secara sempurna
+

@@ -104,6 +104,9 @@ class SignLanguageController extends GetxController {
 
   bool _isDisposed = false;
 
+  int get lastInferenceDurationMs => _lastInferenceDurationMs;
+  DateTime? get segmentStartDateTime => _segmentStartDateTime;
+
   bool get isReadyForInput =>
       state.value != BisindoLiveState.initializing &&
       state.value != BisindoLiveState.error;
@@ -313,6 +316,9 @@ class SignLanguageController extends GetxController {
       _isClassifying = false;
       final next = _pendingSegment;
       _pendingSegment = null;
+      if (state.value == BisindoLiveState.classifying) {
+        _settleIdleState();
+      }
       if (next != null && !_isDisposed && isContinuousRunning.value) {
         unawaited(_classifySegment(next));
       }
@@ -366,12 +372,15 @@ class SignLanguageController extends GetxController {
         return;
       }
 
-      final candidateThreshold = (classifierService.confidenceThreshold * 0.58)
-          .clamp(0.32, 0.52);
+      final candidateThreshold = math.max(
+        0.50,
+        (classifierService.confidenceThreshold * 0.58).clamp(0.35, 0.52),
+      );
 
       if (prediction.isRecognized &&
           prediction.label.isNotEmpty &&
-          prediction.confidence >= candidateThreshold) {
+          prediction.confidence >= candidateThreshold &&
+          prediction.confidence >= 0.50) {
         confidenceScore.value = prediction.confidence;
         topCandidates.assignAll(prediction.candidates);
 
@@ -510,6 +519,9 @@ class SignLanguageController extends GetxController {
     framesCollected.value = 0;
     captureProgress.value = 0.0;
     guidanceMessage.value = '';
+    _isCommittedForCurrentSegment = false;
+    isCandidateConfirmed.value = false;
+    _resetStreamingPreviewState();
 
     if (skipCountdown) {
       _beginManualRecording();
@@ -533,6 +545,8 @@ class SignLanguageController extends GetxController {
 
   void _beginManualRecording() {
     if (_isDisposed) return;
+    _isCommittedForCurrentSegment = false;
+    isCandidateConfirmed.value = false;
     state.value = BisindoLiveState.manualCapturing;
     _captureStartTime = DateTime.now();
 
@@ -560,12 +574,17 @@ class SignLanguageController extends GetxController {
     final frames = List<LandmarkFrame>.of(_manualFrames);
     _manualFrames.clear();
     _isClassifying = true;
+    _isCommittedForCurrentSegment = false;
+    isCandidateConfirmed.value = false;
     state.value = BisindoLiveState.classifying;
     try {
       await _classifyFrames(frames, minMargin: 0.0, source: 'manual');
     } finally {
       _isClassifying = false;
       segmenter.reset();
+      if (state.value == BisindoLiveState.classifying) {
+        _settleIdleState();
+      }
     }
   }
 
@@ -578,7 +597,11 @@ class SignLanguageController extends GetxController {
     required double minMargin,
     required String source,
   }) async {
-    if (_isDisposed || _isCommittedForCurrentSegment) return;
+    if (_isDisposed) return;
+    if (_isCommittedForCurrentSegment) {
+      _settleIdleState();
+      return;
+    }
     try {
       final quality = SignCaptureQuality.fromFrames(frames);
       lastQuality.value = quality;
@@ -586,7 +609,7 @@ class SignLanguageController extends GetxController {
       if (!qualityCheck.isValid) {
         _reject(
           qualityCheck.userErrorMessage ??
-              'Gerakan belum cukup terdeteksi. Silakan coba lagi.',
+              'Gagal mendeteksi: gerakan tangan kurang jelas. Silakan ulangi.',
         );
         return;
       }
@@ -599,10 +622,28 @@ class SignLanguageController extends GetxController {
       }
       final inputTensor = buffer.prepareModelInput();
       final prediction = await classifierService.classify(inputTensor);
-      if (_isDisposed || _isCommittedForCurrentSegment) return;
+      if (_isDisposed || _isCommittedForCurrentSegment) {
+        if (state.value == BisindoLiveState.classifying) {
+          _settleIdleState();
+        }
+        return;
+      }
 
       confidenceScore.value = prediction.confidence;
       topCandidates.assignAll(prediction.candidates);
+
+      // Batalkan dan beri feedback gagal jika keyakinan di bawah 50%
+      if (prediction.confidence < 0.50) {
+        if (kDebugMode) {
+          debugPrint(
+            '[BISINDO_LIVE] Dibatalkan karena keyakinan rendah (< 50%): ${prediction.label} ${(prediction.confidence * 100).toStringAsFixed(1)}%',
+          );
+        }
+        _reject(
+          'Gagal mendeteksi gestur (Keyakinan ${(prediction.confidence * 100).toStringAsFixed(0)}% < 50%). Silakan ulangi gerakan.',
+        );
+        return;
+      }
 
       final accepted =
           prediction.isRecognized &&
@@ -618,7 +659,7 @@ class SignLanguageController extends GetxController {
       }
 
       if (!accepted) {
-        _reject('Gerakan belum dikenali. Silakan ulangi.');
+        _reject('Gerakan belum dikenali. Silakan ulangi gerakan.');
         return;
       }
 

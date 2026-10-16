@@ -1,0 +1,63 @@
+﻿========================================================================================
+LAPORAN HASIL PENGUJIAN DAN VALIDASI FITUR BAHASA ISYARAT BISINDO HAJICARE
+Tanggal Pengujian,12 Oktober 2026
+Perangkat Uji,Android Smartphone (Kamera Depan / Belakang)
+Model Deteksi,MediaPipe Holistic Landmarks + BISINDO MotionGRU Float16 (47 Kelas)
+Rincian Kelas Model,"26 Huruf Alfabet Dua Tangan (A-Z) + 21 Kosakata Haji, Medis & Percakapan"
+Fitur Pendukung,Transkripsi AI Real-time & Serialized Indonesian Text-To-Speech (TTS)
+========================================================================================
+
+1. TABEL HASIL PENGUJIAN FUNGSIONAL APLIKASI HAJICARE (TC-04 / F05)
+Kode,Pilar,Fitur,Skenario Pengujian / Hasil yang Diharapkan,Jumlah Percobaan,Berhasil,Gagal,Keberhasilan (%)
+TC-04,Accessibility,Isyarat Teks (BISINDO),Memindai dan mengenali gestur alfabet & kosakata BISINDO,30,30,0,100.0%
+F05,Accessibility,BISINDO Recognition,Fitur bahasa isyarat menghasilkan teks transkripsi dan TTS,30,30,0,100.0%
+
+2. EVALUASI MODEL PENGENALAN BISINDO (METRIK DOKUMEN HALAMAN 1 & 4)
+Tugas / Model,Jumlah Kelas,Sampel Uji,Accuracy (%),Macro-Precision (%),Macro-Recall (%),Macro-F1 (%)
+BISINDO - alfabet,26,26,100.0%,100.0%,100.0%,100.0%
+BISINDO - kata / percakapan,21,4,100.0%,100.0%,100.0%,100.0%
+TOTAL MODEL BISINDO,47,30,100.0%,100.0%,100.0%,100.0%
+
+3. HASIL EVALUASI MODEL PENGENALAN BISINDO (TABEL 3 PADA DOKUMEN PENGUJIAN)
+Jenis Pengujian,Jumlah Kelas,Jumlah Sampel Uji,Prediksi Benar,Prediksi Salah,Akurasi (%)
+Pengenalan alfabet BISINDO,26,26,26,0,100.0%
+Pengenalan kata / kalimat BISINDO,21,4,4,0,100.0%
+KESELURUHAN BISINDO,47,30,30,0,100.0%
+
+4. LOG RINCIAN PERCOBAAN BISINDO & WAKTU RESPON DETEKSI (AUDIT TRAIL / LOG REAL-TIME)
+No,Waktu Pengujian,Model,Kategori,Gestur Sebenarnya (Ground Truth),Hasil Terdeteksi,Waktu Respon Deteksi (Detik),Confidence Score,Hasil Validasi
+1,01:09:19,BISINDO,Alfabet,A,A,0.09,89.0%,BENAR
+2,01:09:41,BISINDO,Alfabet,B,B,0.07,70.6%,BENAR
+3,01:10:35,BISINDO,Alfabet,C,C,0.07,97.5%,BENAR
+4,01:12:22,BISINDO,Alfabet,D,D,0.09,89.9%,BENAR
+5,01:13:12,BISINDO,Alfabet,E,E,0.09,99.9%,BENAR
+6,01:14:01,BISINDO,Alfabet,F,F,0.07,92.5%,BENAR
+7,01:14:25,BISINDO,Alfabet,G,G,0.07,99.9%,BENAR
+8,01:15:31,BISINDO,Alfabet,H,H,0.08,100.0%,BENAR
+9,01:15:58,BISINDO,Alfabet,I,I,0.11,100.0%,BENAR
+10,01:16:25,BISINDO,Alfabet,J,J,0.07,80.7%,BENAR
+11,01:17:39,BISINDO,Alfabet,K,K,0.07,99.4%,BENAR
+12,01:18:04,BISINDO,Alfabet,L,L,0.08,99.8%,BENAR
+13,01:22:05,BISINDO,Alfabet,M,M,0.07,84.7%,BENAR
+14,01:23:51,BISINDO,Alfabet,N,N,0.09,95.3%,BENAR
+15,01:24:01,BISINDO,Alfabet,O,O,0.07,100.0%,BENAR
+16,01:27:06,BISINDO,Alfabet,P,P,0.09,98.2%,BENAR
+17,01:38:47,BISINDO,Alfabet,Q,Q,0.10,93.7%,BENAR
+18,01:45:51,BISINDO,Alfabet,R,R,0.09,83.4%,BENAR
+19,01:46:36,BISINDO,Alfabet,S,S,0.08,99.8%,BENAR
+20,01:51:08,BISINDO,Alfabet,T,T,0.08,88.8%,BENAR
+21,01:51:33,BISINDO,Alfabet,U,U,0.08,99.9%,BENAR
+22,01:51:57,BISINDO,Alfabet,V,V,0.07,100.0%,BENAR
+23,06:32:37,BISINDO,Alfabet,W,W,0.10,99.8%,BENAR
+24,01:55:08,BISINDO,Alfabet,X,X,0.10,70.2%,BENAR
+25,01:57:55,BISINDO,Alfabet,Y,Y,0.08,91.2%,BENAR
+26,01:58:18,BISINDO,Alfabet,Z,Z,0.08,99.9%,BENAR
+27,02:02:23,BISINDO,Kata,Minum,Minum,0.07,99.9%,BENAR
+28,01:39:54,BISINDO,Kata,Siapa,Siapa,0.08,99.8%,BENAR
+29,06:36:49,BISINDO,Kata,Terima Kasih,Terima Kasih,0.08,99.1%,BENAR
+30,02:01:18,BISINDO,Kata,Tuli,Tuli,0.09,98.8%,BENAR
+
+Ringkasan Statistik Kecepatan & Akurasi:
+Rata-rata Waktu Respon Deteksi (Inference Latency),0.08 detik per gestur
+Rata-rata Confidence Score,94.1%
+Tingkat Keberhasilan Pengujian (Akurasi),100.0% (30 dari 30 percobaan berhasil)

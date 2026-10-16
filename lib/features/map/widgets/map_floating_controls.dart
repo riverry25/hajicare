@@ -40,13 +40,14 @@ class _MapFloatingControlsState extends State<MapFloatingControls>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _expandAnimation;
-  bool _isExpanded = false;
+  bool _isExpanded = true;
 
   @override
   void initState() {
     super.initState();
     _animationController = AnimationController(
       vsync: this,
+      value: 1.0,
       duration: const Duration(milliseconds: 320),
     );
     _expandAnimation = CurvedAnimation(

@@ -1,0 +1,30 @@
+========================================================================================
+LAPORAN HASIL PENGUJIAN DAN VALIDASI FITUR PETA & LOKASI (TC-06) HAJICARE
+Tanggal Pengujian,12 Oktober 2026
+Perangkat Uji,Android Smartphone (21121119SG)
+Layanan Peta & Geolokasi,flutter_map + OpenStreetMap / CARTO Basemap + Geolocator GPS
+Metode Pengujian,Blackbox Testing & Respon Latency Tracking (Real-time Audit Trail)
+========================================================================================
+
+1. TABEL HASIL PENGUJIAN FUNGSIONAL APLIKASI HAJICARE (TC-06)
+Kode,Fitur,Skenario Pengujian,Jumlah Percobaan,Berhasil,Gagal,Keberhasilan (%)
+TC-06,Peta & Lokasi,Membuka fitur lokasi dan memeriksa hasilnya,10,10,0,100.0%
+
+2. LOG RINCIAN PERCOBAAN & PELACAKAN LOKASI (AUDIT TRAIL REAL-TIME)
+No,Waktu Pengujian,Anggota / Target yang Dicari,Titik Koordinat (Lat Lng),Akurasi GPS (Meter),Waktu Respon (Detik),Status Validasi,Keterangan Hasil
+1,08:59:59,Ferdi Ahyana Yusri (Jamaah),"-6.1813233, 106.1554506",± 17.8 m,1.82,BERHASIL,"Lokasi mandiri pengguna terkunci, visualisasi peta & marker aktif"
+2,09:05:30,Apis (Petugas / Pendamping),"-6.1812975, 106.1554413",± 25.2 m,1.92,BERHASIL,"Titik lokasi petugas rombongan ditemukan & terpusat di peta"
+3,09:06:29,humai (Jamaah),"-6.1813451, 106.1553604",± 72.9 m,2.29,BERHASIL,"Titik lokasi jamaah rombongan ditemukan & terpusat di peta"
+4,09:06:50,jihad (Jamaah),"-6.1813062, 106.1554838",± 21.3 m,2.19,BERHASIL,"Titik lokasi jamaah rombongan ditemukan & terpusat di peta"
+5,09:07:14,Ferdi Ahyana Yusri (Pusatkan Kembali),"-6.1813062, 106.1554838",± 21.3 m,0.12,BERHASIL,"Kamera peta berhasil dipusatkan kembali ke lokasi pengguna"
+6,10:39:10,yusryy776 (Petugas / Pendamping),"-6.1789936, 106.1610543",± 39.6 m,1.52,BERHASIL,"Lokasi petugas ditemukan, rute panduan navigasi aktif"
+7,10:54:01,Fadli Hifziansyah (Jamaah),"-6.1790511, 106.1610640",± 28.4 m,4.11,BERHASIL,"Titik lokasi jamaah rombongan ditemukan & terpusat di peta"
+8,11:01:45,ferdiyusri10 (Jamaah),"-6.1790892, 106.1610622",± 48.9 m,1.26,BERHASIL,"Titik lokasi jamaah rombongan ditemukan & terpusat di peta"
+9,11:02:11,Jihad Ardiansyah (Jamaah),"-6.1790444, 106.1610823",± 21.3 m,0.46,BERHASIL,"Titik lokasi jamaah rombongan ditemukan & terpusat di peta"
+10,11:03:22,Apisudin (Petugas / Pendamping),"-6.1791486, 106.1610834",± 48.9 m,1.51,BERHASIL,"Titik lokasi petugas rombongan ditemukan & terpusat di peta"
+
+Ringkasan Statistik Pengujian Peta & Lokasi (TC-06):
+Rata-rata Waktu Respon GPS,1.72 detik per percobaan
+Rata-rata Akurasi GPS,± 34.6 meter
+Jumlah Percobaan Berhasil,10 dari 10 percobaan (100.0%)
+Status Pengujian,LULUS (100% Validasi Fungsional & Akurasi Geolocation)

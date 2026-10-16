@@ -799,11 +799,28 @@ class _SignLanguageScreenState extends State<SignLanguageScreen> {
                         ),
                       ),
                     );
+                  case BisindoLiveState.rejected:
+                  case BisindoLiveState.error:
+                    final feedback =
+                        _isolatedController.guidanceMessage.value.isNotEmpty
+                        ? _isolatedController.guidanceMessage.value
+                        : 'Gagal mendeteksi gestur (< 50%)';
+                    return Positioned(
+                      left: 14,
+                      bottom: 16,
+                      child: _LivePill(
+                        text: feedback,
+                        borderColor: AppColors.sosEmergency,
+                        leading: const Icon(
+                          Icons.error_outline_rounded,
+                          size: 13,
+                          color: AppColors.sosEmergency,
+                        ),
+                      ),
+                    );
                   case BisindoLiveState.recognized:
                   case BisindoLiveState.initializing:
                   case BisindoLiveState.stopped:
-                  case BisindoLiveState.rejected:
-                  case BisindoLiveState.error:
                     return const SizedBox.shrink();
                 }
               }),

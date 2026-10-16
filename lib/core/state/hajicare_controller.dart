@@ -1,3 +1,4 @@
+// ignore_for_file: use_null_aware_elements
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -12,6 +13,7 @@ import '../../features/room/models/room_model.dart';
 import '../../features/room/models/room_member_model.dart';
 import '../../features/room/services/room_service.dart';
 import '../../features/sos/services/sos_service.dart';
+import '../../features/sos/services/sos_validation_tracker_service.dart';
 import '../../features/notification/controllers/notification_controller.dart';
 
 export '../models/jamaah_data.dart';
@@ -1054,8 +1056,16 @@ class HajiCareController extends GetxController {
     if (user == null) return false;
 
     _isSosMutationInFlight = true;
+    final stopwatch = Stopwatch()..start();
+    String? currentRoomName;
+    String? currentUserName;
+    GeoPoint? currentGeoPoint;
+
     try {
       final myPos = myCurrentPosition.value;
+      if (myPos != null) {
+        currentGeoPoint = GeoPoint(myPos.latitude, myPos.longitude);
+      }
       var roomId = activeRoomId.value?.trim();
       if (roomId == null || roomId.isEmpty) {
         roomId = _cachedRoomId?.trim();
@@ -1086,20 +1096,30 @@ class HajiCareController extends GetxController {
           _self!.sosActive = false;
           _self!.refresh();
         }
+        stopwatch.stop();
+        await SosValidationTrackerService.instance.logTrial(
+          userName: _self?.name ?? user.displayName ?? 'Jamaah',
+          roomName: 'Belum Gabung Room',
+          latitude: myPos?.latitude,
+          longitude: myPos?.longitude,
+          durationSeconds: stopwatch.elapsedMilliseconds / 1000.0,
+          isSuccess: false,
+          errorMessage: 'User belum terdaftar di rombongan manapun',
+        );
         return false;
       }
 
       final roomName = activeRoom.value?.name ?? 'Rombongan';
       final userName = _self?.name ?? user.displayName ?? 'Jamaah';
+      currentRoomName = roomName;
+      currentUserName = userName;
 
       final eventId = await _sosService.trigger(
         userId: user.uid,
         userName: userName,
         roomId: roomId,
         roomName: roomName,
-        location: myPos == null
-            ? null
-            : GeoPoint(myPos.latitude, myPos.longitude),
+        location: currentGeoPoint,
         kloter: effectiveKloter,
         maktab: effectiveMaktab,
       );
@@ -1118,15 +1138,37 @@ class HajiCareController extends GetxController {
           'roomName': roomName,
           'status': 'active',
           'createdAt': DateTime.now().toIso8601String(),
-          if (myPos != null)
-            'location': GeoPoint(myPos.latitude, myPos.longitude),
+          if (currentGeoPoint != null) 'location': currentGeoPoint,
         });
         activeSosCount.value = activeSosEvents.length;
       }
       jamaahList.refresh();
+
+      stopwatch.stop();
+      final durationSec = stopwatch.elapsedMilliseconds / 1000.0;
+      await SosValidationTrackerService.instance.logTrial(
+        userName: userName,
+        roomName: roomName,
+        latitude: myPos?.latitude,
+        longitude: myPos?.longitude,
+        durationSeconds: durationSec,
+        isSuccess: true,
+        eventId: eventId,
+      );
+
       return true;
     } catch (e) {
+      stopwatch.stop();
       AppLogger.error('Error triggering SOS: $e', tag: 'HajiCareController');
+      await SosValidationTrackerService.instance.logTrial(
+        userName: currentUserName ?? (_self?.name ?? user.displayName ?? 'Jamaah'),
+        roomName: currentRoomName ?? (activeRoom.value?.name ?? 'Rombongan'),
+        latitude: myCurrentPosition.value?.latitude,
+        longitude: myCurrentPosition.value?.longitude,
+        durationSeconds: stopwatch.elapsedMilliseconds / 1000.0,
+        isSuccess: false,
+        errorMessage: e.toString(),
+      );
       return false;
     } finally {
       _isSosMutationInFlight = false;

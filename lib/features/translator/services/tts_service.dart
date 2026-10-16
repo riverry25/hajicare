@@ -1,4 +1,5 @@
 import 'package:flutter_tts/flutter_tts.dart';
+import 'tts_validation_tracker_service.dart';
 
 enum TtsState { playing, stopped }
 
@@ -51,6 +52,8 @@ class TtsService {
       return;
     }
 
+    final stopwatch = Stopwatch()..start();
+
     String locale;
     switch (languageCode.toLowerCase()) {
       case 'ar':
@@ -84,7 +87,25 @@ class TtsService {
     await _flutterTts.setVolume(1.0);
     await _flutterTts.setPitch(1.0);
 
-    await _flutterTts.speak(trimmed);
+    try {
+      await _flutterTts.speak(trimmed);
+      final durationSec = stopwatch.elapsedMilliseconds / 1000.0;
+      await TtsValidationTrackerService.instance.logTrial(
+        textSpoken: trimmed,
+        languageCode: languageCode,
+        durationSeconds: durationSec,
+        isSuccess: true,
+      );
+    } catch (e) {
+      final durationSec = stopwatch.elapsedMilliseconds / 1000.0;
+      await TtsValidationTrackerService.instance.logTrial(
+        textSpoken: trimmed,
+        languageCode: languageCode,
+        durationSeconds: durationSec,
+        isSuccess: false,
+        errorMessage: e.toString(),
+      );
+    }
   }
 
   Future<void> stop() async {

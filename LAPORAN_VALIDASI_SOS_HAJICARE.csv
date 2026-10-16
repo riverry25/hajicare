@@ -1,0 +1,29 @@
+﻿========================================================================================
+LAPORAN HASIL PENGUJIAN DAN VALIDASI FITUR SOS DARURAT (TC-07) HAJICARE
+Tanggal Pengujian,12 Oktober 2026
+Perangkat Uji,Android Smartphone (21121119SG)
+Layanan SOS & Keamanan,Firebase Firestore Batch Realtime + Geolocation Telemetry
+Metode Pengujian,Blackbox Testing & Respon Latency Tracking (Real-time Audit Trail)
+========================================================================================
+
+1. TABEL HASIL PENGUJIAN FUNGSIONAL APLIKASI HAJICARE (TC-07)
+Kode,Fitur,Skenario Pengujian,Jumlah Percobaan,Berhasil,Gagal,Keberhasilan (%)
+TC-07,SOS Darurat,Menjalankan mekanisme alarm & bantuan darurat SOS,10,10,0,100.0%
+
+2. LOG RINCIAN PERCOBAAN & AUDIT TRAIL SOS REAL-TIME
+No,Waktu Pengujian,Akun Pengguna & Rombongan,Titik Koordinat Darurat (Lat Lng),Waktu Respon (Detik),Status Validasi,Keterangan Hasil / Karakteristik Sistem
+1,13:29:19,Ahmad (Jihad Gang),"-6.1811600, 106.1548383",0.36,BERHASIL,"Sinyal darurat SOS aktif, koordinat GPS disematkan & disiarkan ke rombongan"
+2,13:38:33,Ahmad (Jihad Gang),"-6.1814967, 106.1550150",0.27,BERHASIL,Transaksi batch Firestore atomic sukses memperbarui status darurat jamaah
+3,13:38:43,Ahmad (Jihad Gang),"-6.1815150, 106.1550117",0.43,BERHASIL,Peringatan SOS terdaftar pada linimasa aktivitas rombongan (activity log)
+4,13:38:57,Ahmad (Jihad Gang),"-6.1811783, 106.1548400",0.30,BERHASIL,Dispatcher notifikasi darurat prioritas tinggi (sos_alert) siap dikirim ke pendamping
+5,13:39:03,Ahmad (Jihad Gang),"-6.1812300, 106.1548867",0.28,BERHASIL,Layar pemindai darurat (SOS Scanning) aktif menampilkan status siaga
+6,13:39:10,Ahmad (Jihad Gang),"-6.1810850, 106.1547983",0.37,BERHASIL,Koordinat GPS presisi tersinkronisasi instan ke dokumen member rombongan
+7,13:39:16,Ahmad (Jihad Gang),"-6.1810850, 106.1547983",0.16,BERHASIL,Respon latensi sangat cepat dengan pemanfaatan koneksi soket Firestore persisten
+8,13:39:22,Ahmad (Jihad Gang),"-6.1810850, 106.1547983",0.14,BERHASIL,Mekanisme proteksi countdown 3 detik berhasil memvalidasi pemicuan tanpa kendala
+9,13:39:26,Ahmad (Jihad Gang),"-6.1810850, 106.1547983",0.45,BERHASIL,Pembaruan status realtime terverifikasi pada state controller aplikasi
+10,13:39:31,Ahmad (Jihad Gang),"-6.1812178, 106.1548782",0.35,BERHASIL,Siklus pemicuan dan resolusi darurat berhasil dinormalisasi secara sempurna
+
+Ringkasan Statistik Pengujian SOS Darurat (TC-07):
+Rata-rata Waktu Respon Pengiriman SOS,0.31 detik per percobaan
+Jumlah Percobaan Berhasil,10 dari 10 percobaan (100.0%)
+Jumlah Percobaan Gagal,0 percobaan (0.0%)

@@ -11,6 +11,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/services/trusted_backend_service.dart';
 import '../../../core/state/app_startup_controller.dart';
 import '../../../core/state/hajicare_controller.dart';
+import '../services/auth_validation_tracker_service.dart';
 
 class LoginController extends GetxController {
   final selectedRole = 'jamaah'.obs;
@@ -94,6 +95,7 @@ class LoginController extends GetxController {
 
     isLoading.value = true;
     errorMessage.value = null;
+    final stopwatch = Stopwatch()..start();
 
     try {
       // ============================================================
@@ -108,6 +110,13 @@ class LoginController extends GetxController {
       final uid = userCredential.user?.uid;
 
       if (uid == null) {
+        final durationSec = stopwatch.elapsedMilliseconds / 1000.0;
+        await AuthValidationTrackerService.instance.logTrial(
+          method: 'Email',
+          isSuccess: false,
+          durationSeconds: durationSec,
+          errorMessage: 'User not found',
+        );
         if (!isClosed) {
           errorMessage.value = AppTranslations.tr('auth.errorUserNotFound');
           _showErrorSnackbar(errorMessage.value!);
@@ -170,6 +179,15 @@ class LoginController extends GetxController {
 
       if (isClosed) return;
 
+      // Log success trial to AuthValidationTrackerService
+      final durationSec = stopwatch.elapsedMilliseconds / 1000.0;
+      await AuthValidationTrackerService.instance.logTrial(
+        method: 'Email',
+        account: email,
+        isSuccess: true,
+        durationSeconds: durationSec,
+      );
+
       // ============================================================
       // 4. Tampilkan feedback dialog saat berhasil login
       // ============================================================
@@ -194,11 +212,29 @@ class LoginController extends GetxController {
     } on FirebaseAuthException catch (e) {
       if (isClosed) return;
 
+      final durationSec = stopwatch.elapsedMilliseconds / 1000.0;
+      await AuthValidationTrackerService.instance.logTrial(
+        method: 'Email',
+        account: email,
+        isSuccess: false,
+        durationSeconds: durationSec,
+        errorMessage: e.message,
+      );
+
       errorMessage.value = _friendlyAuthError(e.code, e.message);
 
       _showErrorSnackbar(errorMessage.value!);
     } catch (e) {
       if (isClosed) return;
+
+      final durationSec = stopwatch.elapsedMilliseconds / 1000.0;
+      await AuthValidationTrackerService.instance.logTrial(
+        method: 'Email',
+        account: email,
+        isSuccess: false,
+        durationSeconds: durationSec,
+        errorMessage: e.toString(),
+      );
 
       errorMessage.value = AppTranslations.tr('auth.loginGeneralError');
 

@@ -666,6 +666,7 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
                 ],
               ),
             ),
+
             const SizedBox(width: AppSpacing.xs),
 
             _buildRoundCameraControl(
@@ -1485,7 +1486,7 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
                   // TOTAL CARD (Multi-Currency Aware)
                   if (hasDetections) _buildSummaryTotalCard(),
 
-                  const SizedBox(height: AppSpacing.lg),
+                  const SizedBox(height: AppSpacing.md),
 
                   // ACTION BUTTONS (Adaptive layout for accessibility & large text scale)
                   LayoutBuilder(

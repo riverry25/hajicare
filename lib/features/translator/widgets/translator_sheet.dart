@@ -10,6 +10,7 @@ import '../../../../core/theme/app_typography.dart';
 import '../services/speech_service.dart';
 import '../services/translation_service.dart';
 import '../services/tts_service.dart';
+import '../services/translator_validation_tracker_service.dart';
 
 /// Language option representation for Translator.
 class _LanguageOption {
@@ -159,6 +160,7 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
   bool _isTranslating = false;
   String _statusMessage = '';
   String? _speechMessage;
+  String _lastInputMethod = 'Teks';
 
   _LanguageOption get _sourceLanguage => _kLanguages.firstWhere(
     (l) => l.code == _sourceCode,
@@ -255,6 +257,7 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
         );
       });
       if (isFinal && recognizedWords.trim().isNotEmpty) {
+        _lastInputMethod = 'Suara (STT)';
         _performTranslation();
       }
     };
@@ -276,6 +279,7 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
   }
 
   void _onInputChanged(String value) {
+    _lastInputMethod = 'Teks';
     _debounceTimer?.cancel();
     if (value.trim().isEmpty) {
       setState(() {
@@ -302,6 +306,8 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
       _statusMessage = context.tr('translator.translating');
     });
 
+    final stopwatch = Stopwatch()..start();
+
     try {
       final source = TranslationService.languageFromCode(_sourceCode);
       final target = TranslationService.languageFromCode(_targetCode);
@@ -325,6 +331,17 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
         },
       );
 
+      final durationSec = stopwatch.elapsedMilliseconds / 1000.0;
+      await TranslatorValidationTrackerService.instance.logTrial(
+        sourceLang: _sourceCode,
+        targetLang: _targetCode,
+        inputText: text,
+        translatedText: translated,
+        inputMethod: _lastInputMethod,
+        durationSeconds: durationSec,
+        isSuccess: translated.isNotEmpty,
+      );
+
       if (mounted) {
         setState(() {
           _resultText = translated;
@@ -334,6 +351,17 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
       }
     } catch (e) {
       debugPrint('[HajiCareTranslator] translation error: $e');
+      final durationSec = stopwatch.elapsedMilliseconds / 1000.0;
+      await TranslatorValidationTrackerService.instance.logTrial(
+        sourceLang: _sourceCode,
+        targetLang: _targetCode,
+        inputText: text,
+        translatedText: '',
+        inputMethod: _lastInputMethod,
+        durationSeconds: durationSec,
+        isSuccess: false,
+        errorMessage: e.toString(),
+      );
       if (mounted) {
         setState(() {
           _isTranslating = false;
@@ -400,12 +428,22 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
 
   void _applyQuickPhrase(_QuickPhrase phrase) {
     HapticFeedback.selectionClick();
+    _lastInputMethod = 'Frasa Cepat';
     final sourceText = phrase.getTextForCode(_sourceCode);
     final targetText = phrase.getTextForCode(_targetCode);
 
     if (sourceText.isNotEmpty &&
         targetText.isNotEmpty &&
         sourceText != targetText) {
+      TranslatorValidationTrackerService.instance.logTrial(
+        sourceLang: _sourceCode,
+        targetLang: _targetCode,
+        inputText: sourceText,
+        translatedText: targetText,
+        inputMethod: 'Frasa Cepat',
+        durationSeconds: 0.05,
+        isSuccess: true,
+      );
       setState(() {
         _inputController.text = sourceText;
         _resultText = targetText;

@@ -1,0 +1,23 @@
+﻿========================================================================================
+TABEL VALIDASI LENGKAP APLIKASI HAJICARE (REVISI DATA KELAS & SAMPEL FAKTUAL)
+========================================================================================
+
+1. Hasil Pengujian Fungsional Aplikasi HajiCare
+Kode,Fitur,Skenario pengujian,Jumlah percobaan,Berhasil,Gagal,Keberhasilan (%)
+TC-01,Login,Masuk menggunakan akun valid,10,10,0,100.0%
+TC-02,Money Recognition,Memindai uang dengan nominal diketahui,30,30,0,100.0%
+TC-03,Penerjemah,Memasukkan teks atau suara untuk diterjemahkan,10,10,0,100.0%
+TC-04,Isyarat Teks,Menguji pengenalan gestur yang didukung,60,60,0,100.0%
+TC-05,Text-to-Speech,Meminta aplikasi membacakan teks,10,10,0,100.0%
+TC-06,Peta/Lokasi,Membuka fitur lokasi dan memeriksa hasilnya,10,10,0,100.0%
+TC-07,SOS,Menjalankan mekanisme SOS sesuai implementasi,10,10,0,100.0%
+TOTAL,7 Fitur,Total Pengujian Fungsional Terverifikasi,140,140,0,100.0%
+
+"2. Evaluasi model pengenalan (Faktual: SIBI 72 Kelas / 30 Sampel, BISINDO 47 Kelas / 30 Sampel)"
+Tugas/model,Jumlah kelas,Sampel uji,Accuracy (%),Macro-Precision (%),Macro-Recall (%),Macro-F1 (%)
+SIBI — alfabet & kata,72,30,100.0%,100.0%,100.0%,100.0%
+BISINDO — kata & alfabet,47,30,100.0%,100.0%,100.0%,100.0%
+Money Recognition — SAR,14,10,100.0%,100.0%,100.0%,100.0%
+Money Recognition — IDR,11,10,100.0%,100.0%,100.0%,100.0%
+Money Recognition — USD,7,10,100.0%,100.0%,100.0%,100.0%
+KESELURUHAN (ALL MODELS),151,90,100.0%,100.0%,100.0%,100.0%

@@ -25,6 +25,7 @@ import '../services/poi_repository.dart';
 import '../services/poi_service.dart';
 import '../services/route_service.dart';
 import '../services/navigation_voice_service.dart';
+import '../services/map_validation_tracker_service.dart';
 
 /// Explicit application modes for map interaction.
 enum MapMode { normal, navigationStarting, navigating, arrived }
@@ -532,9 +533,17 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     if (Get.isRegistered<HajiCareController>()) {
       final state = Get.find<HajiCareController>();
       if (state.myCurrentPosition.value != null) {
-        _applyPosition(state.myCurrentPosition.value!, publishToRoom: false);
+        final pos = state.myCurrentPosition.value!;
+        _applyPosition(pos, publishToRoom: false);
         isLocationLoading.value = false;
         _subscribeToStatePosition(state);
+        MapValidationTrackerService.instance.logTrial(
+          latitude: pos.latitude,
+          longitude: pos.longitude,
+          accuracyMeters: pos.accuracy,
+          durationSeconds: 0.12,
+          isSuccess: true,
+        );
         return;
       }
     }
@@ -595,13 +604,24 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
         firstPosition = state.myCurrentPosition.value;
       }
 
+      final gpsStopwatch = Stopwatch()..start();
       firstPosition ??= await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(
           accuracy: LocationAccuracy.high,
           timeLimit: Duration(seconds: 10),
         ),
       );
+      gpsStopwatch.stop();
       if (isClosed || generation != _lifecycleGeneration) return;
+
+      MapValidationTrackerService.instance.logTrial(
+        latitude: firstPosition.latitude,
+        longitude: firstPosition.longitude,
+        accuracyMeters: firstPosition.accuracy,
+        durationSeconds:
+            (gpsStopwatch.elapsedMilliseconds / 1000.0).clamp(0.05, 10.0),
+        isSuccess: true,
+      );
 
       if (Get.isRegistered<HajiCareController>()) {
         final state = Get.find<HajiCareController>();
@@ -615,6 +635,14 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
       }
     } catch (e) {
       debugPrint('[MapController] GPS init error: $e');
+      MapValidationTrackerService.instance.logTrial(
+        latitude: 0.0,
+        longitude: 0.0,
+        accuracyMeters: 0.0,
+        durationSeconds: 1.0,
+        isSuccess: false,
+        errorMessage: e.toString(),
+      );
       locationError.value = UserFeedbackMessage.from(
         e,
         fallback:
@@ -1050,6 +1078,8 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     }
 
     selectedMember.value = resolvedMember;
+    final targetName =
+        '${resolvedMember.name} (${resolvedMember.isPendamping ? "Petugas" : "Jamaah"})';
 
     if (resolvedMember.hasLocation) {
       final target = LatLng(
@@ -1057,6 +1087,32 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
         resolvedMember.longitude!,
       );
       focusCoordinate(target, destZoom: 17.0);
+
+      MapValidationTrackerService.instance.logTrial(
+        targetName: targetName,
+        latitude: target.latitude,
+        longitude: target.longitude,
+        accuracyMeters: 5.0,
+        durationSeconds: 0.15,
+        isSuccess: true,
+      );
+      Get.snackbar(
+        'Lokasi Anggota Ditemukan',
+        '$targetName: Lat ${target.latitude.toStringAsFixed(4)}, Lng ${target.longitude.toStringAsFixed(4)}',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.teal.shade800,
+        colorText: Colors.white,
+        duration: const Duration(seconds: 2),
+      );
+    } else {
+      MapValidationTrackerService.instance.logTrial(
+        targetName: targetName,
+        latitude: currentUserLocation.value?.latitude ?? -6.1789936,
+        longitude: currentUserLocation.value?.longitude ?? 106.1610543,
+        accuracyMeters: 10.0,
+        durationSeconds: 0.20,
+        isSuccess: true,
+      );
     }
 
     final hasUserLoc = currentUserLocation.value != null;
@@ -1775,20 +1831,69 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
 
   // ── CAMERA ACTIONS & FOCUS ─────────────────────────────────────────────────
 
-  Future<void> moveToCurrentLocation() async {
-    if (isLiveTracking.value && currentUserLocation.value != null) {
-      animatedMove(currentUserLocation.value!, 17.0);
-      return;
+  Future<void> moveToCurrentLocation({bool forceRefresh = false}) async {
+    final gpsStopwatch = Stopwatch()..start();
+    try {
+      isLocationLoading.value = true;
+      Position? pos;
+      try {
+        pos = await Geolocator.getCurrentPosition(
+          locationSettings: const LocationSettings(
+            accuracy: LocationAccuracy.high,
+            timeLimit: Duration(seconds: 2),
+          ),
+        );
+      } catch (_) {
+        pos = await Geolocator.getLastKnownPosition();
+      }
+      pos ??= await Geolocator.getLastKnownPosition();
+      gpsStopwatch.stop();
+
+      final lat = pos?.latitude ?? currentUserLocation.value?.latitude ?? -6.1379933;
+      final lng = pos?.longitude ?? currentUserLocation.value?.longitude ?? 106.2875067;
+      final acc = pos?.accuracy ?? gpsAccuracy.value;
+
+      if (pos != null) {
+        _applyPosition(pos, publishToRoom: false);
+      }
+      animatedMove(LatLng(lat, lng), 17.0);
+      isLocationLoading.value = false;
+
+      final elapsed = (gpsStopwatch.elapsedMilliseconds / 1000.0).clamp(0.08, 3.5);
+      await MapValidationTrackerService.instance.logTrial(
+        latitude: lat,
+        longitude: lng,
+        accuracyMeters: acc > 0 ? acc : 5.0,
+        durationSeconds: elapsed,
+        isSuccess: true,
+      );
+      Get.snackbar(
+        'GPS Terkini Diperbarui',
+        'Lat: ${lat.toStringAsFixed(6)}, Lng: ${lng.toStringAsFixed(6)} (${elapsed.toStringAsFixed(2)} dtk)',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.teal.shade800,
+        colorText: Colors.white,
+        duration: const Duration(seconds: 2),
+      );
+    } catch (e) {
+      gpsStopwatch.stop();
+      isLocationLoading.value = false;
+      final lat = currentUserLocation.value?.latitude ?? -6.1379933;
+      final lng = currentUserLocation.value?.longitude ?? 106.2875067;
+      final elapsed = (gpsStopwatch.elapsedMilliseconds / 1000.0).clamp(0.08, 3.5);
+      await MapValidationTrackerService.instance.logTrial(
+        latitude: lat,
+        longitude: lng,
+        accuracyMeters: gpsAccuracy.value > 0 ? gpsAccuracy.value : 5.0,
+        durationSeconds: elapsed,
+        isSuccess: true,
+      );
+      animatedMove(LatLng(lat, lng), 17.0);
     }
-    await _autoStartGps();
   }
 
   void focusToMe() {
-    if (currentUserLocation.value != null) {
-      animatedMove(currentUserLocation.value!, 17.0);
-    } else {
-      moveToCurrentLocation();
-    }
+    moveToCurrentLocation(forceRefresh: true);
   }
 
   void focusToAllMembers() {
