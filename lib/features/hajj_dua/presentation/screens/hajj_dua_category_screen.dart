@@ -166,90 +166,124 @@ class _HajjDuaCategoryScreenState extends State<HajjDuaCategoryScreen> {
             child: Center(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 820),
-                child: ListView(
+                child: CustomScrollView(
                   key: Key('category_screen_${widget.category.stage.name}'),
-                  padding: const EdgeInsets.fromLTRB(
-                    AppSpacing.lg,
-                    AppSpacing.md,
-                    AppSpacing.lg,
-                    AppSpacing.huge,
+                  physics: const AlwaysScrollableScrollPhysics(
+                    parent: BouncingScrollPhysics(),
                   ),
-                  children: [
-                    _CategoryIntroduction(
-                      category: widget.category,
-                      contextualLabel: contextualLabel,
-                    ),
-                    if (_isTawafStage) ...[
-                      const SizedBox(height: AppSpacing.lg),
-                      _TawafCircuitGuide(
-                        selectedCircuit: _selectedCircuit,
-                        onCircuitSelected: (circuit) {
-                          setState(() => _selectedCircuit = circuit);
-                        },
+                  slivers: [
+                    SliverPadding(
+                      padding: const EdgeInsets.fromLTRB(
+                        AppSpacing.lg,
+                        AppSpacing.md,
+                        AppSpacing.lg,
+                        AppSpacing.huge,
                       ),
-                    ],
-                    if (_isSaiStage) ...[
-                      const SizedBox(height: AppSpacing.lg),
-                      _SaiLapGuide(
-                        selectedLap: _selectedCircuit,
-                        onLapSelected: (lap) {
-                          setState(() => _selectedCircuit = lap);
-                        },
-                      ),
-                    ],
-                    if (_isArafahStage) ...[
-                      const SizedBox(height: AppSpacing.lg),
-                      const _ArafahGuidanceCard(),
-                    ],
-                    if (activities.isNotEmpty &&
-                        !_isTawafStage &&
-                        !_isSaiStage) ...[
-                      const SizedBox(height: AppSpacing.lg),
-                      _ActivityFilterChips(
-                        activities: activities,
-                        selectedActivity: _selectedActivity,
-                        onActivitySelected: (act) {
-                          setState(() => _selectedActivity = act);
-                        },
-                      ),
-                    ],
-                    const SizedBox(height: AppSpacing.lg),
-                    if (filteredDuas.isEmpty)
-                      _EmptyCategoryState(category: widget.category)
-                    else ...[
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            context.tr('hajjDuaCount', {
-                              'count': filteredDuas.length,
-                            }),
-                            style: HajjDuaTypography.caption.copyWith(
-                              color: AppColors.textSecondaryColor(context),
+                      sliver: SliverMainAxisGroup(
+                        slivers: [
+                          SliverToBoxAdapter(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                _CategoryIntroduction(
+                                  category: widget.category,
+                                  contextualLabel: contextualLabel,
+                                ),
+                                if (_isTawafStage) ...[
+                                  const SizedBox(height: AppSpacing.lg),
+                                  _TawafCircuitGuide(
+                                    selectedCircuit: _selectedCircuit,
+                                    onCircuitSelected: (circuit) {
+                                      setState(
+                                        () => _selectedCircuit = circuit,
+                                      );
+                                    },
+                                  ),
+                                ],
+                                if (_isSaiStage) ...[
+                                  const SizedBox(height: AppSpacing.lg),
+                                  _SaiLapGuide(
+                                    selectedLap: _selectedCircuit,
+                                    onLapSelected: (lap) {
+                                      setState(() => _selectedCircuit = lap);
+                                    },
+                                  ),
+                                ],
+                                if (_isArafahStage) ...[
+                                  const SizedBox(height: AppSpacing.lg),
+                                  const _ArafahGuidanceCard(),
+                                ],
+                                if (activities.isNotEmpty &&
+                                    !_isTawafStage &&
+                                    !_isSaiStage) ...[
+                                  const SizedBox(height: AppSpacing.lg),
+                                  _ActivityFilterChips(
+                                    activities: activities,
+                                    selectedActivity: _selectedActivity,
+                                    onActivitySelected: (act) {
+                                      setState(() => _selectedActivity = act);
+                                    },
+                                  ),
+                                ],
+                                const SizedBox(height: AppSpacing.lg),
+                                if (filteredDuas.isEmpty)
+                                  _EmptyCategoryState(category: widget.category)
+                                else ...[
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        context.tr('hajjDuaCount', {
+                                          'count': filteredDuas.length,
+                                        }),
+                                        style: HajjDuaTypography.caption
+                                            .copyWith(
+                                              color:
+                                                  AppColors.textSecondaryColor(
+                                                    context,
+                                                  ),
+                                            ),
+                                      ),
+                                      Text(
+                                        'Kementerian Agama RI',
+                                        style: HajjDuaTypography.metadataLabel
+                                            .copyWith(
+                                              color: AppColors.goldPrimary,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: AppSpacing.sm),
+                                ],
+                              ],
                             ),
                           ),
-                          Text(
-                            'Kementerian Agama RI',
-                            style: HajjDuaTypography.metadataLabel.copyWith(
-                              color: AppColors.goldPrimary,
-                              fontWeight: FontWeight.w600,
+                          if (filteredDuas.isNotEmpty)
+                            SliverList.builder(
+                              itemCount: filteredDuas.length,
+                              itemBuilder: (context, index) {
+                                final dua = filteredDuas[index];
+                                return Padding(
+                                  padding: const EdgeInsets.only(
+                                    bottom: AppSpacing.md,
+                                  ),
+                                  child: RepaintBoundary(
+                                    child: DuaCard(
+                                      key: Key('dua_card_${dua.id}'),
+                                      dua: dua,
+                                      initiallyExpanded:
+                                          dua.id ==
+                                          widget.initiallyExpandedDuaId,
+                                    ),
+                                  ),
+                                );
+                              },
                             ),
-                          ),
                         ],
                       ),
-                      const SizedBox(height: AppSpacing.sm),
-                      ...filteredDuas.map(
-                        (dua) => Padding(
-                          padding: const EdgeInsets.only(bottom: AppSpacing.md),
-                          child: DuaCard(
-                            key: Key('dua_card_${dua.id}'),
-                            dua: dua,
-                            initiallyExpanded:
-                                dua.id == widget.initiallyExpandedDuaId,
-                          ),
-                        ),
-                      ),
-                    ],
+                    ),
                   ],
                 ),
               ),

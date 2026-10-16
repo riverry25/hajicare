@@ -3,10 +3,10 @@ import 'dart:math' as math;
 import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/locales/app_localizations.dart';
-import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_breakpoints.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/theme/app_typography.dart';
+import '../../../../core/theme/theme_context.dart';
 import '../../../../core/utils/distance_formatter.dart';
 import '../models/map_poi.dart';
 
@@ -56,6 +56,7 @@ class LocationDetailSheet extends StatefulWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      constraints: const BoxConstraints(maxWidth: AppBreakpoints.maxSheetWidth),
       backgroundColor: Colors.transparent,
       builder: (context) => LocationDetailSheet(
         poi: poi,
@@ -239,585 +240,541 @@ class _LocationDetailSheetState extends State<LocationDetailSheet>
         ? DistanceFormatter.format(distanceMeters)
         : context.tr('maps.enableGpsForDistance');
 
-    final isDark = AppColors.isDark(context);
+    final hc = context.hc;
+    final isDark = hc.isDark;
     final opacity = (1.0 - (_dragOffset / 280.0)).clamp(0.0, 1.0);
 
-    return Opacity(
-      opacity: opacity,
-      child: Transform.translate(
-        offset: Offset(0, _dragOffset),
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onVerticalDragUpdate: _onVerticalDragUpdate,
-          onVerticalDragEnd: _onVerticalDragEnd,
-          onVerticalDragCancel: _onVerticalDragCancel,
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(AppRadius.xl),
-            child: Container(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.cardPadding,
-                12,
-                AppSpacing.cardPadding,
-                AppSpacing.lg,
-              ),
-              decoration: BoxDecoration(
-                color: isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
+    return Align(
+      alignment: Alignment.bottomCenter,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(
+          maxWidth: AppBreakpoints.maxSheetWidth,
+        ),
+        child: Opacity(
+          opacity: opacity,
+          child: Transform.translate(
+            offset: Offset(0, _dragOffset),
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onVerticalDragUpdate: _onVerticalDragUpdate,
+              onVerticalDragEnd: _onVerticalDragEnd,
+              onVerticalDragCancel: _onVerticalDragCancel,
+              child: ClipRRect(
                 borderRadius: BorderRadius.circular(AppRadius.xl),
-                border: Border.all(
-                  color: isDark
-                      ? Colors.white.withValues(alpha: 0.08)
-                      : AppColors.espressoDark.withValues(alpha: 0.06),
-                  width: 1,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.08),
-                    blurRadius: 20,
-                    spreadRadius: 0,
-                    offset: const Offset(0, 6),
+                child: Container(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.cardPadding,
+                    12,
+                    AppSpacing.cardPadding,
+                    AppSpacing.lg,
                   ),
-                ],
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Drag Handle
-                  Center(
-                    child: GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onTap: () => _dismissWithAnimation(),
-                      onVerticalDragUpdate: _onVerticalDragUpdate,
-                      onVerticalDragEnd: _onVerticalDragEnd,
-                      onVerticalDragCancel: _onVerticalDragCancel,
-                      child: Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        color: Colors.transparent,
-                        child: Center(
-                          child: Container(
-                            width: 48,
-                            height: 5,
-                            margin: const EdgeInsets.only(bottom: 8),
-                            decoration: BoxDecoration(
-                              color: isDark
-                                  ? Colors.white.withValues(alpha: 0.25)
-                                  : AppColors.cardBorderColor(context),
-                              borderRadius: BorderRadius.circular(
-                                AppRadius.pill,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  // ── CATEGORY BADGE & STATUS ROW ──
-                  Wrap(
-                    alignment: WrapAlignment.spaceBetween,
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    spacing: 8,
-                    runSpacing: 6,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: poi.color.withValues(
-                            alpha: isDark ? 0.22 : 0.12,
-                          ),
-                          borderRadius: BorderRadius.circular(AppRadius.pill),
-                          border: Border.all(
-                            color: poi.color.withValues(
-                              alpha: isDark ? 0.5 : 0.35,
-                            ),
-                            width: 1,
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(poi.icon, size: 13, color: poi.color),
-                            const SizedBox(width: 5),
-                            Flexible(
-                              child: Text(
-                                poi.category.localizedLabel(context),
-                                style: AppTypography.captionSmall.copyWith(
-                                  color: poi.color,
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 10.5,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 9,
-                          vertical: 3.5,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isDark
-                              ? AppColors.darkSurfaceContainer
-                              : AppColors.canvasCream,
-                          borderRadius: BorderRadius.circular(AppRadius.pill),
-                          border: Border.all(
-                            color: isDark
-                                ? Colors.white.withValues(alpha: 0.1)
-                                : AppColors.espressoDark.withValues(alpha: 0.1),
-                            width: 1,
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Container(
-                              width: 6,
-                              height: 6,
-                              decoration: BoxDecoration(
-                                color: poi.openingHours == '24/7'
-                                    ? AppColors.statusSafe
-                                    : AppColors.goldPrimary,
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                            const SizedBox(width: 5),
-                            Flexible(
-                              child: Text(
-                                poi.localizedStatusLabel(context),
-                                style: TextStyle(
-                                  color: isDark
-                                      ? Colors.white70
-                                      : AppColors.espressoDark,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
+                  decoration: BoxDecoration(
+                    color: hc.surface,
+                    borderRadius: BorderRadius.circular(AppRadius.xl),
+                    border: Border.all(color: hc.border, width: 1),
+                    boxShadow: [
+                      BoxShadow(
+                        color: hc.shadow,
+                        blurRadius: 20,
+                        spreadRadius: 0,
+                        offset: const Offset(0, 6),
                       ),
                     ],
                   ),
-
-                  const SizedBox(height: 12),
-
-                  Row(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Category Icon Box
-                      Container(
-                        width: 54,
-                        height: 54,
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [
-                              Color.lerp(poi.color, Colors.white, 0.15)!,
-                              poi.color,
-                            ],
-                          ),
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: [
-                            BoxShadow(
-                              color: poi.color.withValues(alpha: 0.35),
-                              blurRadius: 10,
-                              offset: const Offset(0, 3),
-                            ),
-                          ],
-                        ),
-                        child: Center(
-                          child: Icon(poi.icon, color: Colors.white, size: 26),
-                        ),
-                      ),
-                      const SizedBox(width: AppSpacing.md),
-
-                      // Title, distance, subtitle
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              _getDisplayName(context),
-                              style: AppTypography.titleMedium.copyWith(
-                                color: AppColors.textHeadingColor(context),
-                                fontWeight: FontWeight.w800,
-                                fontSize: 16,
+                      // Drag Handle
+                      Center(
+                        child: GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onTap: () => _dismissWithAnimation(),
+                          onVerticalDragUpdate: _onVerticalDragUpdate,
+                          onVerticalDragEnd: _onVerticalDragEnd,
+                          onVerticalDragCancel: _onVerticalDragCancel,
+                          child: Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            color: Colors.transparent,
+                            child: Center(
+                              child: Container(
+                                width: 48,
+                                height: 5,
+                                margin: const EdgeInsets.only(bottom: 8),
+                                decoration: BoxDecoration(
+                                  color: hc.borderStrong,
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.pill,
+                                  ),
+                                ),
                               ),
                             ),
-                            const SizedBox(height: 4),
-                            // Walk time estimation & distance
-                            Row(
-                              children: [
-                                const Icon(
-                                  Icons.directions_walk_rounded,
-                                  size: 14,
-                                  color: AppColors.goldPrimary,
+                          ),
+                        ),
+                      ),
+
+                      // ── CATEGORY BADGE & STATUS ROW ──
+                      Wrap(
+                        alignment: WrapAlignment.spaceBetween,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: 8,
+                        runSpacing: 6,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: poi.color.withValues(
+                                alpha: isDark ? 0.22 : 0.12,
+                              ),
+                              borderRadius: BorderRadius.circular(
+                                AppRadius.pill,
+                              ),
+                              border: Border.all(
+                                color: poi.color.withValues(
+                                  alpha: isDark ? 0.5 : 0.35,
                                 ),
-                                const SizedBox(width: 4),
+                                width: 1,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(poi.icon, size: 13, color: poi.color),
+                                const SizedBox(width: 5),
                                 Flexible(
                                   child: Text(
-                                    distanceMeters != null
-                                        ? context.tr('maps.walkingTimeFormat', {
-                                            'min': math
-                                                .max(
-                                                  1,
-                                                  (distanceMeters! / 70).ceil(),
-                                                )
-                                                .toString(),
-                                            'dist': formattedDistance,
-                                          })
-                                        : formattedDistance,
-                                    style: AppTypography.captionSmall.copyWith(
-                                      color: isDark
-                                          ? AppColors.goldPrimary
-                                          : AppColors.espressoDark,
+                                    poi.category.localizedLabel(context),
+                                    style: context.text.labelSmall.copyWith(
+                                      color: poi.color,
                                       fontWeight: FontWeight.w800,
+                                      fontSize: 10.5,
                                     ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
                               ],
                             ),
-                            if (poi.subtitle != null) ...[
-                              const SizedBox(height: 4),
-                              Text(
-                                poi.subtitle!,
-                                style: AppTypography.captionSmall.copyWith(
-                                  color: isDark
-                                      ? AppColors.darkTextBody
-                                      : AppColors.textMuted,
-                                  fontWeight: FontWeight.w500,
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 9,
+                              vertical: 3.5,
+                            ),
+                            decoration: BoxDecoration(
+                              color: hc.surfaceSubtle,
+                              borderRadius: BorderRadius.circular(
+                                AppRadius.pill,
+                              ),
+                              border: Border.all(color: hc.border, width: 1),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  width: 6,
+                                  height: 6,
+                                  decoration: BoxDecoration(
+                                    color: poi.openingHours == '24/7'
+                                        ? hc.success
+                                        : hc.warning,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                                const SizedBox(width: 5),
+                                Flexible(
+                                  child: Text(
+                                    poi.localizedStatusLabel(context),
+                                    style: context.text.labelSmall.copyWith(
+                                      color: hc.textSecondary,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 12),
+
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Category Icon Box
+                          Container(
+                            width: 54,
+                            height: 54,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  Color.lerp(poi.color, Colors.white, 0.15)!,
+                                  poi.color,
+                                ],
+                              ),
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: poi.color.withValues(alpha: 0.35),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 3),
+                                ),
+                              ],
+                            ),
+                            child: Center(
+                              child: Icon(
+                                poi.icon,
+                                color: Colors.white,
+                                size: 26,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: AppSpacing.md),
+
+                          // Title, distance, subtitle
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  _getDisplayName(context),
+                                  style: context.text.titleMedium.copyWith(
+                                    color: hc.textPrimary,
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                // Walk time estimation & distance
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.directions_walk_rounded,
+                                      size: 14,
+                                      color: hc.accent,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Flexible(
+                                      child: Text(
+                                        distanceMeters != null
+                                            ? context.tr(
+                                                'maps.walkingTimeFormat',
+                                                {
+                                                  'min': math
+                                                      .max(
+                                                        1,
+                                                        (distanceMeters! / 70)
+                                                            .ceil(),
+                                                      )
+                                                      .toString(),
+                                                  'dist': formattedDistance,
+                                                },
+                                              )
+                                            : formattedDistance,
+                                        style: context.text.bodySmall.copyWith(
+                                          color: hc.accentText,
+                                          fontWeight: FontWeight.w800,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                if (poi.subtitle != null) ...[
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    poi.subtitle!,
+                                    style: context.text.bodySmall.copyWith(
+                                      color: hc.textSecondary,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+
+                          // Close button
+                          if (onClose != null)
+                            IconButton(
+                              icon: const Icon(Icons.close_rounded, size: 20),
+                              color: hc.textSecondary,
+                              splashRadius: 20,
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                              onPressed: () => _dismissWithAnimation(),
+                            ),
+                        ],
+                      ),
+
+                      // Tags chips (e.g. Ramah Lansia, Air Dingin, Bebas Biaya)
+                      if (poi.tags.isNotEmpty) ...[
+                        const SizedBox(height: 12),
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 6,
+                          children: poi.tags.map((tag) {
+                            return Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 3,
+                              ),
+                              decoration: BoxDecoration(
+                                color: hc.surfaceSubtle,
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.sm,
+                                ),
+                                border: Border.all(color: hc.border, width: 1),
+                              ),
+                              child: Text(
+                                _localizeTag(tag, context),
+                                style: context.text.labelSmall.copyWith(
+                                  color: hc.textSecondary,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
                                 ),
                               ),
-                            ],
+                            );
+                          }).toList(),
+                        ),
+                      ],
+
+                      if (poi.phone != null || poi.website != null) ...[
+                        const SizedBox(height: 10),
+                        Wrap(
+                          spacing: 14,
+                          runSpacing: 6,
+                          children: [
+                            if (poi.phone != null)
+                              _buildMetadata(
+                                Icons.phone_rounded,
+                                poi.phone!,
+                                context,
+                              ),
+                            if (poi.website != null)
+                              _buildMetadata(
+                                Icons.language_rounded,
+                                context.tr('maps.websiteAvailable'),
+                                context,
+                              ),
                           ],
                         ),
-                      ),
-
-                      // Close button
-                      if (onClose != null)
-                        IconButton(
-                          icon: const Icon(Icons.close_rounded, size: 20),
-                          color: isDark
-                              ? AppColors.darkTextBody
-                              : AppColors.tanMedium,
-                          splashRadius: 20,
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(),
-                          onPressed: () => _dismissWithAnimation(),
-                        ),
-                    ],
-                  ),
-
-                  // Tags chips (e.g. Ramah Lansia, Air Dingin, Bebas Biaya)
-                  if (poi.tags.isNotEmpty) ...[
-                    const SizedBox(height: 12),
-                    Wrap(
-                      spacing: 6,
-                      runSpacing: 6,
-                      children: poi.tags.map((tag) {
-                        return Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 3,
-                          ),
-                          decoration: BoxDecoration(
-                            color: isDark
-                                ? AppColors.darkSurfaceContainer
-                                : AppColors.canvasCream,
-                            borderRadius: BorderRadius.circular(AppRadius.sm),
-                            border: Border.all(
-                              color: isDark
-                                  ? Colors.white.withValues(alpha: 0.08)
-                                  : AppColors.espressoDark.withValues(
-                                      alpha: 0.08,
-                                    ),
-                              width: 1,
-                            ),
-                          ),
-                          child: Text(
-                            _localizeTag(tag, context),
-                            style: TextStyle(
-                              color: isDark
-                                  ? Colors.white70
-                                  : AppColors.textBody,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  ],
-
-                  if (poi.phone != null || poi.website != null) ...[
-                    const SizedBox(height: 10),
-                    Wrap(
-                      spacing: 14,
-                      runSpacing: 6,
-                      children: [
-                        if (poi.phone != null)
-                          _buildMetadata(
-                            Icons.phone_rounded,
-                            poi.phone!,
-                            isDark,
-                          ),
-                        if (poi.website != null)
-                          _buildMetadata(
-                            Icons.language_rounded,
-                            context.tr('maps.websiteAvailable'),
-                            isDark,
-                          ),
                       ],
-                    ),
-                  ],
 
-                  if (widget.routeError != null) ...[
-                    const SizedBox(height: 12),
-                    _buildRouteMessage(
-                      icon: Icons.info_outline_rounded,
-                      text: widget.routeError!,
-                      color: AppColors.sosEmergency,
-                      isDark: isDark,
-                    ),
-                    const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            onPressed:
-                                widget.onCenterOnDestination ??
-                                () => _dismissWithAnimation(),
-                            icon: const Icon(Icons.map_outlined, size: 16),
-                            label: Text(
-                              context.tr('maps.viewOnMap'),
-                              style: const TextStyle(
-                                fontSize: 11.5,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            style: OutlinedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 6,
-                                vertical: 10,
-                              ),
-                              foregroundColor: isDark
-                                  ? AppColors.goldLight
-                                  : AppColors.espressoDark,
-                              side: BorderSide(
-                                color: isDark
-                                    ? Colors.white.withValues(alpha: 0.18)
-                                    : AppColors.espressoDark.withValues(
-                                        alpha: 0.15,
-                                      ),
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(
-                                  AppRadius.md,
-                                ),
-                              ),
-                            ),
-                          ),
+                      if (widget.routeError != null) ...[
+                        const SizedBox(height: 12),
+                        _buildRouteMessage(
+                          context: context,
+                          icon: Icons.info_outline_rounded,
+                          text: widget.routeError!,
+                          color: hc.danger,
                         ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            onPressed: () => _openGoogleMaps(
-                              userCoord: widget.userCoordinate,
-                              destCoord: poi.coordinate,
-                            ),
-                            icon: const Icon(
-                              Icons.open_in_new_rounded,
-                              size: 16,
-                            ),
-                            label: Text(
-                              context.tr('maps.openInGoogleMaps'),
-                              style: const TextStyle(
-                                fontSize: 11.5,
-                                fontWeight: FontWeight.w700,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            style: OutlinedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 6,
-                                vertical: 10,
-                              ),
-                              foregroundColor: isDark
-                                  ? AppColors.goldLight
-                                  : AppColors.espressoDark,
-                              side: BorderSide(
-                                color: isDark
-                                    ? Colors.white.withValues(alpha: 0.18)
-                                    : AppColors.espressoDark.withValues(
-                                        alpha: 0.15,
-                                      ),
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(
-                                  AppRadius.md,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ] else if (widget.routeDistanceMeters != null) ...[
-                    const SizedBox(height: 12),
-                    _buildRouteMessage(
-                      icon: Icons.directions_walk_rounded,
-                      text:
-                          '${DistanceFormatter.format(widget.routeDistanceMeters)}'
-                          '${widget.routeDurationSeconds == null ? '' : ' · ${context.tr("maps.minutesDuration", {"min": (widget.routeDurationSeconds! / 60).ceil().toString()})}'}',
-                      color: AppColors.statusSafe,
-                      isDark: isDark,
-                    ),
-                  ],
-
-                  const SizedBox(height: 20),
-
-                  // Actions Row: Rute (Primary) & Bagikan (Secondary)
-                  Row(
-                    children: [
-                      Expanded(
-                        flex: 3,
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(minHeight: 48),
-                          child: ElevatedButton.icon(
-                            onPressed: widget.isRouteLoading ? null : onRoute,
-                            icon: widget.isRouteLoading
-                                ? SizedBox(
-                                    width: 18,
-                                    height: 18,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      color: isDark
-                                          ? AppColors.espressoDark
-                                          : AppColors.goldPrimary,
-                                    ),
-                                  )
-                                : Icon(
-                                    Icons.directions_walk_rounded,
-                                    size: 20,
-                                    color: isDark
-                                        ? AppColors.espressoDark
-                                        : AppColors.goldPrimary,
+                        const SizedBox(height: 10),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed:
+                                    widget.onCenterOnDestination ??
+                                    () => _dismissWithAnimation(),
+                                icon: const Icon(Icons.map_outlined, size: 16),
+                                label: Text(
+                                  context.tr('maps.viewOnMap'),
+                                  style: context.text.labelSmall.copyWith(
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w700,
                                   ),
-                            label: FittedBox(
-                              fit: BoxFit.scaleDown,
-                              child: Text(
-                                widget.isRouteLoading
-                                    ? context.tr('maps.findingRoute')
-                                    : (widget.routeDistanceMeters != null
-                                          ? context.tr('maps.startNavigation')
-                                          : context.tr('maps.routeAction')),
-                                style: AppTypography.labelLarge.copyWith(
-                                  color: (widget.routeDistanceMeters != null)
-                                      ? Colors.white
-                                      : (isDark
-                                            ? AppColors.espressoDark
-                                            : Colors.white),
-                                  fontWeight: FontWeight.w800,
                                 ),
-                              ),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor:
-                                  widget.routeDistanceMeters != null
-                                  ? const Color(0xFF16A34A)
-                                  : (isDark
-                                        ? AppColors.goldPrimary
-                                        : AppColors.espressoDark),
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 12,
-                              ),
-                              elevation: 4,
-                              shadowColor:
-                                  (widget.routeDistanceMeters != null
-                                          ? const Color(0xFF16A34A)
-                                          : AppColors.espressoDark)
-                                      .withValues(alpha: 0.35),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(
-                                  AppRadius.pill,
-                                ),
-                                side: BorderSide(
-                                  color: widget.routeDistanceMeters != null
-                                      ? const Color(0xFF22C55E)
-                                      : (isDark
-                                            ? AppColors.goldPrimary
-                                            : AppColors.goldPrimary.withValues(
-                                                alpha: 0.5,
-                                              )),
-                                  width: 1.2,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: AppSpacing.sm),
-                      Expanded(
-                        flex: 2,
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(minHeight: 48),
-                          child: OutlinedButton.icon(
-                            onPressed: onShare,
-                            icon: Icon(
-                              Icons.share_outlined,
-                              size: 18,
-                              color: isDark
-                                  ? AppColors.darkTextHeading
-                                  : AppColors.espressoDark,
-                            ),
-                            label: FittedBox(
-                              fit: BoxFit.scaleDown,
-                              child: Text(
-                                context.tr('maps.shareLocation'),
-                                style: AppTypography.labelLarge.copyWith(
-                                  color: isDark
-                                      ? AppColors.darkTextHeading
-                                      : AppColors.espressoDark,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ),
-                            style: OutlinedButton.styleFrom(
-                              backgroundColor: isDark
-                                  ? AppColors.darkSurfaceContainer
-                                  : AppColors.canvasCream.withValues(
-                                      alpha: 0.35,
+                                style: OutlinedButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 10,
+                                  ),
+                                  foregroundColor: hc.textPrimary,
+                                  side: BorderSide(color: hc.border),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(
+                                      AppRadius.md,
                                     ),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 12,
+                                  ),
+                                ),
                               ),
-                              side: BorderSide(
-                                color: AppColors.cardBorderColor(context),
-                                width: 1.2,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: () => _openGoogleMaps(
+                                  userCoord: widget.userCoordinate,
+                                  destCoord: poi.coordinate,
+                                ),
+                                icon: const Icon(
+                                  Icons.open_in_new_rounded,
+                                  size: 16,
+                                ),
+                                label: Text(
+                                  context.tr('maps.openInGoogleMaps'),
+                                  style: context.text.labelSmall.copyWith(
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                style: OutlinedButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 10,
+                                  ),
+                                  foregroundColor: hc.textPrimary,
+                                  side: BorderSide(color: hc.border),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(
+                                      AppRadius.md,
+                                    ),
+                                  ),
+                                ),
                               ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(
-                                  AppRadius.pill,
+                            ),
+                          ],
+                        ),
+                      ] else if (widget.routeDistanceMeters != null) ...[
+                        const SizedBox(height: 12),
+                        _buildRouteMessage(
+                          context: context,
+                          icon: Icons.directions_walk_rounded,
+                          text:
+                              '${DistanceFormatter.format(widget.routeDistanceMeters)}'
+                              '${widget.routeDurationSeconds == null ? '' : ' · ${context.tr("maps.minutesDuration", {"min": (widget.routeDurationSeconds! / 60).ceil().toString()})}'}',
+                          color: hc.success,
+                        ),
+                      ],
+
+                      const SizedBox(height: 20),
+
+                      // Actions Row: Rute (Primary) & Bagikan (Secondary)
+                      Row(
+                        children: [
+                          Expanded(
+                            flex: 3,
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(minHeight: 48),
+                              child: ElevatedButton.icon(
+                                onPressed: widget.isRouteLoading
+                                    ? null
+                                    : onRoute,
+                                icon: widget.isRouteLoading
+                                    ? SizedBox(
+                                        width: 18,
+                                        height: 18,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: hc.onPrimary,
+                                        ),
+                                      )
+                                    : Icon(
+                                        Icons.directions_walk_rounded,
+                                        size: 20,
+                                        color: hc.onPrimary,
+                                      ),
+                                label: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Text(
+                                    widget.isRouteLoading
+                                        ? context.tr('maps.findingRoute')
+                                        : (widget.routeDistanceMeters != null
+                                              ? context.tr(
+                                                  'maps.startNavigation',
+                                                )
+                                              : context.tr('maps.routeAction')),
+                                    style: context.text.labelLarge.copyWith(
+                                      color: hc.onPrimary,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor:
+                                      widget.routeDistanceMeters != null
+                                      ? hc.success
+                                      : hc.primary,
+                                  foregroundColor: hc.onPrimary,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 12,
+                                  ),
+                                  elevation: 4,
+                                  shadowColor:
+                                      (widget.routeDistanceMeters != null
+                                              ? hc.success
+                                              : hc.primary)
+                                          .withValues(alpha: 0.35),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(
+                                      AppRadius.pill,
+                                    ),
+                                    side: BorderSide(
+                                      color: widget.routeDistanceMeters != null
+                                          ? hc.success
+                                          : hc.accent,
+                                      width: 1.2,
+                                    ),
+                                  ),
                                 ),
                               ),
                             ),
                           ),
-                        ),
+                          const SizedBox(width: AppSpacing.sm),
+                          Expanded(
+                            flex: 2,
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(minHeight: 48),
+                              child: OutlinedButton.icon(
+                                onPressed: onShare,
+                                icon: Icon(
+                                  Icons.share_outlined,
+                                  size: 18,
+                                  color: hc.textPrimary,
+                                ),
+                                label: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Text(
+                                    context.tr('maps.shareLocation'),
+                                    style: context.text.labelLarge.copyWith(
+                                      color: hc.textPrimary,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ),
+                                style: OutlinedButton.styleFrom(
+                                  backgroundColor: hc.surfaceSubtle,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 12,
+                                  ),
+                                  side: BorderSide(
+                                    color: hc.border,
+                                    width: 1.2,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(
+                                      AppRadius.pill,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                ],
+                ),
               ),
             ),
           ),
@@ -826,16 +783,17 @@ class _LocationDetailSheetState extends State<LocationDetailSheet>
     );
   }
 
-  Widget _buildMetadata(IconData icon, String text, bool isDark) {
+  Widget _buildMetadata(IconData icon, String text, BuildContext context) {
+    final hc = context.hc;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 14, color: AppColors.goldPrimary),
+        Icon(icon, size: 14, color: hc.accent),
         const SizedBox(width: 5),
         Text(
           text,
-          style: AppTypography.captionSmall.copyWith(
-            color: isDark ? AppColors.darkTextBody : AppColors.textMuted,
+          style: context.text.captionSmall.copyWith(
+            color: hc.textSecondary,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -844,16 +802,17 @@ class _LocationDetailSheetState extends State<LocationDetailSheet>
   }
 
   Widget _buildRouteMessage({
+    required BuildContext context,
     required IconData icon,
     required String text,
     required Color color,
-    required bool isDark,
   }) {
+    final hc = context.hc;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: isDark ? 0.16 : 0.08),
+        color: color.withValues(alpha: hc.isDark ? 0.16 : 0.08),
         borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
@@ -864,8 +823,8 @@ class _LocationDetailSheetState extends State<LocationDetailSheet>
           Expanded(
             child: Text(
               text,
-              style: TextStyle(
-                color: isDark ? Colors.white : AppColors.espressoDark,
+              style: context.text.labelSmall.copyWith(
+                color: hc.textPrimary,
                 fontSize: 11.5,
                 fontWeight: FontWeight.w700,
               ),

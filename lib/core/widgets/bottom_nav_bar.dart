@@ -7,10 +7,10 @@ import '../../features/translator/widgets/translator_sheet.dart';
 import '../locales/app_localizations.dart';
 import '../routes/app_routes.dart';
 import '../state/hajicare_controller.dart';
-import '../theme/app_colors.dart';
+import '../theme/app_breakpoints.dart';
 import '../theme/app_radius.dart';
 import '../theme/app_spacing.dart';
-import '../theme/app_typography.dart';
+import '../theme/theme_context.dart';
 
 class HajiCareBottomNavBar extends StatelessWidget {
   final int currentIndex;
@@ -78,114 +78,108 @@ class HajiCareBottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = AppColors.isDark(context);
+    final hc = context.hc;
 
-    return Material(
-      color: Colors.transparent,
-      child: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.md,
-            0,
-            AppSpacing.md,
-            AppSpacing.sm,
-          ),
-          child: Stack(
-            alignment: Alignment.topCenter,
-            clipBehavior: Clip.none,
-            children: [
-              // Main Navigation Dock Card with Scooped Notched Cradle
-              Padding(
-                padding: const EdgeInsets.only(top: 16),
-                child: CustomPaint(
-                  painter: _ScoopedNavBarPainter(
-                    backgroundColor: isDark
-                        ? AppColors.darkSurface
-                        : AppColors.surfaceWhite,
-                    borderColor: isDark
-                        ? Colors.white.withValues(alpha: 0.08)
-                        : AppColors.espressoDark.withValues(alpha: 0.06),
-                    shadowColor: Colors.black.withValues(
-                      alpha: isDark ? 0.35 : 0.08,
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.s16,
+          0,
+          AppSpacing.s16,
+          AppSpacing.s8,
+        ),
+        child: Align(
+          alignment: Alignment.bottomCenter,
+          heightFactor: 1.0,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(
+              maxWidth: AppBreakpoints.maxNavDockWidth,
+            ),
+            child: Stack(
+              alignment: Alignment.topCenter,
+              clipBehavior: Clip.none,
+              children: [
+                // Main Navigation Dock Card with Scooped Notched Cradle
+                Padding(
+                  padding: const EdgeInsets.only(top: 16),
+                  child: CustomPaint(
+                    painter: _ScoopedNavBarPainter(
+                      backgroundColor: hc.surface,
+                      borderColor: hc.border,
+                      shadowColor: hc.shadow,
+                      cornerRadius: 30.0,
+                      buttonRadius: 30.0,
+                      buttonCenterY: 10.0,
+                      notchMargin: 10.0,
+                      shoulderWidth: 20.0,
                     ),
-                    cornerRadius: 30.0,
-                    buttonRadius: 30.0,
-                    buttonCenterY: 10.0,
-                    notchMargin: 10.0,
-                    shoulderWidth: 20.0,
-                  ),
-                  child: Container(
-                    constraints: const BoxConstraints(minHeight: 64),
-                    padding: const EdgeInsets.fromLTRB(4, 8, 4, 8),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: [
-                        // Tab 0: Beranda (Home)
-                        Expanded(
-                          child: _buildNavItem(
-                            context: context,
-                            index: 0,
-                            icon: Icons.home_rounded,
-                            label: context.tr('navHome'),
+                    child: Container(
+                      constraints: const BoxConstraints(minHeight: 64),
+                      padding: const EdgeInsets.fromLTRB(4, 8, 4, 8),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          // Tab 0: Beranda (Home)
+                          Expanded(
+                            child: _buildNavItem(
+                              context: context,
+                              index: 0,
+                              icon: Icons.home_rounded,
+                              label: context.tr('navHome'),
+                            ),
                           ),
-                        ),
 
-                        // Tab 1: Peta (Map)
-                        Expanded(
-                          child: _buildNavItem(
-                            context: context,
-                            index: 1,
-                            icon: Icons.near_me_rounded,
-                            label: context.tr('navMap'),
+                          // Tab 1: Peta (Map)
+                          Expanded(
+                            child: _buildNavItem(
+                              context: context,
+                              index: 1,
+                              icon: Icons.near_me_rounded,
+                              label: context.tr('navMap'),
+                            ),
                           ),
-                        ),
 
-                        // Center Slot: Reserved generous gap for wide scooped cradle and mic button
-                        const SizedBox(width: 96),
+                          // Center Slot: Reserved generous gap for wide scooped cradle and mic button
+                          const SizedBox(width: 96),
 
-                        // Tab 2: Jadwal Salat (Prayer)
-                        Expanded(
-                          child: _buildNavItem(
-                            context: context,
-                            index: 2,
-                            icon: Icons.schedule_rounded,
-                            label: context.tr('navPrayer'),
+                          // Tab 2: Jadwal Salat (Prayer)
+                          Expanded(
+                            child: _buildNavItem(
+                              context: context,
+                              index: 2,
+                              icon: Icons.schedule_rounded,
+                              label: context.tr('navPrayer'),
+                            ),
                           ),
-                        ),
 
-                        // Tab 3: Profil (Profile)
-                        Expanded(
-                          child: _buildNavItem(
-                            context: context,
-                            index: 3,
-                            icon: Icons.person_rounded,
-                            label: context.tr('navProfile'),
+                          // Tab 3: Profil (Profile)
+                          Expanded(
+                            child: _buildNavItem(
+                              context: context,
+                              index: 3,
+                              icon: Icons.person_rounded,
+                              label: context.tr('navProfile'),
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ),
 
-              // Elevated Center Mic / Voice Translator Button nestled in the Scoop
-              Positioned(
-                top: -6,
-                child: _buildCenterMicButton(context, isDark),
-              ),
-            ],
+                // Elevated Center Mic / Voice Translator Button nestled in the Scoop
+                Positioned(top: -6, child: _buildCenterMicButton(context)),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildCenterMicButton(BuildContext context, bool isDark) {
-    final surfaceColor = isDark
-        ? AppColors.darkSurfaceContainerHighest
-        : AppColors.surfaceWhite;
-    final iconColor = isDark ? AppColors.goldLight : AppColors.espressoDark;
+  Widget _buildCenterMicButton(BuildContext context) {
+    final hc = context.hc;
 
     return Semantics(
       button: true,
@@ -197,17 +191,11 @@ class HajiCareBottomNavBar extends StatelessWidget {
           height: 65,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: surfaceColor,
-            border: Border.all(
-              color: isDark
-                  ? AppColors.goldLight.withValues(alpha: 0.35)
-                  : AppColors.goldLight.withValues(alpha: 0.5),
-              width: 1.5,
-            ),
+            color: hc.surface,
+            border: Border.all(color: hc.accent, width: 1.5),
             boxShadow: [
               BoxShadow(
-                color: (isDark ? Colors.black : AppColors.espressoDark)
-                    .withValues(alpha: isDark ? 0.35 : 0.12),
+                color: hc.shadow,
                 blurRadius: 10,
                 spreadRadius: 0,
                 offset: const Offset(0, 3),
@@ -224,7 +212,7 @@ class HajiCareBottomNavBar extends StatelessWidget {
               },
               customBorder: const CircleBorder(),
               child: Center(
-                child: Icon(Icons.mic_rounded, size: 28, color: iconColor),
+                child: Icon(Icons.mic_rounded, size: 28, color: hc.primary),
               ),
             ),
           ),
@@ -239,16 +227,12 @@ class HajiCareBottomNavBar extends StatelessWidget {
     required IconData icon,
     required String label,
   }) {
+    final hc = context.hc;
+    final textTheme = context.text;
     final isSelected = currentIndex == index;
-    final isDark = AppColors.isDark(context);
 
-    final selectedColor = isDark
-        ? Theme.of(context).colorScheme.primary
-        : AppColors.espressoDark;
-
-    final unselectedColor = isDark
-        ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.55)
-        : AppColors.textBody.withValues(alpha: 0.65);
+    final selectedColor = hc.primary;
+    final unselectedColor = hc.textTertiary;
 
     return Semantics(
       button: true,
@@ -277,11 +261,7 @@ class HajiCareBottomNavBar extends StatelessWidget {
                     height: 30,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: isSelected
-                          ? (isDark
-                                ? selectedColor.withValues(alpha: 0.16)
-                                : AppColors.canvasCream)
-                          : Colors.transparent,
+                      color: isSelected ? hc.surfaceSand : Colors.transparent,
                       borderRadius: BorderRadius.circular(AppRadius.md),
                     ),
                     child: AnimatedScale(
@@ -304,7 +284,7 @@ class HajiCareBottomNavBar extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       textAlign: TextAlign.center,
-                      style: AppTypography.captionSmall.copyWith(
+                      style: textTheme.labelSmall.copyWith(
                         fontSize: 10.5,
                         color: isSelected ? selectedColor : unselectedColor,
                         fontWeight: isSelected

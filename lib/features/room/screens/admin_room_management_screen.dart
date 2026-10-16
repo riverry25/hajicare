@@ -4,10 +4,10 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/services/app_alert_service.dart';
-import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/theme_context.dart';
+import '../../../core/theme/app_breakpoints.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
-import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/hajicare_header.dart';
 import '../controllers/admin_room_controller.dart';
 import '../models/room_model.dart';
@@ -97,14 +97,12 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = AppColors.isDark(context);
-    final scaffoldBg = isDark ? AppColors.darkScaffold : AppColors.canvasCream;
-    final cardBg = isDark ? AppColors.darkSurface : AppColors.surfaceWhite;
-    final headingColor = isDark
-        ? AppColors.darkTextHeading
-        : AppColors.espressoDark;
-    final bodyColor = isDark ? AppColors.darkTextBody : AppColors.textBody;
-    final primaryColor = isDark ? AppColors.darkPrimary : AppColors.primaryGold;
+    final isDark = context.isDarkTheme;
+    final scaffoldBg = context.hc.canvas;
+    final cardBg = context.hc.surface;
+    final headingColor = context.hc.textPrimary;
+    final bodyColor = context.hc.textSecondary;
+    final primaryColor = context.hc.brand;
 
     return Scaffold(
       backgroundColor: scaffoldBg,
@@ -136,7 +134,7 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
           _showCreateRoomSheet(context, controller);
         },
         backgroundColor: primaryColor,
-        foregroundColor: isDark ? AppColors.darkOnPrimary : Colors.white,
+        foregroundColor: context.hc.onPrimary,
         elevation: 3,
         icon: const Icon(Icons.add_rounded, size: 22),
         label: Text(
@@ -153,146 +151,151 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
           controller.subscribeToAllStreams();
           await Future.delayed(const Duration(milliseconds: 600));
         },
-        child: CustomScrollView(
-          physics: const AlwaysScrollableScrollPhysics(
-            parent: BouncingScrollPhysics(),
-          ),
-          slivers: [
-            // ── 1. KPI Overview Summary Card ─────────────────────────────────
-            SliverToBoxAdapter(
-              child: Padding(
+        child: ResponsiveCenter(
+          maxWidth: AppBreakpoints.maxTabletContentWidth,
+          child: CustomScrollView(
+            physics: const AlwaysScrollableScrollPhysics(
+              parent: BouncingScrollPhysics(),
+            ),
+            slivers: [
+              // ── 1. KPI Overview Summary Card ─────────────────────────────────
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.screenEdgeGutter,
+                    14,
+                    AppSpacing.screenEdgeGutter,
+                    14,
+                  ),
+                  child: _buildOverviewHeader(
+                    context,
+                    isDark,
+                    cardBg,
+                    headingColor,
+                    bodyColor,
+                    primaryColor,
+                  ),
+                ),
+              ),
+
+              // ── 2. Search, Filter Chips & Sort Controls ──────────────────────
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.screenEdgeGutter,
+                  ),
+                  child: Column(
+                    children: [
+                      _buildSearchBar(
+                        context,
+                        isDark,
+                        cardBg,
+                        headingColor,
+                        bodyColor,
+                        primaryColor,
+                      ),
+                      const SizedBox(height: 12),
+                      _buildFilterAndSortRow(
+                        context,
+                        isDark,
+                        cardBg,
+                        headingColor,
+                        bodyColor,
+                        primaryColor,
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+                  ),
+                ),
+              ),
+
+              // ── 3. Room List or Dedicated Empty State ────────────────────────
+              SliverPadding(
                 padding: const EdgeInsets.fromLTRB(
                   AppSpacing.screenEdgeGutter,
-                  14,
+                  0,
                   AppSpacing.screenEdgeGutter,
-                  14,
+                  100, // Space for FAB
                 ),
-                child: _buildOverviewHeader(
-                  context,
-                  isDark,
-                  cardBg,
-                  headingColor,
-                  bodyColor,
-                  primaryColor,
-                ),
-              ),
-            ),
-
-            // ── 2. Search, Filter Chips & Sort Controls ──────────────────────
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.screenEdgeGutter,
-                ),
-                child: Column(
-                  children: [
-                    _buildSearchBar(
-                      context,
-                      isDark,
-                      cardBg,
-                      headingColor,
-                      bodyColor,
-                      primaryColor,
-                    ),
-                    const SizedBox(height: 12),
-                    _buildFilterAndSortRow(
-                      context,
-                      isDark,
-                      cardBg,
-                      headingColor,
-                      bodyColor,
-                      primaryColor,
-                    ),
-                    const SizedBox(height: 16),
-                  ],
-                ),
-              ),
-            ),
-
-            // ── 3. Room List or Dedicated Empty State ────────────────────────
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.screenEdgeGutter,
-                0,
-                AppSpacing.screenEdgeGutter,
-                100, // Space for FAB
-              ),
-              sliver: Obx(() {
-                if (controller.isLoading.value && controller.rooms.isEmpty) {
-                  return SliverFillRemaining(
-                    hasScrollBody: false,
-                    child: Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          CircularProgressIndicator(color: primaryColor),
-                          const SizedBox(height: AppSpacing.md),
-                          Text(
-                            'Memuat data room pantau...',
-                            style: AppTypography.bodySmall.copyWith(
-                              color: bodyColor,
-                              fontWeight: FontWeight.w500,
+                sliver: Obx(() {
+                  if (controller.isLoading.value && controller.rooms.isEmpty) {
+                    return SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            CircularProgressIndicator(color: primaryColor),
+                            const SizedBox(height: AppSpacing.md),
+                            Text(
+                              'Memuat data room pantau...',
+                              style: AppTypography.bodySmall.copyWith(
+                                color: bodyColor,
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                  );
-                }
-
-                final displayedRooms = _getProcessedRooms();
-
-                if (displayedRooms.isEmpty) {
-                  final isSearching =
-                      _searchController.text.isNotEmpty ||
-                      _statusFilter != 'all';
-                  return SliverFillRemaining(
-                    hasScrollBody: false,
-                    child: _buildEmptyState(
-                      context,
-                      isSearching,
-                      isDark,
-                      cardBg,
-                      headingColor,
-                      bodyColor,
-                      primaryColor,
-                    ),
-                  );
-                }
-
-                return SliverList(
-                  delegate: SliverChildBuilderDelegate((context, index) {
-                    final room = displayedRooms[index];
-                    final jamaahCount = controller.getRoomJamaahCount(room.id);
-                    final pendampingCount = controller.getRoomPendampingCount(
-                      room.id,
                     );
-                    final sosCount = controller.getRoomSosCount(room.id);
+                  }
 
-                    return _RoomManagementCard(
-                      room: room,
-                      jamaahCount: jamaahCount,
-                      pendampingCount: pendampingCount,
-                      sosCount: sosCount,
-                      cardBg: cardBg,
-                      headingColor: headingColor,
-                      bodyColor: bodyColor,
-                      primaryColor: primaryColor,
-                      isDark: isDark,
-                      onTap: () {
-                        HapticFeedback.lightImpact();
-                        controller.selectedRoom.value = room;
-                        controller.subscribeToRoomMembers(room.id);
-                        Get.toNamed(AppRoutes.roomDetail, arguments: room);
-                      },
-                      onOpenActions: () =>
-                          _showRoomActionSheet(context, controller, room),
+                  final displayedRooms = _getProcessedRooms();
+
+                  if (displayedRooms.isEmpty) {
+                    final isSearching =
+                        _searchController.text.isNotEmpty ||
+                        _statusFilter != 'all';
+                    return SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: _buildEmptyState(
+                        context,
+                        isSearching,
+                        isDark,
+                        cardBg,
+                        headingColor,
+                        bodyColor,
+                        primaryColor,
+                      ),
                     );
-                  }, childCount: displayedRooms.length),
-                );
-              }),
-            ),
-          ],
+                  }
+
+                  return SliverList(
+                    delegate: SliverChildBuilderDelegate((context, index) {
+                      final room = displayedRooms[index];
+                      final jamaahCount = controller.getRoomJamaahCount(
+                        room.id,
+                      );
+                      final pendampingCount = controller.getRoomPendampingCount(
+                        room.id,
+                      );
+                      final sosCount = controller.getRoomSosCount(room.id);
+
+                      return _RoomManagementCard(
+                        room: room,
+                        jamaahCount: jamaahCount,
+                        pendampingCount: pendampingCount,
+                        sosCount: sosCount,
+                        cardBg: cardBg,
+                        headingColor: headingColor,
+                        bodyColor: bodyColor,
+                        primaryColor: primaryColor,
+                        isDark: isDark,
+                        onTap: () {
+                          HapticFeedback.lightImpact();
+                          controller.selectedRoom.value = room;
+                          controller.subscribeToRoomMembers(room.id);
+                          Get.toNamed(AppRoutes.roomDetail, arguments: room);
+                        },
+                        onOpenActions: () =>
+                            _showRoomActionSheet(context, controller, room),
+                      );
+                    }, childCount: displayedRooms.length),
+                  );
+                }),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -320,12 +323,7 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
             decoration: BoxDecoration(
               color: cardBg,
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: isDark
-                    ? AppColors.darkCardBorder
-                    : AppColors.lightCardBorder,
-                width: 1.2,
-              ),
+              border: Border.all(color: context.hc.border, width: 1.2),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.04),
@@ -352,11 +350,7 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
                 Container(
                   width: 1,
                   height: 44,
-                  color:
-                      (isDark
-                              ? AppColors.darkCardBorder
-                              : AppColors.lightCardBorder)
-                          .withValues(alpha: 0.7),
+                  color: context.hc.border.withValues(alpha: 0.7),
                 ),
                 Expanded(
                   child: _buildSummaryMetricItem(
@@ -364,7 +358,7 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
                     value: '$totalJamaah',
                     caption: 'Terdaftar',
                     icon: Icons.groups_rounded,
-                    iconColor: AppColors.emeraldIslamic,
+                    iconColor: context.hc.islamic,
                     headingColor: headingColor,
                     bodyColor: bodyColor,
                     isDark: isDark,
@@ -373,11 +367,7 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
                 Container(
                   width: 1,
                   height: 44,
-                  color:
-                      (isDark
-                              ? AppColors.darkCardBorder
-                              : AppColors.lightCardBorder)
-                          .withValues(alpha: 0.7),
+                  color: context.hc.border.withValues(alpha: 0.7),
                 ),
                 Expanded(
                   child: _buildSummaryMetricItem(
@@ -385,7 +375,7 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
                     value: '$totalPendamping',
                     caption: 'Bertugas',
                     icon: Icons.health_and_safety_rounded,
-                    iconColor: AppColors.goldPrimary,
+                    iconColor: context.hc.accent,
                     headingColor: headingColor,
                     bodyColor: bodyColor,
                     isDark: isDark,
@@ -408,12 +398,12 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
                   vertical: 10,
                 ),
                 decoration: BoxDecoration(
-                  color: AppColors.sosEmergency.withValues(
+                  color: context.hc.danger.withValues(
                     alpha: isDark ? 0.20 : 0.10,
                   ),
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
-                    color: AppColors.sosEmergency.withValues(alpha: 0.35),
+                    color: context.hc.danger.withValues(alpha: 0.35),
                     width: 1.2,
                   ),
                 ),
@@ -422,8 +412,8 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
                     Container(
                       width: 8,
                       height: 8,
-                      decoration: const BoxDecoration(
-                        color: AppColors.sosEmergency,
+                      decoration: BoxDecoration(
+                        color: context.hc.danger,
                         shape: BoxShape.circle,
                       ),
                     ),
@@ -432,7 +422,7 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
                       child: Text(
                         'Peringatan: Ada $sosCount panggilan darurat SOS pada room aktif!',
                         style: AppTypography.captionSmall.copyWith(
-                          color: AppColors.sosEmergency,
+                          color: context.hc.danger,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -441,16 +431,16 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
                     Text(
                       'Lihat',
                       style: AppTypography.captionSmall.copyWith(
-                        color: AppColors.sosEmergency,
+                        color: context.hc.danger,
                         fontWeight: FontWeight.w800,
                         decoration: TextDecoration.underline,
                       ),
                     ),
                     const SizedBox(width: 2),
-                    const Icon(
+                    Icon(
                       Icons.arrow_forward_ios_rounded,
                       size: 10,
-                      color: AppColors.sosEmergency,
+                      color: context.hc.danger,
                     ),
                   ],
                 ),
@@ -546,10 +536,7 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
       decoration: BoxDecoration(
         color: cardBg,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isDark ? AppColors.darkCardBorder : AppColors.lightCardBorder,
-          width: 1.2,
-        ),
+        border: Border.all(color: context.hc.border, width: 1.2),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: isDark ? 0.20 : 0.03),
@@ -638,11 +625,11 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
                   _FilterChipItem(
                     label: 'Aktif ($activeCount)',
                     isSelected: _statusFilter == 'active',
-                    activeColor: AppColors.statusSafe,
+                    activeColor: context.hc.success,
                     headingColor: headingColor,
                     cardBg: cardBg,
                     isDark: isDark,
-                    indicatorColor: AppColors.statusSafe,
+                    indicatorColor: context.hc.success,
                     onTap: () => setState(() => _statusFilter = 'active'),
                   ),
                   const SizedBox(width: 8),
@@ -660,11 +647,11 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
                     _FilterChipItem(
                       label: '🚨 SOS ($sosCount)',
                       isSelected: _statusFilter == 'sos',
-                      activeColor: AppColors.sosEmergency,
+                      activeColor: context.hc.danger,
                       headingColor: headingColor,
                       cardBg: cardBg,
                       isDark: isDark,
-                      indicatorColor: AppColors.sosEmergency,
+                      indicatorColor: context.hc.danger,
                       onTap: () => setState(() => _statusFilter = 'sos'),
                     ),
                   ],
@@ -690,12 +677,7 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
               decoration: BoxDecoration(
                 color: cardBg,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: isDark
-                      ? AppColors.darkCardBorder
-                      : AppColors.lightCardBorder,
-                  width: 1.2,
-                ),
+                border: Border.all(color: context.hc.border, width: 1.2),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.03),
@@ -753,6 +735,7 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      constraints: const BoxConstraints(maxWidth: AppBreakpoints.maxSheetWidth),
       backgroundColor: cardBg,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(
@@ -892,10 +875,10 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
               height: 72,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: (isSearching ? primaryColor : AppColors.statusSafe)
+                color: (isSearching ? primaryColor : context.hc.success)
                     .withValues(alpha: isDark ? 0.20 : 0.12),
                 border: Border.all(
-                  color: (isSearching ? primaryColor : AppColors.statusSafe)
+                  color: (isSearching ? primaryColor : context.hc.success)
                       .withValues(alpha: isDark ? 0.35 : 0.25),
                   width: 1.5,
                 ),
@@ -906,7 +889,7 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
                       ? Icons.search_off_rounded
                       : Icons.roofing_rounded,
                   size: 36,
-                  color: isSearching ? primaryColor : AppColors.statusSafe,
+                  color: isSearching ? primaryColor : context.hc.success,
                 ),
               ),
             ),
@@ -964,9 +947,7 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
               ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: primaryColor,
-                  foregroundColor: isDark
-                      ? AppColors.darkOnPrimary
-                      : Colors.white,
+                  foregroundColor: context.hc.onPrimary,
                   minimumSize: const Size(180, 46),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -1003,17 +984,15 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
     RoomModel room,
   ) {
     final textCtrl = TextEditingController(text: room.name);
-    final isDark = AppColors.isDark(context);
-    final cardBg = isDark ? AppColors.darkSurface : AppColors.surfaceWhite;
-    final headingColor = isDark
-        ? AppColors.darkTextHeading
-        : AppColors.espressoDark;
-    final bodyColor = isDark ? AppColors.darkTextBody : AppColors.textBody;
-    final primaryColor = isDark ? AppColors.darkPrimary : AppColors.primaryGold;
+    final cardBg = context.hc.surface;
+    final headingColor = context.hc.textPrimary;
+    final bodyColor = context.hc.textSecondary;
+    final primaryColor = context.hc.brand;
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      constraints: const BoxConstraints(maxWidth: AppBreakpoints.maxSheetWidth),
       backgroundColor: cardBg,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(
@@ -1067,16 +1046,10 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
                     labelText: 'Nama Room Baru',
                     prefixIcon: Icon(Icons.edit_rounded, color: primaryColor),
                     filled: true,
-                    fillColor: isDark
-                        ? AppColors.darkScaffold.withValues(alpha: 0.6)
-                        : AppColors.canvasCream.withValues(alpha: 0.35),
+                    fillColor: context.hc.surfaceSand.withValues(alpha: 0.35),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(AppRadius.md),
-                      borderSide: BorderSide(
-                        color: isDark
-                            ? AppColors.darkCardBorder
-                            : AppColors.canvasCreamSubtle,
-                      ),
+                      borderSide: BorderSide(color: context.hc.border),
                     ),
                   ),
                 ),
@@ -1087,9 +1060,7 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: primaryColor,
-                      foregroundColor: isDark
-                          ? AppColors.darkOnPrimary
-                          : Colors.white,
+                      foregroundColor: context.hc.onPrimary,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(AppRadius.pill),
                       ),
@@ -1117,7 +1088,7 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
           ),
         );
       },
-    );
+    ).whenComplete(textCtrl.dispose);
   }
 
   // ── Room Actions Bottom Sheet ──────────────────────────────────────────────
@@ -1127,17 +1098,16 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
     RoomModel room,
   ) {
     HapticFeedback.lightImpact();
-    final isDark = AppColors.isDark(context);
-    final cardBg = isDark ? AppColors.darkSurface : AppColors.surfaceWhite;
-    final headingColor = isDark
-        ? AppColors.darkTextHeading
-        : AppColors.espressoDark;
-    final bodyColor = isDark ? AppColors.darkTextBody : AppColors.textBody;
-    final primaryColor = isDark ? AppColors.darkPrimary : AppColors.primaryGold;
+    final isDark = context.isDarkTheme;
+    final cardBg = context.hc.surface;
+    final headingColor = context.hc.textPrimary;
+    final bodyColor = context.hc.textSecondary;
+    final primaryColor = context.hc.brand;
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      constraints: const BoxConstraints(maxWidth: AppBreakpoints.maxSheetWidth),
       backgroundColor: cardBg,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(
@@ -1217,12 +1187,7 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
                     ],
                   ),
                   const SizedBox(height: AppSpacing.md),
-                  Divider(
-                    height: 1,
-                    color: isDark
-                        ? AppColors.darkCardBorder
-                        : AppColors.canvasCreamSubtle,
-                  ),
+                  Divider(height: 1, color: context.hc.border),
                   const SizedBox(height: AppSpacing.xs),
 
                   _ActionItemTile(
@@ -1293,8 +1258,8 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
                         ? 'Anggota tidak dapat check-in selama nonaktif'
                         : 'Buka akses check-in anggota',
                     color: room.isActive
-                        ? AppColors.distanceWarning
-                        : AppColors.statusSafe,
+                        ? context.hc.warning
+                        : context.hc.success,
                     headingColor: headingColor,
                     bodyColor: bodyColor,
                     onTap: () {
@@ -1306,8 +1271,8 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
                     icon: Icons.delete_outline_rounded,
                     title: context.tr('room.deleteMonitorRoom'),
                     subtitle: context.tr('room.deleteMonitorRoomSub'),
-                    color: AppColors.error,
-                    headingColor: AppColors.error,
+                    color: context.hc.danger,
+                    headingColor: context.hc.danger,
                     bodyColor: bodyColor,
                     onTap: () {
                       Navigator.pop(ctx);
@@ -1417,24 +1382,21 @@ class _FilterChipItem extends StatelessWidget {
             color: isSelected
                 ? (indicatorColor != null
                       ? activeColor.withValues(alpha: isDark ? 0.24 : 0.14)
-                      : (isDark
-                            ? const Color(0xFF2C1E16)
-                            : AppColors.espressoDark))
+                      : context.hc.brand)
                 : cardBg,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: isSelected
-                  ? (indicatorColor ?? AppColors.goldPrimary)
-                  : (isDark
-                        ? AppColors.darkCardBorder
-                        : AppColors.lightCardBorder),
+                  ? (indicatorColor ?? context.hc.accent)
+                  : context.hc.border,
               width: isSelected ? 1.5 : 1.0,
             ),
             boxShadow: isSelected
                 ? [
                     BoxShadow(
-                      color: (indicatorColor ?? AppColors.espressoDark)
-                          .withValues(alpha: isDark ? 0.35 : 0.16),
+                      color: (indicatorColor ?? context.hc.brand).withValues(
+                        alpha: isDark ? 0.35 : 0.16,
+                      ),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),
@@ -1467,7 +1429,7 @@ class _FilterChipItem extends StatelessWidget {
                   color: isSelected
                       ? (indicatorColor != null
                             ? activeColor
-                            : AppColors.surfaceWhite)
+                            : context.hc.onPrimary)
                       : headingColor.withValues(alpha: 0.85),
                   fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
                   fontSize: 11.5,
@@ -1539,13 +1501,13 @@ class _RoomManagementCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: hasSos
-              ? AppColors.sosEmergency.withValues(alpha: 0.65)
-              : (isDark ? AppColors.darkCardBorder : AppColors.lightCardBorder),
+              ? context.hc.danger.withValues(alpha: 0.65)
+              : context.hc.border,
           width: 1.2,
         ),
         boxShadow: [
           BoxShadow(
-            color: (hasSos ? AppColors.sosEmergency : Colors.black).withValues(
+            color: (hasSos ? context.hc.danger : Colors.black).withValues(
               alpha: isDark ? (hasSos ? 0.30 : 0.22) : (hasSos ? 0.12 : 0.04),
             ),
             blurRadius: 16,
@@ -1573,22 +1535,20 @@ class _RoomManagementCard extends StatelessWidget {
                       height: 46,
                       decoration: BoxDecoration(
                         color: hasSos
-                            ? AppColors.sosEmergency.withValues(
+                            ? context.hc.danger.withValues(
                                 alpha: isDark ? 0.22 : 0.12,
                               )
                             : (room.isActive
-                                  ? AppColors.statusSafe.withValues(
+                                  ? context.hc.success.withValues(
                                       alpha: isDark ? 0.18 : 0.10,
                                     )
                                   : bodyColor.withValues(alpha: 0.08)),
                         borderRadius: BorderRadius.circular(13),
                         border: Border.all(
                           color: hasSos
-                              ? AppColors.sosEmergency.withValues(alpha: 0.4)
+                              ? context.hc.danger.withValues(alpha: 0.4)
                               : (room.isActive
-                                    ? AppColors.statusSafe.withValues(
-                                        alpha: 0.25,
-                                      )
+                                    ? context.hc.success.withValues(alpha: 0.25)
                                     : bodyColor.withValues(alpha: 0.15)),
                           width: 1.0,
                         ),
@@ -1600,9 +1560,9 @@ class _RoomManagementCard extends StatelessWidget {
                                   ? Icons.roofing_rounded
                                   : Icons.meeting_room_outlined),
                         color: hasSos
-                            ? AppColors.sosEmergency
+                            ? context.hc.danger
                             : (room.isActive
-                                  ? AppColors.statusSafe
+                                  ? context.hc.success
                                   : bodyColor.withValues(alpha: 0.7)),
                         size: 23,
                       ),
@@ -1638,7 +1598,7 @@ class _RoomManagementCard extends StatelessWidget {
                                 decoration: BoxDecoration(
                                   color:
                                       (room.isActive
-                                              ? AppColors.statusSafe
+                                              ? context.hc.success
                                               : bodyColor)
                                           .withValues(
                                             alpha: isDark ? 0.20 : 0.12,
@@ -1649,7 +1609,7 @@ class _RoomManagementCard extends StatelessWidget {
                                   border: Border.all(
                                     color:
                                         (room.isActive
-                                                ? AppColors.statusSafe
+                                                ? context.hc.success
                                                 : bodyColor)
                                             .withValues(
                                               alpha: isDark ? 0.35 : 0.25,
@@ -1665,7 +1625,7 @@ class _RoomManagementCard extends StatelessWidget {
                                       height: 5.5,
                                       decoration: BoxDecoration(
                                         color: room.isActive
-                                            ? AppColors.statusSafe
+                                            ? context.hc.success
                                             : bodyColor.withValues(alpha: 0.6),
                                         shape: BoxShape.circle,
                                       ),
@@ -1675,7 +1635,7 @@ class _RoomManagementCard extends StatelessWidget {
                                       room.isActive ? 'Aktif' : 'Nonaktif',
                                       style: TextStyle(
                                         color: room.isActive
-                                            ? AppColors.statusSafe
+                                            ? context.hc.success
                                             : bodyColor,
                                         fontWeight: FontWeight.w700,
                                         fontSize: 10.5,
@@ -1734,16 +1694,9 @@ class _RoomManagementCard extends StatelessWidget {
                     vertical: 9,
                   ),
                   decoration: BoxDecoration(
-                    color: isDark
-                        ? AppColors.darkPrimaryContainer.withValues(alpha: 0.35)
-                        : AppColors.surfaceContainerLow,
+                    color: context.hc.surfaceSand.withValues(alpha: 0.35),
                     borderRadius: BorderRadius.circular(13),
-                    border: Border.all(
-                      color: isDark
-                          ? AppColors.darkCardBorder
-                          : AppColors.canvasCreamSubtle,
-                      width: 1.0,
-                    ),
+                    border: Border.all(color: context.hc.border, width: 1.0),
                   ),
                   child: Row(
                     children: [
@@ -1798,11 +1751,7 @@ class _RoomManagementCard extends StatelessWidget {
                           decoration: BoxDecoration(
                             color: cardBg,
                             borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                              color: isDark
-                                  ? AppColors.darkOutlineVariant
-                                  : const Color(0xFFE2E8F0),
-                            ),
+                            border: Border.all(color: context.hc.border),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
@@ -1848,11 +1797,7 @@ class _RoomManagementCard extends StatelessWidget {
                           decoration: BoxDecoration(
                             color: cardBg,
                             borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                              color: isDark
-                                  ? AppColors.darkOutlineVariant
-                                  : const Color(0xFFE2E8F0),
-                            ),
+                            border: Border.all(color: context.hc.border),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
@@ -1892,7 +1837,7 @@ class _RoomManagementCard extends StatelessWidget {
                             icon: Icons.groups_rounded,
                             count: jamaahCount,
                             label: 'Jamaah',
-                            color: AppColors.emeraldIslamic,
+                            color: context.hc.islamic,
                             isDark: isDark,
                           ),
                           _MetricBadgePill(
@@ -1907,7 +1852,7 @@ class _RoomManagementCard extends StatelessWidget {
                               icon: Icons.warning_rounded,
                               count: sosCount,
                               label: 'SOS',
-                              color: AppColors.sosEmergency,
+                              color: context.hc.danger,
                               isDark: isDark,
                             ),
                         ],

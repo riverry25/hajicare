@@ -117,15 +117,15 @@ extension AssistanceStatusExtension on AssistanceStatus {
   Color get color {
     switch (this) {
       case AssistanceStatus.sent:
-        return const Color(0xFFE64A19);
+        return const Color(0xFFB3412F);
       case AssistanceStatus.acknowledged:
-        return const Color(0xFFD97706);
+        return const Color(0xFF8B541C);
       case AssistanceStatus.onTheWay:
-        return const Color(0xFF0284C7);
+        return const Color(0xFF2C6B8B);
       case AssistanceStatus.completed:
-        return const Color(0xFF16A34A);
+        return const Color(0xFF2E6B44);
       case AssistanceStatus.cancelled:
-        return const Color(0xFF6B7280);
+        return const Color(0xFF6E5D4F);
     }
   }
 

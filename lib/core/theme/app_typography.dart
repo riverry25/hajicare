@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'haji_colors.dart';
 
 /// Centralized Typography Service for HajiCare.
 /// Uses locally bundled offline-ready font families:
@@ -6,8 +7,8 @@ import 'package:flutter/material.dart';
 /// - [bodyFontFamily] ('Montserrat'): Body text, captions, subtitles, badges, and readouts.
 /// - [arabicFontFamily] ('NotoNaskhArabic'): Quranic verses, prayers, and Arabic calligraphy.
 ///
-/// Provides both predefined accessible text scales and dynamic generator methods
-/// (`heading`, `bodyText`, `arabicText`) to allow any screen across the entire app
+/// Provides predefined accessible text scales, Material 3 [buildTextTheme],
+/// and dynamic generator methods to allow any screen across the entire app
 /// to customize typography dynamically, safely, and consistently.
 class AppTypography {
   AppTypography._();
@@ -16,6 +17,126 @@ class AppTypography {
   static const String headingFontFamily = 'Poppins';
   static const String bodyFontFamily = 'Montserrat';
   static const String arabicFontFamily = 'NotoNaskhArabic';
+
+  // ── Material 3 Dynamic TextTheme Builder ───────────────────────────────────
+  /// Fills all 15 M3 typography slots with calibrated offline font families
+  /// and dynamic contrast colors provided by [HajiColors].
+  static TextTheme buildTextTheme(HajiColors c) {
+    return TextTheme(
+      displayLarge: TextStyle(
+        fontFamily: headingFontFamily,
+        fontSize: 28,
+        fontWeight: FontWeight.w800,
+        color: c.textPrimary,
+        height: 1.25,
+        letterSpacing: -0.02,
+      ),
+      displayMedium: TextStyle(
+        fontFamily: headingFontFamily,
+        fontSize: 24,
+        fontWeight: FontWeight.w800,
+        color: c.textPrimary,
+        height: 1.3,
+        letterSpacing: -0.02,
+      ),
+      displaySmall: TextStyle(
+        fontFamily: headingFontFamily,
+        fontSize: 21,
+        fontWeight: FontWeight.w700,
+        color: c.textPrimary,
+        height: 1.35,
+        letterSpacing: -0.01,
+      ),
+      headlineLarge: TextStyle(
+        fontFamily: headingFontFamily,
+        fontSize: 22,
+        fontWeight: FontWeight.w700,
+        color: c.textPrimary,
+        height: 1.35,
+        letterSpacing: -0.01,
+      ),
+      headlineMedium: TextStyle(
+        fontFamily: headingFontFamily,
+        fontSize: 20,
+        fontWeight: FontWeight.w700,
+        color: c.textPrimary,
+        height: 1.35,
+      ),
+      headlineSmall: TextStyle(
+        fontFamily: headingFontFamily,
+        fontSize: 18,
+        fontWeight: FontWeight.w700,
+        color: c.textPrimary,
+        height: 1.4,
+      ),
+      titleLarge: TextStyle(
+        fontFamily: headingFontFamily,
+        fontSize: 18,
+        fontWeight: FontWeight.w700,
+        color: c.textPrimary,
+        height: 1.4,
+        letterSpacing: -0.01,
+      ),
+      titleMedium: TextStyle(
+        fontFamily: headingFontFamily,
+        fontSize: 16,
+        fontWeight: FontWeight.w600,
+        color: c.textPrimary,
+        height: 1.45,
+      ),
+      titleSmall: TextStyle(
+        fontFamily: headingFontFamily,
+        fontSize: 14,
+        fontWeight: FontWeight.w600,
+        color: c.textPrimary,
+        height: 1.4,
+      ),
+      bodyLarge: TextStyle(
+        fontFamily: bodyFontFamily,
+        fontSize: 16,
+        fontWeight: FontWeight.w400,
+        color: c.textSecondary,
+        height: 1.5,
+      ),
+      bodyMedium: TextStyle(
+        fontFamily: bodyFontFamily,
+        fontSize: 14.5,
+        fontWeight: FontWeight.w400,
+        color: c.textSecondary,
+        height: 1.5,
+      ),
+      bodySmall: TextStyle(
+        fontFamily: bodyFontFamily,
+        fontSize: 13,
+        fontWeight: FontWeight.w500,
+        color: c.textSecondary,
+        height: 1.45,
+      ),
+      labelLarge: TextStyle(
+        fontFamily: headingFontFamily,
+        fontSize: 13,
+        fontWeight: FontWeight.w700,
+        color: c.textPrimary,
+        height: 1.35,
+        letterSpacing: 0.1,
+      ),
+      labelMedium: TextStyle(
+        fontFamily: headingFontFamily,
+        fontSize: 12,
+        fontWeight: FontWeight.w600,
+        color: c.textTertiary,
+        height: 1.35,
+      ),
+      labelSmall: TextStyle(
+        fontFamily: bodyFontFamily,
+        fontSize: 11,
+        fontWeight: FontWeight.w700,
+        color: c.textTertiary,
+        height: 1.3,
+        letterSpacing: 0.3,
+      ),
+    );
+  }
 
   // ── Dynamic Typography Service Generators ──────────────────────────────────
   /// Creates a dynamic heading text style using [headingFontFamily] (Poppins).
@@ -219,4 +340,154 @@ class AppTypography {
     fontWeight: FontWeight.w600,
     height: 1.35,
   );
+}
+
+/// ThemeExtension for domain-specific typography (Quranic Arabic, hero metrics, labels).
+class HajiTextStyles extends ThemeExtension<HajiTextStyles> {
+  const HajiTextStyles({
+    required this.heroNumber,
+    required this.arabicLarge,
+    required this.arabic,
+    required this.arabicMedium,
+    required this.arabicSmall,
+    required this.transliteration,
+    required this.translation,
+    required this.metadataLabel,
+    required this.button,
+  });
+
+  final TextStyle heroNumber;
+  final TextStyle arabicLarge;
+  final TextStyle arabic;
+  final TextStyle arabicMedium;
+  final TextStyle arabicSmall;
+  final TextStyle transliteration;
+  final TextStyle translation;
+  final TextStyle metadataLabel;
+  final TextStyle button;
+
+  /// Creates a calibrated [HajiTextStyles] instance using [HajiColors].
+  static HajiTextStyles forBrightness(HajiColors c, Brightness brightness) {
+    return HajiTextStyles(
+      heroNumber: TextStyle(
+        fontFamily: AppTypography.headingFontFamily,
+        fontSize: 52,
+        fontWeight: FontWeight.w800,
+        color: c.textPrimary,
+        height: 1.15,
+        letterSpacing: -0.02,
+      ),
+      arabicLarge: TextStyle(
+        fontFamily: AppTypography.arabicFontFamily,
+        fontSize: 32,
+        fontWeight: FontWeight.w600,
+        color: c.textPrimary,
+        height: 1.9,
+      ),
+      arabic: TextStyle(
+        fontFamily: AppTypography.arabicFontFamily,
+        fontSize: 28,
+        fontWeight: FontWeight.w500,
+        color: c.textPrimary,
+        height: 1.85,
+      ),
+      arabicMedium: TextStyle(
+        fontFamily: AppTypography.arabicFontFamily,
+        fontSize: 22,
+        fontWeight: FontWeight.w500,
+        color: c.textPrimary,
+        height: 1.7,
+      ),
+      arabicSmall: TextStyle(
+        fontFamily: AppTypography.arabicFontFamily,
+        fontSize: 16,
+        fontWeight: FontWeight.w500,
+        color: c.textPrimary,
+        height: 1.6,
+      ),
+      transliteration: TextStyle(
+        fontFamily: AppTypography.bodyFontFamily,
+        fontSize: 15,
+        fontWeight: FontWeight.w500,
+        fontStyle: FontStyle.italic,
+        color: c.textSecondary,
+        height: 1.7,
+      ),
+      translation: TextStyle(
+        fontFamily: AppTypography.bodyFontFamily,
+        fontSize: 14.5,
+        fontWeight: FontWeight.w400,
+        color: c.textSecondary,
+        height: 1.7,
+      ),
+      metadataLabel: TextStyle(
+        fontFamily: AppTypography.bodyFontFamily,
+        fontSize: 11,
+        fontWeight: FontWeight.w600,
+        color: c.textTertiary,
+        height: 1.4,
+        letterSpacing: 0.7,
+      ),
+      button: TextStyle(
+        fontFamily: AppTypography.headingFontFamily,
+        fontSize: 14,
+        fontWeight: FontWeight.w600,
+        color: c.onPrimary,
+        height: 1.35,
+      ),
+    );
+  }
+
+  static HajiTextStyles light(HajiColors c) =>
+      forBrightness(c, Brightness.light);
+  static HajiTextStyles dark(HajiColors c) => forBrightness(c, Brightness.dark);
+
+  @override
+  HajiTextStyles copyWith({
+    TextStyle? heroNumber,
+    TextStyle? arabicLarge,
+    TextStyle? arabic,
+    TextStyle? arabicMedium,
+    TextStyle? arabicSmall,
+    TextStyle? transliteration,
+    TextStyle? translation,
+    TextStyle? metadataLabel,
+    TextStyle? button,
+  }) {
+    return HajiTextStyles(
+      heroNumber: heroNumber ?? this.heroNumber,
+      arabicLarge: arabicLarge ?? this.arabicLarge,
+      arabic: arabic ?? this.arabic,
+      arabicMedium: arabicMedium ?? this.arabicMedium,
+      arabicSmall: arabicSmall ?? this.arabicSmall,
+      transliteration: transliteration ?? this.transliteration,
+      translation: translation ?? this.translation,
+      metadataLabel: metadataLabel ?? this.metadataLabel,
+      button: button ?? this.button,
+    );
+  }
+
+  @override
+  HajiTextStyles lerp(ThemeExtension<HajiTextStyles>? other, double t) {
+    if (other is! HajiTextStyles) return this;
+    return HajiTextStyles(
+      heroNumber: TextStyle.lerp(heroNumber, other.heroNumber, t) ?? heroNumber,
+      arabicLarge:
+          TextStyle.lerp(arabicLarge, other.arabicLarge, t) ?? arabicLarge,
+      arabic: TextStyle.lerp(arabic, other.arabic, t) ?? arabic,
+      arabicMedium:
+          TextStyle.lerp(arabicMedium, other.arabicMedium, t) ?? arabicMedium,
+      arabicSmall:
+          TextStyle.lerp(arabicSmall, other.arabicSmall, t) ?? arabicSmall,
+      transliteration:
+          TextStyle.lerp(transliteration, other.transliteration, t) ??
+          transliteration,
+      translation:
+          TextStyle.lerp(translation, other.translation, t) ?? translation,
+      metadataLabel:
+          TextStyle.lerp(metadataLabel, other.metadataLabel, t) ??
+          metadataLabel,
+      button: TextStyle.lerp(button, other.button, t) ?? button,
+    );
+  }
 }

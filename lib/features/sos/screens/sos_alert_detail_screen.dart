@@ -13,10 +13,9 @@ import '../../../core/constants/app_constants.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/services/app_alert_service.dart';
 import '../../../core/state/hajicare_controller.dart';
-import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
-import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/theme_context.dart';
 
 import '../../dashboard/controllers/dashboard_controller.dart';
 import '../../map/controllers/map_controller.dart';
@@ -67,7 +66,44 @@ class _SosAlertDetailScreenState extends State<SosAlertDetailScreen> {
     final loc = data['location'];
     if (loc is GeoPoint) {
       _liveLocation = loc;
+    } else if (loc is Map) {
+      final lat = loc['latitude'] ?? loc['lat'] ?? loc['_latitude'];
+      final lng = loc['longitude'] ?? loc['lng'] ?? loc['_longitude'];
+      final dLat = lat is num ? lat.toDouble() : double.tryParse('$lat');
+      final dLng = lng is num ? lng.toDouble() : double.tryParse('$lng');
+      if (dLat != null && dLng != null) {
+        _liveLocation = GeoPoint(dLat, dLng);
+      }
+    } else {
+      final lat = data['latitude'] ?? data['lat'];
+      final lng = data['longitude'] ?? data['lng'];
+      final dLat = lat is num ? lat.toDouble() : double.tryParse('$lat');
+      final dLng = lng is num ? lng.toDouble() : double.tryParse('$lng');
+      if (dLat != null && dLng != null) {
+        _liveLocation = GeoPoint(dLat, dLng);
+      }
     }
+
+    if (_liveLocation == null) {
+      final userId =
+          data['userId'] as String? ?? data['jamaahId'] as String? ?? '';
+      if (userId.isNotEmpty) {
+        final jamaah = _state.jamaahList
+            .where((m) => m.id == userId)
+            .firstOrNull;
+        if (jamaah?.currentLocation != null) {
+          _liveLocation = jamaah!.currentLocation;
+        } else {
+          final member = _state.activeRoomMembers
+              .where((m) => m.uid == userId)
+              .firstOrNull;
+          if (member?.currentLocation != null) {
+            _liveLocation = member!.currentLocation;
+          }
+        }
+      }
+    }
+
     final updatedAt = data['locationUpdatedAt'];
     if (updatedAt is Timestamp) {
       _locationUpdatedAt = updatedAt.toDate();
@@ -131,13 +167,13 @@ class _SosAlertDetailScreenState extends State<SosAlertDetailScreen> {
     return '${diff.inHours} jam yang lalu';
   }
 
-  Color _freshnessColor() {
+  Color _freshnessColor(BuildContext context) {
     final updated = _locationUpdatedAt;
-    if (updated == null) return AppColors.statusDanger;
+    if (updated == null) return context.hc.danger;
     final diff = DateTime.now().difference(updated);
-    if (diff.inMinutes < 2) return AppColors.statusSafe;
-    if (diff.inMinutes < 10) return AppColors.statusWarning;
-    return AppColors.statusDanger;
+    if (diff.inMinutes < 2) return context.hc.success;
+    if (diff.inMinutes < 10) return context.hc.warning;
+    return context.hc.danger;
   }
 
   String _distanceText() {
@@ -264,13 +300,70 @@ class _SosAlertDetailScreenState extends State<SosAlertDetailScreen> {
 
   Future<void> _openGoogleMaps() async {
     final target = _targetLatLng;
-    if (target == null) return;
-    final uri = Uri.parse(
-      'https://www.google.com/maps/search/?api=1'
-      '&query=${target.latitude},${target.longitude}',
+    if (target == null) {
+      AppAlert.warning(
+        context,
+        title: context.tr('maps.locationUnavailable'),
+        message:
+            'Posisi GPS jamaah belum terdeteksi. Silakan coba sesaat lagi.',
+      );
+      return;
+    }
+
+    final myPos = _state.myCurrentPosition.value;
+    final Uri googleMapsUrl;
+    if (myPos != null) {
+      googleMapsUrl = Uri.parse(
+        'https://www.google.com/maps/dir/?api=1'
+        '&origin=${myPos.latitude},${myPos.longitude}'
+        '&destination=${target.latitude},${target.longitude}'
+        '&travelmode=walking',
+      );
+    } else {
+      googleMapsUrl = Uri.parse(
+        'https://www.google.com/maps/search/?api=1'
+        '&query=${target.latitude},${target.longitude}',
+      );
+    }
+
+    final geoUri = Uri.parse(
+      'geo:${target.latitude},${target.longitude}?q=${target.latitude},${target.longitude}',
     );
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
+
+    try {
+      // 1. Try launching Google Maps in external app
+      final launched = await launchUrl(
+        googleMapsUrl,
+        mode: LaunchMode.externalApplication,
+      );
+      if (!launched) {
+        // 2. Try geo: scheme
+        final launchedGeo = await launchUrl(
+          geoUri,
+          mode: LaunchMode.externalApplication,
+        );
+        if (!launchedGeo) {
+          // 3. Fallback to platform default browser
+          await launchUrl(googleMapsUrl, mode: LaunchMode.platformDefault);
+        }
+      }
+    } catch (e) {
+      debugPrint(
+        '[SosAlertDetailScreen] External launch failed: $e. Trying platformDefault.',
+      );
+      try {
+        await launchUrl(googleMapsUrl, mode: LaunchMode.platformDefault);
+      } catch (err) {
+        debugPrint('[SosAlertDetailScreen] Failed to launch Google Maps: $err');
+        if (mounted) {
+          AppAlert.error(
+            context,
+            title: 'Gagal Membuka Google Maps',
+            message:
+                'Tidak dapat membuka Google Maps atau browser di perangkat ini.',
+          );
+        }
+      }
     }
   }
 
@@ -337,14 +430,13 @@ class _SosAlertDetailScreenState extends State<SosAlertDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = AppColors.isDark(context);
-    final scaffoldBg = isDark ? AppColors.darkScaffold : AppColors.canvasCream;
-    final cardBg = isDark ? AppColors.darkSurface : AppColors.surfaceWhite;
-    final headingColor = isDark
-        ? AppColors.darkTextHeading
-        : AppColors.espressoDark;
-    final bodyColor = isDark ? AppColors.darkTextBody : AppColors.textBody;
-    final primaryColor = isDark ? AppColors.darkPrimary : AppColors.primaryGold;
+    final colors = context.hc;
+    final typography = context.text;
+    final isDark = colors.isDark;
+    final scaffoldBg = colors.canvas;
+    final cardBg = colors.surface;
+    final headingColor = colors.textPrimary;
+    final primaryColor = colors.accent;
 
     final userName =
         (_sosData['userName'] as String?)?.trim().isNotEmpty == true
@@ -376,7 +468,7 @@ class _SosAlertDetailScreenState extends State<SosAlertDetailScreen> {
           children: [
             Text(
               'Detail Darurat SOS',
-              style: AppTypography.headlineMedium.copyWith(
+              style: typography.headlineMedium.copyWith(
                 color: headingColor,
                 fontWeight: FontWeight.bold,
                 fontSize: 16,
@@ -384,10 +476,8 @@ class _SosAlertDetailScreenState extends State<SosAlertDetailScreen> {
             ),
             Text(
               _isSosResolved ? 'Sudah Diselesaikan' : 'Aktif · Pantau Lokasi',
-              style: AppTypography.captionSmall.copyWith(
-                color: _isSosResolved
-                    ? AppColors.statusSafe
-                    : AppColors.sosEmergency,
+              style: typography.labelSmall.copyWith(
+                color: _isSosResolved ? colors.success : colors.danger,
                 fontWeight: FontWeight.w700,
                 fontSize: 10.5,
               ),
@@ -400,7 +490,7 @@ class _SosAlertDetailScreenState extends State<SosAlertDetailScreen> {
               margin: const EdgeInsets.only(right: 14, left: 6),
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: AppColors.sosEmergency,
+                color: colors.danger,
                 borderRadius: BorderRadius.circular(AppRadius.pill),
               ),
               child: const Row(
@@ -436,15 +526,10 @@ class _SosAlertDetailScreenState extends State<SosAlertDetailScreen> {
                 decoration: BoxDecoration(
                   color: cardBg,
                   borderRadius: BorderRadius.circular(22),
-                  border: Border.all(
-                    color: isDark
-                        ? AppColors.darkCardBorder
-                        : AppColors.lightCardBorder,
-                    width: 1.2,
-                  ),
+                  border: Border.all(color: colors.border, width: 1.2),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(
+                      color: colors.shadow.withValues(
                         alpha: isDark ? 0.28 : 0.05,
                       ),
                       blurRadius: 18,
@@ -459,57 +544,45 @@ class _SosAlertDetailScreenState extends State<SosAlertDetailScreen> {
                     children: [
                       // Identity info rows
                       _buildInfoTile(
+                        context: context,
                         icon: Icons.badge_rounded,
                         label: 'ID Jamaah',
                         value: userId == '-' ? 'Tidak diketahui' : userId,
                         color: primaryColor,
-                        headingColor: headingColor,
-                        bodyColor: bodyColor,
-                        isDark: isDark,
-                        cardBg: cardBg,
                       ),
                       const SizedBox(height: 8),
                       _buildInfoTile(
+                        context: context,
                         icon: Icons.groups_2_rounded,
                         label: 'Rombongan',
                         value: roomName,
                         color: primaryColor,
-                        headingColor: headingColor,
-                        bodyColor: bodyColor,
-                        isDark: isDark,
-                        cardBg: cardBg,
                       ),
                       const SizedBox(height: 8),
                       Row(
                         children: [
                           Expanded(
                             child: _buildInfoTile(
+                              context: context,
                               icon: Icons.flight_takeoff_rounded,
                               label: 'Kloter',
                               value: (kloter != null && kloter.isNotEmpty)
                                   ? kloter
                                   : '-',
                               color: primaryColor,
-                              headingColor: headingColor,
-                              bodyColor: bodyColor,
-                              isDark: isDark,
-                              cardBg: cardBg,
                               compact: true,
                             ),
                           ),
                           const SizedBox(width: 8),
                           Expanded(
                             child: _buildInfoTile(
+                              context: context,
                               icon: Icons.hotel_rounded,
                               label: 'Maktab',
                               value: (maktab != null && maktab.isNotEmpty)
                                   ? maktab
                                   : '-',
                               color: primaryColor,
-                              headingColor: headingColor,
-                              bodyColor: bodyColor,
-                              isDark: isDark,
-                              cardBg: cardBg,
                               compact: true,
                             ),
                           ),
@@ -517,14 +590,11 @@ class _SosAlertDetailScreenState extends State<SosAlertDetailScreen> {
                       ),
                       const SizedBox(height: 8),
                       _buildInfoTile(
+                        context: context,
                         icon: Icons.access_time_rounded,
                         label: 'Waktu SOS',
                         value: timeStr,
-                        color: AppColors.sosEmergency,
-                        headingColor: headingColor,
-                        bodyColor: bodyColor,
-                        isDark: isDark,
-                        cardBg: cardBg,
+                        color: colors.danger,
                       ),
                     ],
                   ),
@@ -539,19 +609,19 @@ class _SosAlertDetailScreenState extends State<SosAlertDetailScreen> {
                 height: 60,
                 child: Container(
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(
+                    gradient: LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
-                      colors: [Color(0xFF7F1D1D), Color(0xFFB91C1C)],
+                      colors: [colors.dangerDark, colors.danger],
                     ),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: AppColors.sosEmergency.withValues(alpha: 0.6),
+                      color: colors.danger.withValues(alpha: 0.6),
                       width: 1.2,
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.sosEmergency.withValues(alpha: 0.4),
+                        color: colors.danger.withValues(alpha: 0.4),
                         blurRadius: 18,
                         offset: const Offset(0, 6),
                       ),
@@ -658,7 +728,7 @@ class _SosAlertDetailScreenState extends State<SosAlertDetailScreen> {
               color: cardBg,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: _freshnessColor().withValues(alpha: 0.35),
+                color: _freshnessColor(context).withValues(alpha: 0.35),
               ),
               boxShadow: [
                 BoxShadow(
@@ -673,13 +743,13 @@ class _SosAlertDetailScreenState extends State<SosAlertDetailScreen> {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: _freshnessColor().withValues(alpha: 0.12),
+                    color: _freshnessColor(context).withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(
                     Icons.near_me_rounded,
                     size: 18,
-                    color: _freshnessColor(),
+                    color: _freshnessColor(context),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -689,14 +759,14 @@ class _SosAlertDetailScreenState extends State<SosAlertDetailScreen> {
                     children: [
                       Text(
                         _locationFreshness(),
-                        style: AppTypography.captionSmall.copyWith(
-                          color: _freshnessColor(),
+                        style: typography.labelSmall.copyWith(
+                          color: _freshnessColor(context),
                           fontWeight: FontWeight.w700,
                         ),
                       ),
                       Text(
                         _distanceText(),
-                        style: AppTypography.bodySmall.copyWith(
+                        style: typography.bodySmall.copyWith(
                           color: headingColor,
                           fontWeight: FontWeight.bold,
                           fontSize: 12,
@@ -728,15 +798,9 @@ class _SosAlertDetailScreenState extends State<SosAlertDetailScreen> {
                         vertical: 6,
                       ),
                       decoration: BoxDecoration(
-                        color: isDark
-                            ? Colors.white.withValues(alpha: 0.06)
-                            : AppColors.canvasCream,
+                        color: colors.surfaceSubtle,
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: isDark
-                              ? AppColors.darkOutlineVariant
-                              : AppColors.canvasCreamSubtle,
-                        ),
+                        border: Border.all(color: colors.border),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -744,13 +808,13 @@ class _SosAlertDetailScreenState extends State<SosAlertDetailScreen> {
                           Icon(
                             Icons.copy_rounded,
                             size: 13,
-                            color: AppColors.goldPrimary,
+                            color: colors.accent,
                           ),
                           const SizedBox(width: 4),
                           Text(
                             'Salin',
                             style: TextStyle(
-                              color: AppColors.goldPrimary,
+                              color: colors.accent,
                               fontSize: 11,
                               fontWeight: FontWeight.w700,
                             ),
@@ -765,27 +829,34 @@ class _SosAlertDetailScreenState extends State<SosAlertDetailScreen> {
           const SizedBox(height: AppSpacing.md),
 
           // ── 3. Mini Map ───────────────────────────────────────────────────
-          _buildMiniMap(isDark, cardBg),
+          _buildMiniMap(context),
           const SizedBox(height: AppSpacing.md),
 
           // ── 4. Action Buttons ─────────────────────────────────────────────
           if (!_isSosResolved) ...[
-            SizedBox(
-              width: double.infinity,
-              height: 50,
+            ConstrainedBox(
+              constraints: const BoxConstraints(
+                minHeight: 48,
+                minWidth: double.infinity,
+              ),
               child: ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1E4DC4),
+                  backgroundColor: colors.info,
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(AppRadius.pill),
                   ),
                   elevation: 0,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.md,
+                    vertical: 12,
+                  ),
                 ),
                 icon: const Icon(Icons.navigation_rounded, size: 18),
                 label: Text(
                   context.tr('sosCreateRoute'),
-                  style: AppTypography.button.copyWith(
+                  style: typography.labelLarge.copyWith(
+                    color: Colors.white,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -793,67 +864,96 @@ class _SosAlertDetailScreenState extends State<SosAlertDetailScreen> {
               ),
             ),
             const SizedBox(height: AppSpacing.sm),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: headingColor,
-                      side: BorderSide(
-                        color: isDark
-                            ? AppColors.darkOutlineVariant
-                            : AppColors.lightCardBorder,
-                        width: 1.2,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.pill),
-                      ),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
+            Builder(
+              builder: (ctx) {
+                final isLargeText =
+                    MediaQuery.textScalerOf(ctx).scale(1.0) > 1.35;
+
+                final mapsButton = OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: headingColor,
+                    side: BorderSide(color: colors.borderStrong, width: 1.2),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
                     ),
-                    icon: const Icon(Icons.map_outlined, size: 16),
-                    label: Text(
-                      'Google Maps',
-                      style: AppTypography.labelLarge.copyWith(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12.5,
-                      ),
+                    minimumSize: const Size(0, 44),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 12,
+                      horizontal: AppSpacing.sm,
                     ),
-                    onPressed: _liveLocation != null ? _openGoogleMaps : null,
                   ),
-                ),
-                const SizedBox(width: AppSpacing.sm),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.statusSafe,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.pill),
-                      ),
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
+                  icon: const Icon(Icons.map_outlined, size: 16),
+                  label: Text(
+                    'Google Maps',
+                    style: typography.labelLarge.copyWith(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12.5,
                     ),
-                    icon: const Icon(Icons.check_circle_rounded, size: 16),
-                    label: Text(
-                      context.tr('sosResolveAlert'),
-                      style: AppTypography.labelLarge.copyWith(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12.5,
-                      ),
-                    ),
-                    onPressed: _dismissSos,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                ),
-              ],
+                  onPressed: _openGoogleMaps,
+                );
+
+                final resolveButton = ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: colors.success,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                    ),
+                    elevation: 0,
+                    minimumSize: const Size(0, 44),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 12,
+                      horizontal: AppSpacing.sm,
+                    ),
+                  ),
+                  icon: const Icon(Icons.check_circle_rounded, size: 16),
+                  label: Text(
+                    context.tr('sosResolveAlert'),
+                    style: typography.labelLarge.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12.5,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  onPressed: _dismissSos,
+                );
+
+                if (isLargeText) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      mapsButton,
+                      const SizedBox(height: AppSpacing.xs),
+                      resolveButton,
+                    ],
+                  );
+                }
+
+                return IntrinsicHeight(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Expanded(child: mapsButton),
+                      const SizedBox(width: AppSpacing.sm),
+                      Expanded(child: resolveButton),
+                    ],
+                  ),
+                );
+              },
             ),
           ] else ...[
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
               decoration: BoxDecoration(
-                color: AppColors.statusSafe.withValues(alpha: 0.1),
+                color: colors.success.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: AppColors.statusSafe.withValues(alpha: 0.35),
+                  color: colors.success.withValues(alpha: 0.35),
                 ),
               ),
               child: Row(
@@ -861,12 +961,12 @@ class _SosAlertDetailScreenState extends State<SosAlertDetailScreen> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: AppColors.statusSafe.withValues(alpha: 0.15),
+                      color: colors.success.withValues(alpha: 0.15),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.check_circle_rounded,
-                      color: AppColors.statusSafe,
+                      color: colors.success,
                       size: 20,
                     ),
                   ),
@@ -877,16 +977,16 @@ class _SosAlertDetailScreenState extends State<SosAlertDetailScreen> {
                       children: [
                         Text(
                           'Darurat Sudah Ditangani',
-                          style: AppTypography.bodySmall.copyWith(
-                            color: AppColors.statusSafe,
+                          style: typography.bodySmall.copyWith(
+                            color: colors.success,
                             fontWeight: FontWeight.w800,
                             fontSize: 13,
                           ),
                         ),
                         Text(
                           'Panggilan darurat ini telah diselesaikan oleh petugas.',
-                          style: AppTypography.captionSmall.copyWith(
-                            color: AppColors.statusSafe.withValues(alpha: 0.8),
+                          style: typography.labelSmall.copyWith(
+                            color: colors.success.withValues(alpha: 0.8),
                           ),
                         ),
                       ],
@@ -904,31 +1004,24 @@ class _SosAlertDetailScreenState extends State<SosAlertDetailScreen> {
 
   /// Builds a premium info tile matching RoomDetailScreen visual language.
   Widget _buildInfoTile({
+    required BuildContext context,
     required IconData icon,
     required String label,
     required String value,
     required Color color,
-    required Color headingColor,
-    required Color bodyColor,
-    required bool isDark,
-    required Color cardBg,
     bool compact = false,
   }) {
+    final colors = context.hc;
+    final typography = context.text;
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: compact ? 10 : 13,
         vertical: compact ? 9 : 11,
       ),
       decoration: BoxDecoration(
-        color: isDark
-            ? AppColors.darkSurfaceContainer
-            : AppColors.canvasCream.withValues(alpha: 0.45),
+        color: colors.surfaceSubtle,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: isDark
-              ? AppColors.darkCardBorder
-              : AppColors.lightCardBorder.withValues(alpha: 0.6),
-        ),
+        border: Border.all(color: colors.border),
       ),
       child: Row(
         children: [
@@ -936,9 +1029,7 @@ class _SosAlertDetailScreenState extends State<SosAlertDetailScreen> {
             width: 30,
             height: 30,
             decoration: BoxDecoration(
-              color: isDark
-                  ? AppColors.darkPrimaryContainer
-                  : AppColors.canvasCreamSubtle,
+              color: colors.surfaceSand,
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(icon, size: 15, color: color),
@@ -950,8 +1041,8 @@ class _SosAlertDetailScreenState extends State<SosAlertDetailScreen> {
               children: [
                 Text(
                   label,
-                  style: AppTypography.captionSmall.copyWith(
-                    color: bodyColor.withValues(alpha: 0.7),
+                  style: typography.labelSmall.copyWith(
+                    color: colors.textSecondary.withValues(alpha: 0.7),
                     fontSize: 10,
                     fontWeight: FontWeight.w500,
                   ),
@@ -959,8 +1050,8 @@ class _SosAlertDetailScreenState extends State<SosAlertDetailScreen> {
                 const SizedBox(height: 1),
                 Text(
                   value,
-                  style: AppTypography.bodySmall.copyWith(
-                    color: headingColor,
+                  style: typography.bodySmall.copyWith(
+                    color: colors.textPrimary,
                     fontWeight: FontWeight.w700,
                     fontSize: compact ? 12 : 12.5,
                   ),
@@ -975,7 +1066,10 @@ class _SosAlertDetailScreenState extends State<SosAlertDetailScreen> {
     );
   }
 
-  Widget _buildMiniMap(bool isDark, Color cardBg) {
+  Widget _buildMiniMap(BuildContext context) {
+    final colors = context.hc;
+    final typography = context.text;
+    final isDark = colors.isDark;
     final target = _targetLatLng;
     final initialCenter = target ?? const LatLng(21.4135, 39.8930);
 
@@ -1041,7 +1135,7 @@ class _SosAlertDetailScreenState extends State<SosAlertDetailScreen> {
                       Text(
                         'Menunggu data lokasi\ndari jamaah...',
                         textAlign: TextAlign.center,
-                        style: AppTypography.bodySmall.copyWith(
+                        style: typography.bodySmall.copyWith(
                           color: Colors.white70,
                         ),
                       ),
@@ -1067,7 +1161,7 @@ class _SosAlertDetailScreenState extends State<SosAlertDetailScreen> {
                   child: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: isDark ? AppColors.darkSurface : Colors.white,
+                      color: colors.surface,
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
@@ -1076,10 +1170,10 @@ class _SosAlertDetailScreenState extends State<SosAlertDetailScreen> {
                         ),
                       ],
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.my_location_rounded,
                       size: 18,
-                      color: AppColors.goldPrimary,
+                      color: colors.accent,
                     ),
                   ),
                 ),
@@ -1101,7 +1195,7 @@ class _StatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = isResolved ? AppColors.statusSafe : AppColors.sosEmergency;
+    final color = isResolved ? context.hc.success : context.hc.danger;
     final label = isResolved ? 'SELESAI' : status.toUpperCase();
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -1139,6 +1233,7 @@ class _SosPinMarker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final dangerColor = context.hc.danger;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -1146,12 +1241,12 @@ class _SosPinMarker extends StatelessWidget {
           width: 32,
           height: 32,
           decoration: BoxDecoration(
-            color: AppColors.sosEmergency,
+            color: dangerColor,
             shape: BoxShape.circle,
             border: Border.all(color: Colors.white, width: 2.5),
             boxShadow: [
               BoxShadow(
-                color: AppColors.sosEmergency.withValues(alpha: 0.5),
+                color: dangerColor.withValues(alpha: 0.5),
                 blurRadius: 10,
                 spreadRadius: 2,
               ),
@@ -1163,16 +1258,22 @@ class _SosPinMarker extends StatelessWidget {
             size: 18,
           ),
         ),
-        CustomPaint(size: const Size(10, 6), painter: _PinTailPainter()),
+        CustomPaint(
+          size: const Size(10, 6),
+          painter: _PinTailPainter(dangerColor),
+        ),
       ],
     );
   }
 }
 
 class _PinTailPainter extends CustomPainter {
+  final Color color;
+  const _PinTailPainter(this.color);
+
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()..color = AppColors.sosEmergency;
+    final paint = Paint()..color = color;
     final path = ui.Path()
       ..moveTo(0, 0)
       ..lineTo(size.width / 2, size.height)
@@ -1192,7 +1293,7 @@ class _LivePill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = isLive ? AppColors.statusSafe : AppColors.textMuted;
+    final color = isLive ? context.hc.success : context.hc.textMuted;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(

@@ -5,10 +5,9 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import '../../../core/services/app_alert_service.dart';
 import '../../../core/state/hajicare_controller.dart';
-import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
-import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/theme_context.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/utils/user_feedback_message.dart';
 import 'add_jamaah_dialog.dart';
@@ -24,13 +23,12 @@ class ActiveRoomCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final state = Get.find<HajiCareController>();
-    final isDark = AppColors.isDark(context);
-    final cardBg = isDark ? AppColors.darkSurface : AppColors.surfaceWhite;
-    final headingColor = isDark
-        ? AppColors.darkTextHeading
-        : AppColors.espressoDark;
-    final bodyColor = isDark ? AppColors.darkTextBody : AppColors.textBody;
-    final primaryColor = isDark ? AppColors.darkPrimary : AppColors.primaryGold;
+    final hc = context.hc;
+    final isDark = hc.isDark;
+    final cardBg = hc.surface;
+    final headingColor = hc.textPrimary;
+    final bodyColor = hc.textSecondary;
+    final primaryColor = hc.brand;
 
     return Obx(() {
       final room = state.activeRoom.value;
@@ -64,12 +62,7 @@ class ActiveRoomCard extends StatelessWidget {
               bottomRight: Radius.circular(24),
               topRight: Radius.circular(48),
             ),
-            border: Border.all(
-              color: isDark
-                  ? AppColors.darkOutlineVariant
-                  : const Color(0xFFF1F5F9),
-              width: 1.2,
-            ),
+            border: Border.all(color: hc.border, width: 1.2),
             boxShadow: [
               BoxShadow(
                 color: isDark
@@ -92,12 +85,12 @@ class ActiveRoomCard extends StatelessWidget {
                     width: 44,
                     height: 44,
                     decoration: BoxDecoration(
-                      color: AppColors.statusWarning.withValues(alpha: 0.15),
+                      color: hc.warningContainer,
                       borderRadius: BorderRadius.circular(14),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.meeting_room_rounded,
-                      color: AppColors.statusWarning,
+                      color: hc.warning,
                       size: 22,
                     ),
                   ),
@@ -150,9 +143,7 @@ class ActiveRoomCard extends StatelessWidget {
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 10),
                           foregroundColor: primaryColor,
-                          side: BorderSide(
-                            color: primaryColor.withValues(alpha: 0.5),
-                          ),
+                          side: BorderSide(color: hc.border),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(AppRadius.pill),
                           ),
@@ -174,9 +165,7 @@ class ActiveRoomCard extends StatelessWidget {
                         style: ElevatedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 10),
                           backgroundColor: primaryColor,
-                          foregroundColor: isDark
-                              ? AppColors.espressoDark
-                              : AppColors.surfaceWhite,
+                          foregroundColor: hc.onBrand,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(AppRadius.pill),
                           ),
@@ -202,9 +191,7 @@ class ActiveRoomCard extends StatelessWidget {
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       backgroundColor: primaryColor,
-                      foregroundColor: isDark
-                          ? AppColors.espressoDark
-                          : AppColors.surfaceWhite,
+                      foregroundColor: hc.onBrand,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(AppRadius.pill),
                       ),
@@ -216,6 +203,11 @@ class ActiveRoomCard extends StatelessWidget {
             ],
           ),
         );
+      }
+
+      // ── Syncing / Skeleton State (Memiliki Room Tapi Data Sedang Dimuat) ───
+      if (room == null) {
+        return ActiveRoomSkeletonCard(isDark: isDark);
       }
 
       // ── Connected State (Memiliki Room Aktif) ──────────────────────────────
@@ -230,12 +222,7 @@ class ActiveRoomCard extends StatelessWidget {
               52,
             ), // Signature modern curved top-right corner
           ),
-          border: Border.all(
-            color: isDark
-                ? AppColors.darkOutlineVariant
-                : const Color(0xFFF1F5F9),
-            width: 1.2,
-          ),
+          border: Border.all(color: hc.border, width: 1.2),
           boxShadow: [
             BoxShadow(
               color: isDark
@@ -268,9 +255,7 @@ class ActiveRoomCard extends StatelessWidget {
                             width: 3.5,
                             height: 36,
                             decoration: BoxDecoration(
-                              color: isDark
-                                  ? AppColors.goldLight
-                                  : AppColors.primaryGold,
+                              color: hc.brand,
                               borderRadius: BorderRadius.circular(2),
                             ),
                           ),
@@ -284,7 +269,7 @@ class ActiveRoomCard extends StatelessWidget {
                                   style: TextStyle(
                                     color: isDark
                                         ? Colors.white60
-                                        : const Color(0xFF64748B),
+                                        : hc.textSecondary,
                                     fontSize: 12,
                                     fontWeight: FontWeight.w500,
                                   ),
@@ -294,9 +279,7 @@ class ActiveRoomCard extends StatelessWidget {
                                   children: [
                                     Icon(
                                       Icons.meeting_room_rounded,
-                                      color: isDark
-                                          ? AppColors.goldLight
-                                          : AppColors.primaryGold,
+                                      color: hc.brand,
                                       size: 16,
                                     ),
                                     const SizedBox(width: 5),
@@ -320,21 +303,13 @@ class ActiveRoomCard extends StatelessWidget {
                                         vertical: 1.5,
                                       ),
                                       decoration: BoxDecoration(
-                                        color:
-                                            (isDark
-                                                    ? AppColors.goldLight
-                                                    : AppColors.primaryGold)
-                                                .withValues(
-                                                  alpha: isDark ? 0.25 : 0.14,
-                                                ),
+                                        color: hc.primaryContainer,
                                         borderRadius: BorderRadius.circular(4),
                                       ),
                                       child: Text(
                                         context.tr('room.active'),
                                         style: TextStyle(
-                                          color: isDark
-                                              ? AppColors.goldLight
-                                              : AppColors.goldDark,
+                                          color: hc.primary,
                                           fontSize: 10,
                                           fontWeight: FontWeight.w700,
                                         ),
@@ -358,9 +333,7 @@ class ActiveRoomCard extends StatelessWidget {
                             width: 3.5,
                             height: 36,
                             decoration: BoxDecoration(
-                              color: isDark
-                                  ? AppColors.darkSecondary
-                                  : AppColors.tanMedium,
+                              color: hc.sandDark,
                               borderRadius: BorderRadius.circular(2),
                             ),
                           ),
@@ -374,7 +347,7 @@ class ActiveRoomCard extends StatelessWidget {
                                   style: TextStyle(
                                     color: isDark
                                         ? Colors.white60
-                                        : const Color(0xFF64748B),
+                                        : hc.textSecondary,
                                     fontSize: 12,
                                     fontWeight: FontWeight.w500,
                                   ),
@@ -384,9 +357,7 @@ class ActiveRoomCard extends StatelessWidget {
                                   children: [
                                     Icon(
                                       Icons.verified_user_rounded,
-                                      color: isDark
-                                          ? AppColors.darkSecondary
-                                          : AppColors.tanMedium,
+                                      color: hc.sandDark,
                                       size: 16,
                                     ),
                                     const SizedBox(width: 5),
@@ -414,15 +385,13 @@ class ActiveRoomCard extends StatelessWidget {
                                         vertical: 1.5,
                                       ),
                                       decoration: BoxDecoration(
-                                        color: AppColors.statusSafe.withValues(
-                                          alpha: isDark ? 0.25 : 0.12,
-                                        ),
+                                        color: hc.successContainer,
                                         borderRadius: BorderRadius.circular(4),
                                       ),
                                       child: Text(
                                         context.tr('dashboard.standby'),
-                                        style: const TextStyle(
-                                          color: AppColors.statusSafe,
+                                        style: TextStyle(
+                                          color: hc.success,
                                           fontSize: 10,
                                           fontWeight: FontWeight.w700,
                                         ),
@@ -456,47 +425,49 @@ class ActiveRoomCard extends StatelessWidget {
                       child: SizedBox(
                         width: 106,
                         height: 106,
-                        child: CustomPaint(
-                          painter: _RoomCapacityGaugePainter(
-                            progress: (jamaahCount / 10.0).clamp(0.2, 1.0),
-                            trackColor: isDark
-                                ? AppColors.darkSurfaceContainerHighest
-                                : AppColors.canvasCreamSubtle,
-                            arcColor: isDark
-                                ? AppColors.goldLight
-                                : AppColors.goldPrimary,
-                            dotColor: isDark
-                                ? AppColors.accentGoldStar
-                                : AppColors.goldDark,
-                          ),
-                          child: Center(
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  '$jamaahCount',
-                                  style: TextStyle(
-                                    color: headingColor,
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.w800,
-                                    letterSpacing: -0.5,
-                                    height: 1.1,
+                        child: RepaintBoundary(
+                          child: CustomPaint(
+                            painter: _RoomCapacityGaugePainter(
+                              progress: (jamaahCount / 10.0).clamp(0.2, 1.0),
+                              trackColor: hc.surfaceSand,
+                              arcColor: hc.brand,
+                              dotColor: hc.brandAccent,
+                            ),
+                            child: Center(
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8),
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        '$jamaahCount',
+                                        style: TextStyle(
+                                          color: headingColor,
+                                          fontSize: 22,
+                                          fontWeight: FontWeight.w800,
+                                          letterSpacing: -0.5,
+                                          height: 1.1,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        isPendamping
+                                            ? context.tr('room.roleJamaah')
+                                            : context.tr('dashboard.members'),
+                                        style: TextStyle(
+                                          color: isDark
+                                              ? Colors.white60
+                                              : hc.textSecondary,
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  isPendamping
-                                      ? context.tr('room.roleJamaah')
-                                      : context.tr('dashboard.members'),
-                                  style: TextStyle(
-                                    color: isDark
-                                        ? Colors.white60
-                                        : const Color(0xFF64748B),
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
+                              ),
                             ),
                           ),
                         ),
@@ -509,14 +480,10 @@ class ActiveRoomCard extends StatelessWidget {
                           width: 32,
                           height: 32,
                           decoration: BoxDecoration(
-                            color: isDark
-                                ? AppColors.darkSurfaceContainer
-                                : AppColors.canvasCream,
+                            color: hc.surfaceSand,
                             shape: BoxShape.circle,
                             border: Border.all(
-                              color: isDark
-                                  ? AppColors.darkOutlineVariant
-                                  : AppColors.goldLight.withValues(alpha: 0.5),
+                              color: hc.borderSubtle,
                               width: 1,
                             ),
                           ),
@@ -530,9 +497,7 @@ class ActiveRoomCard extends StatelessWidget {
                         padding: EdgeInsets.zero,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(AppRadius.md),
-                          side: BorderSide(
-                            color: AppColors.cardBorderColor(context),
-                          ),
+                          side: BorderSide(color: hc.borderSubtle),
                         ),
                         color: cardBg,
                         elevation: 6,
@@ -569,16 +534,16 @@ class ActiveRoomCard extends StatelessWidget {
                             value: 'delete',
                             child: Row(
                               children: [
-                                const Icon(
+                                Icon(
                                   Icons.delete_forever_rounded,
                                   size: 20,
-                                  color: AppColors.sosEmergency,
+                                  color: hc.danger,
                                 ),
                                 const SizedBox(width: 10),
                                 Text(
                                   context.tr('room.deleteRoom'),
-                                  style: const TextStyle(
-                                    color: AppColors.sosEmergency,
+                                  style: TextStyle(
+                                    color: hc.danger,
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
@@ -596,18 +561,13 @@ class ActiveRoomCard extends StatelessWidget {
             const SizedBox(height: 18),
 
             // ── Horizontal Divider Line ─────────────────────────────
-            Divider(
-              height: 1,
-              color: isDark
-                  ? AppColors.darkCardBorder
-                  : const Color(0xFFE2E8F0),
-            ),
+            Divider(height: 1, color: hc.border),
 
             const SizedBox(height: 16),
 
             // ── Interactive Wavy Statistic: Radius Radar (Replaces Kode Room & linear bars) ──
             _RadarWaveStatisticWidget(
-              radius: room?.safeRadius ?? state.safeRadiusMeters.value,
+              radius: room.safeRadius,
               currentDistance: state.calculatedDistance.value,
               isDark: isDark,
               headingColor: headingColor,
@@ -616,134 +576,157 @@ class ActiveRoomCard extends StatelessWidget {
             const SizedBox(height: 18),
 
             // ── Action Buttons Footer ───────────────────────────────
-            if (isPendamping) ...[
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () => _showMemberListSheet(
-                        context,
-                        state: state,
-                        roomId: roomId,
-                        roomName: roomName,
-                        roomCode: roomCode,
-                      ),
-                      icon: const Icon(Icons.people_alt_rounded, size: 16),
-                      label: Text(
-                        context.tr('dashboard.pilgrimList'),
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        side: BorderSide(
-                          color: isDark
-                              ? AppColors.darkOutlineVariant
-                              : const Color(0xFFCBD5E1),
-                          width: 1.2,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.pill),
-                        ),
+            Builder(
+              builder: (context) {
+                final textScaler = MediaQuery.textScalerOf(context);
+                final isLargeScale = textScaler.scale(12) > 16.5;
+
+                final Widget leftBtn;
+                final Widget rightBtn;
+
+                if (isPendamping) {
+                  leftBtn = OutlinedButton.icon(
+                    onPressed: () => _showMemberListSheet(
+                      context,
+                      state: state,
+                      roomId: roomId,
+                      roomName: roomName,
+                      roomCode: roomCode,
+                    ),
+                    icon: const Icon(Icons.people_alt_rounded, size: 16),
+                    label: Text(
+                      context.tr('dashboard.pilgrimList'),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () => AddJamaahDialog.show(context, roomId),
-                      icon: const Icon(
-                        Icons.person_add_alt_1_rounded,
-                        size: 16,
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 10,
                       ),
-                      label: Text(
-                        context.tr('room.invitePilgrimNow'),
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        backgroundColor: primaryColor,
-                        foregroundColor: isDark
-                            ? AppColors.espressoDark
-                            : Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.pill),
-                        ),
-                        elevation: 0,
+                      minimumSize: const Size(0, 44),
+                      side: BorderSide(color: hc.border, width: 1.2),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
                       ),
                     ),
-                  ),
-                ],
-              ),
-            ] else ...[
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () {
-                        HapticFeedback.lightImpact();
-                        if (roomCode.isNotEmpty) {
-                          _showQrModal(context, roomName, roomCode);
-                        }
-                      },
-                      icon: const Icon(Icons.qr_code_2_rounded, size: 16),
-                      label: Text(
-                        context.tr('dashboard.qrRoom'),
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        side: BorderSide(
-                          color: isDark
-                              ? AppColors.darkOutlineVariant
-                              : const Color(0xFFCBD5E1),
-                          width: 1.2,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.pill),
-                        ),
+                  );
+
+                  rightBtn = ElevatedButton.icon(
+                    onPressed: () => AddJamaahDialog.show(context, roomId),
+                    icon: const Icon(Icons.person_add_alt_1_rounded, size: 16),
+                    label: Text(
+                      context.tr('dashboard.invitePilgrim'),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        HapticFeedback.lightImpact();
-                        Get.toNamed(AppRoutes.roomDetail, arguments: room);
-                      },
-                      icon: const Icon(Icons.meeting_room_rounded, size: 16),
-                      label: Text(
-                        context.tr('room.roomDetailTitle'),
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                        ),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 10,
                       ),
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        backgroundColor: isDark
-                            ? AppColors.darkPrimaryContainer
-                            : AppColors.espressoDark,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.pill),
-                        ),
-                        elevation: 0,
+                      minimumSize: const Size(0, 44),
+                      backgroundColor: primaryColor,
+                      foregroundColor: hc.onBrand,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
+                      ),
+                      elevation: 0,
+                    ),
+                  );
+                } else {
+                  leftBtn = OutlinedButton.icon(
+                    onPressed: () {
+                      HapticFeedback.lightImpact();
+                      if (roomCode.isNotEmpty) {
+                        _showQrModal(context, roomName, roomCode);
+                      }
+                    },
+                    icon: const Icon(Icons.qr_code_2_rounded, size: 16),
+                    label: Text(
+                      context.tr('dashboard.qrRoom'),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 10,
+                      ),
+                      minimumSize: const Size(0, 44),
+                      side: BorderSide(color: hc.border, width: 1.2),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
+                      ),
+                    ),
+                  );
+
+                  rightBtn = ElevatedButton.icon(
+                    onPressed: () {
+                      HapticFeedback.lightImpact();
+                      Get.toNamed(AppRoutes.roomDetail, arguments: room);
+                    },
+                    icon: const Icon(Icons.meeting_room_rounded, size: 16),
+                    label: Text(
+                      context.tr('room.roomDetailTitle'),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 10,
+                      ),
+                      minimumSize: const Size(0, 44),
+                      backgroundColor: primaryColor,
+                      foregroundColor: hc.onBrand,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
+                      ),
+                      elevation: 0,
+                    ),
+                  );
+                }
+
+                if (isLargeScale) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [leftBtn, const SizedBox(height: 8), rightBtn],
+                  );
+                }
+
+                return IntrinsicHeight(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Expanded(child: leftBtn),
+                      const SizedBox(width: 8),
+                      Expanded(child: rightBtn),
+                    ],
                   ),
-                ],
-              ),
-            ],
+                );
+              },
+            ),
           ],
         ),
       );
@@ -767,12 +750,10 @@ class ActiveRoomCard extends StatelessWidget {
     required String roomName,
     required String roomCode,
   }) {
-    final isDark = AppColors.isDark(context);
-    final cardBg = isDark ? AppColors.darkSurface : AppColors.surfaceWhite;
-    final headingColor = isDark
-        ? AppColors.darkTextHeading
-        : AppColors.espressoDark;
-    final bodyColor = isDark ? AppColors.darkTextBody : AppColors.textBody;
+    final hc = context.hc;
+    final cardBg = hc.surface;
+    final headingColor = hc.textPrimary;
+    final bodyColor = hc.textSecondary;
 
     showModalBottomSheet(
       context: context,
@@ -805,9 +786,7 @@ class ActiveRoomCard extends StatelessWidget {
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: isDark
-                          ? AppColors.darkOutlineVariant
-                          : AppColors.surfaceVariant,
+                      color: hc.borderSubtle,
                       borderRadius: BorderRadius.circular(AppRadius.pill),
                     ),
                   ),
@@ -821,7 +800,7 @@ class ActiveRoomCard extends StatelessWidget {
                       children: [
                         Text(
                           context.tr('dashboard.pilgrimsInRoom'),
-                          style: AppTypography.titleMedium.copyWith(
+                          style: context.text.titleMedium.copyWith(
                             color: headingColor,
                             fontWeight: FontWeight.bold,
                           ),
@@ -830,7 +809,7 @@ class ActiveRoomCard extends StatelessWidget {
                           context.tr('dashboard.pilgrimsRegisteredTapDetail', {
                             'count': '${jamaahList.length}',
                           }),
-                          style: AppTypography.captionSmall.copyWith(
+                          style: context.text.captionSmall.copyWith(
                             color: bodyColor,
                           ),
                         ),
@@ -843,7 +822,7 @@ class ActiveRoomCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                const Divider(height: 16),
+                Divider(height: 16, color: hc.borderSubtle),
                 if (jamaahList.isEmpty)
                   Expanded(
                     child: Center(
@@ -858,7 +837,7 @@ class ActiveRoomCard extends StatelessWidget {
                           const SizedBox(height: 12),
                           Text(
                             context.tr('dashboard.noRegisteredPilgrims'),
-                            style: AppTypography.bodyMedium.copyWith(
+                            style: context.text.bodyMedium.copyWith(
                               color: bodyColor,
                             ),
                           ),
@@ -882,7 +861,8 @@ class ActiveRoomCard extends StatelessWidget {
                   Expanded(
                     child: ListView.separated(
                       itemCount: jamaahList.length,
-                      separatorBuilder: (_, _) => const Divider(height: 1),
+                      separatorBuilder: (_, _) =>
+                          Divider(height: 1, color: hc.borderSubtle),
                       itemBuilder: (context, index) {
                         final j = jamaahList[index];
                         final initial = j.name.trim().isNotEmpty
@@ -910,7 +890,7 @@ class ActiveRoomCard extends StatelessWidget {
                               Expanded(
                                 child: Text(
                                   j.name,
-                                  style: AppTypography.bodyMedium.copyWith(
+                                  style: context.text.bodyMedium.copyWith(
                                     color: headingColor,
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -925,7 +905,7 @@ class ActiveRoomCard extends StatelessWidget {
                                     vertical: 2,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: AppColors.sosEmergency,
+                                    color: hc.danger,
                                     borderRadius: BorderRadius.circular(4),
                                   ),
                                   child: const Text(
@@ -953,7 +933,7 @@ class ActiveRoomCard extends StatelessWidget {
                               const SizedBox(width: 6),
                               Text(
                                 '${j.tier.label} • ${j.distance.toInt()}m',
-                                style: AppTypography.captionSmall.copyWith(
+                                style: context.text.captionSmall.copyWith(
                                   color: bodyColor,
                                 ),
                               ),
@@ -990,8 +970,9 @@ class ActiveRoomCard extends StatelessWidget {
     HajiCareController state,
     RoomModel room,
   ) {
-    final headingColor = AppColors.textHeadingColor(context);
-    final bodyColor = AppColors.textBodyColor(context);
+    final hc = context.hc;
+    final headingColor = hc.textPrimary;
+    final bodyColor = hc.textSecondary;
 
     bool isDeleting = false;
 
@@ -1001,22 +982,22 @@ class ActiveRoomCard extends StatelessWidget {
       builder: (dialogCtx) => StatefulBuilder(
         builder: (ctx, setDialogState) {
           return AlertDialog(
-            backgroundColor: AppColors.cardBgColor(context),
+            backgroundColor: hc.surface,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(AppRadius.sheet),
-              side: BorderSide(color: AppColors.cardBorderColor(context)),
+              side: BorderSide(color: hc.borderSubtle),
             ),
             title: Row(
               children: [
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: AppColors.sosEmergency.withValues(alpha: 0.12),
+                    color: hc.danger.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(AppRadius.md),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.warning_amber_rounded,
-                    color: AppColors.sosEmergency,
+                    color: hc.danger,
                     size: 24,
                   ),
                 ),
@@ -1024,7 +1005,7 @@ class ActiveRoomCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     context.tr('room.deleteRoomTitle'),
-                    style: AppTypography.titleMedium.copyWith(
+                    style: context.text.titleMedium.copyWith(
                       color: headingColor,
                       fontWeight: FontWeight.bold,
                     ),
@@ -1040,7 +1021,7 @@ class ActiveRoomCard extends StatelessWidget {
                   context.tr('room.deleteRoomDesc', {
                     'name': '${room.name} (${room.code})',
                   }),
-                  style: AppTypography.bodySmall.copyWith(
+                  style: context.text.bodySmall.copyWith(
                     color: bodyColor,
                     height: 1.4,
                   ),
@@ -1062,7 +1043,7 @@ class ActiveRoomCard extends StatelessWidget {
               ),
               ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.sosEmergency,
+                  backgroundColor: hc.danger,
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -1254,35 +1235,28 @@ class _RadarWaveStatisticWidgetState extends State<_RadarWaveStatisticWidget>
     return dist > widget.radius;
   }
 
-  Color get _waveColor {
+  Color _waveColor(HajiColors hc) {
     if (_isOutOfRadius) {
-      return const Color(0xFFEF4444);
+      return hc.danger;
     }
-    return widget.isDark
-        ? const Color(0xFF34D399)
-        : const Color(0xFF059669); // Crisp emerald in light mode
+    return hc.success;
   }
 
   @override
   Widget build(BuildContext context) {
+    final hc = context.hc;
     final effectiveRadius = widget.radius > 0 ? widget.radius : 500.0;
     final isWarning = _isOutOfRadius;
-    final waveColor = _waveColor;
+    final waveColor = _waveColor(hc);
     final hasDist =
         widget.currentDistance != null && widget.currentDistance! > 0;
     final displayDist = hasDist ? widget.currentDistance! : effectiveRadius;
 
     final badgeBg = isWarning
-        ? (widget.isDark
-              ? const Color(0xFF7F1D1D).withValues(alpha: 0.45)
-              : const Color(0xFFFEE2E2))
-        : (widget.isDark
-              ? const Color(0xFF064E3B).withValues(alpha: 0.45)
-              : const Color(0xFFD1FAE5));
+        ? hc.danger.withValues(alpha: widget.isDark ? 0.25 : 0.12)
+        : hc.success.withValues(alpha: widget.isDark ? 0.25 : 0.12);
 
-    final badgeTextColor = isWarning
-        ? const Color(0xFFEF4444)
-        : (widget.isDark ? const Color(0xFF34D399) : const Color(0xFF059669));
+    final badgeTextColor = isWarning ? hc.danger : hc.success;
 
     final badgeText = isWarning
         ? context.tr('dashboard.outOfRadiusBadge')
@@ -1296,29 +1270,32 @@ class _RadarWaveStatisticWidgetState extends State<_RadarWaveStatisticWidget>
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Row(
-              children: [
-                Icon(
-                  Icons.radar_rounded,
-                  size: 17,
-                  color: isWarning
-                      ? const Color(0xFFEF4444)
-                      : (widget.isDark
-                            ? AppColors.darkPrimary
-                            : AppColors.primaryGold),
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  context.tr('room.radarRadius'),
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: widget.headingColor,
-                    letterSpacing: -0.2,
+            Expanded(
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.radar_rounded,
+                    size: 17,
+                    color: isWarning ? hc.danger : hc.brand,
                   ),
-                ),
-              ],
+                  const SizedBox(width: 6),
+                  Flexible(
+                    child: Text(
+                      context.tr('room.radarRadius'),
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: widget.headingColor,
+                        letterSpacing: -0.2,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
             ),
+            const SizedBox(width: 8),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
               decoration: BoxDecoration(
@@ -1348,6 +1325,8 @@ class _RadarWaveStatisticWidgetState extends State<_RadarWaveStatisticWidget>
                       fontWeight: FontWeight.w700,
                       color: badgeTextColor,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),
@@ -1387,6 +1366,7 @@ class _RadarWaveStatisticWidgetState extends State<_RadarWaveStatisticWidget>
                         isTapped: _tapCtrl.isAnimating,
                         displayDistance: displayDist,
                         isDark: widget.isDark,
+                        textScaler: MediaQuery.textScalerOf(context),
                       ),
                       size: Size.infinite,
                     );
@@ -1410,6 +1390,7 @@ class _RadarWavePainter extends CustomPainter {
   final bool isTapped;
   final double displayDistance;
   final bool isDark;
+  final TextScaler textScaler;
 
   const _RadarWavePainter({
     required this.waveColor,
@@ -1418,6 +1399,7 @@ class _RadarWavePainter extends CustomPainter {
     required this.isTapped,
     required this.displayDistance,
     required this.isDark,
+    required this.textScaler,
   });
 
   @override
@@ -1550,6 +1532,7 @@ class _RadarWavePainter extends CustomPainter {
         ],
       ),
       textDirection: TextDirection.ltr,
+      textScaler: textScaler,
     )..layout();
 
     final xPos = w - valuePainter.width - 8;
@@ -1564,5 +1547,281 @@ class _RadarWavePainter extends CustomPainter {
       old.tapPhase != tapPhase ||
       old.isTapped != isTapped ||
       old.waveColor != waveColor ||
-      old.isDark != isDark;
+      old.isDark != isDark ||
+      old.textScaler != textScaler;
+}
+
+/// Shimmering skeleton loading card displayed when room is connected
+/// but activeRoom document data is still synchronizing from Firestore.
+class ActiveRoomSkeletonCard extends StatefulWidget {
+  final bool? isDark;
+
+  const ActiveRoomSkeletonCard({super.key, this.isDark});
+
+  @override
+  State<ActiveRoomSkeletonCard> createState() => _ActiveRoomSkeletonCardState();
+}
+
+class _ActiveRoomSkeletonCardState extends State<ActiveRoomSkeletonCard>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _animCtrl;
+  late final Animation<double> _pulseAnim;
+
+  @override
+  void initState() {
+    super.initState();
+    _animCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1100),
+    )..repeat(reverse: true);
+    _pulseAnim = CurvedAnimation(parent: _animCtrl, curve: Curves.easeInOut);
+  }
+
+  @override
+  void dispose() {
+    _animCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final hc = context.hc;
+    final dark = widget.isDark ?? hc.isDark;
+    final cardBg = hc.surface;
+    final primaryColor = hc.brand;
+    final headingColor = hc.textPrimary;
+
+    return AnimatedBuilder(
+      animation: _pulseAnim,
+      builder: (context, child) {
+        final shimmerAlpha = 0.25 + (_pulseAnim.value * 0.35);
+        final baseShimmerColor = dark
+            ? Colors.white.withValues(alpha: shimmerAlpha * 0.3)
+            : const Color(0xFFCBD5E1).withValues(alpha: shimmerAlpha);
+
+        return Container(
+          decoration: BoxDecoration(
+            color: cardBg,
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(24),
+              bottomLeft: Radius.circular(24),
+              bottomRight: Radius.circular(24),
+              topRight: Radius.circular(52),
+            ),
+            border: Border.all(color: hc.borderSubtle, width: 1.2),
+            boxShadow: [
+              BoxShadow(
+                color: dark
+                    ? Colors.black.withValues(alpha: 0.3)
+                    : const Color(0xFF1E293B).withValues(alpha: 0.05),
+                blurRadius: 16,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          padding: const EdgeInsets.fromLTRB(22, 22, 22, 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Top Row: 2 metrics on left + Gauge on right
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Room name item placeholder
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Container(
+                              width: 3.5,
+                              height: 36,
+                              decoration: BoxDecoration(
+                                color: hc.brand.withValues(alpha: shimmerAlpha),
+                                borderRadius: BorderRadius.circular(2),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Container(
+                                    width: 80,
+                                    height: 10,
+                                    decoration: BoxDecoration(
+                                      color: baseShimmerColor,
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Row(
+                                    children: [
+                                      Container(
+                                        width: 110,
+                                        height: 15,
+                                        decoration: BoxDecoration(
+                                          color: baseShimmerColor,
+                                          borderRadius: BorderRadius.circular(
+                                            4,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Container(
+                                        width: 42,
+                                        height: 14,
+                                        decoration: BoxDecoration(
+                                          color: primaryColor.withValues(
+                                            alpha: shimmerAlpha * 0.4,
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            4,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        // Companion item placeholder
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Container(
+                              width: 3.5,
+                              height: 36,
+                              decoration: BoxDecoration(
+                                color: hc.brandSecondary.withValues(
+                                  alpha: shimmerAlpha,
+                                ),
+                                borderRadius: BorderRadius.circular(2),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Container(
+                                    width: 95,
+                                    height: 10,
+                                    decoration: BoxDecoration(
+                                      color: baseShimmerColor,
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Row(
+                                    children: [
+                                      Container(
+                                        width: 100,
+                                        height: 14,
+                                        decoration: BoxDecoration(
+                                          color: baseShimmerColor,
+                                          borderRadius: BorderRadius.circular(
+                                            4,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Container(
+                                        width: 46,
+                                        height: 14,
+                                        decoration: BoxDecoration(
+                                          color: hc.success.withValues(
+                                            alpha: shimmerAlpha * 0.4,
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            4,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  // Circular gauge placeholder
+                  Container(
+                    width: 100,
+                    height: 100,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: baseShimmerColor, width: 4),
+                    ),
+                    child: Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation(
+                                primaryColor.withValues(alpha: 0.8),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 5),
+                          Text(
+                            context.tr('room.syncing'),
+                            style: TextStyle(
+                              color: headingColor.withValues(alpha: 0.7),
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Divider(height: 1, color: hc.borderSubtle),
+              const SizedBox(height: 14),
+              // Synchronizing message row
+              Row(
+                children: [
+                  Icon(
+                    Icons.sync_rounded,
+                    size: 15,
+                    color: primaryColor.withValues(alpha: 0.9),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      context.tr('room.syncingPleaseWait'),
+                      style: TextStyle(
+                        color: headingColor.withValues(alpha: 0.75),
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
 }

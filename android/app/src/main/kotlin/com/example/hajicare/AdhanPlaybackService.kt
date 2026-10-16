@@ -151,11 +151,12 @@ class AdhanPlaybackService : Service() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        // Action button to stop adhan immediately
-        val stopIntent = Intent(this, AdhanPlaybackService::class.java).apply {
-            action = ACTION_STOP
+        // Action button to stop adhan immediately via BroadcastReceiver
+        val stopIntent = Intent(this, AdhanAlarmReceiver::class.java).apply {
+            action = AdhanAlarmReceiver.ACTION_STOP_ADHAN
+            putExtra(AdhanAlarmReceiver.EXTRA_NOTIFICATION_ID, NOTIFICATION_ID)
         }
-        val stopPendingIntent = PendingIntent.getService(
+        val stopPendingIntent = PendingIntent.getBroadcast(
             this,
             1,
             stopIntent,
@@ -165,6 +166,11 @@ class AdhanPlaybackService : Service() {
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("Waktu Salat $prayerName Telah Tiba")
             .setContentText("Lantunan suara adzan sedang berkumandang")
+            .setStyle(
+                NotificationCompat.BigTextStyle()
+                    .setBigContentTitle("Waktu Salat $prayerName Telah Tiba")
+                    .bigText("Lantunan suara adzan sedang berkumandang. Ketuk 'Matikan Adzan' untuk mematikan suara.")
+            )
             .setSmallIcon(R.mipmap.launcher_icon)
             .setOngoing(true)
             .setAutoCancel(false)

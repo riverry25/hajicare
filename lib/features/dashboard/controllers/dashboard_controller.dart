@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import '../../../core/state/hajicare_controller.dart';
 
 /// Controller managing the dashboard navigation tabs and selected jamaah for pendamping.
 class DashboardController extends GetxController {
@@ -15,6 +16,10 @@ class DashboardController extends GetxController {
       if (tab is int && tab >= 0 && tab <= 3) {
         changeTab(tab);
       }
+    }
+    // Auto-start device GPS tracking for dashboard real-time metrics
+    if (Get.isRegistered<HajiCareController>()) {
+      Get.find<HajiCareController>().startLocationTracking();
     }
   }
 

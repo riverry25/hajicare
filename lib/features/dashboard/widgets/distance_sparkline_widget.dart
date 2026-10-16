@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/theme_context.dart';
 
 /// A distance-reactive sparkline widget for the Jamaah dashboard hero section.
 ///
@@ -9,9 +9,9 @@ import '../../../core/theme/app_colors.dart';
 /// whose shape and colour intensity dynamically reflect the Jamaah's real-time
 /// distance from their Pendamping:
 ///
-/// - **Near (< 50 m)**: tall, smooth wave — green tint — "all clear"
-/// - **Mid (50–300 m)**: medium wave — gold — normal monitoring range
-/// - **Far (> 300 m)**: low, flat wave — orange/red — attention needed
+/// - **Near (< 50 m)**: tall, smooth wave — sage safe tint — "all clear"
+/// - **Mid (50–300 m)**: medium wave — desert gold — normal monitoring range
+/// - **Far (> 300 m)**: low, flat wave — warm ochre / brick red — attention needed
 ///
 /// Tapping triggers a GPS location refresh with a ripple burst animation.
 class DistanceSparklineWidget extends StatefulWidget {
@@ -82,17 +82,18 @@ class _DistanceSparklineWidgetState extends State<DistanceSparklineWidget>
     }
   }
 
-  Color get _waveColor {
+  Color _resolveWaveColor(BuildContext context) {
     final d = widget.distance;
-    if (d <= 0) return AppColors.goldLight.withValues(alpha: 0.7);
-    if (d < 50) return const Color(0xFF6CDEA0);
-    if (d < 300) return AppColors.accentGoldStar;
-    if (d < 1000) return const Color(0xFFFFA040);
-    return const Color(0xFFFF6B6B);
+    if (d <= 0) return context.hc.textSecondary.withValues(alpha: 0.7);
+    if (d < 50) return context.hc.success;
+    if (d < 300) return context.hc.accent;
+    if (d < 1000) return context.hc.warning;
+    return context.hc.danger;
   }
 
   @override
   Widget build(BuildContext context) {
+    final waveColor = _resolveWaveColor(context);
     final buttonContent = SizedBox(
       width: widget.width,
       height: widget.height,
@@ -100,34 +101,36 @@ class _DistanceSparklineWidgetState extends State<DistanceSparklineWidget>
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
-          splashColor: _waveColor.withValues(alpha: 0.22),
-          highlightColor: _waveColor.withValues(alpha: 0.10),
+          splashColor: waveColor.withValues(alpha: 0.22),
+          highlightColor: waveColor.withValues(alpha: 0.10),
           onTap: _isSyncing ? null : _handleTap,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
-            child: AnimatedBuilder(
-              animation: Listenable.merge([_pulseCtrl, _syncCtrl]),
-              builder: (context, _) {
-                final opacity = _isSyncing
-                    ? 0.55 +
-                          0.45 *
-                              (0.5 +
-                                  0.5 * math.sin(_syncCtrl.value * 2 * math.pi))
-                    : 1.0;
+            child: RepaintBoundary(
+              child: AnimatedBuilder(
+                animation: Listenable.merge([_pulseCtrl, _syncCtrl]),
+                builder: (context, _) {
+                  final opacity = _isSyncing
+                      ? 0.55 +
+                            0.45 *
+                                (0.5 +
+                                    0.5 *
+                                        math.sin(_syncCtrl.value * 2 * math.pi))
+                      : 1.0;
 
-                return Opacity(
-                  opacity: opacity,
-                  child: CustomPaint(
+                  return CustomPaint(
                     painter: _DistanceWavePainter(
                       distance: widget.distance,
-                      waveColor: _waveColor,
+                      waveColor: waveColor.withValues(
+                        alpha: waveColor.a * opacity,
+                      ),
                       pulsePhase: _pulseCtrl.value,
                       syncPhase: _isSyncing ? _syncCtrl.value : 0.0,
                       isSyncing: _isSyncing,
                     ),
-                  ),
-                );
-              },
+                  );
+                },
+              ),
             ),
           ),
         ),

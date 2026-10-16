@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:video_player/video_player.dart';
 import '../../translator/services/speech_service.dart';
@@ -148,10 +150,29 @@ class TextToSignController extends GetxController {
   VideoPlayerController? _playerController;
   VideoPlayerController? get playerController => _playerController;
 
+  String? _activePlayingVideoId;
+  String? get activePlayingVideoId => _activePlayingVideoId;
+  int _playSessionId = 0;
+
   final RxBool isVideoInitialized = false.obs;
   final RxBool isVideoPlaying = false.obs;
   final Rx<Duration> videoPosition = Duration.zero.obs;
   final Rx<Duration> videoDuration = Duration.zero.obs;
+
+  // ── SPEED PLAYBACK STATE ─────────────────────────────────────────────────
+  static const List<double> supportedPlaybackSpeeds = [
+    0.5,
+    0.75,
+    1.0,
+    1.25,
+    1.5,
+    2.0,
+  ];
+
+  final RxDouble playbackSpeed = 1.0.obs;
+  final RxBool showSpeedOverlay = false.obs;
+  final RxString speedOverlayText = ''.obs;
+  Timer? _speedOverlayTimer;
 
   // ── CATEGORY PACKAGE DOWNLOAD STATE ──────────────────────────────────────
   final RxMap<String, double> categoryDownloadProgress = <String, double>{}.obs;
@@ -166,6 +187,7 @@ class TextToSignController extends GetxController {
 
   @override
   void onClose() {
+    _speedOverlayTimer?.cancel();
     _disposePlayer();
     _speechService?.dispose();
     textController.dispose();
@@ -354,14 +376,18 @@ class TextToSignController extends GetxController {
 
   /// Memutar video berdasarkan status source (asset vs localCached vs remote).
   Future<void> playEntry(SignVideoEntry entry, {bool force = false}) async {
+    final currentSession = ++_playSessionId;
+
     // 1. Selesaikan status sumber aktual
     final resolved = await _repository.resolveVideoSource(entry);
+
+    if (currentSession != _playSessionId) return;
 
     // Jika video yang sama sudah diinisialisasi dan aktif, jangan dispose & reload
     if (!force &&
         _playerController != null &&
         isVideoInitialized.value &&
-        currentEntry.value?.id == resolved.id) {
+        _activePlayingVideoId == resolved.id) {
       if (!isVideoPlaying.value) {
         await _playerController?.play();
       }
@@ -394,14 +420,25 @@ class TextToSignController extends GetxController {
       }
 
       await controller.initialize();
+      if (currentSession != _playSessionId) {
+        controller.dispose();
+        return;
+      }
+
       controller.setLooping(true);
 
       // Listen posisi & status
       controller.addListener(_videoPlayerListener);
 
       _playerController = controller;
+      _activePlayingVideoId = resolved.id;
       isVideoInitialized.value = true;
       videoDuration.value = controller.value.duration;
+
+      // Pertahankan playback speed yang telah dipilih pengguna
+      if (playbackSpeed.value != 1.0) {
+        await controller.setPlaybackSpeed(playbackSpeed.value);
+      }
 
       // Otomatis play
       await controller.play();
@@ -410,9 +447,11 @@ class TextToSignController extends GetxController {
           ? 'Tersedia offline (Aset Bawaan)'
           : 'Tersedia offline (Tersimpan di HP)';
     } catch (e) {
-      debugPrint('[TextToSignCtrl] playEntry error: $e');
-      errorMessage.value = 'Gagal memutar video: $e';
-      _disposePlayer();
+      if (currentSession == _playSessionId) {
+        debugPrint('[TextToSignCtrl] playEntry error: $e');
+        errorMessage.value = 'Gagal memutar video: $e';
+        _disposePlayer();
+      }
     }
   }
 
@@ -436,14 +475,88 @@ class TextToSignController extends GetxController {
     }
   }
 
-  /// Replay video dari awal.
+  /// Replay video dari awal dengan mempertahankan kecepatan putar.
   Future<void> replay() async {
     final controller = _playerController;
     if (controller == null || !controller.value.isInitialized) return;
 
     await controller.seekTo(Duration.zero);
+    if (playbackSpeed.value != 1.0) {
+      await controller.setPlaybackSpeed(playbackSpeed.value);
+    }
     await controller.play();
   }
+
+  /// Mengatur kecepatan putar video (playback speed).
+  Future<void> setPlaybackSpeed(double speed) async {
+    final clamped = supportedPlaybackSpeeds.contains(speed)
+        ? speed
+        : (supportedPlaybackSpeeds.firstWhere(
+            (s) => s >= speed,
+            orElse: () => 1.0,
+          ));
+
+    playbackSpeed.value = clamped;
+    final speedStr = clamped == clamped.toInt()
+        ? '${clamped.toInt()}.0x'
+        : '${clamped}x';
+    speedOverlayText.value = speedStr;
+    showSpeedOverlay.value = true;
+
+    _speedOverlayTimer?.cancel();
+    _speedOverlayTimer = Timer(const Duration(milliseconds: 1300), () {
+      showSpeedOverlay.value = false;
+    });
+
+    final player = _playerController;
+    if (player != null && player.value.isInitialized) {
+      try {
+        await player.setPlaybackSpeed(clamped);
+      } catch (e) {
+        debugPrint('[TextToSignCtrl] setPlaybackSpeed error: $e');
+      }
+    }
+  }
+
+  /// Memperlambat pemutaran video ke tingkat kecepatan sebelumnya (0.5x min).
+  void slowDown() {
+    final current = playbackSpeed.value;
+    final index = supportedPlaybackSpeeds.indexOf(current);
+    if (index > 0) {
+      HapticFeedback.lightImpact();
+      setPlaybackSpeed(supportedPlaybackSpeeds[index - 1]);
+    } else if (index == -1) {
+      final prev = supportedPlaybackSpeeds.lastWhere(
+        (s) => s < current,
+        orElse: () => supportedPlaybackSpeeds.first,
+      );
+      HapticFeedback.lightImpact();
+      setPlaybackSpeed(prev);
+    }
+  }
+
+  /// Mempercepat pemutaran video ke tingkat kecepatan berikutnya (2.0x max).
+  void speedUp() {
+    final current = playbackSpeed.value;
+    final index = supportedPlaybackSpeeds.indexOf(current);
+    if (index != -1 && index < supportedPlaybackSpeeds.length - 1) {
+      HapticFeedback.lightImpact();
+      setPlaybackSpeed(supportedPlaybackSpeeds[index + 1]);
+    } else if (index == -1) {
+      final next = supportedPlaybackSpeeds.firstWhere(
+        (s) => s > current,
+        orElse: () => supportedPlaybackSpeeds.last,
+      );
+      HapticFeedback.lightImpact();
+      setPlaybackSpeed(next);
+    }
+  }
+
+  /// Apakah kecepatan video bisa diperlambat lagi (belum di batas minimum 0.5x).
+  bool get canSlowDown => playbackSpeed.value > supportedPlaybackSpeeds.first;
+
+  /// Apakah kecepatan video bisa dipercepat lagi (belum di batas maksimum 2.0x).
+  bool get canSpeedUp => playbackSpeed.value < supportedPlaybackSpeeds.last;
 
   /// Seek ke durasi tertentu.
   Future<void> seekTo(Duration position) async {
@@ -459,6 +572,7 @@ class TextToSignController extends GetxController {
       _playerController!.dispose();
       _playerController = null;
     }
+    _activePlayingVideoId = null;
     isVideoInitialized.value = false;
     isVideoPlaying.value = false;
     videoPosition.value = Duration.zero;
@@ -736,6 +850,7 @@ class TextToSignController extends GetxController {
 
   /// Memilih item kosakata dari daftar: mengisi teks, menyiapkan hasil, dan memutar/meminta unduh
   Future<void> selectVocabularyItem(SignVideoEntry video) async {
+    _lastSearchedQuery = video.label;
     textController.text = video.label;
     currentQuery.value = video.label;
     currentEntry.value = video;

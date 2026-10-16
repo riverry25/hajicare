@@ -67,6 +67,22 @@ enum CurrencyCode {
     }
   }
 
+  /// Spoken currency name based on active language ('id' or 'en').
+  String spokenNameIn([String? langCode]) {
+    final isEn = langCode?.toLowerCase() == 'en';
+    if (isEn) {
+      switch (this) {
+        case CurrencyCode.sar:
+          return 'Saudi Riyal';
+        case CurrencyCode.idr:
+          return 'Indonesian Rupiah';
+        case CurrencyCode.usd:
+          return 'US Dollar';
+      }
+    }
+    return spokenName;
+  }
+
   /// Parses a string representation (e.g. 'SAR', 'sar', 'idr', 'USD') into [CurrencyCode].
   static CurrencyCode? tryParse(String? value) {
     if (value == null) return null;

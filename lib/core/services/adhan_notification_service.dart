@@ -357,6 +357,18 @@ class AdhanNotificationService {
         notificationDetails: notificationDetails,
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       );
+
+      // Redundant native Android AlarmManager scheduling for deep Doze mode compatibility
+      if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+        unawaited(
+          AdhanNativeBridge.scheduleNativeAdhan(
+            id: id,
+            prayerName: prayerName,
+            scheduledTime: scheduledTime,
+            isSubuh: isSubuh,
+          ),
+        );
+      }
     } catch (e) {
       debugPrint(
         '[AdhanNotificationService] [ERROR] Failed to schedule adhan for $prayerName (ID: $id): $e',

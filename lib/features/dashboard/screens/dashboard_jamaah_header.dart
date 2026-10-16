@@ -10,6 +10,8 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
     required bool isDark,
   }) {
     final topInset = MediaQuery.paddingOf(context).top;
+    final heroFg = context.hc.dashboardHeroOnSurface;
+    final heroAccent = context.hc.dashboardHeroAccent;
 
     // Formatting Firebase Data
     final displayName = jamaah.name.trim().isNotEmpty
@@ -20,8 +22,6 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
     final initialLetter = displayName.isNotEmpty
         ? displayName[0].toUpperCase()
         : 'J';
-
-    // Money Recognition shortcut (replaces Nomor Porsi — not available in Firebase)
 
     // Distance formatting (Promoted to Hero Display)
     final hasRoom =
@@ -62,34 +62,36 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
           // ── Header Bar: User Greeting & Notification / SOS ───────
           Row(
             children: [
-              // User Avatar
+              // User Avatar (Glassmorphic)
               Container(
                 width: 46,
                 height: 46,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(15),
+                  borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: AppColors.goldLight.withValues(alpha: 0.6),
-                    width: 1.5,
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.18)
+                        : Colors.white.withValues(alpha: 0.85),
+                    width: 1.2,
                   ),
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFFD4A857), Color(0xFFA67C52)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.10)
+                      : Colors.white.withValues(alpha: 0.65),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.2),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
+                      color: Colors.black.withValues(
+                        alpha: isDark ? 0.35 : 0.05,
+                      ),
+                      blurRadius: 10,
+                      offset: const Offset(0, 3),
                     ),
                   ],
                 ),
                 child: Center(
                   child: Text(
                     initialLetter,
-                    style: const TextStyle(
-                      color: Color(0xFF2E1C12),
+                    style: TextStyle(
+                      color: heroAccent,
                       fontWeight: FontWeight.w800,
                       fontSize: 19,
                     ),
@@ -106,7 +108,7 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
                     Text(
                       context.tr('dashboard.greeting'),
                       style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.72),
+                        color: heroFg.withValues(alpha: 0.72),
                         fontSize: 12.5,
                         fontWeight: FontWeight.w500,
                       ),
@@ -114,8 +116,8 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
                     const SizedBox(height: 1),
                     Text(
                       displayName,
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: heroFg,
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
                         letterSpacing: -0.2,
@@ -129,8 +131,8 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
                         'kloter': jamaah.kloter ?? '12',
                         'maktab': jamaah.maktab ?? '48',
                       }),
-                      style: const TextStyle(
-                        color: AppColors.goldLight,
+                      style: TextStyle(
+                        color: heroAccent,
                         fontSize: 11.5,
                         fontWeight: FontWeight.w600,
                       ),
@@ -156,8 +158,8 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
                   children: [
                     Text(
                       distanceDisplay,
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: heroFg,
                         fontSize: 32,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 0.5,
@@ -171,25 +173,32 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
                         vertical: 3.5,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.16),
+                        color: heroFg.withValues(alpha: isDark ? 0.10 : 0.16),
                         borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: heroFg.withValues(alpha: 0.20),
+                          width: 1,
+                        ),
                       ),
                       child: Text(
                         hasRoom
-                            ? context.tr('dashboard.officerDistance')
+                            ? (state.nearestPendamping.value != null
+                                  ? '${context.tr('room.nearestCompanion')}: ${state.nearestPendamping.value!.name}'
+                                  : context.tr('dashboard.officerDistance'))
                             : context.tr('dashboard.notConnectedToRoom'),
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: heroFg,
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],
                 ),
               ),
 
-              // Sync / Refresh Location Circular Button with spinning animation
               // Distance-reactive sparkline wave (replaces static sync button)
               DistanceSparklineWidget(
                 distance: hasRoom ? realDistance : 0.0,
@@ -217,7 +226,7 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
           const SizedBox(height: 18),
 
           // ── Subtle Dotted / Dashed Divider ───────────────────────
-          _buildDashedLine(Colors.white.withValues(alpha: 0.20)),
+          _buildDashedLine(heroFg.withValues(alpha: 0.22)),
 
           const SizedBox(height: 16),
 
@@ -227,10 +236,12 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               _buildMetricColumn(
+                context: context,
                 value: '$prayerName $cleanPrayerTime',
                 label: context.tr('dashboard.prayerSchedule'),
               ),
               _buildMetricColumn(
+                context: context,
                 value: gpsDisplay,
                 label: context.tr('dashboard.locationStatus'),
               ),
@@ -240,16 +251,27 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
 
           const SizedBox(height: 22),
 
-          // ── Segmented Dual-Action Pill Button ────────────────────
+          // ── Segmented Dual-Action Pill Button (Frosted Glassmorphism) ──
           Container(
             height: 52,
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.12),
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.10)
+                  : Colors.white.withValues(alpha: 0.68),
               borderRadius: BorderRadius.circular(26),
               border: Border.all(
-                color: Colors.white.withValues(alpha: 0.22),
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.18)
+                    : Colors.white.withValues(alpha: 0.88),
                 width: 1.2,
               ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
+                ),
+              ],
             ),
             child: Row(
               children: [
@@ -300,16 +322,16 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.north_west_rounded,
-                              color: Colors.white,
+                              color: heroFg,
                               size: 16,
                             ),
                             const SizedBox(width: 7),
                             Text(
                               context.tr('dashboard.trackOfficer'),
-                              style: const TextStyle(
-                                color: Colors.white,
+                              style: TextStyle(
+                                color: heroFg,
                                 fontSize: 13,
                                 fontWeight: FontWeight.w700,
                               ),
@@ -322,11 +344,7 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
                 ),
 
                 // Dashed vertical separator
-                Container(
-                  width: 1,
-                  height: 24,
-                  color: Colors.white.withValues(alpha: 0.25),
-                ),
+                Container(width: 1, height: 24, color: context.hc.border),
 
                 // Right Pill: Bantuan Darurat (SOS)
                 Expanded(
@@ -361,27 +379,16 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
                         child: Ink(
                           decoration: BoxDecoration(
                             gradient: hasSos
-                                ? const LinearGradient(
+                                ? LinearGradient(
                                     colors: [
-                                      Color(0xFFFF1744),
-                                      Color(0xFFD50000),
+                                      context.hc.danger,
+                                      context.hc.dangerContainer,
                                     ],
                                   )
                                 : null,
                             borderRadius: const BorderRadius.horizontal(
                               right: Radius.circular(26),
                             ),
-                            boxShadow: hasSos
-                                ? [
-                                    BoxShadow(
-                                      color: const Color(
-                                        0xFFFF1744,
-                                      ).withValues(alpha: 0.5),
-                                      blurRadius: 10,
-                                      spreadRadius: 1,
-                                    ),
-                                  ]
-                                : null,
                           ),
                           child: Center(
                             child: Row(
@@ -403,8 +410,10 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
                                                 'dashboard.sosActiveUpper',
                                               ))
                                       : context.tr('dashboard.emergencyHelp'),
-                                  style: const TextStyle(
-                                    color: Colors.white,
+                                  style: TextStyle(
+                                    color: hasSos
+                                        ? Colors.white
+                                        : context.hc.textPrimary,
                                     fontSize: 13,
                                     fontWeight: FontWeight.w700,
                                   ),
@@ -414,7 +423,9 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
                                   hasSos
                                       ? Icons.arrow_forward_rounded
                                       : Icons.north_east_rounded,
-                                  color: Colors.white,
+                                  color: hasSos
+                                      ? Colors.white
+                                      : context.hc.textPrimary,
                                   size: 16,
                                 ),
                               ],
@@ -447,23 +458,38 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
           width: 44,
           height: 44,
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.12),
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.10)
+                : Colors.white.withValues(alpha: 0.65),
             shape: BoxShape.circle,
             border: Border.all(
-              color: Colors.white.withValues(alpha: 0.20),
-              width: 1.0,
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.18)
+                  : Colors.white.withValues(alpha: 0.85),
+              width: 1.2,
             ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: isDark ? 0.30 : 0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
+              ),
+            ],
           ),
-          child: IconButton(
-            constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
-            padding: EdgeInsets.zero,
-            icon: const Icon(
-              Icons.notifications_outlined,
-              color: Colors.white,
-              size: 22,
+          child: Material(
+            color: Colors.transparent,
+            shape: const CircleBorder(),
+            child: IconButton(
+              constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+              padding: EdgeInsets.zero,
+              icon: Icon(
+                Icons.notifications_outlined,
+                color: context.hc.dashboardHeroOnSurface,
+                size: 22,
+              ),
+              tooltip: context.tr('notificationTooltip'),
+              onPressed: () => Get.toNamed(AppRoutes.notification),
             ),
-            tooltip: context.tr('notificationTooltip'),
-            onPressed: () => Get.toNamed(AppRoutes.notification),
           ),
         ),
         Obx(() {
@@ -479,24 +505,22 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
           if (totalUnread <= 0 && !hasSeparated) return const SizedBox.shrink();
 
           return Positioned(
-            top: 4,
-            right: 4,
+            top: 2,
+            right: 2,
             child: Container(
-              width: 10,
-              height: 10,
+              width: 11,
+              height: 11,
               decoration: BoxDecoration(
-                color: hasSeparated
-                    ? AppColors.sosEmergency
-                    : const Color(0xFF00E5FF),
+                color: hasSeparated ? context.hc.danger : context.hc.info,
                 shape: BoxShape.circle,
-                border: Border.all(color: const Color(0xFF2E1C12), width: 1.5),
+                border: Border.all(
+                  color: isDark ? const Color(0xFF1E1510) : Colors.white,
+                  width: 2.0,
+                ),
                 boxShadow: [
                   BoxShadow(
-                    color:
-                        (hasSeparated
-                                ? AppColors.sosEmergency
-                                : const Color(0xFF00E5FF))
-                            .withValues(alpha: 0.6),
+                    color: (hasSeparated ? context.hc.danger : context.hc.info)
+                        .withValues(alpha: 0.55),
                     blurRadius: 6,
                     spreadRadius: 1,
                   ),
@@ -511,6 +535,7 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
 
   // ── Money Recognition Metric (Scanner Icon Shortcut) ────────────────────
   Widget _buildMoneyRecognitionMetric(BuildContext context) {
+    final colors = context.hc;
     return Expanded(
       child: Align(
         alignment: Alignment.center,
@@ -520,8 +545,8 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
             Get.toNamed(AppRoutes.moneyRecognition);
           },
           borderRadius: BorderRadius.circular(12),
-          splashColor: Colors.white.withValues(alpha: 0.12),
-          highlightColor: Colors.white.withValues(alpha: 0.06),
+          splashColor: colors.accent.withValues(alpha: 0.15),
+          highlightColor: colors.accent.withValues(alpha: 0.08),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
@@ -532,17 +557,26 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
                 width: 34,
                 height: 34,
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.14),
+                  color: colors.isDark
+                      ? colors.surfaceSand
+                      : Colors.white.withValues(alpha: 0.9),
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: AppColors.goldLight.withValues(alpha: 0.6),
-                    width: 1.0,
+                    color: colors.accent.withValues(alpha: 0.5),
+                    width: 1.2,
                   ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: colors.accent.withValues(alpha: 0.15),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
-                child: const Center(
+                child: Center(
                   child: Icon(
                     Icons.document_scanner_outlined,
-                    color: AppColors.goldLight,
+                    color: colors.accentText,
                     size: 18,
                   ),
                 ),
@@ -552,9 +586,9 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
                 context.tr('dashboard.scanRiyal'),
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.75),
+                  color: colors.textSecondary,
                   fontSize: 11,
-                  fontWeight: FontWeight.w500,
+                  fontWeight: FontWeight.w600,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -567,7 +601,12 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
   }
 
   // ── Metric Item Column Helper ─────────────────────────────────────────────
-  Widget _buildMetricColumn({required String value, required String label}) {
+  Widget _buildMetricColumn({
+    required BuildContext context,
+    required String value,
+    required String label,
+  }) {
+    final colors = context.hc;
     return Expanded(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -577,8 +616,8 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
           Text(
             value,
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: Colors.white,
+            style: TextStyle(
+              color: colors.textPrimary,
               fontSize: 16,
               fontWeight: FontWeight.w800,
               letterSpacing: -0.2,
@@ -591,7 +630,7 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
             label,
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.65),
+              color: colors.textSecondary,
               fontSize: 11,
               fontWeight: FontWeight.w500,
             ),

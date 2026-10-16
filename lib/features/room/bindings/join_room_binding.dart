@@ -5,6 +5,6 @@ import '../controllers/join_room_controller.dart';
 class JoinRoomBinding extends Bindings {
   @override
   void dependencies() {
-    Get.lazyPut<JoinRoomController>(() => JoinRoomController());
+    Get.lazyPut<JoinRoomController>(() => JoinRoomController(), fenix: true);
   }
 }

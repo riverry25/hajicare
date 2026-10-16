@@ -135,6 +135,7 @@ class PrayerTimesController extends GetxController {
   DateTime? _lastScheduleCalculationDate;
   double? _lastGeocodedLat;
   double? _lastGeocodedLng;
+  bool _hasCompletedInitialScheduleSync = false;
 
   Timer? _countdownTimer;
   StreamSubscription<CompassEvent>? _compassSubscription;
@@ -165,6 +166,7 @@ class PrayerTimesController extends GetxController {
     await loadInitialLocationAndSchedule();
     if (!_isCurrent(generation)) return;
 
+    _hasCompletedInitialScheduleSync = true;
     _startCountdownTimer();
     _listenToLocationUpdates();
   }
@@ -457,6 +459,14 @@ class PrayerTimesController extends GetxController {
         includeTimeZone: true,
       );
 
+      // On initial cold launch, pre-populate _lastPlayedAdhanKey so entering the app never sounds adhan
+      if (!_hasCompletedInitialScheduleSync) {
+        final key = _normalizePrayerKey(result.nextPrayerName);
+        final targetTime = result.nextPrayerTime;
+        _lastPlayedAdhanKey =
+            '${key}_${targetTime.year}_${targetTime.month}_${targetTime.day}_${targetTime.hour}_${targetTime.minute}';
+      }
+
       _updateCountdownDifference();
       _updateQiblaOffset(deviceHeading.value);
       _syncUpcomingPrayerAlarms();
@@ -501,7 +511,11 @@ class PrayerTimesController extends GetxController {
 
     // If next prayer time has arrived or passed, trigger adhan & recalculate schedule
     if (diff.isNegative || diff.inSeconds <= 0) {
-      if (nextPrayerName.value.isNotEmpty && _targetNextPrayerTime != null) {
+      // ONLY trigger adhan audio if the app was ALREADY running and counting down to this prayer,
+      // NEVER upon cold start or opening the app!
+      if (_hasCompletedInitialScheduleSync &&
+          nextPrayerName.value.isNotEmpty &&
+          _targetNextPrayerTime != null) {
         _triggerAdhanIfEligible(nextPrayerName.value, _targetNextPrayerTime!);
       }
       _calculateScheduleAndQibla();
@@ -795,6 +809,7 @@ class PrayerTimesController extends GetxController {
   ) async {
     final key = _normalizePrayerKey(prayerName);
     if (key == 'terbit' || key == 'sunrise') return;
+    if (!_hasCompletedInitialScheduleSync) return;
 
     final triggerKey =
         '${key}_${targetTime.year}_${targetTime.month}_${targetTime.day}_${targetTime.hour}_${targetTime.minute}';
@@ -803,8 +818,8 @@ class PrayerTimesController extends GetxController {
     }
 
     final now = DateTime.now();
-    // Only play if within 2 minutes of the prayer time (avoid playing stale past adhan)
-    if (now.difference(targetTime).inMinutes.abs() > 2) {
+    // Only play if within 45 seconds of the prayer time (avoid playing stale past adhan)
+    if (now.difference(targetTime).inSeconds.abs() > 45) {
       return;
     }
 

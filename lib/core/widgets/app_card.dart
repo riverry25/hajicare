@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../theme/app_colors.dart';
 import '../theme/app_radius.dart';
 import '../theme/app_spacing.dart';
+import '../theme/theme_context.dart';
 
 class AppCard extends StatelessWidget {
   final Widget child;
@@ -27,31 +27,22 @@ class AppCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final effectivePadding = padding ?? const EdgeInsets.all(AppSpacing.lg);
-    final effectiveRadius = borderRadius ?? AppRadius.lg;
-    final isDark = AppColors.isDark(context);
+    final hc = context.hc;
+    final effectivePadding = padding ?? const EdgeInsets.all(AppSpacing.s16);
+    final effectiveRadius = borderRadius ?? AppRadius.card;
 
     final content = Container(
       margin: margin,
       padding: effectivePadding,
       decoration: BoxDecoration(
-        color: backgroundColor ?? AppColors.surfaceColor(context),
+        color: backgroundColor ?? hc.surface,
         borderRadius: BorderRadius.circular(effectiveRadius),
-        border: Border.all(
-          color:
-              borderColor ??
-              (isDark
-                  ? AppColors.darkOutlineVariant
-                  : AppColors.canvasCreamSubtle),
-          width: 1.0,
-        ),
+        border: Border.all(color: borderColor ?? hc.border, width: 1.0),
         boxShadow:
             boxShadow ??
             [
               BoxShadow(
-                color: isDark
-                    ? Colors.black.withValues(alpha: 0.25)
-                    : AppColors.primary.withValues(alpha: 0.04),
+                color: hc.shadow,
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),

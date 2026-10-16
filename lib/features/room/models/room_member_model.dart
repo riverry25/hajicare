@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'room_model.dart';
 
 /// Data model representing a member inside `rooms/{roomId}/members/{uid}`.
 class RoomMemberModel {
@@ -24,6 +25,17 @@ class RoomMemberModel {
   bool get isPendamping => role.toLowerCase() == 'pendamping';
   bool get isJamaah => role.toLowerCase() == 'jamaah';
   bool get isAdmin => role.toLowerCase() == 'admin';
+
+  bool isPrimaryOwner(RoomModel? room) => room != null && uid == room.createdBy;
+
+  bool isCoOwner(RoomModel? room) =>
+      room != null &&
+      room.coOwnerId != null &&
+      room.coOwnerId!.isNotEmpty &&
+      uid == room.coOwnerId;
+
+  bool isOwnerOrCoOwner(RoomModel? room) =>
+      isPrimaryOwner(room) || isCoOwner(room);
 
   double? get latitude => currentLocation?.latitude;
   double? get longitude => currentLocation?.longitude;

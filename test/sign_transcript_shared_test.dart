@@ -8,10 +8,11 @@ class _FakeTts extends BisindoTtsService {
   final List<String> spoken = [];
 
   @override
-  Future<void> initialize() async {}
+  Future<void> initialize({String? languageCode}) async {}
 
   @override
-  Future<void> speak(String text) async => spoken.add(text);
+  Future<void> speak(String text, {String? languageCode}) async =>
+      spoken.add(text);
 
   @override
   Future<void> stop() async {}

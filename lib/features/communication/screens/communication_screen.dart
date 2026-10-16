@@ -3,10 +3,10 @@ import 'package:get/get.dart';
 
 import '../../../core/constants/app_constants.dart';
 import '../../../core/locales/app_localizations.dart';
-import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_breakpoints.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
-import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/theme_context.dart';
 import '../controllers/communication_controller.dart';
 import '../widgets/bisindo_card.dart';
 
@@ -15,156 +15,150 @@ class CommunicationScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.hc;
     final controller = Get.find<CommunicationController>();
 
     return Scaffold(
-      backgroundColor: AppColors.scaffoldColor(context),
+      backgroundColor: colors.canvas,
       appBar: AppBar(
-        backgroundColor: AppColors.cardBgColor(context),
+        backgroundColor: colors.surface,
         elevation: 0.5,
         leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back_rounded,
-            color: AppColors.espressoDark,
-          ),
+          icon: Icon(Icons.arrow_back_rounded, color: colors.primary),
           onPressed: () => Get.back(),
         ),
         title: Text(
           context.tr('komunikasi').isEmpty
               ? 'Percakapan Cepat'
               : context.tr('komunikasi'),
-          style: AppTypography.titleLarge.copyWith(
-            color: AppColors.textHeadingColor(context),
+          style: context.text.titleLarge.copyWith(
+            color: colors.textPrimary,
             fontWeight: FontWeight.w800,
           ),
         ),
         centerTitle: true,
-        shape: Border(
-          bottom: BorderSide(
-            color: AppColors.cardBorderColor(context),
-            width: 1,
-          ),
-        ),
+        shape: Border(bottom: BorderSide(color: colors.border, width: 1)),
       ),
-      body: ListView(
-        physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.screenEdgeGutter,
-          vertical: AppSpacing.md,
-        ),
-        children: [
-          // Tip & Guidance Banner
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: BoxDecoration(
-              color: AppColors.surfaceWhite,
-              borderRadius: BorderRadius.circular(AppRadius.lg),
-              border: Border.all(
-                color: AppColors.goldPrimary.withValues(alpha: 0.3),
+      body: ResponsiveCenter(
+        maxWidth: AppBreakpoints.maxTabletContentWidth,
+        child: ListView(
+          physics: const BouncingScrollPhysics(),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.screenEdgeGutter,
+            vertical: AppSpacing.md,
+          ),
+          children: [
+            // Tip & Guidance Banner
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: colors.surface,
+                borderRadius: BorderRadius.circular(AppRadius.lg),
+                border: Border.all(color: colors.accent.withValues(alpha: 0.3)),
+                boxShadow: [
+                  BoxShadow(
+                    color: colors.primary.withValues(alpha: 0.03),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.espressoDark.withValues(alpha: 0.03),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 38,
-                  height: 38,
-                  decoration: BoxDecoration(
-                    color: AppColors.canvasCream,
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: AppColors.goldPrimary.withValues(alpha: 0.3),
+              child: Row(
+                children: [
+                  Container(
+                    width: 38,
+                    height: 38,
+                    decoration: BoxDecoration(
+                      color: colors.surfaceSubtle,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: colors.accent.withValues(alpha: 0.3),
+                      ),
+                    ),
+                    child: Icon(
+                      Icons.record_voice_over_rounded,
+                      color: colors.accent,
+                      size: 20,
                     ),
                   ),
-                  child: const Icon(
-                    Icons.record_voice_over_rounded,
-                    color: AppColors.goldPrimary,
-                    size: 20,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        context.tr('quickComm.showLocals').isNotEmpty
-                            ? context.tr('quickComm.showLocals')
-                            : 'Tunjukkan Layar atau Putar Suara',
-                        style: AppTypography.captionSmall.copyWith(
-                          color: AppColors.textHeadingColor(context),
-                          fontWeight: FontWeight.w800,
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          context.tr('quickComm.showLocals').isNotEmpty
+                              ? context.tr('quickComm.showLocals')
+                              : 'Tunjukkan Layar atau Putar Suara',
+                          style: context.text.labelSmall.copyWith(
+                            color: colors.textPrimary,
+                            fontWeight: FontWeight.w800,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        context.tr('quickComm.tipBanner').isNotEmpty
-                            ? context.tr('quickComm.tipBanner')
-                            : 'Tekan tombol pengeras suara untuk melafalkan ke warga lokal atau petugas.',
-                        style: AppTypography.captionSmall.copyWith(
-                          color: AppColors.textMuted,
-                          height: 1.3,
+                        const SizedBox(height: 2),
+                        Text(
+                          context.tr('quickComm.tipBanner').isNotEmpty
+                              ? context.tr('quickComm.tipBanner')
+                              : 'Tekan tombol pengeras suara untuk melafalkan ke warga lokal atau petugas.',
+                          style: context.text.labelSmall.copyWith(
+                            color: colors.textSecondary,
+                            height: 1.3,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          const SizedBox(height: AppSpacing.lg),
+            const SizedBox(height: AppSpacing.lg),
 
-          // BISINDO Neural Network Gesture Recognizer
-          const BisindoCard(),
+            // BISINDO Neural Network Gesture Recognizer
+            const BisindoCard(),
 
-          // 1. Darurat & Kesehatan
-          _buildCategoryHeader(
-            context,
-            title: context.tr('comm.emergencyAndHealth'),
-            icon: Icons.health_and_safety_rounded,
-            badgeColor: AppColors.sosEmergency,
-          ),
-          const SizedBox(height: 8),
-          ...controller.phrases
-              .where((p) => p.category == 'Darurat & Kesehatan')
-              .map((p) => _buildPhraseCard(context, controller, p)),
+            // 1. Darurat & Kesehatan
+            _buildCategoryHeader(
+              context,
+              title: context.tr('comm.emergencyAndHealth'),
+              icon: Icons.health_and_safety_rounded,
+              badgeColor: colors.danger,
+            ),
+            const SizedBox(height: 8),
+            ...controller.phrases
+                .where((p) => p.category == 'Darurat & Kesehatan')
+                .map((p) => _buildPhraseCard(context, controller, p)),
 
-          const SizedBox(height: AppSpacing.lg),
+            const SizedBox(height: AppSpacing.lg),
 
-          // 2. Arah & Lokasi
-          _buildCategoryHeader(
-            context,
-            title: context.tr('comm.directionAndLocation'),
-            icon: Icons.near_me_rounded,
-            badgeColor: AppColors.goldPrimary,
-          ),
-          const SizedBox(height: 8),
-          ...controller.phrases
-              .where((p) => p.category == 'Arah & Lokasi')
-              .map((p) => _buildPhraseCard(context, controller, p)),
+            // 2. Arah & Lokasi
+            _buildCategoryHeader(
+              context,
+              title: context.tr('comm.directionAndLocation'),
+              icon: Icons.near_me_rounded,
+              badgeColor: colors.accent,
+            ),
+            const SizedBox(height: 8),
+            ...controller.phrases
+                .where((p) => p.category == 'Arah & Lokasi')
+                .map((p) => _buildPhraseCard(context, controller, p)),
 
-          const SizedBox(height: AppSpacing.lg),
+            const SizedBox(height: AppSpacing.lg),
 
-          // 3. Umum
-          _buildCategoryHeader(
-            context,
-            title: context.tr('comm.generalConversation'),
-            icon: Icons.chat_bubble_outline_rounded,
-            badgeColor: AppColors.tanMedium,
-          ),
-          const SizedBox(height: 8),
-          ...controller.phrases
-              .where((p) => p.category == 'Umum')
-              .map((p) => _buildPhraseCard(context, controller, p)),
+            // 3. Umum
+            _buildCategoryHeader(
+              context,
+              title: context.tr('comm.generalConversation'),
+              icon: Icons.chat_bubble_outline_rounded,
+              badgeColor: colors.accentText,
+            ),
+            const SizedBox(height: 8),
+            ...controller.phrases
+                .where((p) => p.category == 'Umum')
+                .map((p) => _buildPhraseCard(context, controller, p)),
 
-          const SizedBox(height: AppConstants.space3xl),
-        ],
+            const SizedBox(height: AppConstants.space3xl),
+          ],
+        ),
       ),
     );
   }
@@ -175,6 +169,7 @@ class CommunicationScreen extends StatelessWidget {
     required IconData icon,
     required Color badgeColor,
   }) {
+    final colors = context.hc;
     return Row(
       children: [
         Container(
@@ -189,8 +184,8 @@ class CommunicationScreen extends StatelessWidget {
         const SizedBox(width: 8),
         Text(
           title,
-          style: AppTypography.titleMedium.copyWith(
-            color: AppColors.textHeadingColor(context),
+          style: context.text.titleMedium.copyWith(
+            color: colors.textPrimary,
             fontWeight: FontWeight.w800,
           ),
         ),
@@ -203,6 +198,7 @@ class CommunicationScreen extends StatelessWidget {
     CommunicationController controller,
     PhraseItem phrase,
   ) {
+    final colors = context.hc;
     return Obx(() {
       final isCurrentlyPlaying = controller.activePhrase.value == phrase.arabic;
 
@@ -211,24 +207,24 @@ class CommunicationScreen extends StatelessWidget {
         padding: const EdgeInsets.all(AppSpacing.cardPadding),
         decoration: BoxDecoration(
           color: phrase.isUrgent
-              ? AppColors.errorContainer.withValues(alpha: 0.35)
+              ? colors.dangerContainer.withValues(alpha: 0.35)
               : (isCurrentlyPlaying
-                    ? AppColors.goldPrimary.withValues(alpha: 0.12)
-                    : AppColors.cardBgColor(context)),
+                    ? colors.primaryContainer.withValues(alpha: 0.35)
+                    : colors.surface),
           borderRadius: BorderRadius.circular(AppRadius.lg),
           border: Border.all(
             color: isCurrentlyPlaying
-                ? AppColors.goldPrimary
+                ? colors.accent
                 : (phrase.isUrgent
-                      ? AppColors.sosEmergency.withValues(alpha: 0.4)
-                      : AppColors.cardBorderColor(context)),
+                      ? colors.danger.withValues(alpha: 0.4)
+                      : colors.border),
             width: isCurrentlyPlaying ? 2 : 1,
           ),
           boxShadow: [
             BoxShadow(
               color: isCurrentlyPlaying
-                  ? AppColors.goldPrimary.withValues(alpha: 0.15)
-                  : AppColors.espressoDark.withValues(alpha: 0.03),
+                  ? colors.accent.withValues(alpha: 0.15)
+                  : colors.primary.withValues(alpha: 0.03),
               blurRadius: isCurrentlyPlaying ? 10 : 6,
               offset: const Offset(0, 2),
             ),
@@ -249,18 +245,18 @@ class CommunicationScreen extends StatelessWidget {
                       ),
                       margin: const EdgeInsets.only(bottom: 6),
                       decoration: BoxDecoration(
-                        color: AppColors.sosEmergency.withValues(alpha: 0.15),
+                        color: colors.danger.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(AppRadius.pill),
                         border: Border.all(
-                          color: AppColors.sosEmergency.withValues(alpha: 0.4),
+                          color: colors.danger.withValues(alpha: 0.4),
                         ),
                       ),
                       child: Text(
                         context.tr('quickComm.urgentBadge').isNotEmpty
                             ? context.tr('quickComm.urgentBadge')
                             : 'PENTING / DARURAT',
-                        style: AppTypography.captionSmall.copyWith(
-                          color: AppColors.sosEmergency,
+                        style: context.text.labelSmall.copyWith(
+                          color: colors.danger,
                           fontWeight: FontWeight.w800,
                           fontSize: 9,
                         ),
@@ -271,9 +267,9 @@ class CommunicationScreen extends StatelessWidget {
                   // Arabic Text (Large, crisp, readable for elderly)
                   Text(
                     phrase.arabic,
-                    style: AppTypography.displayMedium.copyWith(
+                    style: context.textX.arabic.copyWith(
                       fontWeight: FontWeight.w800,
-                      color: AppColors.espressoDark,
+                      color: colors.primary,
                       fontSize: 26,
                       height: 1.35,
                     ),
@@ -284,8 +280,8 @@ class CommunicationScreen extends StatelessWidget {
                   // Localized Meaning
                   Text(
                     phrase.localizedMeaning(context),
-                    style: AppTypography.titleMedium.copyWith(
-                      color: AppColors.textHeadingColor(context),
+                    style: context.text.titleMedium.copyWith(
+                      color: colors.textPrimary,
                       fontWeight: FontWeight.w800,
                     ),
                   ),
@@ -294,8 +290,8 @@ class CommunicationScreen extends StatelessWidget {
                   // Latin Transliteration
                   Text(
                     phrase.transliteration,
-                    style: AppTypography.bodySmall.copyWith(
-                      color: AppColors.textMuted,
+                    style: context.text.bodySmall.copyWith(
+                      color: colors.textSecondary,
                       fontStyle: FontStyle.italic,
                     ),
                   ),
@@ -321,23 +317,19 @@ class CommunicationScreen extends StatelessWidget {
                   height: 50,
                   decoration: BoxDecoration(
                     color: phrase.isUrgent
-                        ? AppColors.sosEmergency
+                        ? colors.danger
                         : (isCurrentlyPlaying
-                              ? AppColors.espressoDark
-                              : AppColors.canvasCream),
+                              ? colors.primary
+                              : colors.surfaceSubtle),
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: isCurrentlyPlaying
-                          ? AppColors.goldPrimary
-                          : AppColors.cardBorderColor(context),
+                      color: isCurrentlyPlaying ? colors.accent : colors.border,
                       width: 1.5,
                     ),
                     boxShadow: [
                       BoxShadow(
                         color:
-                            (phrase.isUrgent
-                                    ? AppColors.sosEmergency
-                                    : AppColors.espressoDark)
+                            (phrase.isUrgent ? colors.danger : colors.primary)
                                 .withValues(alpha: 0.2),
                         blurRadius: 8,
                         offset: const Offset(0, 3),
@@ -350,7 +342,7 @@ class CommunicationScreen extends StatelessWidget {
                         : Icons.volume_up_rounded,
                     color: phrase.isUrgent || isCurrentlyPlaying
                         ? Colors.white
-                        : AppColors.espressoDark,
+                        : colors.primary,
                     size: 24,
                   ),
                 ),

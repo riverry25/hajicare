@@ -19,10 +19,12 @@ class _ProfileHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final porsiText = context.tr('profilePassportCountry');
-    final roleLabel = state?.role == UserRole.pendamping
-        ? context.tr('auth.rolePendamping')
-        : context.tr('auth.roleJamaah');
+    final colors = context.hc;
+    final roleLabel = switch (state?.role) {
+      UserRole.admin => context.tr('auth.roleAdmin'),
+      UserRole.pendamping => context.tr('auth.rolePendamping'),
+      UserRole.jamaah || null => context.tr('auth.roleJamaah'),
+    };
     final kloterStr = state?.effectiveKloter;
     final maktabStr = state?.effectiveMaktab;
 
@@ -35,7 +37,7 @@ class _ProfileHeader extends StatelessWidget {
         clipBehavior: Clip.none,
         alignment: Alignment.topCenter,
         children: [
-          // ── 1. Main Card Container (Tailwind Card Body) ──────────────
+          // ── 1. Main Card Container ─────────────────────────────────────
           Container(
             width: double.infinity,
             padding: const EdgeInsets.fromLTRB(
@@ -47,15 +49,12 @@ class _ProfileHeader extends StatelessWidget {
             decoration: BoxDecoration(
               color: cardBg,
               borderRadius: BorderRadius.circular(24),
-              border: Border.all(
-                color: AppColors.cardBorderColor(context),
-                width: 1.2,
-              ),
+              border: Border.all(color: colors.border, width: 1.2),
               boxShadow: [
                 BoxShadow(
                   color: isDark
                       ? Colors.black.withValues(alpha: 0.35)
-                      : AppColors.espressoDark.withValues(alpha: 0.07),
+                      : colors.primary.withValues(alpha: 0.07),
                   blurRadius: 20,
                   offset: const Offset(0, 8),
                 ),
@@ -64,13 +63,13 @@ class _ProfileHeader extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Display Name (Large & Bold title like Image 2)
+                // Display Name
                 Obx(
                   () => Text(
                     controller.displayName.value.isNotEmpty
                         ? controller.displayName.value
                         : context.tr('profile.defaultUser'),
-                    style: AppTypography.titleLarge.copyWith(
+                    style: context.text.titleLarge.copyWith(
                       color: headingColor,
                       fontWeight: FontWeight.w800,
                       fontSize: 20,
@@ -95,7 +94,7 @@ class _ProfileHeader extends StatelessWidget {
                       Expanded(
                         child: Text(
                           controller.safeEmail,
-                          style: AppTypography.bodySmall.copyWith(
+                          style: context.text.bodySmall.copyWith(
                             color: bodyColor,
                             fontSize: 12.5,
                             fontWeight: FontWeight.w400,
@@ -109,49 +108,54 @@ class _ProfileHeader extends StatelessWidget {
 
                 const SizedBox(height: 14),
 
-                // Tag Chips Row
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 6,
-                  children: [
-                    _TagChip(
-                      icon: Icons.badge_rounded,
-                      label: porsiText,
-                      isDark: isDark,
-                      isPrimary: false,
-                    ),
-                    if (kloterStr != null &&
-                        kloterStr.isNotEmpty &&
-                        kloterStr != '-')
-                      _TagChip(
-                        icon: Icons.flight_takeoff_rounded,
-                        label: kloterStr.toLowerCase().startsWith('kloter')
-                            ? kloterStr
-                            : context.tr('profileKloter', {
-                                'kloter': kloterStr,
-                              }),
-                        isDark: isDark,
-                        isPrimary: false,
-                      ),
-                    if (maktabStr != null &&
-                        maktabStr.isNotEmpty &&
-                        maktabStr != '-')
-                      _TagChip(
-                        icon: Icons.hotel_rounded,
-                        label: maktabStr.toLowerCase().startsWith('maktab')
-                            ? maktabStr
-                            : context.tr('profileMaktab', {
-                                'maktab': maktabStr,
-                              }),
-                        isDark: isDark,
-                        isPrimary: false,
-                      ),
-                  ],
-                ),
+                // Tag Chips Row — only show chips when data exists
+                Obx(() {
+                  final passportNum = controller.passportNumber.value.trim();
+                  return Wrap(
+                    spacing: 8,
+                    runSpacing: 6,
+                    children: [
+                      // Passport chip: only when passport number is filled
+                      if (passportNum.isNotEmpty)
+                        _TagChip(
+                          icon: Icons.badge_rounded,
+                          label: passportNum,
+                          isDark: isDark,
+                          isPrimary: false,
+                        ),
+                      if (kloterStr != null &&
+                          kloterStr.isNotEmpty &&
+                          kloterStr != '-')
+                        _TagChip(
+                          icon: Icons.flight_takeoff_rounded,
+                          label: kloterStr.toLowerCase().startsWith('kloter')
+                              ? kloterStr
+                              : context.tr('profileKloter', {
+                                  'kloter': kloterStr,
+                                }),
+                          isDark: isDark,
+                          isPrimary: false,
+                        ),
+                      if (maktabStr != null &&
+                          maktabStr.isNotEmpty &&
+                          maktabStr != '-')
+                        _TagChip(
+                          icon: Icons.hotel_rounded,
+                          label: maktabStr.toLowerCase().startsWith('maktab')
+                              ? maktabStr
+                              : context.tr('profileMaktab', {
+                                  'maktab': maktabStr,
+                                }),
+                          isDark: isDark,
+                          isPrimary: false,
+                        ),
+                    ],
+                  );
+                }),
 
                 const SizedBox(height: 18),
 
-                // Action Button: "Ubah Profil" (styled like "READ MORE" button in Image 2)
+                // Action Button: "Ubah Profil"
                 SizedBox(
                   width: double.infinity,
                   child: Material(
@@ -167,19 +171,16 @@ class _ProfileHeader extends StatelessWidget {
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             colors: isDark
-                                ? [AppColors.goldPrimary, AppColors.goldDark]
-                                : [AppColors.primary, AppColors.espressoDark],
+                                ? [colors.accent, colors.accentText]
+                                : [colors.primary, const Color(0xFF22160E)],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                           ),
                           borderRadius: BorderRadius.circular(14),
                           boxShadow: [
                             BoxShadow(
-                              color:
-                                  (isDark
-                                          ? AppColors.goldPrimary
-                                          : AppColors.primary)
-                                      .withValues(alpha: 0.28),
+                              color: (isDark ? colors.accent : colors.primary)
+                                  .withValues(alpha: 0.28),
                               blurRadius: 10,
                               offset: const Offset(0, 4),
                             ),
@@ -191,13 +192,13 @@ class _ProfileHeader extends StatelessWidget {
                             Icon(
                               Icons.edit_rounded,
                               size: 16,
-                              color: isDark ? Colors.black : Colors.white,
+                              color: isDark ? colors.onPrimary : Colors.white,
                             ),
                             const SizedBox(width: 8),
                             Text(
                               context.tr('profile.editProfile'),
-                              style: AppTypography.heading(
-                                color: isDark ? Colors.black : Colors.white,
+                              style: context.text.labelMedium.copyWith(
+                                color: isDark ? colors.onPrimary : Colors.white,
                                 fontSize: 13.5,
                                 fontWeight: FontWeight.w700,
                                 letterSpacing: 0.3,
@@ -213,7 +214,7 @@ class _ProfileHeader extends StatelessWidget {
             ),
           ),
 
-          // ── 2. Elevated Floating Top Banner (Image 1 & 2 inspired) ──
+          // ── 2. Elevated Floating Top Banner ──────────────────────────
           Positioned(
             top: -bannerProtrude,
             left: 12,
@@ -226,22 +227,23 @@ class _ProfileHeader extends StatelessWidget {
                 gradient: LinearGradient(
                   colors: isDark
                       ? [
-                          AppColors.darkPrimaryContainer,
-                          AppColors.espressoDark,
-                          const Color(0xFF160E09),
+                          colors.surfaceSand,
+                          colors.surfaceSubtle,
+                          colors.surface,
                         ]
-                      : [
-                          AppColors.primary,
-                          AppColors.espressoDark,
-                          const Color(0xFF23160D),
+                      : const [
+                          Color(0xFF382518),
+                          Color(0xFF28190F),
+                          Color(0xFF1D1109),
                         ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: (isDark ? Colors.black : AppColors.espressoDark)
-                        .withValues(alpha: 0.35),
+                    color: (isDark ? Colors.black : colors.primary).withValues(
+                      alpha: 0.35,
+                    ),
                     blurRadius: 18,
                     offset: const Offset(0, 8),
                   ),
@@ -249,7 +251,7 @@ class _ProfileHeader extends StatelessWidget {
               ),
               child: Stack(
                 children: [
-                  // 3D Concentric Ripples in top-right (Image 1 reference!)
+                  // 3D Concentric Ripples in top-right
                   Positioned(
                     top: -45,
                     right: -45,
@@ -259,7 +261,6 @@ class _ProfileHeader extends StatelessWidget {
                       child: Stack(
                         alignment: Alignment.center,
                         children: [
-                          // Outer ripple ring
                           Container(
                             width: 210,
                             height: 210,
@@ -271,7 +272,6 @@ class _ProfileHeader extends StatelessWidget {
                               ),
                             ),
                           ),
-                          // Mid ripple ring 2
                           Container(
                             width: 160,
                             height: 160,
@@ -284,7 +284,6 @@ class _ProfileHeader extends StatelessWidget {
                               ),
                             ),
                           ),
-                          // Mid ripple ring 1
                           Container(
                             width: 110,
                             height: 110,
@@ -297,7 +296,6 @@ class _ProfileHeader extends StatelessWidget {
                               ),
                             ),
                           ),
-                          // Inner ripple
                           Container(
                             width: 65,
                             height: 65,
@@ -315,7 +313,7 @@ class _ProfileHeader extends StatelessWidget {
                     ),
                   ),
 
-                  // Glossy Glass Arc Highlight across top (Image 1 reference!)
+                  // Glossy Glass Arc Highlight across top
                   Positioned(
                     top: -50,
                     left: -30,
@@ -365,19 +363,27 @@ class _ProfileHeader extends StatelessWidget {
                             children: [
                               Row(
                                 children: [
-                                  const Icon(
+                                  Icon(
                                     Icons.verified_rounded,
                                     size: 14,
-                                    color: AppColors.accentGoldStar,
+                                    color: isDark
+                                        ? colors.accent
+                                        : const Color(0xFFE5C07B),
                                   ),
                                   const SizedBox(width: 5),
-                                  Text(
-                                    context.tr('profilePilgrimCard'),
-                                    style: AppTypography.heading(
-                                      color: AppColors.goldLight,
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w700,
-                                      letterSpacing: 0.8,
+                                  Flexible(
+                                    child: Text(
+                                      context.tr('profilePilgrimCard'),
+                                      style: context.text.labelSmall.copyWith(
+                                        color: isDark
+                                            ? colors.accent
+                                            : const Color(0xFFE5C07B),
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w700,
+                                        letterSpacing: 0.8,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
                                 ],
@@ -388,7 +394,7 @@ class _ProfileHeader extends StatelessWidget {
                                   controller.displayName.value.isNotEmpty
                                       ? controller.displayName.value
                                       : context.tr('profile.defaultUser'),
-                                  style: AppTypography.heading(
+                                  style: context.text.titleMedium.copyWith(
                                     color: Colors.white,
                                     fontSize: 17,
                                     fontWeight: FontWeight.w800,
@@ -402,7 +408,7 @@ class _ProfileHeader extends StatelessWidget {
                           ),
                         ),
 
-                        // Top-Right Glassmorphic Badge (Like "UI" badge in Image 1!)
+                        // Top-Right Glassmorphic Badge
                         Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 10,
@@ -422,18 +428,29 @@ class _ProfileHeader extends StatelessWidget {
                               Container(
                                 width: 6,
                                 height: 6,
-                                decoration: const BoxDecoration(
-                                  color: AppColors.statusSafe,
+                                decoration: BoxDecoration(
+                                  color: switch (state?.role) {
+                                    UserRole.admin => colors.warning,
+                                    UserRole.pendamping => colors.accent,
+                                    UserRole.jamaah || null => colors.success,
+                                  },
                                   shape: BoxShape.circle,
                                 ),
                               ),
                               const SizedBox(width: 5),
-                              Text(
-                                roleLabel,
-                                style: AppTypography.heading(
-                                  color: Colors.white,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w700,
+                              ConstrainedBox(
+                                constraints: const BoxConstraints(
+                                  maxWidth: 110,
+                                ),
+                                child: Text(
+                                  roleLabel,
+                                  style: context.text.labelSmall.copyWith(
+                                    color: Colors.white,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
                             ],
@@ -456,10 +473,8 @@ class _ProfileHeader extends StatelessWidget {
       context: context,
       useRootNavigator: true,
       barrierDismissible: true,
-      builder: (dialogCtx) => _EditNameDialog(
-        controller: controller,
-        isDark: AppColors.isDark(context),
-      ),
+      builder: (dialogCtx) =>
+          _EditNameDialog(controller: controller, isDark: context.isDark),
     );
   }
 }
@@ -530,18 +545,13 @@ class _EditNameDialogState extends State<_EditNameDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.hc;
     final isDarkDialog = widget.isDark;
-    final dialogBg = isDarkDialog
-        ? AppColors.darkSurface
-        : AppColors.surfaceWhite;
-    final headingClr = isDarkDialog
-        ? AppColors.darkTextHeading
-        : AppColors.espressoDark;
-    final bodyClr = isDarkDialog ? AppColors.darkTextBody : AppColors.textBody;
+    final dialogBg = colors.surface;
+    final headingClr = colors.textPrimary;
+    final bodyClr = colors.textSecondary;
 
-    return Dialog(
-      backgroundColor: Colors.transparent,
-      elevation: 0,
+    return HajiTransparentDialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 380),
@@ -564,7 +574,7 @@ class _EditNameDialogState extends State<_EditNameDialog> {
                 border: Border.all(
                   color: isDarkDialog
                       ? Colors.white.withValues(alpha: 0.1)
-                      : AppColors.goldLight.withValues(alpha: 0.35),
+                      : colors.border,
                   width: 1,
                 ),
                 boxShadow: [
@@ -586,7 +596,7 @@ class _EditNameDialogState extends State<_EditNameDialog> {
                     // Title
                     Text(
                       context.tr('profileEditNameTitle'),
-                      style: AppTypography.titleMedium.copyWith(
+                      style: context.text.titleMedium.copyWith(
                         color: headingClr,
                         fontWeight: FontWeight.w800,
                         fontSize: 17.5,
@@ -598,7 +608,7 @@ class _EditNameDialogState extends State<_EditNameDialog> {
                     // Description
                     Text(
                       context.tr('profileEditNameDesc'),
-                      style: AppTypography.bodySmall.copyWith(
+                      style: context.text.bodySmall.copyWith(
                         color: bodyClr.withValues(alpha: 0.85),
                         height: 1.35,
                         fontSize: 12.5,
@@ -618,7 +628,7 @@ class _EditNameDialogState extends State<_EditNameDialog> {
                           textInputAction: TextInputAction.done,
                           onSubmitted: (_) => _submit(),
                           maxLength: 50,
-                          style: AppTypography.bodyText(
+                          style: context.text.bodyMedium.copyWith(
                             color: headingClr,
                             fontSize: 15,
                             fontWeight: FontWeight.w600,
@@ -626,10 +636,8 @@ class _EditNameDialogState extends State<_EditNameDialog> {
                           decoration: InputDecoration(
                             counterText: '',
                             hintText: context.tr('profile.yourFullName'),
-                            hintStyle: AppTypography.bodyText(
-                              color: isDarkDialog
-                                  ? Colors.white38
-                                  : const Color(0xFF9E8E81),
+                            hintStyle: context.text.bodyMedium.copyWith(
+                              color: colors.textTertiary,
                               fontSize: 13.5,
                               fontWeight: FontWeight.w400,
                             ),
@@ -642,37 +650,33 @@ class _EditNameDialogState extends State<_EditNameDialog> {
                             ),
                             border: UnderlineInputBorder(
                               borderSide: BorderSide(
-                                color: isDarkDialog
-                                    ? AppColors.darkOutlineVariant
-                                    : const Color(0xFFD4C7BC),
+                                color: colors.border,
                                 width: 1.2,
                               ),
                             ),
                             enabledBorder: UnderlineInputBorder(
                               borderSide: BorderSide(
-                                color: isDarkDialog
-                                    ? AppColors.darkOutlineVariant
-                                    : const Color(0xFFD4C7BC),
+                                color: colors.border,
                                 width: 1.2,
                               ),
                             ),
                             focusedBorder: UnderlineInputBorder(
                               borderSide: BorderSide(
                                 color: isDarkDialog
-                                    ? AppColors.goldLight
-                                    : AppColors.espressoDark,
+                                    ? colors.accent
+                                    : colors.primary,
                                 width: 1.8,
                               ),
                             ),
-                            errorBorder: const UnderlineInputBorder(
+                            errorBorder: UnderlineInputBorder(
                               borderSide: BorderSide(
-                                color: AppColors.sosEmergency,
+                                color: colors.danger,
                                 width: 1.4,
                               ),
                             ),
-                            focusedErrorBorder: const UnderlineInputBorder(
+                            focusedErrorBorder: UnderlineInputBorder(
                               borderSide: BorderSide(
-                                color: AppColors.sosEmergency,
+                                color: colors.danger,
                                 width: 1.8,
                               ),
                             ),
@@ -691,8 +695,8 @@ class _EditNameDialogState extends State<_EditNameDialog> {
                           const SizedBox(height: 4),
                           Text(
                             _inputError!,
-                            style: AppTypography.caption.copyWith(
-                              color: AppColors.sosEmergency,
+                            style: context.text.labelSmall.copyWith(
+                              color: colors.danger,
                               fontSize: 11.5,
                               fontWeight: FontWeight.w500,
                             ),
@@ -710,7 +714,7 @@ class _EditNameDialogState extends State<_EditNameDialog> {
                           style: TextButton.styleFrom(
                             foregroundColor: isDarkDialog
                                 ? Colors.white60
-                                : const Color(0xFF8C7A6B),
+                                : colors.textSecondary,
                             padding: const EdgeInsets.symmetric(vertical: 4),
                             minimumSize: Size.zero,
                             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -724,15 +728,13 @@ class _EditNameDialogState extends State<_EditNameDialog> {
                             context.tr('cancel').isEmpty
                                 ? 'Batal'
                                 : context.tr('cancel'),
-                            style: AppTypography.button.copyWith(
+                            style: context.text.labelLarge.copyWith(
                               fontSize: 13,
                               letterSpacing: 0.5,
                             ),
                           ),
                         ),
-                        const SizedBox(
-                          width: 135,
-                        ), // Spacer for protruding button
+                        const SizedBox(width: 135),
                       ],
                     ),
                   ],
@@ -740,183 +742,27 @@ class _EditNameDialogState extends State<_EditNameDialog> {
               ),
             ),
 
-            // ── 2. Floating Hero Card (Compact header) ───────────────────
+            // ── 2. Floating Hero Card ────────────────────────────────────
             Positioned(
               top: 0,
               left: 22,
               right: 22,
-              height: 86,
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: isDarkDialog
-                        ? [const Color(0xFF38251A), const Color(0xFF1F140D)]
-                        : [AppColors.espressoDark, const Color(0xFF563B2A)],
-                  ),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: AppColors.goldPrimary.withValues(alpha: 0.4),
-                    width: 1.2,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.espressoDark.withValues(alpha: 0.35),
-                      blurRadius: 16,
-                      offset: const Offset(0, 6),
-                    ),
-                  ],
-                ),
-                child: Stack(
-                  children: [
-                    // Ambient Background Circular Glows
-                    Positioned(
-                      top: -15,
-                      right: -15,
-                      child: Container(
-                        width: 70,
-                        height: 70,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: AppColors.goldPrimary.withValues(alpha: 0.12),
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      bottom: -20,
-                      left: -15,
-                      child: Container(
-                        width: 65,
-                        height: 65,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: AppColors.goldPrimary.withValues(alpha: 0.08),
-                        ),
-                      ),
-                    ),
-
-                    // Center Hero Graphic
-                    Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              gradient: LinearGradient(
-                                colors: [
-                                  AppColors.goldPrimary.withValues(alpha: 0.25),
-                                  AppColors.goldPrimary.withValues(alpha: 0.08),
-                                ],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              ),
-                              border: Border.all(
-                                color: AppColors.goldPrimary.withValues(
-                                  alpha: 0.5,
-                                ),
-                                width: 1.5,
-                              ),
-                            ),
-                            child: const Center(
-                              child: Icon(
-                                Icons.edit_rounded,
-                                color: AppColors.accentGoldStar,
-                                size: 20,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            context.tr('profileUserIdentityBadge'),
-                            style: AppTypography.heading(
-                              color: AppColors.goldLight,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: 1.1,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+              child: HajiDialogHeroHeader(
+                icon: Icons.edit_rounded,
+                title: context.tr('profileUserIdentityBadge'),
               ),
             ),
 
-            // ── 3. Protruding Ribbon Submit Button (Slightly larger, no shadow) ──
+            // ── 3. Protruding Ribbon Submit Button ───────────────────────
             Positioned(
               bottom: 0,
               right: 0,
               child: Obx(() {
                 final saving = widget.controller.isSavingName.value;
-                return Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    // Ribbon fold triangle at the top-right corner
-                    Positioned(
-                      top: -10,
-                      right: 0,
-                      child: CustomPaint(
-                        size: const Size(10, 10),
-                        painter: _RibbonFoldPainter(
-                          color: isDarkDialog
-                              ? const Color(0xFF140D08)
-                              : const Color(0xFF160D07),
-                        ),
-                      ),
-                    ),
-
-                    // Main Pill Submit Button without box shadow
-                    Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        onTap: saving ? null : _submit,
-                        borderRadius: const BorderRadius.only(
-                          topLeft: Radius.circular(24),
-                          bottomLeft: Radius.circular(24),
-                          bottomRight: Radius.circular(5),
-                        ),
-                        child: Ink(
-                          decoration: BoxDecoration(
-                            color: isDarkDialog
-                                ? AppColors.darkPrimaryContainer
-                                : AppColors.espressoDark,
-                            borderRadius: const BorderRadius.only(
-                              topLeft: Radius.circular(24),
-                              bottomLeft: Radius.circular(24),
-                              bottomRight: Radius.circular(5),
-                            ),
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 28,
-                            vertical: 13.5,
-                          ),
-                          child: saving
-                              ? const SizedBox(
-                                  width: 18,
-                                  height: 18,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Colors.white,
-                                  ),
-                                )
-                              : Text(
-                                  context.tr('save').toUpperCase(),
-                                  style: AppTypography.heading(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w900,
-                                    fontSize: 13,
-                                    letterSpacing: 2.2,
-                                  ),
-                                ),
-                        ),
-                      ),
-                    ),
-                  ],
+                return HajiDialogRibbonButton(
+                  label: context.tr('save').toUpperCase(),
+                  isLoading: saving,
+                  onPressed: _submit,
                 );
               }),
             ),
@@ -925,34 +771,6 @@ class _EditNameDialogState extends State<_EditNameDialog> {
       ),
     );
   }
-}
-
-/// Painter for the 3D folded ribbon corner flap on the protruding submit button
-class _RibbonFoldPainter extends CustomPainter {
-  final Color color;
-  const _RibbonFoldPainter({required this.color});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.fill;
-
-    final path = Path()
-      ..moveTo(
-        0,
-        size.height,
-      ) // bottom-left (intersection of card wall & button)
-      ..lineTo(size.width, size.height) // bottom-right (top-right of button)
-      ..lineTo(0, 0) // top-left (on card wall)
-      ..close();
-
-    canvas.drawPath(path, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant _RibbonFoldPainter oldDelegate) =>
-      oldDelegate.color != color;
 }
 
 // ── Initials Avatar with Edit Badge ──────────────────────────────────────────
@@ -970,6 +788,7 @@ class _InitialsAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.hc;
     return GestureDetector(
       onTap: onCameraTap,
       child: Stack(
@@ -982,18 +801,15 @@ class _InitialsAvatar extends StatelessWidget {
               shape: BoxShape.circle,
               gradient: LinearGradient(
                 colors: isDark
-                    ? [
-                        AppColors.darkPrimaryContainer,
-                        AppColors.darkSurfaceContainerHigh,
-                      ]
-                    : [AppColors.espressoDark, const Color(0xFF22160E)],
+                    ? [colors.surfaceSand, colors.surfaceSubtle]
+                    : const [Color(0xFF452D1C), Color(0xFF24160D)],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
-              border: Border.all(color: AppColors.goldPrimary, width: 2.2),
+              border: Border.all(color: colors.accent, width: 2.2),
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.goldPrimary.withValues(alpha: 0.25),
+                  color: colors.accent.withValues(alpha: 0.25),
                   blurRadius: 10,
                   offset: const Offset(0, 3),
                 ),
@@ -1002,7 +818,7 @@ class _InitialsAvatar extends StatelessWidget {
             alignment: Alignment.center,
             child: Text(
               initials,
-              style: AppTypography.heading(
+              style: context.text.headlineMedium.copyWith(
                 color: Colors.white,
                 fontSize: 24,
                 fontWeight: FontWeight.w800,
@@ -1017,10 +833,10 @@ class _InitialsAvatar extends StatelessWidget {
               width: 21,
               height: 21,
               decoration: BoxDecoration(
-                color: AppColors.goldPrimary,
+                color: colors.accent,
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: isDark ? AppColors.espressoDark : Colors.white,
+                  color: isDark ? colors.surface : Colors.white,
                   width: 1.8,
                 ),
                 boxShadow: [
@@ -1057,17 +873,14 @@ class _TagChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.hc;
     final bg = isPrimary
-        ? (isDark
-              ? AppColors.darkPrimaryContainer.withValues(alpha: 0.6)
-              : AppColors.espressoDark)
-        : (isDark ? AppColors.darkSurfaceContainerHigh : AppColors.canvasCream);
-    final borderColor = isPrimary
-        ? AppColors.goldPrimary
-        : AppColors.cardBorderColor(context);
+        ? (isDark ? colors.surfaceSand : colors.primary)
+        : (isDark ? colors.surfaceSubtle : colors.surfaceSubtle);
+    final borderColor = isPrimary ? colors.accent : colors.border;
     final textColor = isPrimary
-        ? (isDark ? AppColors.goldPrimary : Colors.white)
-        : AppColors.textHeadingColor(context);
+        ? (isDark ? colors.accent : Colors.white)
+        : colors.textPrimary;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
@@ -1083,7 +896,7 @@ class _TagChip extends StatelessWidget {
           const SizedBox(width: 5),
           Text(
             label,
-            style: AppTypography.heading(
+            style: context.text.labelSmall.copyWith(
               color: textColor,
               fontSize: 11,
               fontWeight: FontWeight.w700,
@@ -1112,6 +925,7 @@ class _SettingsGroup extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.hc;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1119,7 +933,7 @@ class _SettingsGroup extends StatelessWidget {
           padding: const EdgeInsets.only(left: 6, bottom: 6, top: 4),
           child: Text(
             title.toUpperCase(),
-            style: AppTypography.captionSmall.copyWith(
+            style: context.text.labelSmall.copyWith(
               color: titleColor,
               fontWeight: FontWeight.w800,
               letterSpacing: 0.8,
@@ -1130,10 +944,10 @@ class _SettingsGroup extends StatelessWidget {
           decoration: BoxDecoration(
             color: cardBg,
             borderRadius: BorderRadius.circular(AppRadius.xl),
-            border: Border.all(color: AppColors.cardBorderColor(context)),
+            border: Border.all(color: colors.border),
             boxShadow: [
               BoxShadow(
-                color: AppColors.espressoDark.withValues(alpha: 0.03),
+                color: colors.primary.withValues(alpha: 0.03),
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),
@@ -1169,7 +983,8 @@ class _SettingsTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = AppColors.isDark(context);
+    final colors = context.hc;
+    final isDark = context.isDark;
     return Semantics(
       button: true,
       label: '$label${trailingLabel != null ? ': $trailingLabel' : ''}',
@@ -1184,19 +999,13 @@ class _SettingsTile extends StatelessWidget {
                 width: 38,
                 height: 38,
                 decoration: BoxDecoration(
-                  color: isDark
-                      ? AppColors.darkSurfaceContainerHigh
-                      : AppColors.canvasCream,
+                  color: isDark ? colors.surfaceSand : colors.surfaceSubtle,
                   shape: BoxShape.circle,
-                  border: Border.all(
-                    color: isDark
-                        ? AppColors.darkOutlineVariant
-                        : AppColors.cardBorderColor(context),
-                  ),
+                  border: Border.all(color: colors.border),
                 ),
                 child: Icon(
                   icon,
-                  color: isDark ? AppColors.goldLight : AppColors.espressoDark,
+                  color: isDark ? colors.accent : colors.primary,
                   size: 20,
                 ),
               ),
@@ -1204,27 +1013,28 @@ class _SettingsTile extends StatelessWidget {
               Expanded(
                 child: Text(
                   label,
-                  style: AppTypography.bodyMedium.copyWith(
+                  style: context.text.bodyMedium.copyWith(
                     color: headingColor,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
               ),
               if (trailingLabel != null) ...[
-                Text(
-                  trailingLabel!,
-                  style: AppTypography.captionSmall.copyWith(
-                    color: isDark ? AppColors.goldLight : AppColors.tanMedium,
-                    fontWeight: FontWeight.w700,
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 120),
+                  child: Text(
+                    trailingLabel!,
+                    style: context.text.labelSmall.copyWith(
+                      color: isDark ? colors.accent : colors.accent,
+                      fontWeight: FontWeight.w700,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 const SizedBox(width: AppSpacing.xs),
               ],
-              const Icon(
-                Icons.chevron_right_rounded,
-                color: AppColors.tanMedium,
-                size: 20,
-              ),
+              Icon(Icons.chevron_right_rounded, color: colors.accent, size: 20),
             ],
           ),
         ),
@@ -1238,11 +1048,7 @@ class _SettingsTile extends StatelessWidget {
 class _DividerThin extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Divider(
-      height: 1,
-      indent: 58,
-      color: AppColors.cardBorderColor(context),
-    );
+    return Divider(height: 1, indent: 58, color: context.hc.border);
   }
 }
 
@@ -1254,6 +1060,7 @@ class _LogoutButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.hc;
     return Semantics(
       button: true,
       label: label,
@@ -1267,7 +1074,7 @@ class _LogoutButton extends StatelessWidget {
               message: context.tr('profile.logoutConfirm'),
               confirmText: context.tr('profile.logoutConfirmAction'),
               cancelText: context.tr('common.cancel'),
-              confirmColor: AppColors.sosEmergency,
+              confirmColor: colors.danger,
               isDestructive: true,
               onConfirm: () async {
                 await Get.find<AppStartupController>().signOut();
@@ -1276,23 +1083,19 @@ class _LogoutButton extends StatelessWidget {
           },
           style: OutlinedButton.styleFrom(
             side: BorderSide(
-              color: AppColors.sosEmergency.withValues(alpha: 0.4),
+              color: colors.danger.withValues(alpha: 0.4),
               width: 1.2,
             ),
-            backgroundColor: AppColors.sosEmergency.withValues(alpha: 0.05),
+            backgroundColor: colors.danger.withValues(alpha: 0.05),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(AppRadius.pill),
             ),
           ),
-          icon: const Icon(
-            Icons.logout_rounded,
-            size: 18,
-            color: AppColors.sosEmergency,
-          ),
+          icon: Icon(Icons.logout_rounded, size: 18, color: colors.danger),
           label: Text(
             label,
-            style: AppTypography.button.copyWith(
-              color: AppColors.sosEmergency,
+            style: context.text.labelLarge.copyWith(
+              color: colors.danger,
               fontWeight: FontWeight.w800,
             ),
           ),
@@ -1321,12 +1124,13 @@ class _PickerOption extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = AppColors.isDark(context);
-    final activeColor = isDark ? AppColors.goldPrimary : AppColors.espressoDark;
-    final textColor = AppColors.textHeadingColor(context);
+    final colors = context.hc;
+    final isDark = context.isDark;
+    final activeColor = isDark ? colors.accent : colors.primary;
+    final textColor = colors.textPrimary;
     final selectedBg = isDark
-        ? AppColors.darkPrimaryContainer.withValues(alpha: 0.40)
-        : AppColors.espressoDark.withValues(alpha: 0.07);
+        ? colors.surfaceSand
+        : colors.primary.withValues(alpha: 0.07);
 
     return Semantics(
       button: true,
@@ -1360,7 +1164,7 @@ class _PickerOption extends StatelessWidget {
               Expanded(
                 child: Text(
                   label,
-                  style: AppTypography.bodyLarge.copyWith(
+                  style: context.text.bodyLarge.copyWith(
                     color: isSelected ? activeColor : textColor,
                     fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
                   ),
@@ -1369,8 +1173,8 @@ class _PickerOption extends StatelessWidget {
               if (trailingHint != null) ...[
                 Text(
                   trailingHint!,
-                  style: AppTypography.captionSmall.copyWith(
-                    color: AppColors.textBodyColor(context),
+                  style: context.text.labelSmall.copyWith(
+                    color: colors.textSecondary,
                   ),
                 ),
                 const SizedBox(width: AppSpacing.sm),
@@ -1383,10 +1187,7 @@ class _PickerOption extends StatelessWidget {
                   height: 22,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    border: Border.all(
-                      color: AppColors.cardBorderColor(context),
-                      width: 1.8,
-                    ),
+                    border: Border.all(color: colors.border, width: 1.8),
                   ),
                 ),
             ],

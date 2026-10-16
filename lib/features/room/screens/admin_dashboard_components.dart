@@ -23,9 +23,7 @@ class _QuickActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final effectiveBorder = isDark
-        ? AppColors.darkCardBorder
-        : AppColors.lightCardBorder;
+    final effectiveBorder = context.hc.border;
 
     return Container(
       decoration: BoxDecoration(
@@ -36,7 +34,7 @@ class _QuickActionButton extends StatelessWidget {
           BoxShadow(
             color: isDark
                 ? Colors.black.withValues(alpha: 0.18)
-                : AppColors.primary.withValues(alpha: 0.03),
+                : context.hc.brand.withValues(alpha: 0.03),
             blurRadius: 6,
             offset: const Offset(0, 2),
           ),
@@ -140,24 +138,20 @@ class _RoomPantauCard extends StatelessWidget {
     final hasSos = sosCount > 0;
 
     final effectiveCardBg = hasSos
-        ? (isDark
-              ? const Color(0xFF381418)
-              : AppColors.errorContainer.withValues(alpha: 0.35))
+        ? context.hc.danger.withValues(alpha: 0.1)
         : cardBg;
 
     final borderColor = hasSos
-        ? AppColors.sosEmergency.withValues(alpha: 0.65)
-        : (isDark ? AppColors.darkCardBorder : AppColors.lightCardBorder);
+        ? context.hc.danger.withValues(alpha: 0.65)
+        : context.hc.border;
 
-    final textColor = hasSos ? AppColors.sosEmergency : headingColor;
+    final textColor = hasSos ? context.hc.danger : headingColor;
 
     final subtextColor = hasSos
-        ? AppColors.sosEmergency
+        ? context.hc.danger
         : bodyColor.withValues(alpha: 0.75);
 
-    final actionIconColor = hasSos
-        ? AppColors.sosEmergency
-        : (isDark ? AppColors.darkPrimary : AppColors.espressoDark);
+    final actionIconColor = hasSos ? context.hc.danger : context.hc.brand;
 
     return Container(
       decoration: BoxDecoration(
@@ -166,11 +160,9 @@ class _RoomPantauCard extends StatelessWidget {
         border: Border.all(color: borderColor, width: hasSos ? 1.4 : 1.0),
         boxShadow: [
           BoxShadow(
-            color:
-                (hasSos
-                        ? AppColors.sosEmergency
-                        : (isDark ? Colors.black : AppColors.espressoDark))
-                    .withValues(alpha: isDark ? 0.30 : (hasSos ? 0.12 : 0.04)),
+            color: (hasSos ? context.hc.danger : context.hc.brand).withValues(
+              alpha: isDark ? 0.30 : (hasSos ? 0.12 : 0.04),
+            ),
             blurRadius: hasSos ? 16 : 12,
             offset: const Offset(0, 4),
           ),
@@ -197,13 +189,8 @@ class _RoomPantauCard extends StatelessWidget {
                       height: 190,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color:
-                            (hasSos
-                                    ? AppColors.sosEmergency
-                                    : (isDark
-                                          ? AppColors.goldLight
-                                          : AppColors.espressoDark))
-                                .withValues(alpha: isDark ? 0.05 : 0.05),
+                        color: (hasSos ? context.hc.danger : context.hc.brand)
+                            .withValues(alpha: 0.05),
                       ),
                     ),
                     // Ring 3
@@ -212,21 +199,16 @@ class _RoomPantauCard extends StatelessWidget {
                       height: 146,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color:
-                            (hasSos
-                                    ? AppColors.sosEmergency
-                                    : (isDark
-                                          ? AppColors.goldLight
-                                          : AppColors.espressoDark))
-                                .withValues(alpha: isDark ? 0.08 : 0.09),
+                        color: (hasSos ? context.hc.danger : context.hc.brand)
+                            .withValues(alpha: isDark ? 0.08 : 0.09),
                         boxShadow: [
                           BoxShadow(
                             color:
                                 (isDark
                                         ? Colors.black
                                         : (hasSos
-                                              ? AppColors.sosEmergency
-                                              : AppColors.espressoDark))
+                                              ? context.hc.danger
+                                              : context.hc.brand))
                                     .withValues(alpha: isDark ? 0.12 : 0.04),
                             blurRadius: 8,
                             spreadRadius: 1,
@@ -240,21 +222,16 @@ class _RoomPantauCard extends StatelessWidget {
                       height: 108,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color:
-                            (hasSos
-                                    ? AppColors.sosEmergency
-                                    : (isDark
-                                          ? AppColors.goldLight
-                                          : AppColors.espressoDark))
-                                .withValues(alpha: isDark ? 0.12 : 0.14),
+                        color: (hasSos ? context.hc.danger : context.hc.brand)
+                            .withValues(alpha: isDark ? 0.12 : 0.14),
                         boxShadow: [
                           BoxShadow(
                             color:
                                 (isDark
                                         ? Colors.black
                                         : (hasSos
-                                              ? AppColors.sosEmergency
-                                              : AppColors.espressoDark))
+                                              ? context.hc.danger
+                                              : context.hc.brand))
                                     .withValues(alpha: isDark ? 0.15 : 0.06),
                             blurRadius: 6,
                             spreadRadius: 1,
@@ -268,13 +245,8 @@ class _RoomPantauCard extends StatelessWidget {
                       height: 72,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color:
-                            (hasSos
-                                    ? AppColors.sosEmergency
-                                    : (isDark
-                                          ? AppColors.goldLight
-                                          : AppColors.espressoDark))
-                                .withValues(alpha: isDark ? 0.18 : 0.20),
+                        color: (hasSos ? context.hc.danger : context.hc.brand)
+                            .withValues(alpha: isDark ? 0.18 : 0.20),
                       ),
                     ),
                     // Center Core 3D Badge (Espresso Theme)
@@ -283,17 +255,11 @@ class _RoomPantauCard extends StatelessWidget {
                       height: 44,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: hasSos
-                            ? AppColors.sosEmergency
-                            : (isDark
-                                  ? AppColors.espressoMedium
-                                  : AppColors.espressoDark),
+                        color: hasSos ? context.hc.danger : context.hc.brand,
                         boxShadow: [
                           BoxShadow(
                             color:
-                                (hasSos
-                                        ? AppColors.sosEmergency
-                                        : AppColors.espressoDark)
+                                (hasSos ? context.hc.danger : context.hc.brand)
                                     .withValues(alpha: isDark ? 0.40 : 0.28),
                             blurRadius: 8,
                             offset: const Offset(0, 3),
@@ -327,7 +293,7 @@ class _RoomPantauCard extends StatelessWidget {
                     shape: BoxShape.circle,
                     gradient: RadialGradient(
                       colors: [
-                        (isDark ? Colors.white : AppColors.canvasCreamSubtle)
+                        (isDark ? Colors.white : context.hc.surfaceSand)
                             .withValues(alpha: isDark ? 0.06 : 0.35),
                         Colors.white.withValues(alpha: 0.0),
                       ],
@@ -372,8 +338,8 @@ class _RoomPantauCard extends StatelessWidget {
                                     decoration: BoxDecoration(
                                       color:
                                           (room.isActive
-                                                  ? AppColors.statusSafe
-                                                  : AppColors.textSecondary)
+                                                  ? context.hc.success
+                                                  : context.hc.textSecondary)
                                               .withValues(
                                                 alpha: isDark ? 0.18 : 0.10,
                                               ),
@@ -383,8 +349,8 @@ class _RoomPantauCard extends StatelessWidget {
                                       border: Border.all(
                                         color:
                                             (room.isActive
-                                                    ? AppColors.statusSafe
-                                                    : AppColors.textSecondary)
+                                                    ? context.hc.success
+                                                    : context.hc.textSecondary)
                                                 .withValues(alpha: 0.25),
                                       ),
                                     ),
@@ -397,9 +363,9 @@ class _RoomPantauCard extends StatelessWidget {
                                           decoration: BoxDecoration(
                                             color: room.isActive
                                                 ? (hasSos
-                                                      ? AppColors.sosEmergency
-                                                      : AppColors.statusSafe)
-                                                : AppColors.textSecondary,
+                                                      ? context.hc.danger
+                                                      : context.hc.success)
+                                                : context.hc.textSecondary,
                                             shape: BoxShape.circle,
                                           ),
                                         ),
@@ -419,8 +385,8 @@ class _RoomPantauCard extends StatelessWidget {
                                           style: TextStyle(
                                             color: room.isActive
                                                 ? (hasSos
-                                                      ? AppColors.sosEmergency
-                                                      : AppColors.statusSafe)
+                                                      ? context.hc.danger
+                                                      : context.hc.success)
                                                 : bodyColor,
                                             fontWeight: FontWeight.w800,
                                             fontSize: 10.5,
@@ -477,8 +443,8 @@ class _RoomPantauCard extends StatelessWidget {
                             icon: Icons.warning_amber_rounded,
                             label: '$sosCount SOS',
                             isDark: isDark,
-                            textColor: AppColors.sosEmergency,
-                            backgroundColor: AppColors.sosEmergency.withValues(
+                            textColor: context.hc.danger,
+                            backgroundColor: context.hc.danger.withValues(
                               alpha: 0.15,
                             ),
                           ),
@@ -763,15 +729,16 @@ class _ActivityFeedTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isSos = activity.type == ActivityType.sosActive;
+    final activityColor = activity.resolveColor(context.hc);
 
     return Material(
       color: isSos
-          ? AppColors.sosEmergency.withValues(alpha: isDark ? 0.12 : 0.05)
+          ? context.hc.danger.withValues(alpha: isDark ? 0.12 : 0.05)
           : Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        splashColor: activity.color.withValues(alpha: 0.12),
-        highlightColor: activity.color.withValues(alpha: 0.06),
+        splashColor: activityColor.withValues(alpha: 0.12),
+        highlightColor: activityColor.withValues(alpha: 0.06),
         child: Padding(
           padding: const EdgeInsets.symmetric(
             horizontal: AppSpacing.md,
@@ -785,10 +752,10 @@ class _ActivityFeedTile extends StatelessWidget {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: activity.color.withValues(alpha: isDark ? 0.20 : 0.12),
+                  color: activityColor.withValues(alpha: isDark ? 0.20 : 0.12),
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: activity.color.withValues(
+                    color: activityColor.withValues(
                       alpha: isDark ? 0.40 : 0.25,
                     ),
                     width: 1.2,
@@ -796,16 +763,14 @@ class _ActivityFeedTile extends StatelessWidget {
                   boxShadow: isSos
                       ? [
                           BoxShadow(
-                            color: AppColors.sosEmergency.withValues(
-                              alpha: 0.25,
-                            ),
+                            color: context.hc.danger.withValues(alpha: 0.25),
                             blurRadius: 8,
                             offset: const Offset(0, 2),
                           ),
                         ]
                       : null,
                 ),
-                child: Icon(activity.icon, color: activity.color, size: 19),
+                child: Icon(activity.icon, color: activityColor, size: 19),
               ),
               const SizedBox(width: AppSpacing.cardInnerGutter),
 
@@ -825,7 +790,7 @@ class _ActivityFeedTile extends StatelessWidget {
                             ),
                             margin: const EdgeInsets.only(right: 6),
                             decoration: BoxDecoration(
-                              color: AppColors.sosEmergency,
+                              color: context.hc.danger,
                               borderRadius: BorderRadius.circular(
                                 AppRadius.pill,
                               ),
@@ -845,11 +810,7 @@ class _ActivityFeedTile extends StatelessWidget {
                           child: Text(
                             activity.title,
                             style: DashboardTypography.titleSmall.copyWith(
-                              color: isSos
-                                  ? (isDark
-                                        ? const Color(0xFFFF6B6B)
-                                        : AppColors.sosEmergency)
-                                  : headingColor,
+                              color: isSos ? context.hc.danger : headingColor,
                               fontWeight: FontWeight.bold,
                               fontSize: 13.5,
                             ),
@@ -909,11 +870,7 @@ class _ActivityFeedTile extends StatelessWidget {
                                 vertical: 3,
                               ),
                               decoration: BoxDecoration(
-                                color:
-                                    (isDark
-                                            ? AppColors.darkCardBorder
-                                            : AppColors.canvasCreamSubtle)
-                                        .withValues(alpha: 0.5),
+                                color: context.hc.surfaceSand,
                                 borderRadius: BorderRadius.circular(
                                   AppRadius.pill,
                                 ),
@@ -947,11 +904,7 @@ class _ActivityFeedTile extends StatelessWidget {
                                 vertical: 3,
                               ),
                               decoration: BoxDecoration(
-                                color:
-                                    (isDark
-                                            ? AppColors.darkCardBorder
-                                            : AppColors.canvasCreamSubtle)
-                                        .withValues(alpha: 0.5),
+                                color: context.hc.surfaceSand,
                                 borderRadius: BorderRadius.circular(
                                   AppRadius.pill,
                                 ),

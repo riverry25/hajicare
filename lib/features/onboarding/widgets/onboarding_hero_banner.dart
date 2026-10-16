@@ -1,15 +1,19 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_typography.dart';
+import '../../../../core/theme/app_radius.dart';
+import '../../../../core/theme/theme_context.dart';
 
+/// An elegant, atmospheric visual frame for HajiCare onboarding slides.
+/// Inspired by the warm desert aesthetic (WanderWise / Family App reference),
+/// providing a soft ambient glow, subtle border, and high-contrast tokens.
 class OnboardingHeroBanner extends StatelessWidget {
   final String badgeText;
   final String stageText;
   final String title;
   final IconData icon;
-  final double height;
+  final double? height;
   final double borderRadius;
+  final Widget? child;
 
   const OnboardingHeroBanner({
     super.key,
@@ -17,13 +21,95 @@ class OnboardingHeroBanner extends StatelessWidget {
     required this.stageText,
     required this.title,
     required this.icon,
-    this.height = 180,
-    this.borderRadius = 24,
+    this.height = 175,
+    this.borderRadius = AppRadius.xxl,
+    this.child,
   });
 
   @override
   Widget build(BuildContext context) {
-    final isDark = AppColors.isDark(context);
+    final colors = context.hc;
+    final isDark = colors.isDark;
+
+    if (child != null) {
+      return SizedBox(
+        height: height,
+        width: double.infinity,
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            // Soft warm ambient gold aura in the center
+            Positioned(
+              top: -30,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: Container(
+                  width: 270,
+                  height: 270,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: RadialGradient(
+                      colors: [
+                        (isDark
+                                ? const Color(0xFFB08A57)
+                                : const Color(0xFFD4B896))
+                            .withValues(alpha: isDark ? 0.22 : 0.32),
+                        Colors.transparent,
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            // Decorative celestial sparkles (Family App reference aesthetic)
+            Positioned(
+              top: 14,
+              right: 18,
+              child: Text(
+                '✦',
+                style: TextStyle(
+                  color: colors.accent.withValues(alpha: isDark ? 0.50 : 0.65),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            Positioned(
+              bottom: 12,
+              left: 16,
+              child: Text(
+                '✧',
+                style: TextStyle(
+                  color: colors.accent.withValues(alpha: isDark ? 0.40 : 0.55),
+                  fontSize: 11,
+                ),
+              ),
+            ),
+            Positioned(
+              top: 36,
+              left: 14,
+              child: Text(
+                '✦',
+                style: TextStyle(
+                  color: colors.accent.withValues(alpha: isDark ? 0.30 : 0.45),
+                  fontSize: 8.5,
+                ),
+              ),
+            ),
+
+            // Embedded custom visual scene
+            child!,
+          ],
+        ),
+      );
+    }
+
+    // Default Fallback Banner (for backward compatibility)
+    final gradientColors = isDark
+        ? const [Color(0xFF2C1B11), Color(0xFF1E120A), Color(0xFF140C07)]
+        : const [Color(0xFF382315), Color(0xFF26160C), Color(0xFF1A0E08)];
 
     return Container(
       height: height,
@@ -33,10 +119,10 @@ class OnboardingHeroBanner extends StatelessWidget {
         boxShadow: [
           BoxShadow(
             color: isDark
-                ? Colors.black.withValues(alpha: .35)
-                : AppColors.espressoDark.withValues(alpha: .12),
-            blurRadius: 24,
-            offset: const Offset(0, 10),
+                ? Colors.black.withValues(alpha: 0.50)
+                : colors.shadow.withValues(alpha: 0.14),
+            blurRadius: isDark ? 24 : 16,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
@@ -44,160 +130,61 @@ class OnboardingHeroBanner extends StatelessWidget {
         borderRadius: BorderRadius.circular(borderRadius),
         child: Stack(
           children: [
-            // Background Gradient
-            Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: isDark
-                      ? [
-                          AppColors.darkSurfaceContainerHighest,
-                          AppColors.darkPrimaryContainer,
-                          AppColors.darkSurfaceContainer,
-                        ]
-                      : [
-                          AppColors.espressoDark,
-                          AppColors.primaryContainer,
-                          AppColors.espressoDark,
-                        ],
-                ),
-              ),
-            ),
-
-            // Decorative Circle 1
-            Positioned(
-              top: -40,
-              right: -20,
-              child: Container(
-                width: 140,
-                height: 140,
+            Positioned.fill(
+              child: DecoratedBox(
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: isDark ? .03 : .05),
-                  shape: BoxShape.circle,
-                ),
-              ),
-            ),
-
-            // Decorative Circle 2
-            Positioned(
-              bottom: -60,
-              left: -30,
-              child: Container(
-                width: 180,
-                height: 180,
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: isDark ? .02 : .04),
-                  shape: BoxShape.circle,
-                ),
-              ),
-            ),
-
-            // Floating Icon Card
-            Positioned(
-              right: 20,
-              top: 20,
-              child: Container(
-                width: 72,
-                height: 72,
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: .10),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: .15),
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: gradientColors,
                   ),
                 ),
-                child: Icon(
-                  icon,
-                  color: isDark
-                      ? AppColors.darkPrimary
-                      : Colors.white.withValues(alpha: .95),
-                  size: 34,
-                ),
               ),
             ),
-
-            // Badge
             Positioned(
+              right: 18,
               top: 18,
-              left: 18,
               child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
-                ),
+                width: 48,
+                height: 48,
                 decoration: BoxDecoration(
-                  color: isDark
-                      ? AppColors.darkSurfaceContainerHighest
-                      : Colors.white.withValues(alpha: .95),
-                  borderRadius: BorderRadius.circular(50),
+                  color: const Color(0xFF1D120A).withValues(alpha: 0.70),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: const Color(0xFFE2C499).withValues(alpha: 0.55),
+                    width: 1.5,
+                  ),
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 8,
-                      height: 8,
-                      decoration: const BoxDecoration(
-                        color: AppColors.statusPositive,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-
-                    const SizedBox(width: 6),
-
-                    Text(
-                      badgeText.toUpperCase(),
-                      style: AppTypography.captionSmall.copyWith(
-                        color: isDark
-                            ? AppColors.darkTextHeading
-                            : AppColors.espressoDark,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
-                ),
+                child: Icon(icon, color: const Color(0xFFF7DEB4), size: 24),
               ),
             ),
-
-            // Bottom Content
             Positioned(
               left: 20,
-              right: 20,
               bottom: 20,
+              right: 20,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.accentGoldStar.withValues(
-                        alpha: isDark ? .2 : .15,
-                      ),
-                      borderRadius: BorderRadius.circular(50),
-                    ),
-                    child: Text(
-                      stageText,
-                      style: AppTypography.captionSmall.copyWith(
-                        color: AppColors.accentGoldStar,
-                        fontWeight: FontWeight.w700,
-                      ),
+                  Text(
+                    stageText.toUpperCase(),
+                    style: const TextStyle(
+                      color: Color(0xFFE2C499),
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1.2,
                     ),
                   ),
-
-                  const SizedBox(height: 10),
-
+                  const SizedBox(height: 4),
                   Text(
                     title,
-                    style: AppTypography.titleLarge.copyWith(
-                      color: isDark
-                          ? AppColors.darkTextHeading
-                          : AppColors.surfaceWhite,
-                      fontWeight: FontWeight.w800,
-                      height: 1.15,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w900,
+                      height: 1.2,
                     ),
                   ),
                 ],

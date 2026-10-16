@@ -189,6 +189,106 @@ class MainActivity : FlutterFragmentActivity() {
                     else -> result.notImplemented()
                 }
             }
+
+        // 5. Setup MethodChannel for Native Adhan Foreground Service & Alarms
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "com.hajicare/adhan_native_service")
+            .setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "startAdhanService" -> {
+                        try {
+                            val prayerName = call.argument<String>("prayerName") ?: "Waktu Salat"
+                            val isSubuh = call.argument<Boolean>("isSubuh") ?: false
+                            val serviceIntent = Intent(this, AdhanPlaybackService::class.java).apply {
+                                action = AdhanPlaybackService.ACTION_START
+                                putExtra(AdhanPlaybackService.EXTRA_PRAYER_NAME, prayerName)
+                                putExtra(AdhanPlaybackService.EXTRA_IS_SUBUH, isSubuh)
+                            }
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                startForegroundService(serviceIntent)
+                            } else {
+                                startService(serviceIntent)
+                            }
+                            result.success(true)
+                        } catch (e: Exception) {
+                            Log.e("ADHAN_MAIN", "Error starting Adhan service: ${e.message}", e)
+                            result.error("START_FAILED", e.message, null)
+                        }
+                    }
+                    "stopAdhanService" -> {
+                        try {
+                            val stopIntent = Intent(this, AdhanPlaybackService::class.java).apply {
+                                action = AdhanPlaybackService.ACTION_STOP
+                            }
+                            startService(stopIntent)
+                            AdhanAudioPlayer.stop()
+                            result.success(true)
+                        } catch (e: Exception) {
+                            Log.e("ADHAN_MAIN", "Error stopping Adhan service: ${e.message}", e)
+                            result.error("STOP_FAILED", e.message, null)
+                        }
+                    }
+                    "isServiceRunning" -> {
+                        result.success(AdhanPlaybackService.isRunning || AdhanAudioPlayer.isPlaying)
+                    }
+                    "scheduleNativeAdhan" -> {
+                        try {
+                            val id = call.argument<Int>("id") ?: 0
+                            val prayerName = call.argument<String>("prayerName") ?: "Waktu Salat"
+                            val isSubuh = call.argument<Boolean>("isSubuh") ?: false
+                            val triggerTimestampMs = call.argument<Number>("triggerTimestampMs")?.toLong() ?: 0L
+
+                            val alarmManager = getSystemService(Context.ALARM_SERVICE) as? AlarmManager
+                            val intent = Intent(this, AdhanAlarmReceiver::class.java).apply {
+                                action = AdhanAlarmReceiver.ACTION_PLAY_ADHAN_ALARM
+                                putExtra(AdhanAlarmReceiver.EXTRA_PRAYER_NAME, prayerName)
+                                putExtra(AdhanAlarmReceiver.EXTRA_IS_SUBUH, isSubuh)
+                                putExtra(AdhanAlarmReceiver.EXTRA_NOTIFICATION_ID, id)
+                            }
+                            val pendingIntent = PendingIntent.getBroadcast(
+                                this,
+                                id,
+                                intent,
+                                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                            )
+                            if (alarmManager != null && triggerTimestampMs > System.currentTimeMillis()) {
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                                    alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerTimestampMs, pendingIntent)
+                                } else {
+                                    alarmManager.setExact(AlarmManager.RTC_WAKEUP, triggerTimestampMs, pendingIntent)
+                                }
+                                result.success(true)
+                            } else {
+                                result.success(false)
+                            }
+                        } catch (e: Exception) {
+                            Log.e("ADHAN_MAIN", "Error scheduling native adhan: ${e.message}", e)
+                            result.error("SCHEDULE_FAILED", e.message, null)
+                        }
+                    }
+                    "cancelNativeAdhan" -> {
+                        try {
+                            val id = call.argument<Int>("id") ?: 0
+                            val alarmManager = getSystemService(Context.ALARM_SERVICE) as? AlarmManager
+                            val intent = Intent(this, AdhanAlarmReceiver::class.java)
+                            val pendingIntent = PendingIntent.getBroadcast(
+                                this,
+                                id,
+                                intent,
+                                PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE
+                            )
+                            if (pendingIntent != null && alarmManager != null) {
+                                alarmManager.cancel(pendingIntent)
+                                pendingIntent.cancel()
+                            }
+                            result.success(true)
+                        } catch (e: Exception) {
+                            Log.e("ADHAN_MAIN", "Error cancelling native adhan: ${e.message}", e)
+                            result.error("CANCEL_FAILED", e.message, null)
+                        }
+                    }
+                    else -> result.notImplemented()
+                }
+            }
     }
 
     override fun onRequestPermissionsResult(

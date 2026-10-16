@@ -10,6 +10,7 @@ class RoomModel {
   final String? createdByRole;
   final String? pendampingId;
   final List<String> pendampingIds;
+  final String? coOwnerId;
   final String? maktab;
   final String? kloter;
   final double safeRadius;
@@ -25,6 +26,7 @@ class RoomModel {
     this.createdByRole,
     this.pendampingId,
     this.pendampingIds = const [],
+    this.coOwnerId,
     this.maktab,
     this.kloter,
     this.safeRadius = 200.0,
@@ -32,6 +34,17 @@ class RoomModel {
     this.isActive = true,
     this.memberCount = 0,
   });
+
+  bool isPrimaryOwner(String? uid) =>
+      uid != null && uid.isNotEmpty && uid == createdBy;
+
+  bool isCoOwner(String? uid) =>
+      uid != null &&
+      coOwnerId != null &&
+      coOwnerId!.isNotEmpty &&
+      uid == coOwnerId;
+
+  bool isOwnerOrCoOwner(String? uid) => isPrimaryOwner(uid) || isCoOwner(uid);
 
   factory RoomModel.fromFirestore(DocumentSnapshot doc, {int memberCount = 0}) {
     final data = doc.data() as Map<String, dynamic>? ?? {};
@@ -68,6 +81,7 @@ class RoomModel {
       createdByRole: data['createdByRole'] as String?,
       pendampingId: data['pendampingId'] as String?,
       pendampingIds: pendampingIds,
+      coOwnerId: (data['coOwnerId'] as String?)?.trim(),
       maktab: data['maktab'] as String?,
       kloter: data['kloter'] as String?,
       safeRadius: safeRadius,
@@ -87,6 +101,8 @@ class RoomModel {
       if (createdByRole != null) 'createdByRole': createdByRole,
       if (pendampingId != null) 'pendampingId': pendampingId,
       if (pendampingIds.isNotEmpty) 'pendampingIds': pendampingIds,
+      if (coOwnerId != null && coOwnerId!.trim().isNotEmpty)
+        'coOwnerId': coOwnerId!.trim(),
       if (maktab != null) 'maktab': maktab,
       if (kloter != null) 'kloter': kloter,
       'safeRadius': safeRadius,
@@ -105,6 +121,8 @@ class RoomModel {
     String? createdByRole,
     String? pendampingId,
     List<String>? pendampingIds,
+    String? coOwnerId,
+    bool clearCoOwner = false,
     String? maktab,
     String? kloter,
     double? safeRadius,
@@ -120,6 +138,7 @@ class RoomModel {
       createdByRole: createdByRole ?? this.createdByRole,
       pendampingId: pendampingId ?? this.pendampingId,
       pendampingIds: pendampingIds ?? this.pendampingIds,
+      coOwnerId: clearCoOwner ? null : (coOwnerId ?? this.coOwnerId),
       maktab: maktab ?? this.maktab,
       kloter: kloter ?? this.kloter,
       safeRadius: safeRadius ?? this.safeRadius,
@@ -152,6 +171,8 @@ class RoomModel {
           id == other.id &&
           code == other.code &&
           name == other.name &&
+          createdBy == other.createdBy &&
+          coOwnerId == other.coOwnerId &&
           maktab == other.maktab &&
           kloter == other.kloter &&
           safeRadius == other.safeRadius &&
@@ -163,6 +184,8 @@ class RoomModel {
     id,
     code,
     name,
+    createdBy,
+    coOwnerId,
     maktab,
     kloter,
     safeRadius,

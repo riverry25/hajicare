@@ -149,42 +149,68 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
+    testWidgets('Register tab renders NIK field with localized label in ID', (
+      tester,
+    ) async {
+      final locId = const Locale('id');
+      final settings = Get.put(AppSettingsController(), permanent: true);
+      await settings.setLocale(locId);
+      LoginBinding().dependencies();
+
+      await tester.pumpWidget(
+        _buildTestApp(locale: locId, child: const LoginScreen(initialTab: 1)),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('NIK (Nomor Induk Kependudukan)'), findsOneWidget);
+      expect(find.text('Masukkan 16 digit NIK'), findsOneWidget);
+    });
+
+    testWidgets('Register tab renders NIK field with localized label in EN', (
+      tester,
+    ) async {
+      final locEn = const Locale('en');
+      final settings = Get.put(AppSettingsController(), permanent: true);
+      await settings.setLocale(locEn);
+      LoginBinding().dependencies();
+
+      await tester.pumpWidget(
+        _buildTestApp(locale: locEn, child: const LoginScreen(initialTab: 1)),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('National ID Number (NIK)'), findsOneWidget);
+      expect(find.text('Enter your 16-digit ID number (NIK)'), findsOneWidget);
+    });
+
     testWidgets(
-      'Register tab renders NIK field with localized label in ID',
+      'Switching from Register tab to Login tab does not throw RenderFlex overflow',
       (tester) async {
-        final locId = const Locale('id');
+        final loc = const Locale('id');
         final settings = Get.put(AppSettingsController(), permanent: true);
-        await settings.setLocale(locId);
+        await settings.setLocale(loc);
         LoginBinding().dependencies();
 
+        // Start on Register tab
         await tester.pumpWidget(
-          _buildTestApp(locale: locId, child: const LoginScreen(initialTab: 1)),
+          _buildTestApp(locale: loc, child: const LoginScreen(initialTab: 1)),
         );
         await tester.pumpAndSettle();
 
-        expect(find.text('NIK (Nomor Induk Kependudukan)'), findsOneWidget);
-        expect(find.text('Masukkan 16 digit NIK'), findsOneWidget);
-      },
-    );
+        // Find "Masuk" (Sign In) tab pill or text button and tap it
+        final signInTabFinder = find.text('Masuk');
+        expect(signInTabFinder, findsWidgets);
+        await tester.tap(signInTabFinder.first);
 
-    testWidgets(
-      'Register tab renders NIK field with localized label in EN',
-      (tester) async {
-        final locEn = const Locale('en');
-        final settings = Get.put(AppSettingsController(), permanent: true);
-        await settings.setLocale(locEn);
-        LoginBinding().dependencies();
+        // Pump frame by frame through the crossfade animation
+        await tester.pump(const Duration(milliseconds: 50));
+        expect(tester.takeException(), isNull);
 
-        await tester.pumpWidget(
-          _buildTestApp(locale: locEn, child: const LoginScreen(initialTab: 1)),
-        );
+        await tester.pump(const Duration(milliseconds: 100));
+        expect(tester.takeException(), isNull);
+
         await tester.pumpAndSettle();
-
-        expect(find.text('National ID Number (NIK)'), findsOneWidget);
-        expect(
-          find.text('Enter your 16-digit ID number (NIK)'),
-          findsOneWidget,
-        );
+        expect(tester.takeException(), isNull);
       },
     );
   });

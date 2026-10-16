@@ -79,14 +79,23 @@ class RoomQueryService {
         .collection('invitations')
         .where('toUserId', isEqualTo: uid)
         .where('status', isEqualTo: 'pending')
-        .orderBy('createdAt', descending: true)
-        .limit(50)
         .snapshots()
-        .map(
-          (snapshot) => snapshot.docs
-              .map(RoomInvitationModel.fromFirestore)
-              .toList(growable: false),
-        );
+        .map((snapshot) {
+          final items =
+              snapshot.docs
+                  .map(RoomInvitationModel.fromFirestore)
+                  .toList(growable: true)
+                ..sort((a, b) {
+                  final aTime =
+                      a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+                  final bTime =
+                      b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+                  return bTime.compareTo(aTime);
+                });
+          return items.length <= 50
+              ? List<RoomInvitationModel>.unmodifiable(items)
+              : List<RoomInvitationModel>.unmodifiable(items.take(50));
+        });
   }
 
   Stream<List<ActivityModel>> getRecentActivitiesStream({int limit = 10}) {
@@ -215,7 +224,9 @@ class RoomQueryService {
           .where((item) {
             final st = (item['status'] as String?)?.trim().toLowerCase();
             final rId = (item['roomId'] as String?)?.trim();
+            final uId = (item['userId'] ?? item['jamaahId'])?.toString().trim();
             if (rId == null || rId.isEmpty) return false;
+            if (uId == null || uId.isEmpty) return false;
             return activeStatuses.contains(st);
           })
           .toList();

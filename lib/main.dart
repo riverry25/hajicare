@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 
 import 'dart:async';
 import 'core/services/adhan_notification_service.dart';
+import 'core/services/app_check_service.dart';
 import 'core/theme/app_theme.dart';
 import 'core/locales/app_localizations.dart';
 import 'core/routes/app_routes.dart';
@@ -16,6 +17,7 @@ import 'package:flutter/foundation.dart';
 import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
 import 'features/notification/controllers/notification_controller.dart';
 import 'features/map/controllers/map_controller.dart';
+import 'features/dashboard/services/hajj_guide_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -38,10 +40,14 @@ void main() async {
     }),
   ]);
 
+  // Activate Firebase App Check (Play Integrity on Android release, debug provider in debug)
+  await AppCheckService.initialize();
+
   // Register global permanent controllers after Firebase is ready
   Get.put(AppStartupController(), permanent: true);
   Get.put(HajiCareController(), permanent: true);
   Get.put(NotificationController(), permanent: true);
+  Get.put(HajjGuideService(), permanent: true);
   Get.lazyPut<MapController>(() => MapController(), fenix: true);
 
   unawaited(adhanNotifService.scheduleFromPreferences());

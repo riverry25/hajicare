@@ -275,9 +275,12 @@ void main() {
 
       await tester.scrollUntilVisible(
         find.text('Kebijakan Privasi'),
-        350,
+        50,
         scrollable: find.byType(Scrollable).first,
       );
+      await tester.drag(find.byType(Scrollable).first, const Offset(0, -80));
+      await tester.pumpAndSettle();
+
       await tester.tap(find.text('Kebijakan Privasi'));
       await tester.pumpAndSettle();
 

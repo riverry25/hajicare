@@ -260,6 +260,7 @@ async function joinRoomByCode(db, auth, data) {
 async function leaveRoom(db, auth, data) {
   requireAuth(auth);
   const roomId = requiredString(data?.roomId, 'Room ID', 128);
+  const successorUid = optionalString(data?.successorUid, 'Penerus', 128);
   const userRef = db.collection('users').doc(auth.uid);
   const roomRef = db.collection('rooms').doc(roomId);
   let activity;
@@ -283,10 +284,7 @@ async function leaveRoom(db, auth, data) {
       db.collection('active_sos').doc(auth.uid),
     );
     if (activeSosSnapshot.exists) {
-      throw new BackendError(
-        'failed-precondition',
-        'Akhiri status SOS sebelum keluar dari rombongan.',
-      );
+      transaction.delete(db.collection('active_sos').doc(auth.uid));
     }
 
     const updates = {
@@ -299,8 +297,34 @@ async function leaveRoom(db, auth, data) {
         : [];
       const remainingIds = currentIds.filter((uid) => uid !== auth.uid);
       updates.pendampingIds = remainingIds;
-      if (room.pendampingId === auth.uid) {
-        updates.pendampingId = remainingIds[0] || null;
+
+      if (room.createdBy === auth.uid) {
+        if (remainingIds.length === 0 && !isAdmin(auth)) {
+          throw new BackendError(
+            'failed-precondition',
+            'Sebagai pemilik rombongan satu-satunya, Anda tidak dapat keluar tanpa menunjuk penerus atau menghapus rombongan.',
+          );
+        }
+        let finalSuccessor = successorUid;
+        if (!finalSuccessor || !remainingIds.includes(finalSuccessor)) {
+          if (room.coOwnerId && remainingIds.includes(room.coOwnerId)) {
+            finalSuccessor = room.coOwnerId;
+          } else {
+            finalSuccessor = remainingIds[0];
+          }
+        }
+        updates.createdBy = finalSuccessor;
+        updates.pendampingId = finalSuccessor;
+        if (room.coOwnerId === finalSuccessor) {
+          updates.coOwnerId = null;
+        }
+      } else {
+        if (room.coOwnerId === auth.uid) {
+          updates.coOwnerId = null;
+        }
+        if (room.pendampingId === auth.uid) {
+          updates.pendampingId = remainingIds[0] || null;
+        }
       }
     }
 
@@ -311,12 +335,62 @@ async function leaveRoom(db, auth, data) {
       updatedAt: FieldValue.serverTimestamp(),
     });
     transaction.update(roomRef, updates);
+
+    // Notify all room companions if leaving member was a jamaah
+    if (member.role !== 'pendamping') {
+      const companionUids = new Set([
+        ...(Array.isArray(room.pendampingIds) ? room.pendampingIds.map(String) : []),
+        ...(room.createdBy ? [String(room.createdBy)] : []),
+        ...(room.pendampingId ? [String(room.pendampingId)] : []),
+      ]);
+      companionUids.delete(auth.uid);
+
+      for (const companionUid of companionUids) {
+        transaction.set(db.collection('notifications').doc(), {
+          title: 'Jamaah Keluar Rombongan',
+          message: `${member.name} telah keluar dari rombongan "${room.name}".`,
+          type: 'member_left',
+          recipientId: companionUid,
+          senderId: auth.uid,
+          senderName: member.name,
+          senderRole: member.role || 'jamaah',
+          targetRoomId: roomId,
+          isRead: false,
+          createdAt: FieldValue.serverTimestamp(),
+        });
+      }
+    }
+
     activity = {
       roomName: room.name,
       userName: member.name,
       role: member.role,
     };
   });
+
+  // Auto-cancel active SOS events in Firestore for the leaving member
+  try {
+    const sosEventsSnap = await db.collection('sos_events')
+      .where('userId', '==', auth.uid)
+      .where('status', 'in', ['active', 'baru', 'direspons'])
+      .get();
+    if (!sosEventsSnap.empty) {
+      const sosBatch = db.batch();
+      for (const doc of sosEventsSnap.docs) {
+        sosBatch.set(doc.ref, {
+          status: 'cancelled',
+          cancelledReason: 'member_left_room',
+          resolvedAt: FieldValue.serverTimestamp(),
+          resolvedBy: auth.uid,
+          cancelledAt: FieldValue.serverTimestamp(),
+          cancelledBy: auth.uid,
+        }, {merge: true});
+      }
+      await sosBatch.commit();
+    }
+  } catch (err) {
+    console.error('Failed to cancel active SOS events on leaveRoom:', err);
+  }
 
   await logActivity(db, {
     type: 'member_left',
@@ -329,6 +403,126 @@ async function leaveRoom(db, auth, data) {
     role: activity.role,
   });
   return {roomId};
+}
+
+async function setCoOwner(db, auth, data) {
+  requireAuth(auth);
+  const roomId = requiredString(data?.roomId, 'Room ID', 128);
+  const coOwnerUid = requiredString(data?.coOwnerUid, 'UID Owner Kedua', 128);
+  const roomRef = db.collection('rooms').doc(roomId);
+
+  let targetName = 'Pendamping';
+  await db.runTransaction(async (transaction) => {
+    const roomSnapshot = await getRequired(transaction, roomRef, 'Rombongan tidak ditemukan.');
+    const room = roomSnapshot.data();
+
+    if (room.createdBy !== auth.uid && !isAdmin(auth)) {
+      throw new BackendError('permission-denied', 'Hanya Owner Utama yang dapat menunjuk Owner Kedua.');
+    }
+    if (room.isActive === false || room.status === 'deleting') {
+      throw new BackendError('failed-precondition', 'Rombongan tidak aktif.');
+    }
+
+    const memberRef = roomRef.collection('members').doc(coOwnerUid);
+    const memberSnapshot = await transaction.get(memberRef);
+    if (!memberSnapshot.exists || memberSnapshot.data().role !== 'pendamping') {
+      throw new BackendError('failed-precondition', 'Calon Owner Kedua harus berstatus Pendamping aktif dalam rombongan.');
+    }
+
+    targetName = memberSnapshot.data().name || 'Pendamping';
+    transaction.update(roomRef, {
+      coOwnerId: coOwnerUid,
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+  });
+
+  await logActivity(db, {
+    type: 'room_updated',
+    title: 'Owner Kedua Ditunjuk',
+    description: `${targetName} ditunjuk sebagai Owner Kedua rombongan.`,
+    roomId,
+    userId: auth.uid,
+    role: 'pendamping',
+  });
+  return {roomId, coOwnerId: coOwnerUid};
+}
+
+async function removeCoOwner(db, auth, data) {
+  requireAuth(auth);
+  const roomId = requiredString(data?.roomId, 'Room ID', 128);
+  const roomRef = db.collection('rooms').doc(roomId);
+
+  await db.runTransaction(async (transaction) => {
+    const roomSnapshot = await getRequired(transaction, roomRef, 'Rombongan tidak ditemukan.');
+    const room = roomSnapshot.data();
+
+    if (room.createdBy !== auth.uid && !isAdmin(auth)) {
+      throw new BackendError('permission-denied', 'Hanya Owner Utama yang dapat mencabut status Owner Kedua.');
+    }
+
+    transaction.update(roomRef, {
+      coOwnerId: null,
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+  });
+
+  await logActivity(db, {
+    type: 'room_updated',
+    title: 'Status Owner Kedua Dicabut',
+    description: 'Status Owner Kedua telah dicabut dari rombongan.',
+    roomId,
+    userId: auth.uid,
+    role: 'pendamping',
+  });
+  return {roomId, coOwnerId: null};
+}
+
+async function transferOwnership(db, auth, data) {
+  requireAuth(auth);
+  const roomId = requiredString(data?.roomId, 'Room ID', 128);
+  const newOwnerUid = requiredString(data?.newOwnerUid, 'UID Pemilik Baru', 128);
+  const roomRef = db.collection('rooms').doc(roomId);
+
+  let targetName = 'Pendamping';
+  await db.runTransaction(async (transaction) => {
+    const roomSnapshot = await getRequired(transaction, roomRef, 'Rombongan tidak ditemukan.');
+    const room = roomSnapshot.data();
+
+    if (room.createdBy !== auth.uid && !isAdmin(auth)) {
+      throw new BackendError('permission-denied', 'Hanya Owner Utama yang dapat mewariskan kepemilikan rombongan.');
+    }
+    if (room.isActive === false || room.status === 'deleting') {
+      throw new BackendError('failed-precondition', 'Rombongan tidak aktif.');
+    }
+
+    const memberRef = roomRef.collection('members').doc(newOwnerUid);
+    const memberSnapshot = await transaction.get(memberRef);
+    if (!memberSnapshot.exists || memberSnapshot.data().role !== 'pendamping') {
+      throw new BackendError('failed-precondition', 'Penerus kepemilikan harus berstatus Pendamping aktif dalam rombongan.');
+    }
+
+    targetName = memberSnapshot.data().name || 'Pendamping';
+    const updates = {
+      createdBy: newOwnerUid,
+      pendampingId: newOwnerUid,
+      updatedAt: FieldValue.serverTimestamp(),
+    };
+    if (room.coOwnerId === newOwnerUid) {
+      updates.coOwnerId = null;
+    }
+
+    transaction.update(roomRef, updates);
+  });
+
+  await logActivity(db, {
+    type: 'room_updated',
+    title: 'Kepemilikan Rombongan Dialihkan',
+    description: `Kepemilikan utama rombongan dialihkan kepada ${targetName}.`,
+    roomId,
+    userId: auth.uid,
+    role: 'pendamping',
+  });
+  return {roomId, newOwnerUid};
 }
 
 async function updateRoomSettings(db, auth, data) {
@@ -406,10 +600,7 @@ async function removeJamaah(db, auth, data) {
     }
     const activeSosSnapshot = await transaction.get(db.collection('active_sos').doc(jamaahUid));
     if (activeSosSnapshot.exists) {
-      throw new BackendError(
-        'failed-precondition',
-        'Selesaikan SOS jamaah sebelum mengeluarkannya.',
-      );
+      transaction.delete(db.collection('active_sos').doc(jamaahUid));
     }
     const userRef = db.collection('users').doc(jamaahUid);
     const userSnapshot = await transaction.get(userRef);
@@ -438,6 +629,31 @@ async function removeJamaah(db, auth, data) {
       createdAt: FieldValue.serverTimestamp(),
     });
   });
+
+  // Auto-cancel active SOS events in Firestore for the removed jamaah
+  try {
+    const sosEventsSnap = await db.collection('sos_events')
+      .where('userId', '==', jamaahUid)
+      .where('status', 'in', ['active', 'baru', 'direspons'])
+      .get();
+    if (!sosEventsSnap.empty) {
+      const sosBatch = db.batch();
+      for (const doc of sosEventsSnap.docs) {
+        sosBatch.set(doc.ref, {
+          status: 'cancelled',
+          cancelledReason: 'member_removed_from_room',
+          resolvedAt: FieldValue.serverTimestamp(),
+          resolvedBy: auth.uid,
+          cancelledAt: FieldValue.serverTimestamp(),
+          cancelledBy: auth.uid,
+        }, {merge: true});
+      }
+      await sosBatch.commit();
+    }
+  } catch (err) {
+    console.error('Failed to cancel active SOS events on removeJamaah:', err);
+  }
+
   return {roomId, jamaahUid};
 }
 
@@ -655,13 +871,10 @@ async function deleteRoom(db, auth, data) {
       throw new BackendError('permission-denied', 'Hanya pembuat room yang dapat menghapusnya.');
     }
     const activeSos = await transaction.get(
-      db.collection('active_sos').where('roomId', '==', roomId).limit(1),
+      db.collection('active_sos').where('roomId', '==', roomId).limit(50),
     );
-    if (!activeSos.empty) {
-      throw new BackendError(
-        'failed-precondition',
-        'Selesaikan semua SOS aktif sebelum menghapus rombongan.',
-      );
+    for (const doc of activeSos.docs) {
+      transaction.delete(doc.ref);
     }
     roomData = authorization.room;
     transaction.update(roomRef, {
@@ -690,7 +903,7 @@ async function deleteRoom(db, auth, data) {
             updatedAt: FieldValue.serverTimestamp(),
           });
         }
-        if (member.data().role === 'jamaah') {
+        if (member.id !== auth.uid) {
           transaction.set(db.collection('notifications').doc(), {
             title: 'Rombongan Dihapus',
             message: `Rombongan "${roomData.name}" sudah dihapus oleh pengelola.`,
@@ -756,7 +969,10 @@ module.exports = {
   inviteJamaah,
   joinRoomByCode,
   leaveRoom,
+  removeCoOwner,
   removeJamaah,
   respondInvitation,
+  setCoOwner,
+  transferOwnership,
   updateRoomSettings,
 };

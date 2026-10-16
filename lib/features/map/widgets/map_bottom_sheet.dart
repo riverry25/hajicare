@@ -2,10 +2,10 @@ import '../../../core/locales/app_localizations.dart';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../../../core/state/hajicare_state.dart';
-import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_breakpoints.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/theme/app_typography.dart';
+import '../../../../core/theme/theme_context.dart';
 
 class MapBottomSheet extends StatefulWidget {
   final HajiCareState state;
@@ -208,7 +208,6 @@ class _MapBottomSheetState extends State<MapBottomSheet>
 
   @override
   Widget build(BuildContext context) {
-    final isDark = AppColors.isDark(context);
     final opacity = (1.0 - (_dragOffset / 280.0)).clamp(0.0, 1.0);
 
     final effectiveMember =
@@ -227,167 +226,156 @@ class _MapBottomSheetState extends State<MapBottomSheet>
       left: AppSpacing.md,
       right: AppSpacing.md,
       bottom: bottomOffset,
-      child: RepaintBoundary(
-        child: Opacity(
-          opacity: opacity,
-          child: Transform.translate(
-            offset: Offset(0, _dragOffset),
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onVerticalDragUpdate: _onVerticalDragUpdate,
-              onVerticalDragEnd: _onVerticalDragEnd,
-              onVerticalDragCancel: _onVerticalDragCancel,
-              child: effectiveMember != null
-                  ? Stack(
-                      clipBehavior: Clip.none,
-                      alignment: Alignment.topCenter,
-                      children: [
-                        // Card container with top margin for overlapping avatar
-                        Container(
-                          margin: const EdgeInsets.only(top: 26),
-                          decoration: BoxDecoration(
-                            color: isDark
-                                ? AppColors.darkSurface
-                                : AppColors.surfaceWhite,
-                            borderRadius: BorderRadius.circular(24),
-                            border: Border.all(
-                              color: isDark
-                                  ? Colors.white.withValues(alpha: 0.08)
-                                  : AppColors.espressoDark.withValues(
-                                      alpha: 0.06,
-                                    ),
-                              width: 1,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(
-                                  alpha: isDark ? 0.35 : 0.09,
+      child: Align(
+        alignment: Alignment.bottomCenter,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(
+            maxWidth: AppBreakpoints.maxSheetWidth,
+          ),
+          child: RepaintBoundary(
+            child: Opacity(
+              opacity: opacity,
+              child: Transform.translate(
+                offset: Offset(0, _dragOffset),
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onVerticalDragUpdate: _onVerticalDragUpdate,
+                  onVerticalDragEnd: _onVerticalDragEnd,
+                  onVerticalDragCancel: _onVerticalDragCancel,
+                  child: effectiveMember != null
+                      ? Stack(
+                          clipBehavior: Clip.none,
+                          alignment: Alignment.topCenter,
+                          children: [
+                            // Card container with top margin for overlapping avatar
+                            Container(
+                              margin: const EdgeInsets.only(top: 26),
+                              decoration: BoxDecoration(
+                                color: context.hc.surface,
+                                borderRadius: BorderRadius.circular(24),
+                                border: Border.all(
+                                  color: context.hc.border,
+                                  width: 1,
                                 ),
-                                blurRadius: 20,
-                                spreadRadius: 0,
-                                offset: const Offset(0, 6),
-                              ),
-                            ],
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(24),
-                            child: _buildSelectedMemberDetail(
-                              context,
-                              effectiveMember,
-                            ),
-                          ),
-                        ),
-
-                        // Corner Utility: Back to List
-                        if (onBackToList != null)
-                          Positioned(
-                            top: 36,
-                            left: 14,
-                            child: _buildSmallCircularButton(
-                              context: context,
-                              icon: Icons.arrow_back_rounded,
-                              tooltip: 'Kembali ke Daftar',
-                              onTap: onBackToList!,
-                            ),
-                          ),
-
-                        // Corner Utility: Center on Map
-                        if (onCenterOnMember != null)
-                          Positioned(
-                            top: 36,
-                            right: 14,
-                            child: _buildSmallCircularButton(
-                              context: context,
-                              icon: Icons.my_location_rounded,
-                              tooltip: 'Fokus ke Peta',
-                              onTap: onCenterOnMember!,
-                            ),
-                          ),
-
-                        // Overlapping circular avatar popping out at top center
-                        Positioned(
-                          top: 0,
-                          left: 0,
-                          right: 0,
-                          child: Center(
-                            child: _buildOverlappingAvatar(
-                              context,
-                              effectiveMember,
-                            ),
-                          ),
-                        ),
-                      ],
-                    )
-                  : ClipRRect(
-                      borderRadius: BorderRadius.circular(AppRadius.xl),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: isDark
-                              ? AppColors.darkSurface
-                              : AppColors.surfaceWhite,
-                          borderRadius: BorderRadius.circular(AppRadius.xl),
-                          border: Border.all(
-                            color: isDark
-                                ? Colors.white.withValues(alpha: 0.08)
-                                : AppColors.espressoDark.withValues(
-                                    alpha: 0.06,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: context.hc.shadow,
+                                    blurRadius: 20,
+                                    spreadRadius: 0,
+                                    offset: const Offset(0, 6),
                                   ),
-                            width: 1,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(
-                                alpha: isDark ? 0.25 : 0.08,
+                                ],
                               ),
-                              blurRadius: 20,
-                              spreadRadius: 0,
-                              offset: const Offset(0, 6),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(24),
+                                child: _buildSelectedMemberDetail(
+                                  context,
+                                  effectiveMember,
+                                ),
+                              ),
+                            ),
+
+                            // Corner Utility: Back to List
+                            if (onBackToList != null)
+                              Positioned(
+                                top: 36,
+                                left: 14,
+                                child: _buildSmallCircularButton(
+                                  context: context,
+                                  icon: Icons.arrow_back_rounded,
+                                  tooltip: 'Kembali ke Daftar',
+                                  onTap: onBackToList!,
+                                ),
+                              ),
+
+                            // Corner Utility: Center on Map
+                            if (onCenterOnMember != null)
+                              Positioned(
+                                top: 36,
+                                right: 14,
+                                child: _buildSmallCircularButton(
+                                  context: context,
+                                  icon: Icons.my_location_rounded,
+                                  tooltip: 'Fokus ke Peta',
+                                  onTap: onCenterOnMember!,
+                                ),
+                              ),
+
+                            // Overlapping circular avatar popping out at top center
+                            Positioned(
+                              top: 0,
+                              left: 0,
+                              right: 0,
+                              child: Center(
+                                child: _buildOverlappingAvatar(
+                                  context,
+                                  effectiveMember,
+                                ),
+                              ),
                             ),
                           ],
-                        ),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            // Interactive Drag Handle
-                            GestureDetector(
-                              behavior: HitTestBehavior.opaque,
-                              onTap: () => _dismissWithAnimation(),
-                              onVerticalDragUpdate: _onVerticalDragUpdate,
-                              onVerticalDragEnd: _onVerticalDragEnd,
-                              onVerticalDragCancel: _onVerticalDragCancel,
-                              child: Container(
-                                width: double.infinity,
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 8,
+                        )
+                      : ClipRRect(
+                          borderRadius: BorderRadius.circular(AppRadius.xl),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: context.hc.surface,
+                              borderRadius: BorderRadius.circular(AppRadius.xl),
+                              border: Border.all(
+                                color: context.hc.border,
+                                width: 1,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: context.hc.shadow,
+                                  blurRadius: 20,
+                                  spreadRadius: 0,
+                                  offset: const Offset(0, 6),
                                 ),
-                                color: Colors.transparent,
-                                child: Center(
+                              ],
+                            ),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                // Interactive Drag Handle
+                                GestureDetector(
+                                  behavior: HitTestBehavior.opaque,
+                                  onTap: () => _dismissWithAnimation(),
+                                  onVerticalDragUpdate: _onVerticalDragUpdate,
+                                  onVerticalDragEnd: _onVerticalDragEnd,
+                                  onVerticalDragCancel: _onVerticalDragCancel,
                                   child: Container(
-                                    width: 38,
-                                    height: 4,
-                                    decoration: BoxDecoration(
-                                      color: isDark
-                                          ? AppColors.darkOutline
-                                          : AppColors.outlineVariant.withValues(
-                                              alpha: 0.7,
-                                            ),
-                                      borderRadius: BorderRadius.circular(
-                                        AppRadius.pill,
+                                    width: double.infinity,
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 8,
+                                    ),
+                                    color: Colors.transparent,
+                                    child: Center(
+                                      child: Container(
+                                        width: 38,
+                                        height: 4,
+                                        decoration: BoxDecoration(
+                                          color: context.hc.borderStrong,
+                                          borderRadius: BorderRadius.circular(
+                                            AppRadius.pill,
+                                          ),
+                                        ),
                                       ),
                                     ),
                                   ),
                                 ),
-                              ),
-                            ),
 
-                            if (roomMembers != null && roomMembers!.isNotEmpty)
-                              _buildRoomMembersList(context, roomMembers!)
-                            else
-                              _buildLegacyJamaahCard(context),
-                          ],
+                                if (roomMembers != null &&
+                                    roomMembers!.isNotEmpty)
+                                  _buildRoomMembersList(context, roomMembers!)
+                                else
+                                  _buildLegacyJamaahCard(context),
+                              ],
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
+                ),
+              ),
             ),
           ),
         ),
@@ -401,7 +389,6 @@ class _MapBottomSheetState extends State<MapBottomSheet>
     BuildContext context,
     RoomMemberModel member,
   ) {
-    final isDark = AppColors.isDark(context);
     final distText = getMemberDistanceText != null
         ? getMemberDistanceText!(member) ??
               context.tr('maps.locationUnavailable')
@@ -466,10 +453,8 @@ class _MapBottomSheetState extends State<MapBottomSheet>
                   textAlign: TextAlign.center,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: AppTypography.titleLarge.copyWith(
-                    color: isDark
-                        ? AppColors.darkTextHeading
-                        : AppColors.espressoDark,
+                  style: context.text.titleLarge.copyWith(
+                    color: context.hc.textPrimary,
                     fontWeight: FontWeight.w700,
                     fontSize: 18,
                     letterSpacing: -0.3,
@@ -491,7 +476,7 @@ class _MapBottomSheetState extends State<MapBottomSheet>
                         width: 6.5,
                         height: 6.5,
                         decoration: BoxDecoration(
-                          color: _getLocationStatusColor(member),
+                          color: _getLocationStatusColor(context, member),
                           shape: BoxShape.circle,
                         ),
                       ),
@@ -499,10 +484,8 @@ class _MapBottomSheetState extends State<MapBottomSheet>
                       Flexible(
                         child: Text(
                           _formatLastLocationUpdate(member, context),
-                          style: AppTypography.captionSmall.copyWith(
-                            color: isDark
-                                ? AppColors.darkTextBody
-                                : AppColors.textMuted,
+                          style: context.text.captionSmall.copyWith(
+                            color: context.hc.textSecondary,
                             fontSize: 11.5,
                             fontWeight: FontWeight.w500,
                           ),
@@ -556,10 +539,8 @@ class _MapBottomSheetState extends State<MapBottomSheet>
                       ),
                       child: Text(
                         context.tr('common.close'),
-                        style: AppTypography.labelMedium.copyWith(
-                          color: isDark
-                              ? AppColors.darkTextBody
-                              : AppColors.textMuted,
+                        style: context.text.labelMedium.copyWith(
+                          color: context.hc.textSecondary,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -576,18 +557,27 @@ class _MapBottomSheetState extends State<MapBottomSheet>
   // ── Overlapping Circular Avatar (Centered & Proportional) ───────────────────
 
   Widget _buildOverlappingAvatar(BuildContext context, RoomMemberModel member) {
-    final isDark = AppColors.isDark(context);
-    final cardBg = isDark ? AppColors.darkSurface : AppColors.surfaceWhite;
+    final hc = context.hc;
+    final cardBg = hc.surface;
     final isPendamping = member.isPendamping;
     final isEmergency = member.sosActive;
 
     final List<Color> gradientColors;
     if (isEmergency) {
-      gradientColors = const [Color(0xFFFEE2E2), Color(0xFFFECACA)];
+      gradientColors = [
+        hc.dangerContainer,
+        hc.dangerContainer.withValues(alpha: 0.8),
+      ];
     } else if (isPendamping) {
-      gradientColors = const [Color(0xFFDBEAFE), Color(0xFFBFDBFE)];
+      gradientColors = [
+        hc.infoContainer,
+        hc.infoContainer.withValues(alpha: 0.8),
+      ];
     } else {
-      gradientColors = const [Color(0xFFDCFCE7), Color(0xFFBBF7D0)];
+      gradientColors = [
+        hc.successContainer,
+        hc.successContainer.withValues(alpha: 0.8),
+      ];
     }
 
     return Container(
@@ -599,7 +589,7 @@ class _MapBottomSheetState extends State<MapBottomSheet>
         border: Border.all(color: cardBg, width: 3.5),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.10),
+            color: hc.shadow,
             blurRadius: 14,
             offset: const Offset(0, 4),
           ),
@@ -623,10 +613,8 @@ class _MapBottomSheetState extends State<MapBottomSheet>
                   Icons.person_rounded,
                   size: 38,
                   color: isEmergency
-                      ? AppColors.sosEmergency
-                      : (isPendamping
-                            ? const Color(0xFF2563EB)
-                            : const Color(0xFF16A34A)),
+                      ? hc.danger
+                      : (isPendamping ? hc.info : hc.success),
                 ),
               ),
 
@@ -638,7 +626,7 @@ class _MapBottomSheetState extends State<MapBottomSheet>
                   child: Container(
                     padding: const EdgeInsets.all(2.0),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF2563EB),
+                      color: hc.info,
                       shape: BoxShape.circle,
                       border: Border.all(color: Colors.white, width: 1.5),
                     ),
@@ -657,7 +645,7 @@ class _MapBottomSheetState extends State<MapBottomSheet>
                   child: Container(
                     padding: const EdgeInsets.all(2.0),
                     decoration: BoxDecoration(
-                      color: AppColors.sosEmergency,
+                      color: hc.danger,
                       shape: BoxShape.circle,
                       border: Border.all(color: Colors.white, width: 1.5),
                     ),
@@ -683,13 +671,9 @@ class _MapBottomSheetState extends State<MapBottomSheet>
     String distText,
     bool hasRoute,
   ) {
-    final isDark = AppColors.isDark(context);
-    final containerBg = isDark
-        ? AppColors.darkSurfaceContainer
-        : const Color(0xFFF8FAFC);
-    final borderColor = isDark
-        ? AppColors.darkOutline.withValues(alpha: 0.25)
-        : const Color(0xFFE2E8F0);
+    final hc = context.hc;
+    final containerBg = hc.surfaceSubtle;
+    final borderColor = hc.border;
     final isPendamping = member.isPendamping;
 
     // Stat 1: Status Kondisi Jamaah (Kesehatan / Keselamatan - Pengganti Bintang)
@@ -773,15 +757,13 @@ class _MapBottomSheetState extends State<MapBottomSheet>
     required String label,
     bool isEmergency = false,
   }) {
-    final isDark = AppColors.isDark(context);
-    final greenColor = isEmergency
-        ? AppColors.sosEmergency
-        : const Color(0xFF22C55E);
+    final hc = context.hc;
+    final statusColor = isEmergency ? hc.danger : hc.success;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 18, color: greenColor),
+        Icon(icon, size: 18, color: statusColor),
         const SizedBox(height: 3),
         Row(
           mainAxisSize: MainAxisSize.min,
@@ -790,14 +772,10 @@ class _MapBottomSheetState extends State<MapBottomSheet>
             Flexible(
               child: Text(
                 value,
-                style: AppTypography.titleSmall.copyWith(
+                style: context.text.titleSmall.copyWith(
                   fontWeight: FontWeight.w700,
                   fontSize: 13,
-                  color: isEmergency
-                      ? AppColors.sosEmergency
-                      : (isDark
-                            ? AppColors.darkTextHeading
-                            : AppColors.espressoDark),
+                  color: isEmergency ? hc.danger : hc.textPrimary,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -807,9 +785,9 @@ class _MapBottomSheetState extends State<MapBottomSheet>
             Flexible(
               child: Text(
                 label,
-                style: AppTypography.captionSmall.copyWith(
+                style: context.text.captionSmall.copyWith(
                   fontSize: 10.5,
-                  color: isDark ? AppColors.darkTextBody : AppColors.textMuted,
+                  color: hc.textSecondary,
                   fontWeight: FontWeight.w500,
                 ),
                 maxLines: 1,
@@ -829,18 +807,16 @@ class _MapBottomSheetState extends State<MapBottomSheet>
     RoomMemberModel member,
     bool hasRoute,
   ) {
-    final isDark = AppColors.isDark(context);
+    final hc = context.hc;
 
     if (!member.hasLocation) {
       return Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(AppRadius.pill),
-          gradient: const LinearGradient(
-            colors: [Color(0xFF22C55E), Color(0xFF16A34A)],
-          ),
+          color: hc.success,
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF22C55E).withValues(alpha: 0.35),
+              color: hc.success.withValues(alpha: 0.35),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -855,8 +831,8 @@ class _MapBottomSheetState extends State<MapBottomSheet>
           ),
           child: Text(
             context.tr('common.close'),
-            style: const TextStyle(
-              color: Colors.white,
+            style: TextStyle(
+              color: hc.onPrimary,
               fontSize: 16,
               fontWeight: FontWeight.w700,
             ),
@@ -869,9 +845,7 @@ class _MapBottomSheetState extends State<MapBottomSheet>
       return Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(AppRadius.pill),
-          color: isDark
-              ? AppColors.darkSurfaceContainer
-              : const Color(0xFFE2E8F0),
+          color: hc.surfaceSubtle,
         ),
         child: Center(
           child: Row(
@@ -882,18 +856,14 @@ class _MapBottomSheetState extends State<MapBottomSheet>
                 height: 18,
                 child: CircularProgressIndicator(
                   strokeWidth: 2.2,
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    isDark ? AppColors.goldPrimary : const Color(0xFF16A34A),
-                  ),
+                  valueColor: AlwaysStoppedAnimation<Color>(hc.primary),
                 ),
               ),
               const SizedBox(width: 10),
               Text(
                 context.tr('maps.searchingWalkingRoute'),
-                style: AppTypography.labelLarge.copyWith(
-                  color: isDark
-                      ? AppColors.darkTextBody
-                      : AppColors.espressoDark,
+                style: context.text.labelLarge.copyWith(
+                  color: hc.textPrimary,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -907,10 +877,10 @@ class _MapBottomSheetState extends State<MapBottomSheet>
       return Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(AppRadius.pill),
-          color: AppColors.sosEmergency,
+          color: hc.danger,
           boxShadow: [
             BoxShadow(
-              color: AppColors.sosEmergency.withValues(alpha: 0.3),
+              color: hc.danger.withValues(alpha: 0.3),
               blurRadius: 8,
               offset: const Offset(0, 3),
             ),
@@ -918,17 +888,13 @@ class _MapBottomSheetState extends State<MapBottomSheet>
         ),
         child: ElevatedButton.icon(
           onPressed: onRetryRoute,
-          icon: const Icon(
-            Icons.refresh_rounded,
-            size: 18,
-            color: Colors.white,
-          ),
+          icon: Icon(Icons.refresh_rounded, size: 18, color: hc.onDanger),
           label: Text(
             context.tr('maps.routeNotFoundRetry'),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: Colors.white,
+            style: TextStyle(
+              color: hc.onDanger,
               fontSize: 14.5,
               fontWeight: FontWeight.w700,
             ),
@@ -952,12 +918,10 @@ class _MapBottomSheetState extends State<MapBottomSheet>
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(AppRadius.pill),
-        gradient: const LinearGradient(
-          colors: [Color(0xFF22C55E), Color(0xFF16A34A)],
-        ),
+        color: hc.success,
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF22C55E).withValues(alpha: 0.35),
+            color: hc.success.withValues(alpha: 0.35),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -977,8 +941,8 @@ class _MapBottomSheetState extends State<MapBottomSheet>
             buttonLabel,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: Colors.white,
+            style: TextStyle(
+              color: hc.onPrimary,
               fontSize: 16,
               fontWeight: FontWeight.w700,
               letterSpacing: 0.2,
@@ -995,7 +959,7 @@ class _MapBottomSheetState extends State<MapBottomSheet>
     required String tooltip,
     required VoidCallback onTap,
   }) {
-    final isDark = AppColors.isDark(context);
+    final hc = context.hc;
     return Tooltip(
       message: tooltip,
       child: Material(
@@ -1007,26 +971,11 @@ class _MapBottomSheetState extends State<MapBottomSheet>
             width: 32,
             height: 32,
             decoration: BoxDecoration(
-              color: isDark
-                  ? AppColors.darkSurfaceContainer
-                  : AppColors.canvasCream.withValues(alpha: 0.6),
+              color: hc.surfaceSubtle,
               shape: BoxShape.circle,
-              border: Border.all(
-                color: isDark
-                    ? AppColors.darkOutline.withValues(alpha: 0.25)
-                    : AppColors.outlineVariant.withValues(alpha: 0.35),
-                width: 1,
-              ),
+              border: Border.all(color: hc.border, width: 1),
             ),
-            child: Center(
-              child: Icon(
-                icon,
-                size: 16,
-                color: isDark
-                    ? AppColors.darkTextBody
-                    : AppColors.espressoMedium,
-              ),
-            ),
+            child: Center(child: Icon(icon, size: 16, color: hc.textPrimary)),
           ),
         ),
       ),
@@ -1071,18 +1020,18 @@ class _MapBottomSheetState extends State<MapBottomSheet>
     }
   }
 
-  Color _getLocationStatusColor(RoomMemberModel member) {
-    if (member.sosActive) return AppColors.sosEmergency;
+  Color _getLocationStatusColor(BuildContext context, RoomMemberModel member) {
+    if (member.sosActive) return context.hc.danger;
     if (!member.hasLocation || member.locationUpdatedAt == null) {
-      return AppColors.textMuted.withValues(alpha: 0.6);
+      return context.hc.textMuted.withValues(alpha: 0.6);
     }
     final diff = DateTime.now().difference(member.locationUpdatedAt!);
     if (diff.inMinutes <= 5) {
-      return const Color(0xFF22C55E);
+      return context.hc.success;
     } else if (diff.inMinutes <= 30) {
-      return const Color(0xFFEAB308);
+      return context.hc.warning;
     }
-    return AppColors.textMuted;
+    return context.hc.textMuted;
   }
 
   // ── 2. ROOM MEMBERS LIST PANEL (Gambar 2 Fusion & Compact Design) ──────────
@@ -1094,17 +1043,11 @@ class _MapBottomSheetState extends State<MapBottomSheet>
     required VoidCallback onTap,
     bool isActive = false,
   }) {
-    final isDark = AppColors.isDark(context);
-    final activeBg = isDark
-        ? AppColors.darkPrimaryContainer
-        : AppColors.espressoDark;
-    final activeColor = isDark ? AppColors.goldLight : AppColors.canvasCream;
-    final defaultBg = isDark
-        ? AppColors.darkSurfaceContainerHighest
-        : AppColors.canvasCream;
-    final defaultColor = isDark
-        ? AppColors.darkTextHeading
-        : AppColors.espressoDark;
+    final hc = context.hc;
+    final activeBg = hc.primary;
+    final activeColor = hc.onPrimary;
+    final defaultBg = hc.surfaceSubtle;
+    final defaultColor = hc.textPrimary;
 
     return Semantics(
       button: true,
@@ -1123,13 +1066,7 @@ class _MapBottomSheetState extends State<MapBottomSheet>
                 color: isActive ? activeBg : defaultBg,
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: isActive
-                      ? (isDark
-                            ? AppColors.goldPrimary
-                            : AppColors.espressoDark)
-                      : (isDark
-                            ? AppColors.darkOutlineVariant
-                            : AppColors.lightCardBorder),
+                  color: isActive ? hc.accent : hc.border,
                   width: 1.1,
                 ),
               ),
@@ -1151,14 +1088,13 @@ class _MapBottomSheetState extends State<MapBottomSheet>
     BuildContext context,
     List<RoomMemberModel> members,
   ) {
+    final hc = context.hc;
     final sorted = List<RoomMemberModel>.from(members);
     sorted.sort((a, b) {
       if (a.hasLocation && !b.hasLocation) return -1;
       if (!a.hasLocation && b.hasLocation) return 1;
       return a.name.compareTo(b.name);
     });
-
-    final isDark = AppColors.isDark(context);
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(
@@ -1189,10 +1125,8 @@ class _MapBottomSheetState extends State<MapBottomSheet>
                     children: [
                       Text(
                         context.tr('maps.selectMember'),
-                        style: AppTypography.titleSmall.copyWith(
-                          color: isDark
-                              ? AppColors.darkTextBody
-                              : AppColors.textMuted,
+                        style: context.text.titleSmall.copyWith(
+                          color: hc.textSecondary,
                           fontWeight: FontWeight.w600,
                           fontSize: 12.5,
                           letterSpacing: 0.2,
@@ -1201,8 +1135,8 @@ class _MapBottomSheetState extends State<MapBottomSheet>
                       const SizedBox(height: 1),
                       Text(
                         context.tr('maps.groupTitle'),
-                        style: AppTypography.displayMedium.copyWith(
-                          color: AppColors.textHeadingColor(context),
+                        style: context.text.displayMedium.copyWith(
+                          color: hc.textPrimary,
                           fontWeight: FontWeight.w900,
                           fontSize: 19,
                           height: 1.1,
@@ -1213,10 +1147,8 @@ class _MapBottomSheetState extends State<MapBottomSheet>
                         context.tr('maps.membersRegistered', {
                           'count': members.length.toString(),
                         }),
-                        style: AppTypography.captionSmall.copyWith(
-                          color: isDark
-                              ? AppColors.goldLight
-                              : AppColors.secondary,
+                        style: context.text.captionSmall.copyWith(
+                          color: hc.accentText,
                           fontWeight: FontWeight.w700,
                           fontSize: 10.5,
                         ),
@@ -1265,16 +1197,9 @@ class _MapBottomSheetState extends State<MapBottomSheet>
             Container(
               height: 38,
               decoration: BoxDecoration(
-                color: isDark
-                    ? AppColors.darkSurfaceContainer
-                    : AppColors.canvasCream,
+                color: hc.surfaceSubtle,
                 borderRadius: BorderRadius.circular(AppRadius.pill),
-                border: Border.all(
-                  color: isDark
-                      ? AppColors.darkOutlineVariant
-                      : AppColors.lightCardBorder,
-                  width: 1.0,
-                ),
+                border: Border.all(color: hc.border, width: 1.0),
               ),
               padding: const EdgeInsets.symmetric(horizontal: 12),
               child: Theme(
@@ -1292,9 +1217,7 @@ class _MapBottomSheetState extends State<MapBottomSheet>
                     Icon(
                       Icons.search_rounded,
                       size: 17,
-                      color: isDark
-                          ? AppColors.goldLight
-                          : AppColors.espressoDark,
+                      color: hc.textSecondary,
                     ),
                     const SizedBox(width: 8),
                     Expanded(
@@ -1305,19 +1228,17 @@ class _MapBottomSheetState extends State<MapBottomSheet>
                             _searchQuery = val;
                           });
                         },
-                        style: TextStyle(
+                        style: context.text.bodyMedium.copyWith(
                           fontSize: 12.5,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.textHeadingColor(context),
+                          color: hc.textPrimary,
                         ),
                         decoration: InputDecoration(
                           hintText: context.tr('maps.searchNameOrStatus'),
-                          hintStyle: TextStyle(
+                          hintStyle: context.text.bodyMedium.copyWith(
                             fontSize: 12,
                             fontWeight: FontWeight.w400,
-                            color: isDark
-                                ? AppColors.darkOutline
-                                : AppColors.textMuted,
+                            color: hc.textTertiary,
                           ),
                           filled: false,
                           fillColor: Colors.transparent,
@@ -1342,9 +1263,7 @@ class _MapBottomSheetState extends State<MapBottomSheet>
                         child: Icon(
                           Icons.cancel_rounded,
                           size: 16,
-                          color: isDark
-                              ? AppColors.goldLight
-                              : AppColors.textMuted,
+                          color: hc.textSecondary,
                         ),
                       ),
                   ],
@@ -1363,7 +1282,8 @@ class _MapBottomSheetState extends State<MapBottomSheet>
     BuildContext context,
     List<RoomMemberModel> sorted,
   ) {
-    final isDark = AppColors.isDark(context);
+    final hc = context.hc;
+    final isDark = hc.isDark;
     final mq = MediaQuery.of(context);
     // Compact max height so it does NOT dominate or cover the map view
     final double listMaxHeight = (mq.size.height * 0.38).clamp(180.0, 310.0);
@@ -1388,18 +1308,14 @@ class _MapBottomSheetState extends State<MapBottomSheet>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
-              Icons.search_off_rounded,
-              size: 28,
-              color: AppColors.outlineVariant,
-            ),
+            Icon(Icons.search_off_rounded, size: 28, color: hc.textMuted),
             const SizedBox(height: 6),
             Text(
               context.tr('maps.noMatchingMembers'),
-              style: const TextStyle(
+              style: context.text.bodyMedium.copyWith(
                 fontSize: 12.5,
                 fontWeight: FontWeight.w600,
-                color: AppColors.textMuted,
+                color: hc.textMuted,
               ),
             ),
           ],
@@ -1465,42 +1381,24 @@ class _MapBottomSheetState extends State<MapBottomSheet>
                 : (isPendamping ? 'P' : 'J');
 
             // ── Unified Color Configuration (Same clean card for all members) ──
-            final cardBg = isDark
-                ? AppColors.darkSurfaceContainer
-                : AppColors.surfaceWhite;
-            final cardBorder = isDark
-                ? AppColors.darkOutlineVariant
-                : AppColors.lightCardBorder;
-            final cardTextColor = isDark
-                ? AppColors.darkTextHeading
-                : AppColors.textHeading;
-            final cardSubtextColor = isDark
-                ? AppColors.darkTextBody.withValues(alpha: 0.8)
-                : AppColors.textMuted;
-            final cardDistanceColor = isDark
-                ? AppColors.darkTextHeading
-                : AppColors.textHeading;
-            final cardDistanceIconColor = isDark
-                ? AppColors.darkPrimary
-                : AppColors.goldPrimary;
+            final cardBg = hc.surface;
+            final cardBorder = hc.border;
+            final cardTextColor = hc.textPrimary;
+            final cardSubtextColor = hc.textMuted;
+            final cardDistanceColor = hc.textPrimary;
+            final cardDistanceIconColor = hc.accent;
             final roleBgColor = isPendamping
-                ? AppColors.goldPrimary.withValues(alpha: isDark ? 0.25 : 0.15)
-                : AppColors.statusSafe.withValues(alpha: isDark ? 0.2 : 0.1);
+                ? hc.accent.withValues(alpha: isDark ? 0.25 : 0.15)
+                : hc.success.withValues(alpha: isDark ? 0.2 : 0.1);
             final roleBorderColor = isPendamping
-                ? AppColors.goldPrimary.withValues(alpha: isDark ? 0.45 : 0.35)
-                : AppColors.statusSafe.withValues(alpha: 0.28);
+                ? hc.accent.withValues(alpha: isDark ? 0.45 : 0.35)
+                : hc.success.withValues(alpha: 0.28);
             final roleTextColor = isPendamping
-                ? (isDark ? AppColors.goldLight : AppColors.espressoDark)
-                : AppColors.statusSafe;
-            final arrowBtnBg = isDark
-                ? AppColors.darkSurfaceContainerHighest
-                : AppColors.canvasCream;
-            final arrowBtnBorder = isDark
-                ? AppColors.darkOutlineVariant
-                : AppColors.lightCardBorder;
-            final arrowBtnIconColor = isDark
-                ? AppColors.darkTextHeading
-                : AppColors.espressoDark;
+                ? (isDark ? hc.accent : hc.primary)
+                : hc.success;
+            final arrowBtnBg = hc.surfaceSubtle;
+            final arrowBtnBorder = hc.border;
+            final arrowBtnIconColor = hc.textPrimary;
             final String displayStatus;
             if (!m.hasLocation || m.locationUpdatedAt == null) {
               displayStatus = context.tr('maps.locationUnavailable');
@@ -1554,40 +1452,20 @@ class _MapBottomSheetState extends State<MapBottomSheet>
                                   gradient: LinearGradient(
                                     colors: isPendamping
                                         ? (isDark
-                                              ? [
-                                                  AppColors
-                                                      .darkSurfaceContainerHighest,
-                                                  AppColors
-                                                      .darkPrimaryContainer,
-                                                ]
-                                              : [
-                                                  AppColors.espressoMedium,
-                                                  AppColors.primaryContainer,
-                                                ])
+                                              ? [hc.surfaceSubtle, hc.surface]
+                                              : [hc.primary, hc.primaryDark])
                                         : (isDark
-                                              ? [
-                                                  AppColors
-                                                      .darkSurfaceContainerHigh,
-                                                  AppColors
-                                                      .darkSurfaceContainer,
-                                                ]
-                                              : [
-                                                  AppColors.tanLight.withValues(
-                                                    alpha: 0.4,
-                                                  ),
-                                                  AppColors.canvasCream,
-                                                ]),
+                                              ? [hc.surfaceSubtle, hc.surface]
+                                              : [hc.surfaceSubtle, hc.canvas]),
                                     begin: Alignment.topLeft,
                                     end: Alignment.bottomRight,
                                   ),
                                   border: Border.all(
                                     color: isPendamping
-                                        ? AppColors.goldPrimary
+                                        ? hc.accent
                                         : (isDark
-                                              ? AppColors.darkOutlineVariant
-                                              : AppColors.tanMedium.withValues(
-                                                  alpha: 0.35,
-                                                )),
+                                              ? hc.border
+                                              : hc.borderSubtle),
                                     width: 1.1,
                                   ),
                                 ),
@@ -1597,17 +1475,17 @@ class _MapBottomSheetState extends State<MapBottomSheet>
                                         Icons.shield_rounded,
                                         size: 17,
                                         color: isDark
-                                            ? AppColors.goldLight
+                                            ? hc.accent
                                             : Colors.white,
                                       )
                                     : Text(
                                         initial,
-                                        style: TextStyle(
+                                        style: context.text.titleSmall.copyWith(
                                           fontSize: 13,
                                           fontWeight: FontWeight.bold,
                                           color: isDark
-                                              ? AppColors.darkTextHeading
-                                              : AppColors.espressoDark,
+                                              ? hc.textPrimary
+                                              : hc.primary,
                                         ),
                                       ),
                               ),
@@ -1619,10 +1497,10 @@ class _MapBottomSheetState extends State<MapBottomSheet>
                                   height: 9.5,
                                   decoration: BoxDecoration(
                                     color: m.hasLocation && isOnline
-                                        ? AppColors.statusSafe
+                                        ? hc.success
                                         : (m.hasLocation
-                                              ? AppColors.statusWarning
-                                              : AppColors.outlineVariant),
+                                              ? hc.warning
+                                              : hc.border),
                                     shape: BoxShape.circle,
                                     border: Border.all(
                                       color: cardBg,
@@ -1639,7 +1517,7 @@ class _MapBottomSheetState extends State<MapBottomSheet>
                           Expanded(
                             child: Text(
                               m.name,
-                              style: TextStyle(
+                              style: context.text.titleSmall.copyWith(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w800,
                                 color: cardTextColor,
@@ -1670,7 +1548,7 @@ class _MapBottomSheetState extends State<MapBottomSheet>
                           isPendamping
                               ? '👑 ${context.tr('maps.rolePetugas')}'
                               : context.tr('maps.roleJamaah'),
-                          style: TextStyle(
+                          style: context.text.labelSmall.copyWith(
                             fontSize: 9.5,
                             fontWeight: FontWeight.w800,
                             color: roleTextColor,
@@ -1701,7 +1579,7 @@ class _MapBottomSheetState extends State<MapBottomSheet>
                                     Flexible(
                                       child: Text(
                                         dist,
-                                        style: TextStyle(
+                                        style: context.text.labelSmall.copyWith(
                                           fontSize: 11,
                                           fontWeight: FontWeight.w800,
                                           color: cardDistanceColor,
@@ -1721,18 +1599,18 @@ class _MapBottomSheetState extends State<MapBottomSheet>
                                           : Icons.access_time_rounded,
                                       size: 10,
                                       color: isOnline
-                                          ? AppColors.statusSafe
+                                          ? hc.success
                                           : cardSubtextColor,
                                     ),
                                     const SizedBox(width: 3),
                                     Flexible(
                                       child: Text(
                                         displayStatus,
-                                        style: TextStyle(
+                                        style: context.text.labelSmall.copyWith(
                                           fontSize: 9.5,
                                           fontWeight: FontWeight.w600,
                                           color: isOnline
-                                              ? AppColors.statusSafe
+                                              ? hc.success
                                               : cardSubtextColor,
                                         ),
                                         maxLines: 1,
@@ -1791,7 +1669,8 @@ class _MapBottomSheetState extends State<MapBottomSheet>
   // ── 3. LEGACY JAMAAH CARD FALLBACK ─────────────────────────────────────────
 
   Widget _buildLegacyJamaahCard(BuildContext context) {
-    final isDark = AppColors.isDark(context);
+    final hc = context.hc;
+    final isDark = hc.isDark;
     final jamaah = activeJamaah ?? state.self;
 
     return Padding(
@@ -1805,19 +1684,13 @@ class _MapBottomSheetState extends State<MapBottomSheet>
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: isDark
-                      ? AppColors.darkSurfaceContainer
-                      : AppColors.canvasCream,
+                  color: hc.surfaceSubtle,
                   shape: BoxShape.circle,
-                  border: Border.all(
-                    color: AppColors.goldPrimary.withValues(alpha: 0.35),
-                  ),
+                  border: Border.all(color: hc.accent.withValues(alpha: 0.35)),
                 ),
                 child: Icon(
                   Icons.elderly_rounded,
-                  color: isDark
-                      ? AppColors.goldPrimary
-                      : AppColors.espressoDark,
+                  color: isDark ? hc.accent : hc.primary,
                   size: 24,
                 ),
               ),
@@ -1828,8 +1701,8 @@ class _MapBottomSheetState extends State<MapBottomSheet>
                   children: [
                     Text(
                       jamaah.name,
-                      style: AppTypography.titleMedium.copyWith(
-                        color: AppColors.textHeadingColor(context),
+                      style: context.text.titleMedium.copyWith(
+                        color: hc.textPrimary,
                         fontWeight: FontWeight.w800,
                       ),
                       maxLines: 1,
@@ -1838,8 +1711,8 @@ class _MapBottomSheetState extends State<MapBottomSheet>
                     const SizedBox(height: 2),
                     Text(
                       '${jamaah.shortLabel} • ${jamaah.distance >= 1000 ? '${(jamaah.distance / 1000).toStringAsFixed(jamaah.distance >= 100000 ? 0 : 1)}km' : '${jamaah.distance.toInt()}m'}',
-                      style: AppTypography.bodySmall.copyWith(
-                        color: AppColors.textBodyColor(context),
+                      style: context.text.bodySmall.copyWith(
+                        color: hc.textMuted,
                       ),
                     ),
                   ],
@@ -1847,7 +1720,7 @@ class _MapBottomSheetState extends State<MapBottomSheet>
               ),
               IconButton(
                 icon: const Icon(Icons.close_rounded, size: 20),
-                color: AppColors.outlineVariant,
+                color: hc.textMuted,
                 onPressed: () => _dismissWithAnimation(),
               ),
             ],
@@ -1862,27 +1735,21 @@ class _MapBottomSheetState extends State<MapBottomSheet>
                 icon: Icon(
                   Icons.directions_walk_rounded,
                   size: 20,
-                  color: isDark
-                      ? AppColors.espressoDark
-                      : AppColors.goldPrimary,
+                  color: isDark ? hc.canvas : hc.accent,
                 ),
                 label: FittedBox(
                   fit: BoxFit.scaleDown,
                   child: Text(
                     context.tr('maps.startNavigation'),
-                    style: AppTypography.labelLarge.copyWith(
-                      color: isDark ? AppColors.espressoDark : Colors.white,
+                    style: context.text.labelLarge.copyWith(
+                      color: isDark ? hc.canvas : Colors.white,
                       fontWeight: FontWeight.w800,
                     ),
                   ),
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: isDark
-                      ? AppColors.goldPrimary
-                      : AppColors.espressoDark,
-                  foregroundColor: isDark
-                      ? AppColors.espressoDark
-                      : Colors.white,
+                  backgroundColor: isDark ? hc.accent : hc.primary,
+                  foregroundColor: isDark ? hc.canvas : Colors.white,
                   padding: const EdgeInsets.symmetric(
                     horizontal: 16,
                     vertical: 12,
@@ -1891,8 +1758,8 @@ class _MapBottomSheetState extends State<MapBottomSheet>
                     borderRadius: BorderRadius.circular(AppRadius.pill),
                     side: BorderSide(
                       color: isDark
-                          ? AppColors.goldPrimary
-                          : AppColors.goldPrimary.withValues(alpha: 0.5),
+                          ? hc.accent
+                          : hc.accent.withValues(alpha: 0.5),
                       width: 1.2,
                     ),
                   ),

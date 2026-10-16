@@ -16,7 +16,7 @@ extension _AdminDashboardJamaahSheet on _AdminDashboardHome {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
+      backgroundColor: context.hc.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(
           top: Radius.circular(AppRadius.sheet),
@@ -75,16 +75,16 @@ extension _AdminDashboardJamaahSheet on _AdminDashboardHome {
                                 Container(
                                   padding: const EdgeInsets.all(8),
                                   decoration: BoxDecoration(
-                                    color: AppColors.statusSafe.withValues(
+                                    color: context.hc.success.withValues(
                                       alpha: 0.15,
                                     ),
                                     borderRadius: BorderRadius.circular(
                                       AppRadius.sm,
                                     ),
                                   ),
-                                  child: const Icon(
+                                  child: Icon(
                                     Icons.groups_rounded,
-                                    color: AppColors.statusSafe,
+                                    color: context.hc.success,
                                     size: 20,
                                   ),
                                 ),
@@ -146,28 +146,18 @@ extension _AdminDashboardJamaahSheet on _AdminDashboardHome {
                               size: 18,
                             ),
                             filled: true,
-                            fillColor: isDark
-                                ? AppColors.darkScaffold.withValues(alpha: 0.5)
-                                : AppColors.canvasCream.withValues(alpha: 0.4),
+                            fillColor: context.hc.canvas.withValues(alpha: 0.5),
                             contentPadding: const EdgeInsets.symmetric(
                               horizontal: 14,
                               vertical: 10,
                             ),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(AppRadius.md),
-                              borderSide: BorderSide(
-                                color: isDark
-                                    ? AppColors.darkCardBorder
-                                    : AppColors.lightCardBorder,
-                              ),
+                              borderSide: BorderSide(color: context.hc.border),
                             ),
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(AppRadius.md),
-                              borderSide: BorderSide(
-                                color: isDark
-                                    ? AppColors.darkCardBorder
-                                    : AppColors.lightCardBorder,
-                              ),
+                              borderSide: BorderSide(color: context.hc.border),
                             ),
                           ),
                           style: TextStyle(color: headingColor, fontSize: 13),
@@ -244,7 +234,7 @@ extension _AdminDashboardJamaahSheet on _AdminDashboardHome {
                                     final String statusLabel;
 
                                     if (isSos) {
-                                      dotColor = AppColors.sosEmergency;
+                                      dotColor = context.hc.danger;
                                       statusLabel =
                                           '• ${context.tr('adminDashboard.sosActive')}';
                                     } else if (!hasRoom) {
@@ -259,20 +249,18 @@ extension _AdminDashboardJamaahSheet on _AdminDashboardHome {
                                         locUpdatedAt,
                                       );
                                       if (diff.inMinutes <= 5 || isGps) {
-                                        dotColor = AppColors.statusSafe;
+                                        dotColor = context.hc.success;
                                         statusLabel =
                                             '• ${context.tr('adminDashboard.online')}';
                                       } else {
-                                        dotColor = const Color(
-                                          0xFFF57C00,
-                                        ); // Amber (stale location)
+                                        dotColor = context.hc.warning;
                                         statusLabel = context.tr(
                                           'adminDashboard.lastLocation',
                                           {'time': _formatMinutesAgo(diff)},
                                         );
                                       }
                                     } else if (isGps) {
-                                      dotColor = AppColors.statusSafe;
+                                      dotColor = context.hc.success;
                                       statusLabel =
                                           '• ${context.tr('adminDashboard.online')}';
                                     } else {
@@ -292,22 +280,14 @@ extension _AdminDashboardJamaahSheet on _AdminDashboardHome {
                                         ),
                                         border: Border.all(
                                           color: isSos
-                                              ? AppColors.sosEmergency
-                                                    .withValues(alpha: 0.6)
-                                              : (isDark
-                                                    ? AppColors.darkCardBorder
-                                                    : AppColors
-                                                          .lightCardBorder),
+                                              ? context.hc.danger.withValues(
+                                                  alpha: 0.6,
+                                                )
+                                              : context.hc.border,
                                         ),
                                         boxShadow: [
                                           BoxShadow(
-                                            color: isDark
-                                                ? Colors.black.withValues(
-                                                    alpha: 0.15,
-                                                  )
-                                                : AppColors.primary.withValues(
-                                                    alpha: 0.03,
-                                                  ),
+                                            color: context.hc.shadow,
                                             blurRadius: 6,
                                             offset: const Offset(0, 2),
                                           ),

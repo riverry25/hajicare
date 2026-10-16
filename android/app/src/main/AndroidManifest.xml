@@ -32,6 +32,11 @@
         android:icon="@mipmap/launcher_icon"
         android:enableOnBackInvokedCallback="true"
         android:extractNativeLibs="true"
+        android:allowBackup="false"
+        android:fullBackupContent="false"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:usesCleartextTraffic="false"
+        android:networkSecurityConfig="@xml/network_security_config"
         tools:replace="android:extractNativeLibs">
         <activity
             android:name=".MainActivity"
@@ -119,5 +124,19 @@
         </intent>
         <!-- Required for google_sign_in v7 Credential Manager on Android -->
         <package android:name="com.google.android.gms" />
+        <!-- Required for Google Maps and External Map URL Launching -->
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="geo" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="https" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="http" />
+        </intent>
+        <package android:name="com.google.android.apps.maps" />
     </queries>
 </manifest>

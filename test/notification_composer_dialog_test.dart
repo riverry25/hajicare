@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:hajicare/core/locales/app_localizations.dart';
 import 'package:hajicare/core/state/hajicare_controller.dart';
 import 'package:hajicare/features/notification/widgets/notification_composer_dialog.dart';
+import 'package:hajicare/features/room/widgets/add_jamaah_dialog.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
@@ -125,5 +126,88 @@ void main() {
     expect(sendRect.center.dx, closeTo(cancelRect.center.dx, 1));
     expect(sendRect.bottom, lessThan(cancelRect.top));
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets(
+    'NotificationComposerDialog.show closes when tapping backdrop/barrier',
+    (tester) async {
+      BuildContext? testContext;
+      await tester.pumpWidget(
+        MaterialApp(
+          locale: const Locale('id'),
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+            FallbackMaterialLocalizationsDelegate(),
+            FallbackCupertinoLocalizationsDelegate(),
+            FallbackWidgetsLocalizationsDelegate(),
+          ],
+          supportedLocales: AppTranslations.supportedLocales,
+          home: Builder(
+            builder: (ctx) {
+              testContext = ctx;
+              return const Scaffold(body: Text('Home'));
+            },
+          ),
+        ),
+      );
+
+      NotificationComposerDialog.show(testContext!);
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const Key('notification_composer_dialog')),
+        findsOneWidget,
+      );
+
+      // Tap on top-left corner (backdrop area outside dialog)
+      await tester.tapAt(const Offset(10, 10));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const Key('notification_composer_dialog')),
+        findsNothing,
+      );
+    },
+  );
+
+  testWidgets('AddJamaahDialog.show closes when tapping backdrop/barrier', (
+    tester,
+  ) async {
+    BuildContext? testContext;
+    await tester.pumpWidget(
+      MaterialApp(
+        locale: const Locale('id'),
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+          FallbackMaterialLocalizationsDelegate(),
+          FallbackCupertinoLocalizationsDelegate(),
+          FallbackWidgetsLocalizationsDelegate(),
+        ],
+        supportedLocales: AppTranslations.supportedLocales,
+        home: Builder(
+          builder: (ctx) {
+            testContext = ctx;
+            return const Scaffold(body: Text('Home'));
+          },
+        ),
+      ),
+    );
+
+    AddJamaahDialog.show(testContext!, 'room-1');
+    await tester.pumpAndSettle();
+
+    expect(find.byType(AddJamaahDialog), findsOneWidget);
+
+    // Tap on top-left corner (backdrop area outside dialog)
+    await tester.tapAt(const Offset(10, 10));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(AddJamaahDialog), findsNothing);
   });
 }

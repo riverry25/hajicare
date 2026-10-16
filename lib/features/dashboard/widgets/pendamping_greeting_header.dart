@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../core/locales/app_translations.dart';
 import '../../../../core/state/hajicare_state.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/theme_context.dart';
 import '../presentation/dashboard_typography.dart';
 
 class PendampingGreetingHeader extends StatelessWidget {
@@ -14,9 +14,8 @@ class PendampingGreetingHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = AppColors.isDark(context);
-    final headingColor = AppColors.textHeadingColor(context);
-    final bodyColor = AppColors.textBodyColor(context);
+    final headingColor = context.hc.textPrimary;
+    final bodyColor = context.hc.textSecondary;
 
     return Obx(() {
       final pName = state.pendampingName.value.trim();
@@ -70,34 +69,23 @@ class PendampingGreetingHeader extends StatelessWidget {
                     vertical: 4.5,
                   ),
                   decoration: BoxDecoration(
-                    color: isDark
-                        ? AppColors.darkPrimaryContainer.withValues(alpha: 0.5)
-                        : AppColors.secondaryContainer.withValues(alpha: 0.7),
+                    color: context.hc.surfaceSand,
                     borderRadius: BorderRadius.circular(AppRadius.pill),
-                    border: Border.all(
-                      color: isDark
-                          ? AppColors.darkOutlineVariant
-                          : AppColors.goldLight.withValues(alpha: 0.5),
-                      width: 0.8,
-                    ),
+                    border: Border.all(color: context.hc.border, width: 0.8),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
                         Icons.verified_user_rounded,
-                        color: isDark
-                            ? AppColors.goldLight
-                            : AppColors.espressoDark,
+                        color: context.hc.primary,
                         size: 13,
                       ),
                       const SizedBox(width: 4.5),
                       Text(
                         context.tr('modePendampingSubtitle'),
                         style: TextStyle(
-                          color: isDark
-                              ? AppColors.goldLight
-                              : AppColors.espressoDark,
+                          color: context.hc.primary,
                           fontSize: 11,
                           fontWeight: FontWeight.w800,
                         ),
@@ -114,16 +102,9 @@ class PendampingGreetingHeader extends StatelessWidget {
                       vertical: 4.5,
                     ),
                     decoration: BoxDecoration(
-                      color: isDark
-                          ? AppColors.darkSurfaceContainer
-                          : AppColors.canvasCream,
+                      color: context.hc.surfaceSubtle,
                       borderRadius: BorderRadius.circular(AppRadius.pill),
-                      border: Border.all(
-                        color: isDark
-                            ? AppColors.darkOutlineVariant
-                            : AppColors.goldLight.withValues(alpha: 0.4),
-                        width: 0.8,
-                      ),
+                      border: Border.all(color: context.hc.border, width: 0.8),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -131,9 +112,7 @@ class PendampingGreetingHeader extends StatelessWidget {
                         Icon(
                           Icons.location_on_outlined,
                           size: 13,
-                          color: isDark
-                              ? AppColors.goldLight
-                              : AppColors.tanMedium,
+                          color: context.hc.accent,
                         ),
                         const SizedBox(width: 4),
                         Flexible(
@@ -142,9 +121,7 @@ class PendampingGreetingHeader extends StatelessWidget {
                                 ? groupInfo
                                 : context.tr('dashboard.noGroupYet'),
                             style: TextStyle(
-                              color: isDark
-                                  ? AppColors.goldLight
-                                  : AppColors.espressoDark,
+                              color: context.hc.textPrimary,
                               fontSize: 11,
                               fontWeight: FontWeight.w700,
                             ),

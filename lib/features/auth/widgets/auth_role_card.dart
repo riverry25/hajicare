@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
-import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/theme_context.dart';
 
 class AuthRoleCard extends StatelessWidget {
   final String roleId;
@@ -24,6 +23,8 @@ class AuthRoleCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.hc;
+
     return GestureDetector(
       onTap: onTap,
       child: AnimatedOpacity(
@@ -33,27 +34,25 @@ class AuthRoleCard extends StatelessWidget {
           constraints: const BoxConstraints(minHeight: 148),
           padding: const EdgeInsets.all(AppSpacing.lg),
           decoration: BoxDecoration(
-            color: AppColors.surfaceWhite,
+            color: colors.surface,
             borderRadius: BorderRadius.circular(AppRadius.lg),
             border: Border.all(
-              color: isSelected
-                  ? AppColors.espressoDark
-                  : AppColors.outlineVariant.withValues(alpha: 0.6),
+              color: isSelected ? colors.primary : colors.border,
               width: isSelected ? 2 : 1,
             ),
             boxShadow: isSelected
                 ? [
                     BoxShadow(
-                      color: AppColors.primaryContainer.withValues(alpha: 0.16),
-                      blurRadius: 24,
-                      offset: const Offset(0, 8),
+                      color: colors.primary.withValues(alpha: 0.16),
+                      blurRadius: 20,
+                      offset: const Offset(0, 6),
                     ),
                   ]
                 : [
                     BoxShadow(
-                      color: AppColors.espressoDark.withValues(alpha: 0.08),
-                      blurRadius: 20,
-                      offset: const Offset(0, 4),
+                      color: colors.shadow,
+                      blurRadius: 12,
+                      offset: const Offset(0, 3),
                     ),
                   ],
           ),
@@ -66,13 +65,13 @@ class AuthRoleCard extends StatelessWidget {
                   child: Container(
                     width: 24,
                     height: 24,
-                    decoration: const BoxDecoration(
-                      color: AppColors.primaryContainer,
+                    decoration: BoxDecoration(
+                      color: colors.primary,
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.check_circle,
-                      color: Colors.white,
+                      color: colors.onPrimary,
                       size: 16,
                     ),
                   ),
@@ -86,14 +85,16 @@ class AuthRoleCard extends StatelessWidget {
                       height: 48,
                       decoration: BoxDecoration(
                         color: isSelected
-                            ? AppColors.secondaryContainer
-                            : AppColors.canvasCream,
+                            ? colors.primaryContainer
+                            : colors.surfaceSand,
                         shape: BoxShape.circle,
                       ),
                       child: Center(
                         child: Icon(
                           icon,
-                          color: AppColors.espressoDark,
+                          color: isSelected
+                              ? colors.primary
+                              : colors.textPrimary,
                           size: 24,
                         ),
                       ),
@@ -103,17 +104,18 @@ class AuthRoleCard extends StatelessWidget {
                   Center(
                     child: Text(
                       title,
-                      style: AppTypography.titleLarge.copyWith(
-                        color: AppColors.espressoDark,
+                      style: context.text.titleMedium.copyWith(
+                        color: colors.textPrimary,
+                        fontWeight: FontWeight.bold,
                       ),
                       textAlign: TextAlign.center,
                     ),
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 4),
                   Text(
                     description,
-                    style: AppTypography.caption.copyWith(
-                      color: AppColors.textBody,
+                    style: context.text.bodySmall.copyWith(
+                      color: colors.textSecondary,
                     ),
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,

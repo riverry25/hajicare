@@ -12,15 +12,16 @@ import '../../../core/models/filter_chip_item.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/services/app_alert_service.dart';
 import '../../../core/state/hajicare_controller.dart';
-import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_breakpoints.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
-import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/theme_context.dart';
 import '../../../core/widgets/bottom_nav_bar.dart';
 import '../../dashboard/models/assistance_request_model.dart';
 import '../../dashboard/services/assistance_request_service.dart';
 import '../controllers/map_controller.dart';
 import '../models/map_search_result.dart';
+import '../widgets/gps_user_puck.dart';
 import '../widgets/location_detail_sheet.dart';
 import '../widgets/map_bottom_sheet.dart';
 import '../widgets/map_floating_controls.dart';
@@ -139,14 +140,14 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
     final mapCtrl = _mapController;
 
     return Scaffold(
-      backgroundColor: AppColors.scaffoldColor(context),
+      backgroundColor: context.hc.canvas,
       extendBody: true,
       resizeToAvoidBottomInset: false,
       body: Stack(
         children: [
           // 1. Core Map Layer (Normal 2D flutter_map OR 3D Perspective NavigationMapView)
           Obx(() {
-            if (mapCtrl.isNavigating) {
+            if (mapCtrl.isNavigatingRx.value) {
               return RepaintBoundary(
                 child: NavigationMapView(mapCtrl: mapCtrl),
               );
@@ -156,7 +157,7 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
 
           // 2. Normal Mode: Dynamic Contextual Bottom Sheets & Compact Member Pill
           Obx(() {
-            if (mapCtrl.isNavigating) return const SizedBox.shrink();
+            if (mapCtrl.isNavigatingRx.value) return const SizedBox.shrink();
 
             final bottomPadding = MediaQuery.of(context).padding.bottom;
             // When hosted inside dashboard Scaffold (with extendBody: true),
@@ -326,13 +327,13 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
 
           // 3. Normal Mode: POI Status Overlay
           Obx(() {
-            if (mapCtrl.isNavigating) return const SizedBox.shrink();
+            if (mapCtrl.isNavigatingRx.value) return const SizedBox.shrink();
             return _buildPoiStatusOverlay(context, mapCtrl);
           }),
 
           // 4. Normal Mode: Floating Quick Action Controls
           Obx(() {
-            if (mapCtrl.isNavigating) return const SizedBox.shrink();
+            if (mapCtrl.isNavigatingRx.value) return const SizedBox.shrink();
             final isSearchActive =
                 mapCtrl.searchState.value != MapSearchState.idle ||
                 _searchCtrl.text.trim().isNotEmpty;
@@ -355,7 +356,7 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
 
           // 5. Normal Mode: Top Header with live GPS tracking status
           Obx(() {
-            if (mapCtrl.isNavigating) return const SizedBox.shrink();
+            if (mapCtrl.isNavigatingRx.value) return const SizedBox.shrink();
             return MapTopHeader(
               filters: _getFilters(context),
               selectedFilter: mapCtrl.selectedFilter.value,
@@ -378,7 +379,7 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
 
           // 6. Navigation Mode HUD Overlays
           Obx(() {
-            if (!mapCtrl.isNavigating) return const SizedBox.shrink();
+            if (!mapCtrl.isNavigatingRx.value) return const SizedBox.shrink();
             return Stack(
               children: [
                 // Top Direction Card
@@ -403,20 +404,23 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
             left: 0,
             right: 0,
             child: Obx(() {
-              if (mapCtrl.isNavigating) return const SizedBox.shrink();
-              return MapSearchDropdown(
-                mapCtrl: mapCtrl,
-                onSelect: (result) {
-                  _searchCtrl.text = result.name;
-                  mapCtrl.selectSearchResult(result);
-                },
+              if (mapCtrl.isNavigatingRx.value) return const SizedBox.shrink();
+              return ResponsiveCenter(
+                maxWidth: AppBreakpoints.maxTabletContentWidth,
+                child: MapSearchDropdown(
+                  mapCtrl: mapCtrl,
+                  onSelect: (result) {
+                    _searchCtrl.text = result.name;
+                    mapCtrl.selectSearchResult(result);
+                  },
+                ),
               );
             }),
           ),
         ],
       ),
       bottomNavigationBar: Obx(() {
-        if (mapCtrl.isNavigating) return const SizedBox.shrink();
+        if (mapCtrl.isNavigatingRx.value) return const SizedBox.shrink();
         return widget.showBottomNav
             ? const HajiCareBottomNavBar(currentIndex: 1)
             : const SizedBox.shrink();
@@ -442,7 +446,8 @@ class _CompactMemberPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = AppColors.isDark(context);
+    final hc = context.hc;
+    final isDark = hc.isDark;
     final count = mapCtrl.filteredMembers.length;
     final roleFilter = mapCtrl.selectedRoleFilter.value;
     final label = roleFilter == 1
@@ -479,21 +484,12 @@ class _CompactMemberPill extends StatelessWidget {
                     child: Container(
                       padding: const EdgeInsets.fromLTRB(10, 6, 12, 6),
                       decoration: BoxDecoration(
-                        color: isDark
-                            ? AppColors.darkSurface.withValues(alpha: 0.95)
-                            : AppColors.surfaceWhite.withValues(alpha: 0.95),
+                        color: hc.surface.withValues(alpha: 0.95),
                         borderRadius: BorderRadius.circular(AppRadius.pill),
-                        border: Border.all(
-                          color: isDark
-                              ? Colors.white.withValues(alpha: 0.12)
-                              : AppColors.goldLight.withValues(alpha: 0.45),
-                          width: 1.2,
-                        ),
+                        border: Border.all(color: hc.border, width: 1.2),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(
-                              alpha: isDark ? 0.35 : 0.10,
-                            ),
+                            color: hc.shadow,
                             blurRadius: 14,
                             offset: const Offset(0, 4),
                           ),
@@ -507,16 +503,14 @@ class _CompactMemberPill extends StatelessWidget {
                             width: 28,
                             height: 28,
                             decoration: BoxDecoration(
-                              color: AppColors.goldPrimary.withValues(
+                              color: hc.accent.withValues(
                                 alpha: isDark ? 0.25 : 0.16,
                               ),
                               shape: BoxShape.circle,
                             ),
                             child: Icon(
                               Icons.groups_rounded,
-                              color: isDark
-                                  ? AppColors.goldPrimary
-                                  : AppColors.espressoDark,
+                              color: hc.textPrimary,
                               size: 16,
                             ),
                           ),
@@ -525,10 +519,8 @@ class _CompactMemberPill extends StatelessWidget {
                           // Dynamic Label
                           Text(
                             label,
-                            style: TextStyle(
-                              color: isDark
-                                  ? Colors.white
-                                  : AppColors.espressoDark,
+                            style: context.text.labelLarge.copyWith(
+                              color: hc.textPrimary,
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
                               letterSpacing: -0.2,
@@ -543,20 +535,12 @@ class _CompactMemberPill extends StatelessWidget {
                               vertical: 3,
                             ),
                             decoration: BoxDecoration(
-                              color: isDark
-                                  ? AppColors.darkSurfaceContainer
-                                  : AppColors.canvasCream,
+                              color: hc.surfaceSubtle,
                               borderRadius: BorderRadius.circular(
                                 AppRadius.pill,
                               ),
                               border: Border.all(
-                                color: isDark
-                                    ? AppColors.goldPrimary.withValues(
-                                        alpha: 0.3,
-                                      )
-                                    : AppColors.goldPrimary.withValues(
-                                        alpha: 0.25,
-                                      ),
+                                color: hc.accent.withValues(alpha: 0.3),
                                 width: 0.8,
                               ),
                             ),
@@ -565,10 +549,8 @@ class _CompactMemberPill extends StatelessWidget {
                               children: [
                                 Text(
                                   context.tr('maps.openSheet'),
-                                  style: TextStyle(
-                                    color: isDark
-                                        ? AppColors.goldPrimary
-                                        : AppColors.espressoDark,
+                                  style: context.text.labelSmall.copyWith(
+                                    color: hc.textPrimary,
                                     fontSize: 10,
                                     fontWeight: FontWeight.w800,
                                   ),
@@ -576,9 +558,7 @@ class _CompactMemberPill extends StatelessWidget {
                                 const SizedBox(width: 2),
                                 Icon(
                                   Icons.keyboard_arrow_up_rounded,
-                                  color: isDark
-                                      ? AppColors.goldPrimary
-                                      : AppColors.espressoDark,
+                                  color: hc.textPrimary,
                                   size: 14,
                                 ),
                               ],
@@ -607,7 +587,7 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
       return const SizedBox.shrink();
     }
 
-    final isDark = AppColors.isDark(context);
+    final hc = context.hc;
     final label = loading
         ? context.tr('maps.loadingNearbyPois')
         : error != null
@@ -628,7 +608,7 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
           button: !loading,
           label: label,
           child: Material(
-            color: isDark ? AppColors.darkSurface : Colors.white,
+            color: hc.surface,
             elevation: 5,
             borderRadius: BorderRadius.circular(AppRadius.pill),
             child: InkWell(
@@ -649,15 +629,15 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     else
-                      Icon(icon, size: 18, color: AppColors.goldPrimary),
+                      Icon(icon, size: 18, color: hc.accent),
                     const SizedBox(width: 8),
                     Flexible(
                       child: Text(
                         label,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: isDark ? Colors.white : AppColors.espressoDark,
+                        style: context.text.labelLarge.copyWith(
+                          color: hc.textPrimary,
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
                         ),
@@ -717,7 +697,7 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
       children: [
         // 1. Tile Layer — changes only on layer toggle & dark mode
         Obx(() {
-          final isDark = AppColors.isDark(context);
+          final isDark = context.hc.isDark;
           final currentUrl = mapCtrl.activeTileUrl.value;
           final effectiveUrl = isDark
               ? (currentUrl == AppConstants.cartoVoyagerUrl
@@ -734,7 +714,8 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
 
         // 2. Walking Route Polyline Layer
         Obx(() {
-          final isDark = AppColors.isDark(context);
+          final hc = context.hc;
+          final isDark = hc.isDark;
           final routePoints = mapCtrl.activeRoute;
 
           if (routePoints.length < 2) {
@@ -746,11 +727,11 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
               fmap.Polyline<Object>(
                 points: routePoints.toList(),
                 strokeWidth: 8.0,
-                color: isDark ? AppColors.goldPrimary : const Color(0xFF1E60CC),
+                color: isDark ? hc.accent : hc.primary,
                 borderStrokeWidth: 2.5,
                 borderColor: isDark
-                    ? const Color(0xFF3E2800)
-                    : const Color(0xFF0D254C),
+                    ? const Color(0xFF1F140D)
+                    : const Color(0xFF140D08),
               ),
             ],
           );
@@ -762,14 +743,15 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
           if (userLocation == null) {
             return const SizedBox.shrink();
           }
+          final hc = context.hc;
           return fmap.CircleLayer(
             circles: [
               fmap.CircleMarker(
                 point: userLocation,
                 radius: mapCtrl.safeRadiusMeters.value,
                 useRadiusInMeter: true,
-                color: AppColors.statusSafe.withValues(alpha: 0.08),
-                borderColor: AppColors.statusSafe.withValues(alpha: 0.5),
+                color: hc.success.withValues(alpha: 0.08),
+                borderColor: hc.success.withValues(alpha: 0.5),
                 borderStrokeWidth: 2.0,
               ),
             ],
@@ -799,9 +781,9 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
               if (userLocation != null)
                 fmap.Marker(
                   point: userLocation,
-                  width: 130,
-                  height: 75,
-                  child: RepaintBoundary(child: _buildCompanionMarker()),
+                  width: 88,
+                  height: 104,
+                  child: RepaintBoundary(child: _buildCompanionMarker(mapCtrl)),
                 ),
 
               // Active Assistance Request Pin Marker (Prominent Jemputan / Bantuan Pin)
@@ -851,7 +833,8 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
   // ---------------------------------------------------------------------------
 
   fmap.Marker _buildSearchMarker(MapSearchResult result) {
-    final isDark = AppColors.isDark(context);
+    final hc = context.hc;
+    final isDark = hc.isDark;
     return fmap.Marker(
       point: result.coordinate,
       width: 150,
@@ -864,12 +847,12 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: isDark ? AppColors.darkSurface : AppColors.espressoDark,
+                color: isDark ? hc.surface : hc.primary,
                 borderRadius: BorderRadius.circular(AppRadius.pill),
-                border: Border.all(color: AppColors.goldPrimary, width: 1.5),
+                border: Border.all(color: hc.accent, width: 1.5),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.35),
+                    color: hc.shadow,
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -878,18 +861,14 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(
-                    Icons.place_rounded,
-                    size: 13,
-                    color: AppColors.goldPrimary,
-                  ),
+                  Icon(Icons.place_rounded, size: 13, color: hc.accent),
                   const SizedBox(width: 4),
                   Flexible(
                     child: Text(
                       result.name,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: AppTypography.captionSmall.copyWith(
+                      style: context.text.labelSmall.copyWith(
                         color: Colors.white,
                         fontWeight: FontWeight.w800,
                         fontSize: 10.5,
@@ -904,14 +883,12 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
               width: 32,
               height: 32,
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFFE53935), Color(0xFFC62828)],
-                ),
+                gradient: LinearGradient(colors: [hc.danger, hc.dangerDark]),
                 shape: BoxShape.circle,
                 border: Border.all(color: Colors.white, width: 2),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFFE53935).withValues(alpha: 0.45),
+                    color: hc.danger.withValues(alpha: 0.45),
                     blurRadius: 8,
                     offset: const Offset(0, 3),
                   ),
@@ -933,6 +910,7 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
     AssistanceRequestModel req,
     MapController mapCtrl,
   ) {
+    final hc = context.hc;
     final coord = LatLng(req.latitude!, req.longitude!);
     final isSelected =
         mapCtrl.selectedMember.value?.uid == req.jamaahId ||
@@ -960,9 +938,7 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
                   vertical: 4,
                 ),
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFFE64A19), Color(0xFFD84315)],
-                  ),
+                  gradient: LinearGradient(colors: [hc.danger, hc.dangerDark]),
                   borderRadius: BorderRadius.circular(AppRadius.pill),
                   border: Border.all(
                     color: Colors.white,
@@ -970,7 +946,7 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFFE64A19).withValues(alpha: 0.5),
+                      color: hc.danger.withValues(alpha: 0.5),
                       blurRadius: 10,
                       offset: const Offset(0, 3),
                     ),
@@ -990,7 +966,7 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
                         req.jamaahName,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: AppTypography.captionSmall.copyWith(
+                        style: context.text.labelSmall.copyWith(
                           color: Colors.white,
                           fontWeight: FontWeight.w800,
                           fontSize: 11,
@@ -1010,21 +986,21 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
                     height: 36,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: const Color(0xFFE64A19).withValues(alpha: 0.22),
+                      color: hc.danger.withValues(alpha: 0.22),
                     ),
                   ),
                   Container(
                     width: 32,
                     height: 32,
                     decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFFE64A19), Color(0xFFBF360C)],
+                      gradient: LinearGradient(
+                        colors: [hc.danger, hc.dangerDark],
                       ),
                       shape: BoxShape.circle,
                       border: Border.all(color: Colors.white, width: 2),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFFE64A19).withValues(alpha: 0.5),
+                          color: hc.danger.withValues(alpha: 0.5),
                           blurRadius: 8,
                           offset: const Offset(0, 3),
                         ),
@@ -1045,91 +1021,62 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
     );
   }
 
-  Widget _buildCompanionMarker() {
-    final isDark = AppColors.isDark(context);
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-          decoration: BoxDecoration(
-            color: isDark ? AppColors.darkSurface : AppColors.espressoDark,
-            borderRadius: BorderRadius.circular(AppRadius.pill),
-            border: Border.all(color: AppColors.goldPrimary, width: 1.5),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.25),
-                blurRadius: 6,
-                offset: const Offset(0, 2),
-              ),
-            ],
+  Widget _buildCompanionMarker(MapController mapCtrl) {
+    return SizedBox(
+      width: 88,
+      height: 104,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // 1. Google Maps Dynamic Rotating GPS User Puck with Directional Beam
+          GpsUserPuck(mapCtrl: mapCtrl, isNavigating: false),
+          // 2. Compact "Anda" identification pill floating right above the puck
+          Positioned(top: 2, child: _buildUserTagPill()),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildUserTagPill() {
+    final hc = context.hc;
+    final isDark = hc.isDark;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
+      decoration: BoxDecoration(
+        color: (isDark ? hc.surface : hc.primary).withValues(alpha: 0.94),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+        border: Border.all(color: hc.accent, width: 1.2),
+        boxShadow: [
+          BoxShadow(
+            color: hc.shadow,
+            blurRadius: 6,
+            offset: const Offset(0, 2),
           ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 7,
-                height: 7,
-                decoration: const BoxDecoration(
-                  color: AppColors.statusSafe,
-                  shape: BoxShape.circle,
-                ),
-              ),
-              const SizedBox(width: 5),
-              Text(
-                context.tr('youLabel'),
-                style: AppTypography.captionSmall.copyWith(
-                  color: isDark ? AppColors.darkTextHeading : Colors.white,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            ],
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 6,
+            height: 6,
+            decoration: BoxDecoration(
+              color: hc.success,
+              shape: BoxShape.circle,
+            ),
           ),
-        ),
-        const SizedBox(height: 3),
-        RepaintBoundary(
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: AppColors.goldPrimary.withValues(alpha: 0.22),
-                ),
-              ),
-              Container(
-                width: 34,
-                height: 34,
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? AppColors.darkSurfaceContainer
-                      : AppColors.surfaceWhite,
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: isDark
-                        ? AppColors.goldPrimary
-                        : AppColors.espressoDark,
-                    width: 2.2,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.25),
-                      blurRadius: 6,
-                    ),
-                  ],
-                ),
-                child: const Icon(
-                  Icons.navigation_rounded,
-                  color: AppColors.goldPrimary,
-                  size: 19,
-                ),
-              ),
-            ],
+          const SizedBox(width: 4),
+          Text(
+            context.tr('youLabel'),
+            style: context.text.labelSmall.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.w800,
+              fontSize: 10,
+              letterSpacing: 0.2,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -1142,7 +1089,8 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
       return [];
     }
 
-    final isDark = AppColors.isDark(context);
+    final hc = context.hc;
+    final isDark = hc.isDark;
     final currentUid = mapCtrl.currentUserId ?? state.currentUid;
     final selfName = state.self.name.trim().toLowerCase();
 
@@ -1285,8 +1233,8 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
           mapCtrl.selectedJamaah.value?.id == member.uid;
       final isPendamping = member.isPendamping;
       final markerColor = isEmergency
-          ? AppColors.sosEmergency
-          : (isPendamping ? AppColors.goldPrimary : AppColors.statusSafe);
+          ? hc.danger
+          : (isPendamping ? hc.accent : hc.success);
       final distMeters = mapCtrl.getDistanceToMember(member);
       final distText = distMeters != null
           ? MapController.formatDistance(distMeters)
@@ -1320,29 +1268,20 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
                       vertical: isEmergency ? 4 : 3,
                     ),
                     decoration: BoxDecoration(
-                      color: isEmergency
-                          ? AppColors.sosEmergency
-                          : (isDark
-                                ? AppColors.darkSurface
-                                : AppColors.surfaceWhite),
+                      color: isEmergency ? hc.danger : hc.surface,
                       borderRadius: BorderRadius.circular(AppRadius.pill),
                       border: Border.all(
                         color: isEmergency
                             ? Colors.white
                             : (isSelected
-                                  ? (isDark
-                                        ? AppColors.goldPrimary
-                                        : AppColors.espressoDark)
+                                  ? (isDark ? hc.accent : hc.primary)
                                   : markerColor),
                         width: isEmergency ? 2.0 : (isSelected ? 2.5 : 1.5),
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color:
-                              (isEmergency
-                                      ? AppColors.sosEmergency
-                                      : Colors.black)
-                                  .withValues(alpha: isEmergency ? 0.5 : 0.18),
+                          color: (isEmergency ? hc.danger : hc.shadow)
+                              .withValues(alpha: isEmergency ? 0.5 : 0.18),
                           blurRadius: isEmergency ? 10 : 6,
                           offset: const Offset(0, 2),
                         ),
@@ -1366,12 +1305,10 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
                             isEmergency
                                 ? 'SOS • ${member.name.split(' ').first}'
                                 : member.name.split(' ').take(2).join(' '),
-                            style: AppTypography.captionSmall.copyWith(
+                            style: context.text.labelSmall.copyWith(
                               color: isEmergency
                                   ? Colors.white
-                                  : (isDark
-                                        ? AppColors.darkTextHeading
-                                        : AppColors.espressoDark),
+                                  : (isDark ? hc.textPrimary : hc.primary),
                               fontWeight: FontWeight.w800,
                               fontSize: 10,
                             ),
@@ -1383,7 +1320,7 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
                           const SizedBox(width: 4),
                           Text(
                             distText,
-                            style: TextStyle(
+                            style: context.text.labelSmall.copyWith(
                               fontSize: 9,
                               fontWeight: FontWeight.w800,
                               color: isEmergency
@@ -1411,7 +1348,7 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
                               height: 34 + (12 * pulse),
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                color: AppColors.sosEmergency.withValues(
+                                color: hc.danger.withValues(
                                   alpha: (0.35 * (1.0 - pulse)).clamp(0.0, 1.0),
                                 ),
                               ),
@@ -1423,30 +1360,21 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
                         height: isEmergency ? 36 : 34,
                         decoration: BoxDecoration(
                           color: isEmergency
-                              ? AppColors.sosEmergency
-                              : (isDark
-                                    ? AppColors.darkSurfaceContainer
-                                    : AppColors.surfaceWhite),
+                              ? hc.danger
+                              : (isDark ? hc.surfaceSubtle : hc.surface),
                           shape: BoxShape.circle,
                           border: Border.all(
                             color: isEmergency
                                 ? Colors.white
                                 : (isSelected
-                                      ? (isDark
-                                            ? AppColors.goldPrimary
-                                            : AppColors.espressoDark)
+                                      ? (isDark ? hc.accent : hc.primary)
                                       : markerColor),
                             width: isEmergency ? 2.5 : 2.2,
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color:
-                                  (isEmergency
-                                          ? AppColors.sosEmergency
-                                          : Colors.black)
-                                      .withValues(
-                                        alpha: isEmergency ? 0.45 : 0.2,
-                                      ),
+                              color: (isEmergency ? hc.danger : hc.shadow)
+                                  .withValues(alpha: isEmergency ? 0.45 : 0.2),
                               blurRadius: isEmergency ? 8 : 5,
                             ),
                           ],
@@ -1482,7 +1410,8 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
       return [];
     }
 
-    final isDark = AppColors.isDark(context);
+    final hc = context.hc;
+    final isDark = hc.isDark;
     final source = state.jamaahList.isNotEmpty
         ? List<JamaahData>.from(state.jamaahList)
         : [state.self];
@@ -1620,9 +1549,7 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
       final isSelected =
           mapCtrl.selectedJamaah.value?.id == jamaah.id ||
           mapCtrl.selectedMember.value?.uid == jamaah.id;
-      final markerColor = isEmergency
-          ? AppColors.sosEmergency
-          : jamaah.tier.color;
+      final markerColor = isEmergency ? hc.danger : jamaah.tier.color;
 
       markers.add(
         fmap.Marker(
@@ -1650,29 +1577,20 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
                       vertical: 3,
                     ),
                     decoration: BoxDecoration(
-                      color: isEmergency
-                          ? AppColors.sosEmergency
-                          : (isDark
-                                ? AppColors.darkSurface
-                                : AppColors.surfaceWhite),
+                      color: isEmergency ? hc.danger : hc.surface,
                       borderRadius: BorderRadius.circular(AppRadius.pill),
                       border: Border.all(
                         color: isEmergency
                             ? Colors.white
                             : (isSelected
-                                  ? (isDark
-                                        ? AppColors.goldPrimary
-                                        : AppColors.espressoDark)
+                                  ? (isDark ? hc.accent : hc.primary)
                                   : markerColor),
                         width: isEmergency ? 2.0 : (isSelected ? 2.5 : 1.5),
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color:
-                              (isEmergency
-                                      ? AppColors.sosEmergency
-                                      : Colors.black)
-                                  .withValues(alpha: isEmergency ? 0.5 : 0.18),
+                          color: (isEmergency ? hc.danger : hc.shadow)
+                              .withValues(alpha: isEmergency ? 0.5 : 0.18),
                           blurRadius: isEmergency ? 10 : 6,
                           offset: const Offset(0, 2),
                         ),
@@ -1696,12 +1614,10 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
                                 : jamaah.shortLabel,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: AppTypography.captionSmall.copyWith(
+                            style: context.text.labelSmall.copyWith(
                               color: isEmergency
                                   ? Colors.white
-                                  : (isDark
-                                        ? AppColors.darkTextHeading
-                                        : AppColors.espressoDark),
+                                  : (isDark ? hc.textPrimary : hc.primary),
                               fontWeight: FontWeight.w800,
                             ),
                           ),
@@ -1709,7 +1625,7 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
                         const SizedBox(width: 4),
                         Text(
                           jamaah.formattedDistance,
-                          style: AppTypography.captionSmall.copyWith(
+                          style: context.text.labelSmall.copyWith(
                             color: isEmergency
                                 ? Colors.white.withValues(alpha: 0.9)
                                 : markerColor,
@@ -1733,7 +1649,7 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
                               height: 36 + (12 * pulse),
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                color: AppColors.sosEmergency.withValues(
+                                color: hc.danger.withValues(
                                   alpha: (0.35 * (1.0 - pulse)).clamp(0.0, 1.0),
                                 ),
                               ),
@@ -1745,10 +1661,8 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
                         height: isEmergency ? 38 : 36,
                         decoration: BoxDecoration(
                           color: isEmergency
-                              ? AppColors.sosEmergency
-                              : (isDark
-                                    ? AppColors.darkSurfaceContainer
-                                    : AppColors.surfaceWhite),
+                              ? hc.danger
+                              : (isDark ? hc.surfaceSubtle : hc.surface),
                           shape: BoxShape.circle,
                           border: Border.all(
                             color: isEmergency ? Colors.white : markerColor,
@@ -1756,13 +1670,8 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color:
-                                  (isEmergency
-                                          ? AppColors.sosEmergency
-                                          : Colors.black)
-                                      .withValues(
-                                        alpha: isEmergency ? 0.45 : 0.25,
-                                      ),
+                              color: (isEmergency ? hc.danger : hc.shadow)
+                                  .withValues(alpha: isEmergency ? 0.45 : 0.25),
                               blurRadius: isEmergency ? 8 : 6,
                             ),
                           ],
@@ -1788,7 +1697,8 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
   }
 
   List<fmap.Marker> _buildPoiMarkers(MapController mapCtrl) {
-    final isDark = AppColors.isDark(context);
+    final hc = context.hc;
+    final isDark = hc.isDark;
     final userPos = mapCtrl.currentUserLocation.value;
 
     return mapCtrl.filteredPois.map((poi) {
@@ -1874,9 +1784,7 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
                                 offset: const Offset(0, 3),
                               ),
                               BoxShadow(
-                                color: Colors.black.withValues(
-                                  alpha: isDark ? 0.35 : 0.15,
-                                ),
+                                color: hc.shadow,
                                 blurRadius: 4,
                                 offset: const Offset(0, 2),
                               ),
@@ -1917,23 +1825,15 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
                       vertical: 2.5,
                     ),
                     decoration: BoxDecoration(
-                      color: isDark
-                          ? AppColors.darkSurface.withValues(alpha: 0.95)
-                          : Colors.white.withValues(alpha: 0.96),
+                      color: hc.surface.withValues(alpha: 0.95),
                       borderRadius: BorderRadius.circular(AppRadius.pill),
                       border: Border.all(
-                        color: isSelected
-                            ? poi.color
-                            : (isDark
-                                  ? Colors.white.withValues(alpha: 0.15)
-                                  : Colors.black.withValues(alpha: 0.08)),
+                        color: isSelected ? poi.color : hc.border,
                         width: isSelected ? 1.5 : 0.8,
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(
-                            alpha: isDark ? 0.35 : 0.12,
-                          ),
+                          color: hc.shadow,
                           blurRadius: 6,
                           offset: const Offset(0, 2),
                         ),
@@ -1956,10 +1856,8 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
                             poi.name,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              color: isDark
-                                  ? Colors.white
-                                  : AppColors.espressoDark,
+                            style: context.text.labelSmall.copyWith(
+                              color: isDark ? hc.textPrimary : hc.primary,
                               fontSize: 9.5,
                               fontWeight: isSelected
                                   ? FontWeight.w800
@@ -1972,12 +1870,8 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
                           const SizedBox(width: 3),
                           Text(
                             '· $distText',
-                            style: TextStyle(
-                              color: isSelected
-                                  ? poi.color
-                                  : (isDark
-                                        ? Colors.white60
-                                        : AppColors.textMuted),
+                            style: context.text.labelSmall.copyWith(
+                              color: isSelected ? poi.color : hc.textMuted,
                               fontSize: 8.5,
                               fontWeight: FontWeight.w600,
                             ),

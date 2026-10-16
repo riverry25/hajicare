@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../theme/app_colors.dart';
+import '../theme/theme_context.dart';
 
 class IconCircle extends StatelessWidget {
   final IconData icon;
@@ -19,25 +19,18 @@ class IconCircle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final hc = context.hc;
+
     return Container(
       width: size,
       height: size,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: backgroundColor ?? AppColors.canvasCream,
-        border: hasBorder
-            ? Border.all(
-                color: AppColors.goldLight.withValues(alpha: 0.5),
-                width: 1.5,
-              )
-            : null,
+        color: backgroundColor ?? hc.surfaceSand,
+        border: hasBorder ? Border.all(color: hc.accent, width: 1.5) : null,
       ),
       child: Center(
-        child: Icon(
-          icon,
-          size: size * 0.5,
-          color: iconColor ?? AppColors.espressoDark,
-        ),
+        child: Icon(icon, size: size * 0.5, color: iconColor ?? hc.primary),
       ),
     );
   }

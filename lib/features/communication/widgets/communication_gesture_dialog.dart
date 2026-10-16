@@ -3,10 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 import '../../../core/locales/app_localizations.dart';
-import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
-import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/theme_context.dart';
 import '../controllers/communication_controller.dart';
 
 /// Modern gesture-driven modal sheet for quick Arabic-Indonesian communication.
@@ -85,8 +84,8 @@ class _CommunicationGestureDialogState
   }
 
   void _showAudioHelpDialog(BuildContext context) {
-    final isDark = AppColors.isDark(context);
-    final headingColor = AppColors.textHeadingColor(context);
+    final colors = context.hc;
+    final textTheme = context.text;
     final controller = Get.isRegistered<CommunicationController>()
         ? Get.find<CommunicationController>()
         : Get.put(CommunicationController());
@@ -95,9 +94,7 @@ class _CommunicationGestureDialogState
       context: context,
       builder: (dialogCtx) {
         return AlertDialog(
-          backgroundColor: isDark
-              ? AppColors.darkSurface
-              : AppColors.surfaceWhite,
+          backgroundColor: colors.surface,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.xl),
           ),
@@ -106,12 +103,12 @@ class _CommunicationGestureDialogState
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: AppColors.goldPrimary.withValues(alpha: 0.15),
+                  color: colors.accent.withValues(alpha: 0.15),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.volume_up_rounded,
-                  color: AppColors.goldPrimary,
+                  color: colors.accent,
                   size: 22,
                 ),
               ),
@@ -119,8 +116,8 @@ class _CommunicationGestureDialogState
               Expanded(
                 child: Text(
                   context.tr('quickComm.audioHelpTitle'),
-                  style: AppTypography.titleMedium.copyWith(
-                    color: headingColor,
+                  style: textTheme.titleMedium.copyWith(
+                    color: colors.textPrimary,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -134,34 +131,31 @@ class _CommunicationGestureDialogState
               children: [
                 Text(
                   context.tr('quickComm.audioHelpDesc'),
-                  style: AppTypography.bodySmall.copyWith(
-                    color: isDark ? AppColors.darkTextBody : AppColors.textBody,
+                  style: textTheme.bodySmall.copyWith(
+                    color: colors.textSecondary,
                     height: 1.4,
                   ),
                 ),
                 const SizedBox(height: 14),
                 _buildHelpItem(
+                  context: context,
                   icon: Icons.volume_up_rounded,
                   title: context.tr('quickComm.audioHelpVolumeTitle'),
                   subtitle: context.tr('quickComm.audioHelpVolumeDesc'),
-                  isDark: isDark,
-                  headingColor: headingColor,
                 ),
                 const SizedBox(height: 12),
                 _buildHelpItem(
+                  context: context,
                   icon: Icons.notifications_active_rounded,
                   title: context.tr('quickComm.audioHelpRingerTitle'),
                   subtitle: context.tr('quickComm.audioHelpRingerDesc'),
-                  isDark: isDark,
-                  headingColor: headingColor,
                 ),
                 const SizedBox(height: 12),
                 _buildHelpItem(
+                  context: context,
                   icon: Icons.language_rounded,
                   title: context.tr('quickComm.audioHelpVoiceTitle'),
                   subtitle: context.tr('quickComm.audioHelpVoiceDesc'),
-                  isDark: isDark,
-                  headingColor: headingColor,
                   trailing: Obx(() {
                     final isReady = controller.isArabicVoiceAvailable.value;
                     return Container(
@@ -169,13 +163,13 @@ class _CommunicationGestureDialogState
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
                         color: isReady
-                            ? const Color(0xFF2E7D32).withValues(alpha: 0.1)
-                            : AppColors.goldPrimary.withValues(alpha: 0.12),
+                            ? colors.success.withValues(alpha: 0.1)
+                            : colors.accent.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(AppRadius.md),
                         border: Border.all(
                           color: isReady
-                              ? const Color(0xFF2E7D32).withValues(alpha: 0.35)
-                              : AppColors.goldPrimary.withValues(alpha: 0.35),
+                              ? colors.success.withValues(alpha: 0.35)
+                              : colors.accent.withValues(alpha: 0.35),
                         ),
                       ),
                       child: Column(
@@ -188,9 +182,7 @@ class _CommunicationGestureDialogState
                                     ? Icons.check_circle_rounded
                                     : Icons.info_outline_rounded,
                                 size: 16,
-                                color: isReady
-                                    ? const Color(0xFF2E7D32)
-                                    : AppColors.goldPrimary,
+                                color: isReady ? colors.success : colors.accent,
                               ),
                               const SizedBox(width: 6),
                               Expanded(
@@ -204,10 +196,8 @@ class _CommunicationGestureDialogState
                                     fontSize: 11,
                                     fontWeight: FontWeight.w700,
                                     color: isReady
-                                        ? const Color(0xFF2E7D32)
-                                        : (isDark
-                                              ? AppColors.goldLight
-                                              : AppColors.espressoDark),
+                                        ? colors.success
+                                        : colors.textPrimary,
                                   ),
                                 ),
                               ),
@@ -221,7 +211,7 @@ class _CommunicationGestureDialogState
                                 controller.installOrDownloadArabicVoice();
                               },
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.goldPrimary,
+                                backgroundColor: colors.accent,
                                 foregroundColor: Colors.white,
                                 padding: const EdgeInsets.symmetric(
                                   vertical: 8,
@@ -264,9 +254,7 @@ class _CommunicationGestureDialogState
                                 context.tr('quickComm.openTtsSettings'),
                                 style: TextStyle(
                                   fontSize: 10.5,
-                                  color: isDark
-                                      ? AppColors.goldLight
-                                      : AppColors.goldPrimary,
+                                  color: colors.accentText,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -285,8 +273,8 @@ class _CommunicationGestureDialogState
               onPressed: () => Navigator.of(dialogCtx).pop(),
               child: Text(
                 context.tr('common.close'),
-                style: const TextStyle(
-                  color: AppColors.goldPrimary,
+                style: TextStyle(
+                  color: colors.accent,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -298,17 +286,17 @@ class _CommunicationGestureDialogState
   }
 
   Widget _buildHelpItem({
+    required BuildContext context,
     required IconData icon,
     required String title,
     required String subtitle,
-    required bool isDark,
-    required Color headingColor,
     Widget? trailing,
   }) {
+    final colors = context.hc;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 18, color: AppColors.goldPrimary),
+        Icon(icon, size: 18, color: colors.accent),
         const SizedBox(width: 10),
         Expanded(
           child: Column(
@@ -317,7 +305,7 @@ class _CommunicationGestureDialogState
               Text(
                 title,
                 style: TextStyle(
-                  color: headingColor,
+                  color: colors.textPrimary,
                   fontWeight: FontWeight.w700,
                   fontSize: 12.5,
                 ),
@@ -326,7 +314,7 @@ class _CommunicationGestureDialogState
               Text(
                 subtitle,
                 style: TextStyle(
-                  color: isDark ? AppColors.darkTextBody : AppColors.textMuted,
+                  color: colors.textMuted,
                   fontSize: 11,
                   height: 1.3,
                 ),
@@ -344,8 +332,8 @@ class _CommunicationGestureDialogState
     PhraseItem phrase,
     CommunicationController controller,
   ) {
-    final isDark = AppColors.isDark(context);
-    final headingColor = AppColors.textHeadingColor(context);
+    final colors = context.hc;
+    final textTheme = context.text;
 
     showModalBottomSheet<void>(
       context: context,
@@ -360,7 +348,7 @@ class _CommunicationGestureDialogState
             MediaQuery.paddingOf(zoomCtx).bottom + 20,
           ),
           decoration: BoxDecoration(
-            color: isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
+            color: colors.surface,
             borderRadius: const BorderRadius.vertical(
               top: Radius.circular(AppRadius.sheet),
             ),
@@ -380,9 +368,7 @@ class _CommunicationGestureDialogState
                 width: 44,
                 height: 4.5,
                 decoration: BoxDecoration(
-                  color: isDark
-                      ? AppColors.darkOutlineVariant
-                      : AppColors.outlineVariant,
+                  color: colors.border,
                   borderRadius: BorderRadius.circular(AppRadius.pill),
                 ),
               ),
@@ -394,9 +380,9 @@ class _CommunicationGestureDialogState
                 children: [
                   Row(
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.visibility_rounded,
-                        color: AppColors.goldPrimary,
+                        color: colors.accent,
                         size: 20,
                       ),
                       const SizedBox(width: 8),
@@ -404,15 +390,15 @@ class _CommunicationGestureDialogState
                         context.tr('quickComm.showLocals').isNotEmpty
                             ? context.tr('quickComm.showLocals')
                             : 'Tunjukkan ke Warga / Petugas',
-                        style: AppTypography.titleSmall.copyWith(
-                          color: headingColor,
+                        style: textTheme.titleSmall.copyWith(
+                          color: colors.textPrimary,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
                     ],
                   ),
                   IconButton(
-                    icon: const Icon(Icons.close_rounded),
+                    icon: Icon(Icons.close_rounded, color: colors.textPrimary),
                     onPressed: () => Navigator.of(zoomCtx).pop(),
                     tooltip: context.tr('quickComm.closeTooltip').isNotEmpty
                         ? context.tr('quickComm.closeTooltip')
@@ -431,19 +417,13 @@ class _CommunicationGestureDialogState
                 ),
                 decoration: BoxDecoration(
                   color: phrase.isUrgent
-                      ? (isDark
-                            ? const Color(0xFF381418)
-                            : const Color(0xFFFFF0F2))
-                      : (isDark
-                            ? AppColors.darkSurfaceContainer
-                            : AppColors.canvasCream),
+                      ? colors.danger.withValues(alpha: 0.08)
+                      : colors.surfaceSand,
                   borderRadius: BorderRadius.circular(AppRadius.xl),
                   border: Border.all(
                     color: phrase.isUrgent
-                        ? AppColors.sosEmergency.withValues(alpha: 0.6)
-                        : (isDark
-                              ? AppColors.goldLight.withValues(alpha: 0.3)
-                              : AppColors.goldPrimary.withValues(alpha: 0.4)),
+                        ? colors.danger.withValues(alpha: 0.6)
+                        : colors.accent.withValues(alpha: 0.4),
                     width: 2,
                   ),
                 ),
@@ -457,20 +437,18 @@ class _CommunicationGestureDialogState
                         ),
                         margin: const EdgeInsets.only(bottom: 12),
                         decoration: BoxDecoration(
-                          color: AppColors.sosEmergency.withValues(alpha: 0.15),
+                          color: colors.danger.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(AppRadius.pill),
                           border: Border.all(
-                            color: AppColors.sosEmergency.withValues(
-                              alpha: 0.4,
-                            ),
+                            color: colors.danger.withValues(alpha: 0.4),
                           ),
                         ),
                         child: Text(
                           context.tr('quickComm.urgentBadge').isNotEmpty
                               ? context.tr('quickComm.urgentBadge')
                               : 'PENTING / DARURAT',
-                          style: AppTypography.captionSmall.copyWith(
-                            color: AppColors.sosEmergency,
+                          style: textTheme.labelSmall.copyWith(
+                            color: colors.danger,
                             fontWeight: FontWeight.w800,
                             fontSize: 11,
                           ),
@@ -483,9 +461,10 @@ class _CommunicationGestureDialogState
                       textAlign: TextAlign.center,
                       textDirection: TextDirection.rtl,
                       style: TextStyle(
+                        fontFamily: 'Amiri',
                         fontSize: 38,
                         fontWeight: FontWeight.w800,
-                        color: isDark ? Colors.white : AppColors.espressoDark,
+                        color: colors.textPrimary,
                         height: 1.4,
                       ),
                     ),
@@ -497,9 +476,7 @@ class _CommunicationGestureDialogState
                       style: TextStyle(
                         fontSize: 15,
                         fontStyle: FontStyle.italic,
-                        color: isDark
-                            ? AppColors.darkTextBody
-                            : AppColors.textMuted,
+                        color: colors.textMuted,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -510,7 +487,7 @@ class _CommunicationGestureDialogState
                       style: TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.w700,
-                        color: headingColor,
+                        color: colors.textPrimary,
                       ),
                     ),
                   ],
@@ -539,15 +516,9 @@ class _CommunicationGestureDialogState
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: phrase.isUrgent
-                              ? AppColors.sosEmergency
-                              : (isPlaying
-                                    ? (isDark
-                                          ? AppColors.goldLight
-                                          : AppColors.espressoDark)
-                                    : AppColors.primaryGold),
-                          foregroundColor: isPlaying && isDark
-                              ? AppColors.espressoDark
-                              : Colors.white,
+                              ? colors.danger
+                              : (isPlaying ? colors.primary : colors.accent),
+                          foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -597,6 +568,8 @@ class _CommunicationGestureDialogState
                         ? context.tr('quickComm.copyTooltip')
                         : 'Salin Teks Arab',
                     style: IconButton.styleFrom(
+                      backgroundColor: colors.surfaceSand,
+                      foregroundColor: colors.textPrimary,
                       padding: const EdgeInsets.all(14),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -614,8 +587,8 @@ class _CommunicationGestureDialogState
 
   @override
   Widget build(BuildContext context) {
-    final isDark = AppColors.isDark(context);
-    final headingColor = AppColors.textHeadingColor(context);
+    final colors = context.hc;
+    final textTheme = context.text;
     final controller = Get.isRegistered<CommunicationController>()
         ? Get.find<CommunicationController>()
         : Get.put(CommunicationController());
@@ -628,7 +601,7 @@ class _CommunicationGestureDialogState
       ),
       padding: EdgeInsets.only(bottom: bottomPadding),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
+        color: colors.surface,
         borderRadius: const BorderRadius.vertical(
           top: Radius.circular(AppRadius.sheet),
         ),
@@ -657,9 +630,7 @@ class _CommunicationGestureDialogState
                     width: 44,
                     height: 4.5,
                     decoration: BoxDecoration(
-                      color: isDark
-                          ? AppColors.darkOutlineVariant
-                          : AppColors.outlineVariant,
+                      color: colors.border,
                       borderRadius: BorderRadius.circular(AppRadius.pill),
                     ),
                   ),
@@ -679,21 +650,15 @@ class _CommunicationGestureDialogState
                     width: 42,
                     height: 42,
                     decoration: BoxDecoration(
-                      color: isDark
-                          ? AppColors.darkSurfaceContainer
-                          : AppColors.canvasCream,
+                      color: colors.surfaceSand,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: isDark
-                            ? AppColors.goldLight.withValues(alpha: 0.25)
-                            : AppColors.goldPrimary.withValues(alpha: 0.3),
+                        color: colors.accent.withValues(alpha: 0.3),
                       ),
                     ),
                     child: Icon(
                       Icons.record_voice_over_rounded,
-                      color: isDark
-                          ? AppColors.goldLight
-                          : AppColors.espressoDark,
+                      color: colors.accentText,
                       size: 22,
                     ),
                   ),
@@ -709,8 +674,8 @@ class _CommunicationGestureDialogState
                             context.tr('quickComm.title').isNotEmpty
                                 ? context.tr('quickComm.title')
                                 : 'Komunikasi Cepat',
-                            style: AppTypography.titleLarge.copyWith(
-                              color: headingColor,
+                            style: textTheme.titleLarge.copyWith(
+                              color: colors.textPrimary,
                               fontWeight: FontWeight.w800,
                               fontSize: 18,
                             ),
@@ -721,10 +686,8 @@ class _CommunicationGestureDialogState
                           context.tr('quickComm.subtitle').isNotEmpty
                               ? context.tr('quickComm.subtitle')
                               : 'Lafal & Audio Arab-Indonesia untuk Jamaah',
-                          style: AppTypography.caption.copyWith(
-                            color: isDark
-                                ? AppColors.darkTextBody
-                                : AppColors.textMuted,
+                          style: textTheme.bodySmall.copyWith(
+                            color: colors.textMuted,
                             fontSize: 11.5,
                           ),
                           maxLines: 1,
@@ -737,9 +700,7 @@ class _CommunicationGestureDialogState
                     onPressed: () => _showAudioHelpDialog(context),
                     icon: Icon(
                       Icons.help_outline_rounded,
-                      color: isDark
-                          ? AppColors.goldLight
-                          : AppColors.espressoDark,
+                      color: colors.accentText,
                       size: 22,
                     ),
                     tooltip: context.tr('quickComm.audioHelpTitle').isNotEmpty
@@ -751,12 +712,7 @@ class _CommunicationGestureDialogState
                       controller.stop();
                       Navigator.of(context).pop();
                     },
-                    icon: Icon(
-                      Icons.close_rounded,
-                      color: isDark
-                          ? AppColors.darkTextBody
-                          : AppColors.textMuted,
-                    ),
+                    icon: Icon(Icons.close_rounded, color: colors.textMuted),
                     tooltip: context.tr('quickComm.closeTooltip').isNotEmpty
                         ? context.tr('quickComm.closeTooltip')
                         : 'Tutup',
@@ -777,23 +733,17 @@ class _CommunicationGestureDialogState
                   vertical: 9,
                 ),
                 decoration: BoxDecoration(
-                  color: isDark
-                      ? AppColors.darkSurfaceContainer
-                      : AppColors.canvasCream,
+                  color: colors.surfaceSand,
                   borderRadius: BorderRadius.circular(AppRadius.md),
                   border: Border.all(
-                    color: isDark
-                        ? AppColors.goldLight.withValues(alpha: 0.2)
-                        : AppColors.goldPrimary.withValues(alpha: 0.25),
+                    color: colors.accent.withValues(alpha: 0.25),
                   ),
                 ),
                 child: Row(
                   children: [
                     Icon(
                       Icons.touch_app_rounded,
-                      color: isDark
-                          ? AppColors.goldLight
-                          : AppColors.primaryGold,
+                      color: colors.accent,
                       size: 20,
                     ),
                     const SizedBox(width: 10),
@@ -805,9 +755,7 @@ class _CommunicationGestureDialogState
                         style: TextStyle(
                           fontSize: 11.5,
                           height: 1.35,
-                          color: isDark
-                              ? AppColors.darkTextBody
-                              : AppColors.espressoDark,
+                          color: colors.textPrimary,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -835,17 +783,17 @@ class _CommunicationGestureDialogState
                     vertical: 8,
                   ),
                   decoration: BoxDecoration(
-                    color: AppColors.goldPrimary.withValues(alpha: 0.12),
+                    color: colors.accent.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(AppRadius.md),
                     border: Border.all(
-                      color: AppColors.goldPrimary.withValues(alpha: 0.35),
+                      color: colors.accent.withValues(alpha: 0.35),
                     ),
                   ),
                   child: Row(
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.download_for_offline_rounded,
-                        color: AppColors.goldPrimary,
+                        color: colors.accent,
                         size: 20,
                       ),
                       const SizedBox(width: 8),
@@ -855,9 +803,7 @@ class _CommunicationGestureDialogState
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
-                            color: isDark
-                                ? AppColors.goldLight
-                                : AppColors.espressoDark,
+                            color: colors.textPrimary,
                             height: 1.3,
                           ),
                         ),
@@ -868,7 +814,7 @@ class _CommunicationGestureDialogState
                           controller.installOrDownloadArabicVoice();
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.goldPrimary,
+                          backgroundColor: colors.accent,
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(
                             horizontal: 10,
@@ -902,33 +848,22 @@ class _CommunicationGestureDialogState
               child: Container(
                 height: 42,
                 decoration: BoxDecoration(
-                  color: isDark
-                      ? AppColors.darkSurfaceContainer
-                      : AppColors.surfaceWhite,
+                  color: colors.surface,
                   borderRadius: BorderRadius.circular(AppRadius.pill),
-                  border: Border.all(
-                    color: isDark
-                        ? AppColors.darkOutlineVariant
-                        : AppColors.cardBorderColor(context),
-                  ),
+                  border: Border.all(color: colors.border),
                 ),
                 child: TextField(
                   controller: _searchController,
-                  style: TextStyle(fontSize: 13, color: headingColor),
+                  style: TextStyle(fontSize: 13, color: colors.textPrimary),
                   decoration: InputDecoration(
                     hintText: context.tr('quickComm.searchHint').isNotEmpty
                         ? context.tr('quickComm.searchHint')
                         : 'Cari percakapan (dokter, arah, sakit...)',
-                    hintStyle: TextStyle(
-                      fontSize: 12,
-                      color: isDark
-                          ? AppColors.darkTextBody
-                          : AppColors.textMuted,
-                    ),
-                    prefixIcon: const Icon(
+                    hintStyle: TextStyle(fontSize: 12, color: colors.textMuted),
+                    prefixIcon: Icon(
                       Icons.search_rounded,
                       size: 20,
-                      color: AppColors.goldPrimary,
+                      color: colors.accent,
                     ),
                     suffixIcon: _searchController.text.isNotEmpty
                         ? IconButton(
@@ -975,10 +910,10 @@ class _CommunicationGestureDialogState
                   return Padding(
                     padding: const EdgeInsets.only(right: 8),
                     child: _buildFilterChip(
+                      context: context,
                       categoryKey: cat.key,
                       label: label,
                       count: count,
-                      isDark: isDark,
                     ),
                   );
                 }).toList(),
@@ -986,7 +921,7 @@ class _CommunicationGestureDialogState
             ),
 
             const SizedBox(height: 6),
-            const Divider(height: 1),
+            Divider(height: 1, color: colors.border),
 
             // ── TTS Error Helper Banner (If Active) ───────────────────────
             Obx(() {
@@ -1002,17 +937,17 @@ class _CommunicationGestureDialogState
                   vertical: 8,
                 ),
                 decoration: BoxDecoration(
-                  color: AppColors.sosEmergency.withValues(alpha: 0.1),
+                  color: colors.danger.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(AppRadius.md),
                   border: Border.all(
-                    color: AppColors.sosEmergency.withValues(alpha: 0.3),
+                    color: colors.danger.withValues(alpha: 0.3),
                   ),
                 ),
                 child: Row(
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.volume_off_rounded,
-                      color: AppColors.sosEmergency,
+                      color: colors.danger,
                       size: 18,
                     ),
                     const SizedBox(width: 8),
@@ -1021,9 +956,9 @@ class _CommunicationGestureDialogState
                         context.tr('quickComm.ttsError').isNotEmpty
                             ? context.tr('quickComm.ttsError')
                             : 'Audio belum bersuara. Pastikan volume media aktif atau unduh paket suara Arab di HP.',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 11,
-                          color: AppColors.sosEmergency,
+                          color: colors.danger,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -1038,9 +973,9 @@ class _CommunicationGestureDialogState
                         ),
                         child: Text(
                           context.tr('quickComm.downloadVoice'),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 11,
-                            color: AppColors.sosEmergency,
+                            color: colors.danger,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
@@ -1056,9 +991,9 @@ class _CommunicationGestureDialogState
                         context.tr('quickComm.audioHelpTitle').isNotEmpty
                             ? context.tr('quickComm.audioHelpTitle')
                             : 'Bantuan',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 11,
-                          color: AppColors.sosEmergency,
+                          color: colors.danger,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -1088,9 +1023,7 @@ class _CommunicationGestureDialogState
                             Icon(
                               Icons.search_off_rounded,
                               size: 48,
-                              color: isDark
-                                  ? AppColors.darkOutlineVariant
-                                  : AppColors.outlineVariant,
+                              color: colors.border,
                             ),
                             const SizedBox(height: 12),
                             Text(
@@ -1102,9 +1035,7 @@ class _CommunicationGestureDialogState
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 fontSize: 13,
-                                color: isDark
-                                    ? AppColors.darkTextBody
-                                    : AppColors.textMuted,
+                                color: colors.textMuted,
                               ),
                             ),
                           ],
@@ -1127,8 +1058,6 @@ class _CommunicationGestureDialogState
                         context: context,
                         controller: controller,
                         phrase: phrase,
-                        isDark: isDark,
-                        headingColor: headingColor,
                       );
                     },
                   );
@@ -1142,11 +1071,12 @@ class _CommunicationGestureDialogState
   }
 
   Widget _buildFilterChip({
+    required BuildContext context,
     required String categoryKey,
     required String label,
     required int count,
-    required bool isDark,
   }) {
+    final colors = context.hc;
     final isSelected = _selectedCategory == categoryKey;
     return InkWell(
       onTap: () {
@@ -1159,21 +1089,9 @@ class _CommunicationGestureDialogState
         duration: const Duration(milliseconds: 180),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: isSelected
-              ? (isDark
-                    ? AppColors.darkPrimaryContainer
-                    : AppColors.espressoDark)
-              : (isDark
-                    ? AppColors.darkSurfaceContainer
-                    : AppColors.canvasCream),
+          color: isSelected ? colors.primary : colors.surfaceSand,
           borderRadius: BorderRadius.circular(AppRadius.pill),
-          border: Border.all(
-            color: isSelected
-                ? (isDark ? AppColors.goldLight : AppColors.espressoDark)
-                : (isDark
-                      ? AppColors.darkOutlineVariant
-                      : AppColors.goldPrimary.withValues(alpha: 0.2)),
-          ),
+          border: Border.all(color: isSelected ? colors.accent : colors.border),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -1183,11 +1101,7 @@ class _CommunicationGestureDialogState
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                color: isSelected
-                    ? Colors.white
-                    : (isDark
-                          ? AppColors.darkTextBody
-                          : AppColors.espressoDark),
+                color: isSelected ? colors.onPrimary : colors.textSecondary,
               ),
             ),
             const SizedBox(width: 6),
@@ -1195,12 +1109,8 @@ class _CommunicationGestureDialogState
               padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
               decoration: BoxDecoration(
                 color: isSelected
-                    ? (isDark
-                          ? AppColors.goldLight.withValues(alpha: 0.25)
-                          : Colors.white.withValues(alpha: 0.2))
-                    : (isDark
-                          ? AppColors.darkOutlineVariant
-                          : AppColors.espressoDark.withValues(alpha: 0.08)),
+                    ? colors.onPrimary.withValues(alpha: 0.2)
+                    : colors.textMuted.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(AppRadius.pill),
               ),
               child: Text(
@@ -1208,9 +1118,7 @@ class _CommunicationGestureDialogState
                 style: TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w700,
-                  color: isSelected
-                      ? Colors.white
-                      : (isDark ? AppColors.darkTextBody : AppColors.textMuted),
+                  color: isSelected ? colors.onPrimary : colors.textMuted,
                 ),
               ),
             ),
@@ -1224,9 +1132,10 @@ class _CommunicationGestureDialogState
     required BuildContext context,
     required CommunicationController controller,
     required PhraseItem phrase,
-    required bool isDark,
-    required Color headingColor,
   }) {
+    final colors = context.hc;
+    final textTheme = context.text;
+
     return Obx(() {
       final isCurrentlyPlaying = controller.activePhrase.value == phrase.arabic;
 
@@ -1234,30 +1143,24 @@ class _CommunicationGestureDialogState
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: phrase.isUrgent
-              ? (isDark ? const Color(0xFF2E1517) : const Color(0xFFFFECEF))
+              ? colors.danger.withValues(alpha: 0.08)
               : (isCurrentlyPlaying
-                    ? (isDark
-                          ? AppColors.goldPrimary.withValues(alpha: 0.18)
-                          : AppColors.goldLight.withValues(alpha: 0.25))
-                    : (isDark
-                          ? AppColors.darkSurfaceContainer
-                          : AppColors.cardBgColor(context))),
+                    ? colors.accent.withValues(alpha: 0.15)
+                    : colors.surface),
           borderRadius: BorderRadius.circular(AppRadius.lg),
           border: Border.all(
             color: isCurrentlyPlaying
-                ? (isDark ? AppColors.goldLight : AppColors.goldPrimary)
+                ? colors.accent
                 : (phrase.isUrgent
-                      ? AppColors.sosEmergency.withValues(alpha: 0.45)
-                      : (isDark
-                            ? AppColors.darkOutlineVariant
-                            : AppColors.cardBorderColor(context))),
+                      ? colors.danger.withValues(alpha: 0.45)
+                      : colors.border),
             width: isCurrentlyPlaying ? 2 : 1,
           ),
           boxShadow: [
             BoxShadow(
               color: isCurrentlyPlaying
-                  ? AppColors.goldPrimary.withValues(alpha: 0.12)
-                  : AppColors.espressoDark.withValues(alpha: 0.03),
+                  ? colors.accent.withValues(alpha: 0.12)
+                  : Colors.black.withValues(alpha: 0.03),
               blurRadius: isCurrentlyPlaying ? 10 : 4,
               offset: const Offset(0, 2),
             ),
@@ -1282,18 +1185,18 @@ class _CommunicationGestureDialogState
                         vertical: 2.5,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.sosEmergency.withValues(alpha: 0.12),
+                        color: colors.danger.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(AppRadius.pill),
                         border: Border.all(
-                          color: AppColors.sosEmergency.withValues(alpha: 0.35),
+                          color: colors.danger.withValues(alpha: 0.35),
                         ),
                       ),
                       child: Text(
                         context.tr('quickComm.urgentBadge').isNotEmpty
                             ? context.tr('quickComm.urgentBadge')
                             : 'PENTING / DARURAT',
-                        style: AppTypography.captionSmall.copyWith(
-                          color: AppColors.sosEmergency,
+                        style: textTheme.labelSmall.copyWith(
+                          color: colors.danger,
                           fontWeight: FontWeight.w800,
                           fontSize: 9.5,
                         ),
@@ -1313,9 +1216,7 @@ class _CommunicationGestureDialogState
                         tooltip: context.tr('quickComm.zoomTooltip').isNotEmpty
                             ? context.tr('quickComm.zoomTooltip')
                             : 'Perbesar untuk Warga Lokal',
-                        color: isDark
-                            ? AppColors.goldLight
-                            : AppColors.espressoDark,
+                        color: colors.accentText,
                         onPressed: () =>
                             _showZoomModal(context, phrase, controller),
                       ),
@@ -1329,9 +1230,7 @@ class _CommunicationGestureDialogState
                         tooltip: context.tr('quickComm.copyTooltip').isNotEmpty
                             ? context.tr('quickComm.copyTooltip')
                             : 'Salin Teks Arab',
-                        color: isDark
-                            ? AppColors.darkTextBody
-                            : AppColors.textMuted,
+                        color: colors.textMuted,
                         onPressed: () {
                           Clipboard.setData(ClipboardData(text: phrase.arabic));
                           final msg = context.tr('quickComm.copied').isNotEmpty
@@ -1372,9 +1271,7 @@ class _CommunicationGestureDialogState
                             style: TextStyle(
                               fontFamily: 'Amiri',
                               fontWeight: FontWeight.w800,
-                              color: isDark
-                                  ? Colors.white
-                                  : AppColors.espressoDark,
+                              color: colors.textPrimary,
                               fontSize: 24,
                               height: 1.4,
                             ),
@@ -1388,7 +1285,7 @@ class _CommunicationGestureDialogState
                       Text(
                         phrase.localizedMeaning(context),
                         style: TextStyle(
-                          color: headingColor,
+                          color: colors.textPrimary,
                           fontWeight: FontWeight.w700,
                           fontSize: 14,
                         ),
@@ -1399,9 +1296,7 @@ class _CommunicationGestureDialogState
                       Text(
                         phrase.transliteration,
                         style: TextStyle(
-                          color: isDark
-                              ? AppColors.darkTextBody
-                              : AppColors.textMuted,
+                          color: colors.textMuted,
                           fontSize: 12,
                           fontStyle: FontStyle.italic,
                         ),
@@ -1428,33 +1323,23 @@ class _CommunicationGestureDialogState
                       height: 48,
                       decoration: BoxDecoration(
                         color: phrase.isUrgent
-                            ? AppColors.sosEmergency
+                            ? colors.danger
                             : (isCurrentlyPlaying
-                                  ? (isDark
-                                        ? AppColors.goldLight
-                                        : AppColors.espressoDark)
-                                  : (isDark
-                                        ? AppColors.darkSurface
-                                        : AppColors.canvasCream)),
+                                  ? colors.primary
+                                  : colors.surfaceSand),
                         shape: BoxShape.circle,
                         border: Border.all(
                           color: isCurrentlyPlaying
-                              ? (isDark
-                                    ? AppColors.goldLight
-                                    : AppColors.goldPrimary)
-                              : (isDark
-                                    ? AppColors.darkOutlineVariant
-                                    : AppColors.cardBorderColor(context)),
+                              ? colors.accent
+                              : colors.border,
                           width: 1.5,
                         ),
                         boxShadow: [
                           BoxShadow(
                             color:
                                 (phrase.isUrgent
-                                        ? AppColors.sosEmergency
-                                        : (isDark
-                                              ? AppColors.goldLight
-                                              : AppColors.espressoDark))
+                                        ? colors.danger
+                                        : colors.accent)
                                     .withValues(alpha: 0.25),
                             blurRadius: isCurrentlyPlaying ? 10 : 6,
                             offset: const Offset(0, 2),
@@ -1466,12 +1351,8 @@ class _CommunicationGestureDialogState
                             ? Icons.stop_rounded
                             : Icons.volume_up_rounded,
                         color: phrase.isUrgent || isCurrentlyPlaying
-                            ? (isCurrentlyPlaying && isDark
-                                  ? AppColors.espressoDark
-                                  : Colors.white)
-                            : (isDark
-                                  ? AppColors.goldLight
-                                  : AppColors.espressoDark),
+                            ? Colors.white
+                            : colors.accentText,
                         size: 24,
                       ),
                     ),

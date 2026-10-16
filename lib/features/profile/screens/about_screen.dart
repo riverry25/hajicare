@@ -3,11 +3,10 @@ import 'package:get/get.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/locales/app_localizations.dart';
 import '../../../core/routes/app_routes.dart';
-import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_typography.dart';
-import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_sizes.dart';
+import '../../../core/theme/app_spacing.dart';
+import '../../../core/theme/theme_context.dart';
 import 'legal_document_screen.dart';
 
 class AboutScreen extends StatelessWidget {
@@ -15,27 +14,24 @@ class AboutScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = AppColors.isDark(context);
-    final scaffoldBg = isDark ? AppColors.darkScaffold : AppColors.canvasCream;
-    final headingColor = isDark
-        ? AppColors.darkTextHeading
-        : AppColors.espressoDark;
-    final bodyColor = isDark ? AppColors.darkTextBody : AppColors.textBody;
-    final cardBg = isDark ? AppColors.darkSurface : AppColors.surfaceWhite;
+    final colors = context.hc;
 
     return Scaffold(
-      backgroundColor: scaffoldBg,
+      backgroundColor: colors.canvas,
       appBar: AppBar(
-        backgroundColor: scaffoldBg,
+        backgroundColor: colors.canvas,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new_rounded, color: headingColor),
+          icon: Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: colors.textPrimary,
+          ),
           onPressed: () => Get.back(),
           tooltip: context.tr('back'),
         ),
         title: Text(
           context.tr('aboutTitle'),
-          style: AppTypography.headlineMd.copyWith(color: headingColor),
+          style: context.text.titleLarge.copyWith(color: colors.textPrimary),
         ),
         centerTitle: true,
       ),
@@ -48,12 +44,7 @@ class AboutScreen extends StatelessWidget {
               padding: const EdgeInsets.all(AppSpacing.lg),
               children: [
                 // ── App Identity Header ─────────────────────────────────────────
-                _AppIdentitySection(
-                  headingColor: headingColor,
-                  bodyColor: bodyColor,
-                  cardBg: cardBg,
-                  isDark: isDark,
-                ),
+                _AppIdentitySection(colors: colors),
                 const SizedBox(height: AppSpacing.gapSection),
 
                 // ── About Description ───────────────────────────────────────────
@@ -61,20 +52,12 @@ class AboutScreen extends StatelessWidget {
                   title: context.tr('aboutTitle'),
                   content: context.tr('aboutDescription'),
                   icon: Icons.info_outline_rounded,
-                  cardBg: cardBg,
-                  headingColor: headingColor,
-                  bodyColor: bodyColor,
-                  isDark: isDark,
+                  colors: colors,
                 ),
                 const SizedBox(height: AppSpacing.gapCards),
 
                 // ── Features ───────────────────────────────────────────────────
-                _FeaturesSection(
-                  cardBg: cardBg,
-                  headingColor: headingColor,
-                  bodyColor: bodyColor,
-                  isDark: isDark,
-                ),
+                _FeaturesSection(colors: colors),
                 const SizedBox(height: AppSpacing.gapCards),
 
                 // ── Accessibility ───────────────────────────────────────────────
@@ -82,10 +65,7 @@ class AboutScreen extends StatelessWidget {
                   title: context.tr('accessibilitySectionTitle'),
                   content: context.tr('accessibilitySectionDesc'),
                   icon: Icons.accessibility_new_rounded,
-                  cardBg: cardBg,
-                  headingColor: headingColor,
-                  bodyColor: bodyColor,
-                  isDark: isDark,
+                  colors: colors,
                 ),
                 const SizedBox(height: AppSpacing.gapCards),
 
@@ -94,20 +74,12 @@ class AboutScreen extends StatelessWidget {
                   title: context.tr('privacySectionTitle'),
                   content: context.tr('privacySectionDesc'),
                   icon: Icons.shield_outlined,
-                  cardBg: cardBg,
-                  headingColor: headingColor,
-                  bodyColor: bodyColor,
-                  isDark: isDark,
+                  colors: colors,
                 ),
                 const SizedBox(height: AppSpacing.gapCards),
 
                 // ── Legal ───────────────────────────────────────────────────────
-                _LegalSection(
-                  cardBg: cardBg,
-                  headingColor: headingColor,
-                  bodyColor: bodyColor,
-                  isDark: isDark,
-                ),
+                _LegalSection(colors: colors),
                 const SizedBox(height: AppSpacing.gapSection),
 
                 OutlinedButton.icon(
@@ -116,9 +88,8 @@ class AboutScreen extends StatelessWidget {
                   icon: const Icon(Icons.help_outline_rounded),
                   label: Text(context.tr('legalHelpCta')),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: isDark
-                        ? AppColors.darkPrimary
-                        : AppColors.espressoDark,
+                    foregroundColor: colors.primary,
+                    side: BorderSide(color: colors.border),
                     minimumSize: const Size.fromHeight(52),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -128,7 +99,7 @@ class AboutScreen extends StatelessWidget {
                 const SizedBox(height: AppSpacing.gapSection),
 
                 // ── Footer ──────────────────────────────────────────────────────
-                _FooterSection(bodyColor: bodyColor),
+                _FooterSection(colors: colors),
                 const SizedBox(height: AppSpacing.huge),
               ],
             ),
@@ -144,22 +115,12 @@ class AboutScreen extends StatelessWidget {
 // ────────────────────────────────────────────────────────────────────────────
 
 class _AppIdentitySection extends StatelessWidget {
-  final Color headingColor;
-  final Color bodyColor;
-  final Color cardBg;
-  final bool isDark;
+  final HajiColors colors;
 
-  const _AppIdentitySection({
-    required this.headingColor,
-    required this.bodyColor,
-    required this.cardBg,
-    required this.isDark,
-  });
+  const _AppIdentitySection({required this.colors});
 
   @override
   Widget build(BuildContext context) {
-    final accentColor = isDark ? AppColors.darkPrimary : AppColors.espressoDark;
-
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(
@@ -167,13 +128,9 @@ class _AppIdentitySection extends StatelessWidget {
         horizontal: AppSpacing.lg,
       ),
       decoration: BoxDecoration(
-        color: cardBg,
+        color: colors.surface,
         borderRadius: BorderRadius.circular(AppConstants.radiusCard),
-        border: Border.all(
-          color: isDark
-              ? AppColors.darkOutlineVariant
-              : AppColors.canvasCreamSubtle,
-        ),
+        border: Border.all(color: colors.border),
       ),
       child: Column(
         children: [
@@ -184,12 +141,12 @@ class _AppIdentitySection extends StatelessWidget {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(AppRadius.xl),
               border: Border.all(
-                color: AppColors.goldPrimary.withValues(alpha: 0.6),
+                color: colors.accent.withValues(alpha: 0.6),
                 width: 2.0,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.espressoDark.withValues(alpha: 0.20),
+                  color: colors.shadow,
                   blurRadius: 16,
                   offset: const Offset(0, 4),
                 ),
@@ -199,12 +156,14 @@ class _AppIdentitySection extends StatelessWidget {
               borderRadius: BorderRadius.circular(AppRadius.xl - 2),
               child: Image.asset(
                 'assets/icon.jpeg',
+                cacheWidth: 192,
+                cacheHeight: 192,
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) => Container(
-                  color: AppColors.espressoDark,
-                  child: const Icon(
+                  color: colors.primary,
+                  child: Icon(
                     Icons.mosque_rounded,
-                    color: AppColors.goldLight,
+                    color: colors.accent,
                     size: 48,
                   ),
                 ),
@@ -216,8 +175,10 @@ class _AppIdentitySection extends StatelessWidget {
           // App Name
           Text(
             context.tr('appName'),
-            style: AppTypography.displayLarge.copyWith(
-              color: headingColor,
+            style: context.text.titleLarge.copyWith(
+              color: colors.textPrimary,
+              fontSize: 22,
+              fontWeight: FontWeight.w700,
               letterSpacing: -0.5,
             ),
           ),
@@ -226,7 +187,9 @@ class _AppIdentitySection extends StatelessWidget {
           // Tagline
           Text(
             context.tr('aboutSubtitle'),
-            style: AppTypography.bodyMedium.copyWith(color: bodyColor),
+            style: context.text.bodyMedium.copyWith(
+              color: colors.textSecondary,
+            ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: AppSpacing.lg),
@@ -238,12 +201,12 @@ class _AppIdentitySection extends StatelessWidget {
               vertical: AppSpacing.xs,
             ),
             decoration: BoxDecoration(
-              color: accentColor.withValues(alpha: isDark ? 0.15 : 0.08),
+              color: colors.primaryContainer.withValues(alpha: 0.35),
               borderRadius: BorderRadius.circular(AppRadius.pill),
             ),
             child: Text(
               '${context.tr('appVersionLabel')} ${AppConstants.appVersion}',
-              style: AppTypography.labelLarge.copyWith(color: accentColor),
+              style: context.text.labelLarge.copyWith(color: colors.primary),
             ),
           ),
         ],
@@ -260,35 +223,23 @@ class _ContentSection extends StatelessWidget {
   final String title;
   final String content;
   final IconData icon;
-  final Color cardBg;
-  final Color headingColor;
-  final Color bodyColor;
-  final bool isDark;
+  final HajiColors colors;
 
   const _ContentSection({
     required this.title,
     required this.content,
     required this.icon,
-    required this.cardBg,
-    required this.headingColor,
-    required this.bodyColor,
-    required this.isDark,
+    required this.colors,
   });
 
   @override
   Widget build(BuildContext context) {
-    final accentColor = isDark ? AppColors.darkPrimary : AppColors.espressoDark;
-
     return Container(
       padding: const EdgeInsets.all(AppSpacing.xl),
       decoration: BoxDecoration(
-        color: cardBg,
+        color: colors.surface,
         borderRadius: BorderRadius.circular(AppConstants.radiusCard),
-        border: Border.all(
-          color: isDark
-              ? AppColors.darkOutlineVariant
-              : AppColors.canvasCreamSubtle,
-        ),
+        border: Border.all(color: colors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -299,16 +250,18 @@ class _ContentSection extends StatelessWidget {
                 width: AppSizes.touchTargetMin,
                 height: AppSizes.touchTargetMin,
                 decoration: BoxDecoration(
-                  color: accentColor.withValues(alpha: isDark ? 0.15 : 0.08),
+                  color: colors.primaryContainer.withValues(alpha: 0.35),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(icon, color: accentColor, size: AppSizes.iconMd),
+                child: Icon(icon, color: colors.primary, size: AppSizes.iconMd),
               ),
               const SizedBox(width: AppSpacing.md),
               Expanded(
                 child: Text(
                   title,
-                  style: AppTypography.titleLarge.copyWith(color: headingColor),
+                  style: context.text.titleLarge.copyWith(
+                    color: colors.textPrimary,
+                  ),
                 ),
               ),
             ],
@@ -316,8 +269,8 @@ class _ContentSection extends StatelessWidget {
           const SizedBox(height: AppSpacing.md),
           Text(
             content,
-            style: AppTypography.bodyMedium.copyWith(
-              color: bodyColor,
+            style: context.text.bodyMedium.copyWith(
+              color: colors.textSecondary,
               height: 1.6,
             ),
           ),
@@ -332,17 +285,9 @@ class _ContentSection extends StatelessWidget {
 // ────────────────────────────────────────────────────────────────────────────
 
 class _FeaturesSection extends StatelessWidget {
-  final Color cardBg;
-  final Color headingColor;
-  final Color bodyColor;
-  final bool isDark;
+  final HajiColors colors;
 
-  const _FeaturesSection({
-    required this.cardBg,
-    required this.headingColor,
-    required this.bodyColor,
-    required this.isDark,
-  });
+  const _FeaturesSection({required this.colors});
 
   @override
   Widget build(BuildContext context) {
@@ -351,52 +296,41 @@ class _FeaturesSection extends StatelessWidget {
         Icons.people_outline_rounded,
         'featureCompanion',
         'featureCompanionDesc',
-        AppColors.secondary,
+        colors.primary,
       ),
-      (
-        Icons.schedule_rounded,
-        'featureInfo',
-        'featureInfoDesc',
-        AppColors.accentGoldStar,
-      ),
+      (Icons.schedule_rounded, 'featureInfo', 'featureInfoDesc', colors.accent),
       (
         Icons.accessibility_new_rounded,
         'featureAccessibility',
         'featureAccessibilityDesc',
-        AppColors.statusSafe,
+        colors.success,
       ),
       (
         Icons.translate_rounded,
         'featureLanguage',
         'featureLanguageDesc',
-        AppColors.tanMedium,
+        colors.info,
       ),
       (
         Icons.dark_mode_outlined,
         'featureDarkMode',
         'featureDarkModeDesc',
-        AppColors.primary,
+        colors.primary,
       ),
       (
         Icons.person_outline_rounded,
         'featureProfile',
         'featureProfileDesc',
-        AppColors.statusWarning,
+        colors.warning,
       ),
     ];
-
-    final accentColor = isDark ? AppColors.darkPrimary : AppColors.espressoDark;
 
     return Container(
       padding: const EdgeInsets.all(AppSpacing.xl),
       decoration: BoxDecoration(
-        color: cardBg,
+        color: colors.surface,
         borderRadius: BorderRadius.circular(AppConstants.radiusCard),
-        border: Border.all(
-          color: isDark
-              ? AppColors.darkOutlineVariant
-              : AppColors.canvasCreamSubtle,
-        ),
+        border: Border.all(color: colors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -407,19 +341,21 @@ class _FeaturesSection extends StatelessWidget {
                 width: AppSizes.touchTargetMin,
                 height: AppSizes.touchTargetMin,
                 decoration: BoxDecoration(
-                  color: accentColor.withValues(alpha: isDark ? 0.15 : 0.08),
+                  color: colors.primaryContainer.withValues(alpha: 0.35),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
                   Icons.star_outline_rounded,
-                  color: accentColor,
+                  color: colors.primary,
                   size: AppSizes.iconMd,
                 ),
               ),
               const SizedBox(width: AppSpacing.md),
               Text(
                 context.tr('featuresTitle'),
-                style: AppTypography.titleLarge.copyWith(color: headingColor),
+                style: context.text.titleLarge.copyWith(
+                  color: colors.textPrimary,
+                ),
               ),
             ],
           ),
@@ -434,7 +370,7 @@ class _FeaturesSection extends StatelessWidget {
                     width: 36,
                     height: 36,
                     decoration: BoxDecoration(
-                      color: f.$4.withValues(alpha: isDark ? 0.15 : 0.1),
+                      color: f.$4.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(AppRadius.md),
                     ),
                     child: Icon(f.$1, color: f.$4, size: 18),
@@ -446,16 +382,16 @@ class _FeaturesSection extends StatelessWidget {
                       children: [
                         Text(
                           context.tr(f.$2),
-                          style: AppTypography.bodyLarge.copyWith(
-                            color: headingColor,
+                          style: context.text.bodyLarge.copyWith(
+                            color: colors.textPrimary,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
                         const SizedBox(height: 2),
                         Text(
                           context.tr(f.$3),
-                          style: AppTypography.bodySmall.copyWith(
-                            color: bodyColor,
+                          style: context.text.bodySmall.copyWith(
+                            color: colors.textSecondary,
                           ),
                         ),
                       ],
@@ -476,22 +412,12 @@ class _FeaturesSection extends StatelessWidget {
 // ────────────────────────────────────────────────────────────────────────────
 
 class _LegalSection extends StatelessWidget {
-  final Color cardBg;
-  final Color headingColor;
-  final Color bodyColor;
-  final bool isDark;
+  final HajiColors colors;
 
-  const _LegalSection({
-    required this.cardBg,
-    required this.headingColor,
-    required this.bodyColor,
-    required this.isDark,
-  });
+  const _LegalSection({required this.colors});
 
   @override
   Widget build(BuildContext context) {
-    final accentColor = isDark ? AppColors.darkPrimary : AppColors.espressoDark;
-
     final items = <(String, IconData, VoidCallback)>[
       (
         context.tr('privacyPolicy'),
@@ -526,8 +452,10 @@ class _LegalSection extends StatelessWidget {
               'assets/icon.jpeg',
               width: 52,
               height: 52,
+              cacheWidth: 104,
+              cacheHeight: 104,
               errorBuilder: (_, _, _) =>
-                  const Icon(Icons.mosque_rounded, size: 48),
+                  Icon(Icons.mosque_rounded, size: 48, color: colors.accent),
             ),
           ),
           applicationLegalese: '© ${DateTime.now().year} HajiCare',
@@ -537,13 +465,9 @@ class _LegalSection extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: cardBg,
+        color: colors.surface,
         borderRadius: BorderRadius.circular(AppConstants.radiusCard),
-        border: Border.all(
-          color: isDark
-              ? AppColors.darkOutlineVariant
-              : AppColors.canvasCreamSubtle,
-        ),
+        border: Border.all(color: colors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -561,19 +485,21 @@ class _LegalSection extends StatelessWidget {
                   width: AppSizes.touchTargetMin,
                   height: AppSizes.touchTargetMin,
                   decoration: BoxDecoration(
-                    color: accentColor.withValues(alpha: isDark ? 0.15 : 0.08),
+                    color: colors.primaryContainer.withValues(alpha: 0.35),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
                     Icons.article_outlined,
-                    color: accentColor,
+                    color: colors.primary,
                     size: AppSizes.iconMd,
                   ),
                 ),
                 const SizedBox(width: AppSpacing.md),
                 Text(
                   context.tr('legalSectionTitle'),
-                  style: AppTypography.titleLarge.copyWith(color: headingColor),
+                  style: context.text.titleLarge.copyWith(
+                    color: colors.textPrimary,
+                  ),
                 ),
               ],
             ),
@@ -583,13 +509,7 @@ class _LegalSection extends StatelessWidget {
             final item = entry.value;
             return Column(
               children: [
-                Divider(
-                  height: 1,
-                  indent: AppSpacing.xl,
-                  color: isDark
-                      ? AppColors.darkOutlineVariant
-                      : AppColors.canvasCreamSubtle,
-                ),
+                Divider(height: 1, indent: AppSpacing.xl, color: colors.border),
                 Semantics(
                   button: true,
                   label: item.$1,
@@ -610,22 +530,20 @@ class _LegalSection extends StatelessWidget {
                           Icon(
                             item.$2,
                             size: AppSizes.iconMd,
-                            color: bodyColor,
+                            color: colors.textSecondary,
                           ),
                           const SizedBox(width: AppSpacing.md),
                           Expanded(
                             child: Text(
                               item.$1,
-                              style: AppTypography.bodyMedium.copyWith(
-                                color: headingColor,
+                              style: context.text.bodyMedium.copyWith(
+                                color: colors.textPrimary,
                               ),
                             ),
                           ),
                           Icon(
                             Icons.chevron_right_rounded,
-                            color: isDark
-                                ? AppColors.darkOutline
-                                : AppColors.tanMedium,
+                            color: colors.borderStrong,
                           ),
                         ],
                       ),
@@ -647,9 +565,9 @@ class _LegalSection extends StatelessWidget {
 // ────────────────────────────────────────────────────────────────────────────
 
 class _FooterSection extends StatelessWidget {
-  final Color bodyColor;
+  final HajiColors colors;
 
-  const _FooterSection({required this.bodyColor});
+  const _FooterSection({required this.colors});
 
   @override
   Widget build(BuildContext context) {
@@ -657,21 +575,19 @@ class _FooterSection extends StatelessWidget {
       children: [
         Text(
           context.tr('appFooter'),
-          style: AppTypography.labelLarge.copyWith(color: bodyColor),
+          style: context.text.labelLarge.copyWith(color: colors.textSecondary),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: AppSpacing.xs),
         Text(
           context.tr('appFooterSubtitle'),
-          style: AppTypography.caption.copyWith(color: bodyColor),
+          style: context.text.bodySmall.copyWith(color: colors.textSecondary),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: AppSpacing.xs),
         Text(
           '© ${DateTime.now().year} HajiCare',
-          style: AppTypography.caption.copyWith(
-            color: bodyColor.withValues(alpha: 0.6),
-          ),
+          style: context.text.bodySmall.copyWith(color: colors.textTertiary),
           textAlign: TextAlign.center,
         ),
       ],

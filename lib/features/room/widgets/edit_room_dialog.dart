@@ -7,11 +7,12 @@ import 'package:get/get.dart';
 import '../../../core/locales/app_translations.dart';
 import '../../../core/services/app_alert_service.dart';
 import '../../../core/state/hajicare_controller.dart';
-import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
-import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/theme_context.dart';
 import '../../../core/utils/user_feedback_message.dart';
-import '../../../core/widgets/ribbon_fold_painter.dart';
+import '../../../core/widgets/haji_dialog_hero_header.dart';
+import '../../../core/widgets/haji_dialog_ribbon_button.dart';
+import '../../../core/widgets/haji_transparent_dialog.dart';
 import '../controllers/admin_room_controller.dart';
 import '../services/room_service.dart';
 
@@ -183,7 +184,7 @@ class _EditRoomDialogState extends State<EditRoomDialog> {
         AppAlert.success(
           context,
           title: context.tr('room.changesSaved'),
-          message: 'Pengaturan rombongan "$name" sudah diperbarui.',
+          message: context.tr('room.roomSettingsUpdatedDesc', {'name': name}),
         );
       }
     } catch (e) {
@@ -192,7 +193,7 @@ class _EditRoomDialogState extends State<EditRoomDialog> {
           _isSaving = false;
           _inputError = UserFeedbackMessage.from(
             e,
-            fallback: 'Perubahan belum dapat disimpan. Silakan coba lagi.',
+            fallback: context.tr('room.roomSettingsSaveFailedFallback'),
           );
         });
       }
@@ -201,14 +202,10 @@ class _EditRoomDialogState extends State<EditRoomDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final isDarkDialog = AppColors.isDark(context);
-    final dialogBg = isDarkDialog
-        ? AppColors.darkSurface
-        : AppColors.surfaceWhite;
-    final headingClr = isDarkDialog
-        ? AppColors.darkTextHeading
-        : AppColors.espressoDark;
-    final bodyClr = isDarkDialog ? AppColors.darkTextBody : AppColors.textBody;
+    final isDarkDialog = context.hc.isDark;
+    final dialogBg = context.hc.surface;
+    final headingClr = context.hc.textPrimary;
+    final bodyClr = context.hc.textSecondary;
 
     Widget buildUnderlineInput({
       required String label,
@@ -247,7 +244,7 @@ class _EditRoomDialogState extends State<EditRoomDialog> {
             decoration: InputDecoration(
               hintText: hint,
               hintStyle: TextStyle(
-                color: isDarkDialog ? Colors.white38 : const Color(0xFF9E8E81),
+                color: isDarkDialog ? Colors.white38 : context.hc.textTertiary,
                 fontSize: 12.5,
                 fontWeight: FontWeight.w400,
               ),
@@ -262,8 +259,8 @@ class _EditRoomDialogState extends State<EditRoomDialog> {
                       prefixIcon,
                       size: 17,
                       color: isDarkDialog
-                          ? AppColors.goldLight.withValues(alpha: 0.7)
-                          : AppColors.espressoDark.withValues(alpha: 0.6),
+                          ? context.hc.sand
+                          : context.hc.brandDark,
                     )
                   : null,
               prefixIconConstraints: const BoxConstraints(
@@ -273,40 +270,19 @@ class _EditRoomDialogState extends State<EditRoomDialog> {
               filled: false,
               contentPadding: const EdgeInsets.fromLTRB(0, 6, 0, 2),
               border: UnderlineInputBorder(
-                borderSide: BorderSide(
-                  color: isDarkDialog
-                      ? AppColors.darkOutlineVariant
-                      : const Color(0xFFD4C7BC),
-                  width: 1.2,
-                ),
+                borderSide: BorderSide(color: context.hc.border, width: 1.2),
               ),
               enabledBorder: UnderlineInputBorder(
-                borderSide: BorderSide(
-                  color: isDarkDialog
-                      ? AppColors.darkOutlineVariant
-                      : const Color(0xFFD4C7BC),
-                  width: 1.2,
-                ),
+                borderSide: BorderSide(color: context.hc.border, width: 1.2),
               ),
               focusedBorder: UnderlineInputBorder(
-                borderSide: BorderSide(
-                  color: isDarkDialog
-                      ? AppColors.goldLight
-                      : AppColors.espressoDark,
-                  width: 1.8,
-                ),
+                borderSide: BorderSide(color: context.hc.brand, width: 1.8),
               ),
-              errorBorder: const UnderlineInputBorder(
-                borderSide: BorderSide(
-                  color: AppColors.sosEmergency,
-                  width: 1.4,
-                ),
+              errorBorder: UnderlineInputBorder(
+                borderSide: BorderSide(color: context.hc.error, width: 1.4),
               ),
-              focusedErrorBorder: const UnderlineInputBorder(
-                borderSide: BorderSide(
-                  color: AppColors.sosEmergency,
-                  width: 1.8,
-                ),
+              focusedErrorBorder: UnderlineInputBorder(
+                borderSide: BorderSide(color: context.hc.error, width: 1.8),
               ),
             ),
             onChanged: onChanged,
@@ -315,9 +291,7 @@ class _EditRoomDialogState extends State<EditRoomDialog> {
       );
     }
 
-    return Dialog(
-      backgroundColor: Colors.transparent,
-      elevation: 0,
+    return HajiTransparentDialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 400, maxHeight: 640),
@@ -337,12 +311,7 @@ class _EditRoomDialogState extends State<EditRoomDialog> {
               decoration: BoxDecoration(
                 color: dialogBg,
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: isDarkDialog
-                      ? Colors.white.withValues(alpha: 0.1)
-                      : AppColors.goldLight.withValues(alpha: 0.35),
-                  width: 1,
-                ),
+                border: Border.all(color: context.hc.borderSubtle, width: 1),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(
@@ -363,7 +332,7 @@ class _EditRoomDialogState extends State<EditRoomDialog> {
                     children: [
                       Text(
                         context.tr('room.editRoomSettingsTitle'),
-                        style: AppTypography.titleMedium.copyWith(
+                        style: context.text.titleMedium.copyWith(
                           color: headingClr,
                           fontWeight: FontWeight.w800,
                           fontSize: 17.5,
@@ -373,7 +342,7 @@ class _EditRoomDialogState extends State<EditRoomDialog> {
                       const SizedBox(height: 4),
                       Text(
                         context.tr('room.editRoomSettingsDesc'),
-                        style: AppTypography.bodySmall.copyWith(
+                        style: context.text.bodySmall.copyWith(
                           color: bodyClr.withValues(alpha: 0.85),
                           height: 1.35,
                           fontSize: 12.5,
@@ -390,17 +359,9 @@ class _EditRoomDialogState extends State<EditRoomDialog> {
                             vertical: 3.5,
                           ),
                           decoration: BoxDecoration(
-                            color: isDarkDialog
-                                ? AppColors.darkPrimaryContainer.withValues(
-                                    alpha: 0.5,
-                                  )
-                                : AppColors.canvasCream,
+                            color: context.hc.surfaceSand,
                             borderRadius: BorderRadius.circular(AppRadius.pill),
-                            border: Border.all(
-                              color: AppColors.goldPrimary.withValues(
-                                alpha: 0.35,
-                              ),
-                            ),
+                            border: Border.all(color: context.hc.borderSubtle),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
@@ -421,8 +382,8 @@ class _EditRoomDialogState extends State<EditRoomDialog> {
                               ),
                               Text(
                                 widget.room.code,
-                                style: const TextStyle(
-                                  color: AppColors.goldPrimary,
+                                style: TextStyle(
+                                  color: context.hc.brand,
                                   fontSize: 12,
                                   fontWeight: FontWeight.w800,
                                   fontFamily: 'monospace',
@@ -510,8 +471,8 @@ class _EditRoomDialogState extends State<EditRoomDialog> {
                         const SizedBox(height: 10),
                         Text(
                           _inputError!,
-                          style: const TextStyle(
-                            color: AppColors.sosEmergency,
+                          style: TextStyle(
+                            color: context.hc.error,
                             fontSize: 11.5,
                             fontWeight: FontWeight.w600,
                           ),
@@ -525,9 +486,7 @@ class _EditRoomDialogState extends State<EditRoomDialog> {
                         children: [
                           TextButton(
                             style: TextButton.styleFrom(
-                              foregroundColor: isDarkDialog
-                                  ? Colors.white60
-                                  : const Color(0xFF8C7A6B),
+                              foregroundColor: bodyClr,
                               padding: const EdgeInsets.symmetric(vertical: 4),
                               minimumSize: Size.zero,
                               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -558,175 +517,23 @@ class _EditRoomDialogState extends State<EditRoomDialog> {
               top: 0,
               left: 22,
               right: 22,
-              height: 86,
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: isDarkDialog
-                        ? [const Color(0xFF38251A), const Color(0xFF1F140D)]
-                        : [AppColors.espressoDark, const Color(0xFF563B2A)],
-                  ),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: AppColors.goldPrimary.withValues(alpha: 0.4),
-                    width: 1.2,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.espressoDark.withValues(alpha: 0.35),
-                      blurRadius: 16,
-                      offset: const Offset(0, 6),
-                    ),
-                  ],
-                ),
-                child: Stack(
-                  children: [
-                    Positioned(
-                      top: -15,
-                      right: -15,
-                      child: Container(
-                        width: 70,
-                        height: 70,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: AppColors.goldPrimary.withValues(alpha: 0.12),
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      bottom: -20,
-                      left: -15,
-                      child: Container(
-                        width: 65,
-                        height: 65,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: AppColors.goldPrimary.withValues(alpha: 0.08),
-                        ),
-                      ),
-                    ),
-                    Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              gradient: LinearGradient(
-                                colors: [
-                                  AppColors.goldPrimary.withValues(alpha: 0.25),
-                                  AppColors.goldPrimary.withValues(alpha: 0.08),
-                                ],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              ),
-                              border: Border.all(
-                                color: AppColors.goldPrimary.withValues(
-                                  alpha: 0.5,
-                                ),
-                                width: 1.5,
-                              ),
-                            ),
-                            child: const Center(
-                              child: Icon(
-                                Icons.meeting_room_rounded,
-                                color: AppColors.accentGoldStar,
-                                size: 20,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            context.tr('room.groupSettingsHeader'),
-                            style: const TextStyle(
-                              color: AppColors.goldLight,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: 1.1,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+              child: HajiDialogHeroHeader(
+                icon: Icons.meeting_room_rounded,
+                title: context.tr('room.groupSettingsHeader'),
               ),
             ),
 
-            // ── 3. Protruding Ribbon Submit Button (No shadow) ──
+            // ── 3. Protruding Ribbon Submit Button ──
             Positioned(
               bottom: 0,
               right: 0,
-              child: Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  Positioned(
-                    top: -10,
-                    right: 0,
-                    child: CustomPaint(
-                      size: const Size(10, 10),
-                      painter: RibbonFoldPainter(
-                        color: isDarkDialog
-                            ? const Color(0xFF140D08)
-                            : const Color(0xFF160D07),
-                      ),
-                    ),
-                  ),
-                  Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: _isSaving
-                          ? null
-                          : () {
-                              HapticFeedback.lightImpact();
-                              _handleSave();
-                            },
-                      borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(24),
-                        bottomLeft: Radius.circular(24),
-                        bottomRight: Radius.circular(5),
-                      ),
-                      child: Ink(
-                        decoration: BoxDecoration(
-                          color: isDarkDialog
-                              ? AppColors.darkPrimaryContainer
-                              : AppColors.espressoDark,
-                          borderRadius: const BorderRadius.only(
-                            topLeft: Radius.circular(24),
-                            bottomLeft: Radius.circular(24),
-                            bottomRight: Radius.circular(5),
-                          ),
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 28,
-                          vertical: 13.5,
-                        ),
-                        child: _isSaving
-                            ? const SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
-                                ),
-                              )
-                            : Text(
-                                context.tr('common.save'),
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w900,
-                                  fontSize: 13,
-                                  letterSpacing: 2.2,
-                                ),
-                              ),
-                      ),
-                    ),
-                  ),
-                ],
+              child: HajiDialogRibbonButton(
+                label: context.tr('common.save').toUpperCase(),
+                isLoading: _isSaving,
+                onPressed: () {
+                  HapticFeedback.lightImpact();
+                  _handleSave();
+                },
               ),
             ),
           ],

@@ -3,7 +3,9 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:math' as math;
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_compass/flutter_compass.dart';
 import 'package:flutter_map/flutter_map.dart' as fmap;
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
@@ -26,6 +28,7 @@ import '../services/poi_service.dart';
 import '../services/route_service.dart';
 import '../services/navigation_voice_service.dart';
 import '../services/map_validation_tracker_service.dart';
+import '../../../core/services/app_tts_service.dart';
 
 /// Explicit application modes for map interaction.
 enum MapMode { normal, navigationStarting, navigating, arrived }
@@ -38,6 +41,7 @@ enum MapSearchState { idle, loading, results, empty, error, history }
 class MapController extends GetxController with GetTickerProviderStateMixin {
   final fmap.MapController flutterMapController = fmap.MapController();
   final RoomService? _injectedRoomService;
+  final Stream<CompassEvent>? _injectedCompassStream;
   RoomService? _lazyRoomService;
   final RouteService _routeService;
   final GeocodingService _geocodingService;
@@ -50,7 +54,9 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     GeocodingService? geocodingService,
     PoiService? poiService,
     PoiRepository? poiRepository,
+    Stream<CompassEvent>? compassStream,
   }) : _injectedRoomService = roomService,
+       _injectedCompassStream = compassStream,
        _routeService = routeService ?? RouteService(),
        _geocodingService = geocodingService ?? GeocodingService(),
        _poiService = poiService ?? PoiService(),
@@ -86,6 +92,12 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
   final currentIndex = 1.obs;
   final compassRotation = 0.0.obs;
 
+  // ── DYNAMIC GPS USER PUCK HEADING & MOVEMENT STATE ─────────────────────────
+  final userHeading = 0.0.obs;
+  final isUserMoving = false.obs;
+  final hasCompassSensor = true.obs;
+  StreamSubscription<CompassEvent>? _compassSub;
+
   final selectedPoi = Rxn<MapPoi>();
   final selectedJamaah = Rxn<JamaahData>();
   final selectedMember = Rxn<RoomMemberModel>();
@@ -112,10 +124,23 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
   VoidCallback? onRecenterTriggered;
   Position? _previousPosition;
 
-  bool get isNavigating =>
-      mapMode.value == MapMode.navigating ||
-      mapMode.value == MapMode.navigationStarting ||
-      mapMode.value == MapMode.arrived;
+  /// Reactive navigation flag — use inside Obx() to track navigation state changes.
+  /// Always kept in sync with [mapMode] via [_setMapMode].
+  final isNavigatingRx = false.obs;
+
+  /// Non-reactive convenience getter for use OUTSIDE Obx (e.g. imperative logic).
+  /// Do NOT use this inside Obx — use [isNavigatingRx] instead.
+  bool get isNavigating => isNavigatingRx.value;
+
+  /// Atomically sets [mapMode] and keeps [isNavigatingRx] consistent.
+  /// Use this everywhere instead of assigning mapMode.value directly.
+  void _setMapMode(MapMode mode) {
+    mapMode.value = mode;
+    isNavigatingRx.value =
+        mode == MapMode.navigating ||
+        mode == MapMode.navigationStarting ||
+        mode == MapMode.arrived;
+  }
 
   String get currentDestinationTitle {
     if (selectedPoi.value != null) return selectedPoi.value!.name;
@@ -128,7 +153,8 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
   }
 
   LatLng? get currentDestinationCoord {
-    if (_activeDestination != null) return _activeDestination;
+    final active = _activeDestination.value;
+    if (active != null) return active;
     if (selectedPoi.value != null) return selectedPoi.value!.coordinate;
     if (selectedMember.value?.hasLocation == true) {
       return LatLng(
@@ -159,7 +185,12 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
   double? pendingFocusZoom;
 
   // Active navigation tracking
-  LatLng? _activeDestination;
+  /// Reactive so that `Obx` widgets reading [currentDestinationCoord]
+  /// always subscribe to at least one observable.
+  final _activeDestination = Rxn<LatLng>();
+
+  @visibleForTesting
+  set debugActiveDestination(LatLng? value) => _activeDestination.value = value;
   DateTime? _lastRerouteTime;
   static const double _deviationThresholdMeters = 50.0;
   static const Duration _rerouteCooldown = Duration(seconds: 15);
@@ -235,9 +266,52 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     loadSearchHistory();
     _initRoomListener();
     _autoStartGps();
+    _initCompassStream();
     isVoiceGuidanceEnabled.listen((enabled) {
       voiceService.setMuted(!enabled);
     });
+  }
+
+  /// Listens to device compass magnetometer to dynamically rotate the user location puck
+  /// when stationary or turning body (Google Maps signature beam rotation).
+  void _initCompassStream() {
+    final stream =
+        _injectedCompassStream ?? (kIsWeb ? null : FlutterCompass.events);
+    if (stream == null) {
+      hasCompassSensor.value = false;
+      return;
+    }
+
+    try {
+      _compassSub = stream.listen(
+        (event) {
+          final rawHeading = event.heading;
+          if (rawHeading == null || rawHeading.isNaN || !rawHeading.isFinite) {
+            return;
+          }
+
+          // Normalize heading to [0, 360)
+          final heading = (rawHeading % 360.0 + 360.0) % 360.0;
+
+          // When user is stationary, device orientation dictates the puck's facing direction.
+          if (!isUserMoving.value) {
+            final prev = userHeading.value;
+            // Deadband threshold: filter minor sensor noise (< 0.6°) to maintain stillness
+            final delta = ((heading - prev + 180.0) % 360.0 - 180.0).abs();
+            if (delta >= 0.6) {
+              userHeading.value = heading;
+            }
+          }
+        },
+        onError: (e) {
+          debugPrint('[MapController] Compass stream error: $e');
+          hasCompassSensor.value = false;
+        },
+      );
+    } catch (e) {
+      debugPrint('[MapController] Compass stream unavailable: $e');
+      hasCompassSensor.value = false;
+    }
   }
 
   Future<void> refreshNearbyPois(
@@ -298,6 +372,9 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     mapCameraCenter.value = center;
     _mapCameraZoom = zoom;
     if ((mapZoom.value - zoom).abs() > 0.05) mapZoom.value = zoom;
+    if (hasGesture && isFollowingUser.value) {
+      isFollowingUser.value = false;
+    }
     if (!hasGesture || poiQueryCenter.value == null) return;
     final distance = calculateDistanceMeters(poiQueryCenter.value!, center);
     showSearchThisArea.value = distance > _searchAreaThresholdForZoom(zoom);
@@ -529,14 +606,15 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     isLocationLoading.value = true;
     locationError.value = null;
 
-    // Fast-path: Check if HajiCareController is already providing a valid GPS location
+    // 1. Immediately subscribe to HajiCareController if registered so updates are never missed
+    HajiCareController? state;
     if (Get.isRegistered<HajiCareController>()) {
-      final state = Get.find<HajiCareController>();
+      state = Get.find<HajiCareController>();
+      _subscribeToStatePosition(state);
       if (state.myCurrentPosition.value != null) {
         final pos = state.myCurrentPosition.value!;
         _applyPosition(pos, publishToRoom: false);
         isLocationLoading.value = false;
-        _subscribeToStatePosition(state);
         MapValidationTrackerService.instance.logTrial(
           latitude: pos.latitude,
           longitude: pos.longitude,
@@ -544,6 +622,9 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
           durationSeconds: 0.12,
           isSuccess: true,
         );
+        if (!state.isMyGpsActive.value) {
+          state.startLocationTracking();
+        }
         return;
       }
     }
@@ -567,6 +648,7 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
       var permission = await Geolocator.checkPermission();
       if (isClosed || generation != _lifecycleGeneration) return;
       if (permission == LocationPermission.denied) {
+        // Direct System Permission: ask OS directly without in-app pre-dialog
         permission = await Geolocator.requestPermission();
         if (isClosed || generation != _lifecycleGeneration) return;
         if (permission == LocationPermission.denied) {
@@ -598,17 +680,28 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
         return;
       }
 
-      Position? firstPosition;
-      if (Get.isRegistered<HajiCareController>()) {
-        final state = Get.find<HajiCareController>();
-        firstPosition = state.myCurrentPosition.value;
+      // 2. If HajiCareController is registered, trigger its GPS tracking
+      if (state != null) {
+        await state.refreshLocation();
+        if (isClosed || generation != _lifecycleGeneration) return;
+        if (state.myCurrentPosition.value != null) {
+          _applyPosition(state.myCurrentPosition.value!, publishToRoom: false);
+          isLocationLoading.value = false;
+          return;
+        }
       }
 
+      // 3. Direct position fetch if state not registered or still pending
       final gpsStopwatch = Stopwatch()..start();
+      Position? firstPosition;
+      try {
+        firstPosition = await Geolocator.getLastKnownPosition();
+      } catch (_) {}
+
       firstPosition ??= await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(
           accuracy: LocationAccuracy.high,
-          timeLimit: Duration(seconds: 10),
+          timeLimit: Duration(seconds: 5),
         ),
       );
       gpsStopwatch.stop();
@@ -623,14 +716,12 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
         isSuccess: true,
       );
 
-      if (Get.isRegistered<HajiCareController>()) {
-        final state = Get.find<HajiCareController>();
-        _applyPosition(firstPosition, publishToRoom: false);
-        isLocationLoading.value = false;
+      _applyPosition(firstPosition, publishToRoom: state == null);
+      isLocationLoading.value = false;
+      if (state != null) {
         _subscribeToStatePosition(state);
-      } else {
-        _applyPosition(firstPosition, publishToRoom: true);
-        isLocationLoading.value = false;
+      }
+      if (state == null || !state.isMyGpsActive.value) {
         _startPositionStream();
       }
     } catch (e) {
@@ -649,8 +740,6 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
             'Lokasi belum dapat ditemukan. Periksa pengaturan lokasi ponsel, lalu coba lagi.',
       );
       isLocationLoading.value = false;
-      // Do NOT set currentUserLocation to defaultMinaBase on failure:
-      // real GPS location must remain null until an actual device fix is acquired.
     }
   }
 
@@ -660,6 +749,8 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     _statePositionSub = state.myCurrentPosition.listen((pos) {
       if (pos != null) {
         _applyPosition(pos, publishToRoom: false);
+        isLocationLoading.value = false;
+        locationError.value = null;
       }
     });
     isLiveTracking.value = true;
@@ -672,10 +763,14 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
         Geolocator.getPositionStream(
           locationSettings: const LocationSettings(
             accuracy: LocationAccuracy.high,
-            distanceFilter: 2,
+            distanceFilter: 0,
           ),
         ).listen(
-          (pos) => _applyPosition(pos, publishToRoom: true),
+          (pos) {
+            _applyPosition(pos, publishToRoom: true);
+            isLocationLoading.value = false;
+            locationError.value = null;
+          },
           onError: (e) {
             debugPrint('[MapController] Stream error: $e');
             isLiveTracking.value = false;
@@ -688,6 +783,25 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     final newCoord = LatLng(position.latitude, position.longitude);
     currentUserLocation.value = newCoord;
     gpsAccuracy.value = position.accuracy;
+
+    // Movement detection: walking threshold is ~ 0.8 m/s (approx 2.9 km/h)
+    final moving = position.speed > 0.8;
+    isUserMoving.value = moving;
+
+    if (moving) {
+      if (position.heading >= 0 &&
+          position.heading <= 360 &&
+          position.heading != 0.0) {
+        userHeading.value = position.heading;
+      } else if (_previousPosition != null) {
+        userHeading.value = _calculateBearingBetween(
+          LatLng(_previousPosition!.latitude, _previousPosition!.longitude),
+          newCoord,
+        );
+      }
+    }
+    _previousPosition = position;
+
     refreshNearbyPois(newCoord);
 
     // Live navigation: evaluate route deviation if active route is engaged
@@ -732,10 +846,8 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
           if (isMapAttached) animatedMove(newCoord, 16.5);
         });
       });
-    } else if (activeRoute.isNotEmpty &&
-        _activeDestination != null &&
-        !isNavigating) {
-      // Normal map mode with route: keep camera centered on user movement
+    } else if (isFollowingUser.value && !isNavigating) {
+      // Normal map mode with follow engaged: keep camera centered on user movement
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!isClosed && isMapAttached) {
           flutterMapController.move(newCoord, flutterMapController.camera.zoom);
@@ -748,7 +860,7 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
   /// If deviated and cooldown (15s) has passed, triggers controlled reroute.
   void _checkRouteDeviation(LatLng userPos) {
     if (activeRoute.isEmpty ||
-        _activeDestination == null ||
+        _activeDestination.value == null ||
         isRouteLoading.value) {
       return;
     }
@@ -765,7 +877,7 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
         '[ROUTE] User deviated ${minDistance.toInt()}m from route. Initiating reroute...',
       );
       _lastRerouteTime = now;
-      _updateRouteTo(_activeDestination!, isReroute: true);
+      _updateRouteTo(_activeDestination.value!, isReroute: true);
     }
   }
 
@@ -992,8 +1104,9 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     AppLogger.debug('selectPoi: ${poi.name}', tag: 'MapController');
     isBottomSheetOpen.value = true;
     if (selectedPoi.value?.id == poi.id) return;
-    if (_activeDestination != null &&
-        calculateDistanceMeters(_activeDestination!, poi.coordinate) > 2) {
+    if (_activeDestination.value != null &&
+        calculateDistanceMeters(_activeDestination.value!, poi.coordinate) >
+            2) {
       clearRoute();
     }
     selectedPoi.value = poi;
@@ -1170,8 +1283,23 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
   /// and centers the map camera on their real-time pin.
   /// Returns the focused [RoomMemberModel], or null if no companion is found.
   Future<RoomMemberModel?> focusOnCompanion({bool autoRoute = false}) async {
-    // 1. Try to find companion from roomMembers (prefer one with real GPS location)
-    RoomMemberModel? companion =
+    RoomMemberModel? companion;
+
+    // 1. Prioritize nearest companion if resolved by HajiCareController
+    if (Get.isRegistered<HajiCareController>()) {
+      final hajiCtrl = Get.find<HajiCareController>();
+      final nearest = hajiCtrl.nearestPendamping.value;
+      if (nearest != null) {
+        companion =
+            roomMembers.firstWhereOrNull((m) => m.uid == nearest.uid) ??
+            hajiCtrl.activeRoomMembers.firstWhereOrNull(
+              (m) => m.uid == nearest.uid,
+            );
+      }
+    }
+
+    // 2. Try to find companion from roomMembers (prefer one with real GPS location)
+    companion ??=
         pendampingMembers.firstWhereOrNull((m) => m.hasLocation) ??
         pendampingMembers.firstOrNull;
 
@@ -1305,7 +1433,7 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
 
   void clearRoute() {
     activeRoute.clear();
-    _activeDestination = null;
+    _activeDestination.value = null;
     routeError.value = null;
     routeDistanceMeters.value = null;
     routeDurationSeconds.value = null;
@@ -1338,7 +1466,7 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
       return;
     }
 
-    _activeDestination = destination;
+    _activeDestination.value = destination;
     final requestId = ++_routeRequestId;
 
     isRouteLoading.value = true;
@@ -1524,7 +1652,7 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     }
 
     destinationTitle.value = currentDestinationTitle;
-    mapMode.value = MapMode.navigationStarting;
+    _setMapMode(MapMode.navigationStarting);
     isFollowingUser.value = true;
     isBottomSheetOpen.value = false;
 
@@ -1538,21 +1666,25 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
         activeRoute,
       );
       navigationBearing.value = initialBearing;
+      if (userHeading.value == 0.0) {
+        userHeading.value = initialBearing;
+      }
     }
 
     _computeUpcomingManeuver(userLoc);
 
     // Announce start of navigation via voice guidance
     voiceService.setMuted(!isVoiceGuidanceEnabled.value);
-    voiceService.speak(
-      'Memulai navigasi menuju ${destinationTitle.value}',
-      force: true,
-    );
+    final lang = AppTtsService.resolveLanguageCode();
+    final startPrompt = lang == 'en'
+        ? 'Starting navigation to ${destinationTitle.value}'
+        : 'Memulai navigasi menuju ${destinationTitle.value}';
+    voiceService.speak(startPrompt, force: true);
 
     // Instant zero-lag transition from normal map to full navigation
     await Future.delayed(Duration.zero);
     if (mapMode.value == MapMode.navigationStarting) {
-      mapMode.value = MapMode.navigating;
+      _setMapMode(MapMode.navigating);
     }
   }
 
@@ -1560,7 +1692,7 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
   /// and restores the previous place sheet without losing selection.
   void exitNavigation() {
     voiceService.reset();
-    mapMode.value = MapMode.normal;
+    _setMapMode(MapMode.normal);
     isFollowingUser.value = true;
     if (isMapAttached) {
       flutterMapController.rotate(0.0);
@@ -1649,7 +1781,7 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
       final distToDest = calculateDistanceMeters(userPos, dest);
       if (distToDest <= 20.0) {
         if (mapMode.value != MapMode.arrived) {
-          mapMode.value = MapMode.arrived;
+          _setMapMode(MapMode.arrived);
           remainingNavDistance.value = 0.0;
           remainingNavDuration.value = 0;
           nextManeuverInstruction.value = AppTranslations.tr(
@@ -1691,6 +1823,9 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
         targetBearing,
         0.35,
       );
+      if (isUserMoving.value) {
+        userHeading.value = navigationBearing.value;
+      }
     }
     _previousPosition = position;
 
@@ -1893,7 +2028,12 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
   }
 
   void focusToMe() {
-    moveToCurrentLocation(forceRefresh: true);
+    isFollowingUser.value = true;
+    if (currentUserLocation.value != null) {
+      animatedMove(currentUserLocation.value!, 17.0);
+    } else {
+      moveToCurrentLocation();
+    }
   }
 
   void focusToAllMembers() {
@@ -2223,8 +2363,9 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
   /// updates search marker, and animates camera to the target coordinates.
   void selectSearchResult(MapSearchResult result) {
     addSearchHistory(result);
-    if (_activeDestination != null &&
-        calculateDistanceMeters(_activeDestination!, result.coordinate) > 2) {
+    if (_activeDestination.value != null &&
+        calculateDistanceMeters(_activeDestination.value!, result.coordinate) >
+            2) {
       clearRoute();
     }
     selectedSearchResult.value = result;
@@ -2271,6 +2412,7 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     _lifecycleGeneration++;
     _searchDebounceTimer?.cancel();
     _moveAnimCtrl?.dispose();
+    _compassSub?.cancel();
     _nativePositionSub?.cancel();
     _statePositionSub?.cancel();
     _roomMembersSub?.cancel();

@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
-import '../theme/app_typography.dart';
+import '../theme/theme_context.dart';
 
 /// Reusable, accessible, and premium header component for HajiCare screens.
 ///
@@ -47,7 +46,7 @@ class HajiCareHeader extends StatelessWidget implements PreferredSizeWidget {
   /// Custom height if needed. Defaults to 72dp when subtitle is present, or 64dp otherwise.
   final double? height;
 
-  /// Background color override. Defaults to [AppColors.scaffoldColor].
+  /// Background color override. Defaults to [context.hc.canvas].
   final Color? backgroundColor;
 
   /// Optional custom widget to replace the default title column.
@@ -81,10 +80,9 @@ class HajiCareHeader extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = AppColors.isDark(context);
-    final headingColor = AppColors.textHeadingColor(context);
-    final bodyColor = AppColors.textBodyColor(context);
-    final scaffoldBg = backgroundColor ?? AppColors.scaffoldColor(context);
+    final hc = context.hc;
+    final textTheme = context.text;
+    final scaffoldBg = backgroundColor ?? hc.canvas;
 
     // Determine leading widget
     Widget? effectiveLeading;
@@ -93,7 +91,7 @@ class HajiCareHeader extends StatelessWidget implements PreferredSizeWidget {
     } else if (showBackButton) {
       effectiveLeading = IconButton(
         icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
-        color: headingColor,
+        color: hc.textPrimary,
         tooltip: MaterialLocalizations.of(context).backButtonTooltip,
         onPressed: onBack ?? () => Get.back(),
       );
@@ -124,12 +122,10 @@ class HajiCareHeader extends StatelessWidget implements PreferredSizeWidget {
                   width: 36,
                   height: 36,
                   decoration: BoxDecoration(
-                    color: isDark
-                        ? AppColors.darkPrimaryContainer
-                        : AppColors.primaryContainer,
+                    color: hc.primaryContainer,
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: AppColors.goldPrimary.withValues(alpha: 0.5),
+                      color: hc.accent.withValues(alpha: 0.5),
                       width: 1.2,
                     ),
                   ),
@@ -138,39 +134,31 @@ class HajiCareHeader extends StatelessWidget implements PreferredSizeWidget {
                       imageAsset ?? 'assets/icon.jpeg',
                       width: 36,
                       height: 36,
+                      cacheWidth: 72,
+                      cacheHeight: 72,
                       fit: BoxFit.cover,
                       errorBuilder: (context, error, stackTrace) {
                         return Icon(
                           icon ?? Icons.mosque_rounded,
-                          color: isDark
-                              ? AppColors.goldLight
-                              : AppColors.accentGoldStar,
+                          color: hc.accent,
                           size: 19,
                         );
                       },
                     ),
                   ),
                 ),
-                const SizedBox(width: AppSpacing.sm),
+                const SizedBox(width: AppSpacing.s8),
               ] else if (icon != null) ...[
                 Container(
                   width: 36,
                   height: 36,
                   decoration: BoxDecoration(
-                    color: isDark
-                        ? AppColors.darkPrimaryContainer
-                        : AppColors.primaryContainer,
+                    color: hc.primaryContainer,
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(
-                    icon,
-                    color: isDark
-                        ? AppColors.goldLight
-                        : AppColors.accentGoldStar,
-                    size: 19,
-                  ),
+                  child: Icon(icon, color: hc.accent, size: 19),
                 ),
-                const SizedBox(width: AppSpacing.sm),
+                const SizedBox(width: AppSpacing.s8),
               ],
               Expanded(
                 child: Column(
@@ -181,8 +169,8 @@ class HajiCareHeader extends StatelessWidget implements PreferredSizeWidget {
                       title,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: AppTypography.titleLarge.copyWith(
-                        color: headingColor,
+                      style: textTheme.titleLarge.copyWith(
+                        color: hc.textPrimary,
                         fontWeight: FontWeight.w800,
                         letterSpacing: -0.2,
                       ),
@@ -193,8 +181,8 @@ class HajiCareHeader extends StatelessWidget implements PreferredSizeWidget {
                         subtitle!,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: AppTypography.caption.copyWith(
-                          color: bodyColor.withValues(alpha: 0.75),
+                        style: textTheme.labelSmall.copyWith(
+                          color: hc.textSecondary,
                           fontWeight: FontWeight.w500,
                         ),
                       ),

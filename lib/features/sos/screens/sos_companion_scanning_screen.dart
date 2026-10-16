@@ -12,10 +12,9 @@ import '../../../core/locales/app_localizations.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/services/app_alert_service.dart';
 import '../../../core/state/hajicare_controller.dart';
-import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
-import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/theme_context.dart';
 import '../../../core/widgets/app_card.dart';
 import '../../map/controllers/map_controller.dart';
 import '../../map/models/map_poi.dart';
@@ -435,17 +434,18 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
     }
   }
 
-  Color get _statusColor {
+  Color _statusColor(BuildContext context) {
+    final colors = context.hc;
     switch (_currentState) {
       case SosScanningState.detectingGps:
       case SosScanningState.scanningCompanions:
-        return AppColors.goldPrimary;
+        return colors.accent;
       case SosScanningState.searchingClosest:
-        return const Color(0xFF29B6F6);
+        return colors.info;
       case SosScanningState.companionFound:
-        return AppColors.statusSafe;
+        return colors.success;
       case SosScanningState.noCompanionAvailable:
-        return AppColors.sosEmergency;
+        return colors.danger;
     }
   }
 
@@ -468,13 +468,11 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
 
   @override
   Widget build(BuildContext context) {
-    final isDark = AppColors.isDark(context);
-    final scaffoldBg = AppColors.scaffoldColor(context);
-    final textHeading = AppColors.textHeadingColor(context);
-    final textBody = AppColors.textBodyColor(context);
+    final colors = context.hc;
+    final isDark = context.isDark;
 
     return Scaffold(
-      backgroundColor: scaffoldBg,
+      backgroundColor: colors.canvas,
       body: Stack(
         children: [
           // 1. Subtle decorative background illumination
@@ -487,13 +485,13 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
                     radius: 0.9,
                     colors: isDark
                         ? [
-                            AppColors.goldPrimary.withValues(alpha: 0.12),
-                            const Color(0xFF261912).withValues(alpha: 0.35),
+                            colors.accent.withValues(alpha: 0.12),
+                            colors.primaryContainer.withValues(alpha: 0.35),
                             Colors.transparent,
                           ]
                         : [
-                            AppColors.goldLight.withValues(alpha: 0.28),
-                            AppColors.canvasCreamSubtle.withValues(alpha: 0.5),
+                            colors.accent.withValues(alpha: 0.18),
+                            colors.surfaceSand.withValues(alpha: 0.45),
                             Colors.transparent,
                           ],
                   ),
@@ -529,9 +527,9 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
                             const SizedBox(height: 8),
-                            _buildTopBar(isDark),
+                            _buildTopBar(context),
                             const SizedBox(height: 12),
-                            _buildStatusPill(isDark, textHeading, textBody),
+                            _buildStatusPill(context),
                           ],
                         ),
 
@@ -542,7 +540,7 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
                             child: SizedBox(
                               width: radarBoxSize,
                               height: radarBoxSize,
-                              child: _buildRadarStack(radarBoxSize, isDark),
+                              child: _buildRadarStack(context, radarBoxSize),
                             ),
                           ),
                         ),
@@ -551,9 +549,9 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            _buildDistanceFilterRow(isDark),
+                            _buildDistanceFilterRow(context),
                             const SizedBox(height: 14),
-                            _buildBottomPanel(isDark),
+                            _buildBottomPanel(context),
                             const SizedBox(height: 16),
                           ],
                         ),
@@ -571,7 +569,9 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
 
   // ── TOP BAR & STATUS PILL (Inspired by Image 2 Header) ─────────────────────
 
-  Widget _buildTopBar(bool isDark) {
+  Widget _buildTopBar(BuildContext context) {
+    final colors = context.hc;
+
     return Row(
       children: [
         // Rounded Close Button
@@ -579,13 +579,11 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
           button: true,
           label: 'Tutup radar',
           child: Material(
-            color: isDark
-                ? AppColors.darkSurfaceContainer
-                : Colors.white.withValues(alpha: 0.8),
+            color: colors.surfaceSubtle,
             shape: const CircleBorder(),
             clipBehavior: Clip.antiAlias,
-            elevation: isDark ? 0 : 2,
-            shadowColor: Colors.black12,
+            elevation: context.isDark ? 0 : 1,
+            shadowColor: colors.shadow.withValues(alpha: 0.1),
             child: InkWell(
               onTap: () => Get.back(),
               child: Padding(
@@ -593,7 +591,7 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
                 child: Icon(
                   Icons.close_rounded,
                   size: 20,
-                  color: isDark ? Colors.white70 : AppColors.textHeading,
+                  color: colors.textPrimary,
                 ),
               ),
             ),
@@ -609,8 +607,8 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
             children: [
               Text(
                 'Radar Deteksi',
-                style: AppTypography.titleLarge.copyWith(
-                  color: AppColors.textHeadingColor(context),
+                style: context.text.titleLarge.copyWith(
+                  color: colors.textPrimary,
                   fontWeight: FontWeight.w800,
                   fontSize: 19,
                 ),
@@ -620,8 +618,8 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
               const SizedBox(height: 2),
               Text(
                 'Pantau Pendamping Terdekat',
-                style: AppTypography.captionSmall.copyWith(
-                  color: AppColors.textSecondaryColor(context),
+                style: context.text.bodySmall.copyWith(
+                  color: colors.textSecondary,
                   fontWeight: FontWeight.w600,
                 ),
                 maxLines: 1,
@@ -635,33 +633,29 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
           decoration: BoxDecoration(
-            color: AppColors.sosEmergency.withValues(alpha: 0.18),
+            color: colors.danger.withValues(alpha: 0.15),
             borderRadius: BorderRadius.circular(AppRadius.pill),
             border: Border.all(
-              color: AppColors.sosEmergency.withValues(alpha: 0.55),
+              color: colors.danger.withValues(alpha: 0.55),
               width: 1.2,
             ),
             boxShadow: [
               BoxShadow(
-                color: AppColors.sosEmergency.withValues(alpha: 0.15),
+                color: colors.danger.withValues(alpha: 0.15),
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),
             ],
           ),
-          child: const Row(
+          child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                Icons.emergency_rounded,
-                color: AppColors.sosEmergency,
-                size: 14,
-              ),
-              SizedBox(width: 4),
+              Icon(Icons.emergency_rounded, color: colors.danger, size: 14),
+              const SizedBox(width: 4),
               Text(
                 'SOS AKTIF',
-                style: TextStyle(
-                  color: AppColors.sosEmergency,
+                style: context.text.labelSmall.copyWith(
+                  color: colors.danger,
                   fontSize: 10.5,
                   fontWeight: FontWeight.w900,
                   letterSpacing: 0.6,
@@ -674,21 +668,18 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
     );
   }
 
-  Widget _buildStatusPill(bool isDark, Color headingColor, Color bodyColor) {
+  Widget _buildStatusPill(BuildContext context) {
+    final colors = context.hc;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
-        color: isDark
-            ? AppColors.darkSurfaceContainer.withValues(alpha: 0.8)
-            : Colors.white.withValues(alpha: 0.9),
+        color: colors.surface,
         borderRadius: BorderRadius.circular(AppRadius.pill),
-        border: Border.all(
-          color: isDark ? AppColors.darkCardBorder : AppColors.lightCardBorder,
-          width: 1,
-        ),
+        border: Border.all(color: colors.border, width: 1),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+            color: colors.shadow.withValues(alpha: context.isDark ? 0.2 : 0.04),
             blurRadius: 10,
             offset: const Offset(0, 3),
           ),
@@ -697,7 +688,7 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
       child: Row(
         children: [
           // Status Icon with color
-          Icon(_statusIcon, size: 16, color: _statusColor),
+          Icon(_statusIcon, size: 16, color: _statusColor(context)),
           const SizedBox(width: 8),
 
           // Status readout text
@@ -710,8 +701,8 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
                   _currentState == SosScanningState.companionFound
                       ? '${_candidates.length} Pendamping terdeteksi • ${_selectedCompanion?.name ?? "Terdekat"}'
                       : _statusTitle,
-                  style: AppTypography.captionSmall.copyWith(
-                    color: headingColor,
+                  style: context.text.labelLarge.copyWith(
+                    color: colors.textPrimary,
                     fontWeight: FontWeight.w700,
                     fontSize: 12,
                   ),
@@ -721,8 +712,8 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
                 if (_statusDetail != null)
                   Text(
                     _statusDetail!,
-                    style: AppTypography.captionSmall.copyWith(
-                      color: bodyColor.withValues(alpha: 0.8),
+                    style: context.text.bodySmall.copyWith(
+                      color: colors.textSecondary,
                       fontSize: 10.5,
                       fontWeight: FontWeight.w500,
                     ),
@@ -736,11 +727,7 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
           // Quick re-scan trigger
           GestureDetector(
             onTap: _startDetectionPipeline,
-            child: const Icon(
-              Icons.sync_rounded,
-              size: 16,
-              color: AppColors.goldPrimary,
-            ),
+            child: Icon(Icons.sync_rounded, size: 16, color: colors.accent),
           ),
         ],
       ),
@@ -749,7 +736,9 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
 
   // ── RADAR STACK (Organic Layered Disks + Center Beacon + Floating Avatars) ──
 
-  Widget _buildRadarStack(double size, bool isDark) {
+  Widget _buildRadarStack(BuildContext context, double size) {
+    final colors = context.hc;
+    final isDark = context.isDark;
     final center = Offset(size / 2, size / 2);
     final maxRadius = size / 2;
     final activeCompanion = _selectedCompanion ?? _closestCompanion;
@@ -765,23 +754,26 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
         return Stack(
           alignment: Alignment.center,
           children: [
-            // 1. Layered Organic Concentric Radar Disks (Image 2 style)
-            CustomPaint(
-              size: Size(size, size),
-              painter: _WinkyOrganicRadarPainter(
-                sweepProgress: _sweepController.value,
-                pulseProgress: _pulseController.value,
-                centerPulse: _centerPulseController.value,
-                lockOnProgress: _lockOnController.value,
-                state: _currentState,
-                isDark: isDark,
-                selectedCompanion: activeCompanion,
-                maxRangeMeters: _effectiveMaxRange,
+            // 1. Layered Organic Concentric Radar Disks
+            RepaintBoundary(
+              child: CustomPaint(
+                size: Size(size, size),
+                painter: _WinkyOrganicRadarPainter(
+                  sweepProgress: _sweepController.value,
+                  pulseProgress: _pulseController.value,
+                  centerPulse: _centerPulseController.value,
+                  lockOnProgress: _lockOnController.value,
+                  state: _currentState,
+                  colors: colors,
+                  isDark: isDark,
+                  selectedCompanion: activeCompanion,
+                  maxRangeMeters: _effectiveMaxRange,
+                ),
               ),
             ),
 
-            // 2. Central Glowing Beacon (Rounded Triangle / Diamond from Image 2)
-            _buildCenterBeacon(isDark),
+            // 2. Central Glowing Beacon
+            _buildCenterBeacon(context),
 
             // 3. Floating Interactive Candidate Avatars
             ..._visibleCandidates.map((cand) {
@@ -802,7 +794,7 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
                   candidate: cand,
                   isSelected: isSelected,
                   isClosest: isClosest,
-                  isDark: isDark,
+                  colors: colors,
                   onTap: () => _selectCompanion(cand),
                 ),
               );
@@ -813,8 +805,9 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
     );
   }
 
-  /// Center glowing diamond/rounded triangle beacon matching Image 2
-  Widget _buildCenterBeacon(bool isDark) {
+  /// Center glowing diamond/rounded triangle beacon
+  Widget _buildCenterBeacon(BuildContext context) {
+    final colors = context.hc;
     final double pulseScale = 1.0 + (0.12 * _centerPulseController.value);
 
     return Transform.scale(
@@ -825,18 +818,11 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           gradient: RadialGradient(
-            colors: isDark
-                ? [Colors.white, AppColors.goldPrimary, AppColors.espressoDark]
-                : [
-                    AppColors.primary,
-                    AppColors.espressoDark,
-                    AppColors.primaryContainer,
-                  ],
+            colors: [colors.accent, colors.primary, colors.primaryContainer],
           ),
           boxShadow: [
             BoxShadow(
-              color: (isDark ? AppColors.goldPrimary : AppColors.primary)
-                  .withValues(alpha: 0.45),
+              color: colors.accent.withValues(alpha: 0.45),
               blurRadius: 16,
               spreadRadius: 3,
             ),
@@ -848,12 +834,12 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
             height: 32,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: isDark ? Colors.white : AppColors.espressoDark,
+              color: colors.surface,
             ),
             child: Icon(
               Icons.my_location_rounded,
               size: 18,
-              color: isDark ? AppColors.espressoDark : AppColors.goldLight,
+              color: colors.primary,
             ),
           ),
         ),
@@ -861,9 +847,11 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
     );
   }
 
-  // ── DISTANCE FILTER ROW (Direct from Image 2) ──────────────────────────────
+  // ── DISTANCE FILTER ROW ────────────────────────────────────────────────────
 
-  Widget _buildDistanceFilterRow(bool isDark) {
+  Widget _buildDistanceFilterRow(BuildContext context) {
+    final colors = context.hc;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -872,10 +860,8 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
           children: [
             Text(
               'JARAK JANGKAUAN',
-              style: AppTypography.captionSmall.copyWith(
-                color: isDark
-                    ? AppColors.goldLight
-                    : AppColors.textHeadingColor(context),
+              style: context.text.labelSmall.copyWith(
+                color: colors.textPrimary,
                 fontWeight: FontWeight.w800,
                 letterSpacing: 1.1,
                 fontSize: 11,
@@ -883,8 +869,8 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
             ),
             Text(
               'Skala: ${_effectiveMaxRange < 1000 ? "${_effectiveMaxRange.toInt()}m" : "${(_effectiveMaxRange / 1000).toStringAsFixed(1)}km"}',
-              style: AppTypography.captionSmall.copyWith(
-                color: AppColors.textSecondaryColor(context),
+              style: context.text.labelSmall.copyWith(
+                color: colors.textSecondary,
                 fontWeight: FontWeight.w600,
                 fontSize: 11,
               ),
@@ -895,27 +881,27 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
         Row(
           children: [
             _buildFilterPill(
+              context: context,
               filter: RadarDistanceFilter.closest,
               label: 'Terdekat',
-              isDark: isDark,
             ),
             const SizedBox(width: 8),
             _buildFilterPill(
+              context: context,
               filter: RadarDistanceFilter.near50m,
               label: '< 50m',
-              isDark: isDark,
             ),
             const SizedBox(width: 8),
             _buildFilterPill(
+              context: context,
               filter: RadarDistanceFilter.near200m,
               label: '< 200m',
-              isDark: isDark,
             ),
             const SizedBox(width: 8),
             _buildFilterPill(
+              context: context,
               filter: RadarDistanceFilter.all,
               label: 'Semua',
-              isDark: isDark,
             ),
           ],
         ),
@@ -924,10 +910,11 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
   }
 
   Widget _buildFilterPill({
+    required BuildContext context,
     required RadarDistanceFilter filter,
     required String label,
-    required bool isDark,
   }) {
+    final colors = context.hc;
     final isSelected = _selectedFilter == filter;
 
     return Expanded(
@@ -950,24 +937,16 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
               curve: Curves.easeOut,
               padding: const EdgeInsets.symmetric(vertical: 8),
               decoration: BoxDecoration(
-                color: isSelected
-                    ? (isDark ? AppColors.goldPrimary : AppColors.primary)
-                    : (isDark ? AppColors.darkSurfaceContainer : Colors.white),
+                color: isSelected ? colors.primary : colors.surfaceSubtle,
                 borderRadius: BorderRadius.circular(AppRadius.pill),
                 border: Border.all(
-                  color: isSelected
-                      ? (isDark ? AppColors.goldPrimary : AppColors.primary)
-                      : (isDark
-                            ? AppColors.darkOutline.withValues(alpha: 0.4)
-                            : AppColors.lightCardBorder),
+                  color: isSelected ? colors.primary : colors.border,
                   width: 1.2,
                 ),
                 boxShadow: [
                   if (isSelected)
                     BoxShadow(
-                      color:
-                          (isDark ? AppColors.goldPrimary : AppColors.primary)
-                              .withValues(alpha: 0.3),
+                      color: colors.primary.withValues(alpha: 0.25),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),
@@ -976,13 +955,10 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
               child: Center(
                 child: Text(
                   label,
-                  style: TextStyle(
-                    fontFamily: AppTypography.headingFontFamily,
+                  style: context.text.labelSmall.copyWith(
                     fontSize: 11.5,
                     fontWeight: FontWeight.w700,
-                    color: isSelected
-                        ? (isDark ? AppColors.espressoDark : Colors.white)
-                        : (isDark ? Colors.white70 : AppColors.textBody),
+                    color: isSelected ? colors.onPrimary : colors.textSecondary,
                   ),
                 ),
               ),
@@ -995,17 +971,19 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
 
   // ── BOTTOM PANEL (Companion Card or Scanning State) ────────────────────────
 
-  Widget _buildBottomPanel(bool isDark) {
+  Widget _buildBottomPanel(BuildContext context) {
+    final colors = context.hc;
+
     if (_currentState == SosScanningState.companionFound &&
         (_selectedCompanion != null || _closestCompanion != null)) {
       final comp = _selectedCompanion ?? _closestCompanion!;
       final isClosest = comp.uid == _closestCompanion?.uid;
 
       return AppCard(
-        backgroundColor: isDark ? AppColors.darkSurface : Colors.white,
+        backgroundColor: colors.surface,
         borderColor: isClosest
-            ? AppColors.statusSafe.withValues(alpha: 0.6)
-            : AppColors.goldPrimary.withValues(alpha: 0.5),
+            ? colors.success.withValues(alpha: 0.6)
+            : colors.accent.withValues(alpha: 0.5),
         padding: const EdgeInsets.all(AppSpacing.cardPadding),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1022,17 +1000,12 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         gradient: LinearGradient(
-                          colors: [
-                            AppColors.espressoDark,
-                            AppColors.primaryContainer,
-                          ],
+                          colors: [colors.primary, colors.primaryContainer],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                         ),
                         border: Border.all(
-                          color: isClosest
-                              ? AppColors.statusSafe
-                              : AppColors.goldPrimary,
+                          color: isClosest ? colors.success : colors.accent,
                           width: 2,
                         ),
                       ),
@@ -1041,8 +1014,8 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
                           comp.name.isNotEmpty
                               ? comp.name.substring(0, 1).toUpperCase()
                               : 'P',
-                          style: AppTypography.titleLarge.copyWith(
-                            color: Colors.white,
+                          style: context.text.titleLarge.copyWith(
+                            color: colors.onPrimary,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -1055,14 +1028,9 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
                         width: 14,
                         height: 14,
                         decoration: BoxDecoration(
-                          color: AppColors.statusSafe,
+                          color: colors.success,
                           shape: BoxShape.circle,
-                          border: Border.all(
-                            color: isDark
-                                ? AppColors.darkSurface
-                                : Colors.white,
-                            width: 2,
-                          ),
+                          border: Border.all(color: colors.surface, width: 2),
                         ),
                       ),
                     ),
@@ -1080,10 +1048,10 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
                           Expanded(
                             child: Text(
                               comp.name,
-                              style: AppTypography.titleMedium.copyWith(
+                              style: context.text.titleMedium.copyWith(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 16,
-                                color: AppColors.textHeadingColor(context),
+                                color: colors.textPrimary,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -1096,17 +1064,15 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
                                 vertical: 2,
                               ),
                               decoration: BoxDecoration(
-                                color: AppColors.statusSafe.withValues(
-                                  alpha: 0.15,
-                                ),
+                                color: colors.success.withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(
                                   AppRadius.pill,
                                 ),
                               ),
-                              child: const Text(
+                              child: Text(
                                 'TERDEKAT',
-                                style: TextStyle(
-                                  color: AppColors.statusSafe,
+                                style: context.text.labelSmall.copyWith(
+                                  color: colors.success,
                                   fontSize: 10,
                                   fontWeight: FontWeight.w900,
                                 ),
@@ -1120,17 +1086,13 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
                           Icon(
                             Icons.location_on_rounded,
                             size: 14,
-                            color: isClosest
-                                ? AppColors.statusSafe
-                                : AppColors.goldPrimary,
+                            color: isClosest ? colors.success : colors.accent,
                           ),
                           const SizedBox(width: 3),
                           Text(
                             comp.formattedDistance,
-                            style: AppTypography.captionSmall.copyWith(
-                              color: isClosest
-                                  ? AppColors.statusSafe
-                                  : AppColors.goldPrimary,
+                            style: context.text.labelSmall.copyWith(
+                              color: isClosest ? colors.success : colors.accent,
                               fontWeight: FontWeight.w800,
                               fontSize: 12.5,
                             ),
@@ -1138,8 +1100,8 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
                           const SizedBox(width: 6),
                           Text(
                             '• ${comp.isFromRoom ? "Rombongan" : "Petugas"}',
-                            style: AppTypography.captionSmall.copyWith(
-                              color: AppColors.textSecondaryColor(context),
+                            style: context.text.bodySmall.copyWith(
+                              color: colors.textSecondary,
                             ),
                           ),
                         ],
@@ -1158,13 +1120,9 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
                   Expanded(
                     child: OutlinedButton.icon(
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: isDark
-                            ? AppColors.goldLight
-                            : AppColors.primary,
+                        foregroundColor: colors.primary,
                         side: BorderSide(
-                          color: isDark
-                              ? AppColors.goldPrimary
-                              : AppColors.primary,
+                          color: colors.borderStrong,
                           width: 1.2,
                         ),
                         shape: RoundedRectangleBorder(
@@ -1173,9 +1131,9 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
                         padding: const EdgeInsets.symmetric(vertical: 11),
                       ),
                       icon: const Icon(Icons.phone_in_talk_rounded, size: 16),
-                      label: const Text(
+                      label: Text(
                         'Hubungi',
-                        style: TextStyle(
+                        style: context.text.labelMedium.copyWith(
                           fontWeight: FontWeight.bold,
                           fontSize: 12.5,
                         ),
@@ -1189,12 +1147,8 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
                   flex: 2,
                   child: ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: isDark
-                          ? AppColors.goldPrimary
-                          : AppColors.primary,
-                      foregroundColor: isDark
-                          ? AppColors.espressoDark
-                          : Colors.white,
+                      backgroundColor: colors.primary,
+                      foregroundColor: colors.onPrimary,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(AppRadius.pill),
                       ),
@@ -1202,9 +1156,10 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
                       padding: const EdgeInsets.symmetric(vertical: 11),
                     ),
                     icon: const Icon(Icons.navigation_rounded, size: 16),
-                    label: const Text(
+                    label: Text(
                       'Lihat di Peta',
-                      style: TextStyle(
+                      style: context.text.labelMedium.copyWith(
+                        color: colors.onPrimary,
                         fontWeight: FontWeight.w800,
                         fontSize: 12.5,
                       ),
@@ -1219,8 +1174,8 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
       );
     } else if (_currentState == SosScanningState.noCompanionAvailable) {
       return AppCard(
-        backgroundColor: isDark ? AppColors.darkSurface : Colors.white,
-        borderColor: AppColors.sosEmergency.withValues(alpha: 0.5),
+        backgroundColor: colors.surface,
+        borderColor: colors.danger.withValues(alpha: 0.5),
         padding: const EdgeInsets.all(AppSpacing.cardPadding),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -1228,17 +1183,17 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
           children: [
             Row(
               children: [
-                const Icon(
+                Icon(
                   Icons.warning_amber_rounded,
-                  color: AppColors.sosEmergency,
+                  color: colors.danger,
                   size: 26,
                 ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
                     'Pendamping Belum Terdeteksi',
-                    style: AppTypography.titleMedium.copyWith(
-                      color: AppColors.sosEmergency,
+                    style: context.text.titleMedium.copyWith(
+                      color: colors.danger,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -1248,8 +1203,8 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
             const SizedBox(height: 6),
             Text(
               'Tetap tenang dan jangan berpindah tempat. Sinyal SOS Anda tetap disiarkan ke posko terdekat.',
-              style: AppTypography.bodySmall.copyWith(
-                color: isDark ? Colors.white70 : AppColors.textBody,
+              style: context.text.bodySmall.copyWith(
+                color: colors.textSecondary,
               ),
             ),
             const SizedBox(height: 12),
@@ -1257,8 +1212,8 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
               width: double.infinity,
               child: ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.goldPrimary,
-                  foregroundColor: AppColors.espressoDark,
+                  backgroundColor: colors.primary,
+                  foregroundColor: colors.onPrimary,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(AppRadius.pill),
                   ),
@@ -1280,16 +1235,12 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: isDark
-            ? AppColors.darkSurfaceContainer.withValues(alpha: 0.8)
-            : Colors.white,
+        color: colors.surface,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(
-          color: isDark ? AppColors.darkCardBorder : AppColors.lightCardBorder,
-        ),
+        border: Border.all(color: colors.border),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05),
+            color: colors.shadow.withValues(alpha: context.isDark ? 0.2 : 0.05),
             blurRadius: 10,
             offset: const Offset(0, 3),
           ),
@@ -1297,12 +1248,12 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
       ),
       child: Row(
         children: [
-          const SizedBox(
+          SizedBox(
             width: 18,
             height: 18,
             child: CircularProgressIndicator(
               strokeWidth: 2.2,
-              valueColor: AlwaysStoppedAnimation<Color>(AppColors.goldPrimary),
+              valueColor: AlwaysStoppedAnimation<Color>(colors.accent),
             ),
           ),
           const SizedBox(width: 12),
@@ -1313,14 +1264,14 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
               children: [
                 Text(
                   _statusTitle,
-                  style: AppTypography.labelLarge.copyWith(
-                    color: AppColors.textHeadingColor(context),
+                  style: context.text.labelLarge.copyWith(
+                    color: colors.textPrimary,
                   ),
                 ),
                 Text(
                   'Tetap tenang & jangan berpindah tempat',
-                  style: AppTypography.captionSmall.copyWith(
-                    color: AppColors.textSecondaryColor(context),
+                  style: context.text.bodySmall.copyWith(
+                    color: colors.textSecondary,
                   ),
                 ),
               ],
@@ -1332,28 +1283,28 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
   }
 }
 
-// ── FLOATING COMPANION AVATAR WIDGET (Image 2 style) ─────────────────────────
+// ── FLOATING COMPANION AVATAR WIDGET ─────────────────────────────────────────
 
 class _RadarCompanionAvatar extends StatelessWidget {
   final CandidateCompanion candidate;
   final bool isSelected;
   final bool isClosest;
-  final bool isDark;
+  final HajiColors colors;
   final VoidCallback onTap;
 
   const _RadarCompanionAvatar({
     required this.candidate,
     required this.isSelected,
     required this.isClosest,
-    required this.isDark,
+    required this.colors,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     final ringColor = isSelected
-        ? (isDark ? AppColors.goldPrimary : AppColors.primary)
-        : (isClosest ? AppColors.statusSafe : Colors.white);
+        ? colors.accent
+        : (isClosest ? colors.success : colors.surfaceSand);
 
     return Semantics(
       button: true,
@@ -1371,7 +1322,7 @@ class _RadarCompanionAvatar extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: LinearGradient(
-                  colors: [AppColors.espressoDark, AppColors.primaryContainer],
+                  colors: [colors.primary, colors.primaryContainer],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -1383,7 +1334,7 @@ class _RadarCompanionAvatar extends StatelessWidget {
                   BoxShadow(
                     color: (isSelected || isClosest)
                         ? ringColor.withValues(alpha: 0.5)
-                        : Colors.black.withValues(alpha: 0.3),
+                        : colors.shadow.withValues(alpha: 0.3),
                     blurRadius: isSelected ? 10 : 6,
                     spreadRadius: isSelected ? 2 : 0,
                   ),
@@ -1394,6 +1345,8 @@ class _RadarCompanionAvatar extends StatelessWidget {
                     ? Image.network(
                         candidate.photoUrl!,
                         fit: BoxFit.cover,
+                        cacheWidth: 140,
+                        cacheHeight: 140,
                         errorBuilder: (_, _, _) => _buildFallbackInitial(),
                       )
                     : _buildFallbackInitial(),
@@ -1405,9 +1358,7 @@ class _RadarCompanionAvatar extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
               decoration: BoxDecoration(
-                color: isSelected
-                    ? (isDark ? AppColors.goldPrimary : AppColors.primary)
-                    : (isDark ? Colors.black87 : Colors.white),
+                color: isSelected ? colors.primary : colors.surface,
                 borderRadius: BorderRadius.circular(AppRadius.pill),
                 border: Border.all(
                   color: isSelected ? Colors.transparent : ringColor,
@@ -1415,7 +1366,7 @@ class _RadarCompanionAvatar extends StatelessWidget {
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.25),
+                    color: colors.shadow.withValues(alpha: 0.25),
                     blurRadius: 4,
                   ),
                 ],
@@ -1429,9 +1380,7 @@ class _RadarCompanionAvatar extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 8.5,
                   fontWeight: FontWeight.w900,
-                  color: isSelected
-                      ? (isDark ? AppColors.espressoDark : Colors.white)
-                      : (isDark ? Colors.white : AppColors.espressoDark),
+                  color: isSelected ? colors.onPrimary : colors.textPrimary,
                 ),
               ),
             ),
@@ -1447,8 +1396,8 @@ class _RadarCompanionAvatar extends StatelessWidget {
         candidate.name.isNotEmpty
             ? candidate.name.substring(0, 1).toUpperCase()
             : 'P',
-        style: const TextStyle(
-          color: Colors.white,
+        style: TextStyle(
+          color: colors.onPrimary,
           fontWeight: FontWeight.w800,
           fontSize: 15,
         ),
@@ -1457,7 +1406,7 @@ class _RadarCompanionAvatar extends StatelessWidget {
   }
 }
 
-// ── ORGANIC LAYERED RADAR PAINTER (Image 2 Concentric Ripple Disks) ──────────
+// ── ORGANIC LAYERED RADAR PAINTER ─────────────────────────────────────────────
 
 class _WinkyOrganicRadarPainter extends CustomPainter {
   final double sweepProgress;
@@ -1465,6 +1414,7 @@ class _WinkyOrganicRadarPainter extends CustomPainter {
   final double centerPulse;
   final double lockOnProgress;
   final SosScanningState state;
+  final HajiColors colors;
   final bool isDark;
   final CandidateCompanion? selectedCompanion;
   final double maxRangeMeters;
@@ -1475,6 +1425,7 @@ class _WinkyOrganicRadarPainter extends CustomPainter {
     required this.centerPulse,
     required this.lockOnProgress,
     required this.state,
+    required this.colors,
     required this.isDark,
     required this.selectedCompanion,
     required this.maxRangeMeters,
@@ -1485,8 +1436,7 @@ class _WinkyOrganicRadarPainter extends CustomPainter {
     final center = Offset(size.width / 2, size.height / 2);
     final maxRadius = size.width / 2;
 
-    // 1. Layered Organic Concentric Disks (Image 2 style)
-    // 4 Distinct smooth translucent discs layered from outermost to innermost
+    // 1. Layered Organic Concentric Disks
     final diskLayers = [
       _RadarDisk(radiusFactor: 1.00, rotationOffset: 0.00),
       _RadarDisk(radiusFactor: 0.76, rotationOffset: 0.08),
@@ -1498,7 +1448,7 @@ class _WinkyOrganicRadarPainter extends CustomPainter {
       final disk = diskLayers[i];
       final r = maxRadius * disk.radiusFactor;
 
-      // Fill Paint (smooth gradients calibrated for Light and Dark modes)
+      // Fill Paint
       final fillPaint = Paint()
         ..style = PaintingStyle.fill
         ..shader = RadialGradient(
@@ -1506,14 +1456,12 @@ class _WinkyOrganicRadarPainter extends CustomPainter {
           radius: 0.95,
           colors: isDark
               ? [
-                  AppColors.goldPrimary.withValues(alpha: 0.08 + (i * 0.04)),
-                  const Color(0xFF2E1C12).withValues(alpha: 0.25 + (i * 0.08)),
+                  colors.accent.withValues(alpha: 0.08 + (i * 0.04)),
+                  colors.primaryContainer.withValues(alpha: 0.25 + (i * 0.08)),
                 ]
               : [
-                  AppColors.goldLight.withValues(alpha: 0.30 + (i * 0.07)),
-                  AppColors.canvasCreamSubtle.withValues(
-                    alpha: 0.40 + (i * 0.09),
-                  ),
+                  colors.accent.withValues(alpha: 0.22 + (i * 0.06)),
+                  colors.surfaceSand.withValues(alpha: 0.35 + (i * 0.08)),
                 ],
         ).createShader(Rect.fromCircle(center: center, radius: r));
 
@@ -1524,8 +1472,8 @@ class _WinkyOrganicRadarPainter extends CustomPainter {
         ..style = PaintingStyle.stroke
         ..strokeWidth = isDark ? 1.0 : 1.2
         ..color = isDark
-            ? AppColors.goldPrimary.withValues(alpha: 0.18 + (i * 0.08))
-            : Colors.white.withValues(alpha: 0.75 + (i * 0.08));
+            ? colors.accent.withValues(alpha: 0.18 + (i * 0.08))
+            : colors.surfaceSand.withValues(alpha: 0.75 + (i * 0.08));
 
       canvas.drawCircle(center, r, strokePaint);
     }
@@ -1540,8 +1488,7 @@ class _WinkyOrganicRadarPainter extends CustomPainter {
         final ripplePaint = Paint()
           ..style = PaintingStyle.stroke
           ..strokeWidth = 1.5
-          ..color = (isDark ? AppColors.goldPrimary : AppColors.primary)
-              .withValues(alpha: rippleAlpha);
+          ..color = colors.accent.withValues(alpha: rippleAlpha);
 
         canvas.drawCircle(center, rippleRadius, ripplePaint);
       }
@@ -1560,9 +1507,7 @@ class _WinkyOrganicRadarPainter extends CustomPainter {
           endAngle: math.pi / 2.5,
           colors: [
             Colors.transparent,
-            (isDark ? AppColors.goldPrimary : AppColors.primary).withValues(
-              alpha: isDark ? 0.22 : 0.15,
-            ),
+            colors.accent.withValues(alpha: isDark ? 0.22 : 0.15),
           ],
           transform: GradientRotation(sweepAngle - (math.pi / 2.5)),
         ).createShader(Rect.fromCircle(center: center, radius: maxRadius));
@@ -1575,9 +1520,7 @@ class _WinkyOrganicRadarPainter extends CustomPainter {
         center.dy + maxRadius * math.sin(sweepAngle),
       );
       final sweepLinePaint = Paint()
-        ..color = (isDark ? AppColors.goldLight : AppColors.primary).withValues(
-          alpha: 0.6,
-        )
+        ..color = colors.accent.withValues(alpha: 0.6)
         ..strokeWidth = 1.4;
       canvas.drawLine(center, lineEnd, sweepLinePaint);
     }
@@ -1595,8 +1538,7 @@ class _WinkyOrganicRadarPainter extends CustomPainter {
       );
 
       final connectorPaint = Paint()
-        ..color = (isDark ? AppColors.goldPrimary : AppColors.primary)
-            .withValues(alpha: 0.35)
+        ..color = colors.accent.withValues(alpha: 0.35)
         ..strokeWidth = 1.2
         ..style = PaintingStyle.stroke;
 
@@ -1610,6 +1552,7 @@ class _WinkyOrganicRadarPainter extends CustomPainter {
         oldDelegate.pulseProgress != pulseProgress ||
         oldDelegate.centerPulse != centerPulse ||
         oldDelegate.lockOnProgress != lockOnProgress ||
+        oldDelegate.colors != colors ||
         oldDelegate.isDark != isDark ||
         oldDelegate.selectedCompanion != selectedCompanion ||
         oldDelegate.maxRangeMeters != maxRangeMeters;

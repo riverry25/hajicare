@@ -2,11 +2,10 @@ import '../../../core/locales/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../core/routes/app_routes.dart';
-import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_sizes.dart';
 import '../../../core/theme/app_spacing.dart';
-import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/theme_context.dart';
 import '../../../core/widgets/app_status_badge.dart';
 
 class DistanceAlertScreen extends StatelessWidget {
@@ -14,8 +13,11 @@ class DistanceAlertScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.hc;
+    final typography = context.text;
+
     return Scaffold(
-      backgroundColor: AppColors.distanceWarning,
+      backgroundColor: colors.warning,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -26,11 +28,11 @@ class DistanceAlertScreen extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.all(AppSpacing.lg),
               decoration: BoxDecoration(
-                color: AppColors.surfaceWhite,
+                color: colors.surface,
                 borderRadius: BorderRadius.circular(AppRadius.xl),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.espressoDark.withValues(alpha: 0.2),
+                    color: colors.shadow.withValues(alpha: 0.2),
                     blurRadius: 40,
                     spreadRadius: 10,
                   ),
@@ -47,9 +49,7 @@ class DistanceAlertScreen extends StatelessWidget {
                         width: 88,
                         height: 88,
                         decoration: BoxDecoration(
-                          color: AppColors.distanceWarning.withValues(
-                            alpha: 0.1,
-                          ),
+                          color: colors.warning.withValues(alpha: 0.1),
                           shape: BoxShape.circle,
                         ),
                       ),
@@ -57,9 +57,7 @@ class DistanceAlertScreen extends StatelessWidget {
                         width: 68,
                         height: 68,
                         decoration: BoxDecoration(
-                          color: AppColors.distanceWarning.withValues(
-                            alpha: 0.2,
-                          ),
+                          color: colors.warning.withValues(alpha: 0.2),
                           shape: BoxShape.circle,
                         ),
                       ),
@@ -67,13 +65,11 @@ class DistanceAlertScreen extends StatelessWidget {
                         width: 52,
                         height: 52,
                         decoration: BoxDecoration(
-                          color: AppColors.distanceWarning,
+                          color: colors.warning,
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: AppColors.distanceWarning.withValues(
-                                alpha: 0.4,
-                              ),
+                              color: colors.warning.withValues(alpha: 0.4),
                               blurRadius: 12,
                               spreadRadius: 2,
                             ),
@@ -96,13 +92,13 @@ class DistanceAlertScreen extends StatelessWidget {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: AppColors.espressoDark,
+                      color: colors.primary,
                       borderRadius: BorderRadius.circular(AppRadius.pill),
                     ),
                     child: Text(
                       context.tr('distanceAlertElderly'),
-                      style: AppTypography.captionSmall.copyWith(
-                        color: AppColors.surfaceWhite,
+                      style: typography.labelSmall.copyWith(
+                        color: colors.onPrimary,
                         letterSpacing: 1.2,
                       ),
                     ),
@@ -111,8 +107,8 @@ class DistanceAlertScreen extends StatelessWidget {
 
                   Text(
                     context.tr('distanceAlertTooFar'),
-                    style: AppTypography.displayMedium.copyWith(
-                      color: AppColors.espressoDark,
+                    style: typography.displayMedium.copyWith(
+                      color: colors.textPrimary,
                       fontWeight: FontWeight.w800,
                     ),
                     textAlign: TextAlign.center,
@@ -121,8 +117,8 @@ class DistanceAlertScreen extends StatelessWidget {
 
                   Text(
                     context.tr('distanceAlertDesc'),
-                    style: AppTypography.bodySmall.copyWith(
-                      color: AppColors.textBody,
+                    style: typography.bodySmall.copyWith(
+                      color: colors.textSecondary,
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -132,10 +128,10 @@ class DistanceAlertScreen extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(AppSpacing.md),
                     decoration: BoxDecoration(
-                      color: AppColors.canvasCream.withValues(alpha: 0.5),
+                      color: colors.surfaceSubtle,
                       borderRadius: BorderRadius.circular(AppRadius.md),
                       border: Border.all(
-                        color: AppColors.distanceWarning.withValues(alpha: 0.3),
+                        color: colors.warning.withValues(alpha: 0.3),
                       ),
                     ),
                     child: Column(
@@ -147,15 +143,16 @@ class DistanceAlertScreen extends StatelessWidget {
                           children: [
                             Text(
                               '245',
-                              style: AppTypography.heroNumberLarge.copyWith(
-                                color: AppColors.distanceWarning,
+                              style: typography.displayLarge.copyWith(
+                                color: colors.warning,
+                                fontWeight: FontWeight.bold,
                               ),
                             ),
                             const SizedBox(width: 8),
                             Text(
                               context.tr('distanceMeters'),
-                              style: AppTypography.titleMedium.copyWith(
-                                color: AppColors.textBody,
+                              style: typography.titleMedium.copyWith(
+                                color: colors.textSecondary,
                               ),
                             ),
                           ],
@@ -179,8 +176,8 @@ class DistanceAlertScreen extends StatelessWidget {
                     child: ElevatedButton(
                       onPressed: () => Get.offNamed(AppRoutes.interactiveMap),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.espressoDark,
-                        foregroundColor: AppColors.surfaceWhite,
+                        backgroundColor: colors.primary,
+                        foregroundColor: colors.onPrimary,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(AppRadius.pill),
                         ),
@@ -193,8 +190,8 @@ class DistanceAlertScreen extends StatelessWidget {
                           const SizedBox(width: AppSpacing.sm2),
                           Text(
                             context.tr('seeReturnDirections'),
-                            style: AppTypography.labelLarge.copyWith(
-                              color: AppColors.surfaceWhite,
+                            style: typography.labelLarge.copyWith(
+                              color: colors.onPrimary,
                             ),
                           ),
                         ],
@@ -208,10 +205,10 @@ class DistanceAlertScreen extends StatelessWidget {
                     child: OutlinedButton(
                       onPressed: () => Get.toNamed(AppRoutes.communication),
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.espressoDark,
-                        side: const BorderSide(
-                          color: AppColors.goldLight,
-                          width: 2,
+                        foregroundColor: colors.textPrimary,
+                        side: BorderSide(
+                          color: colors.borderStrong,
+                          width: 1.5,
                         ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -220,16 +217,12 @@ class DistanceAlertScreen extends StatelessWidget {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(
-                            Icons.call,
-                            size: 20,
-                            color: AppColors.tanMedium,
-                          ),
+                          Icon(Icons.call, size: 20, color: colors.accent),
                           const SizedBox(width: AppSpacing.sm2),
                           Text(
                             context.tr('callCompanion'),
-                            style: AppTypography.labelLarge.copyWith(
-                              color: AppColors.espressoDark,
+                            style: typography.labelLarge.copyWith(
+                              color: colors.textPrimary,
                             ),
                           ),
                         ],

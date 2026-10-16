@@ -5,11 +5,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../core/locales/app_localizations.dart';
 import '../../../core/models/jamaah_data.dart';
-import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/theme_context.dart';
 
 /// An enlarged, transparent mini sparkline wave chart button that blends
-/// seamlessly into the hero card background, featuring a glowing Mecca gold
-/// wave with gradient fill matching AppColors.
+/// seamlessly into the hero card background, featuring a glowing desert gold
+/// wave with gradient fill matching White Sand theme.
 ///
 /// Synchronizes visually with the room's live jamaah data (distance & status)
 /// and triggers full location & room synchronization on tap.
@@ -28,7 +28,7 @@ class MiniSparklineButton extends StatefulWidget {
     this.tooltip,
     this.width = 175,
     this.height = 84,
-    this.waveColor = AppColors.accentGoldStar,
+    this.waveColor = const Color(0xFFB08A57),
     this.jamaahList,
     this.animate = true,
   });
@@ -89,33 +89,27 @@ class _MiniSparklineButtonState extends State<MiniSparklineButton>
     }
   }
 
-  Color get _effectiveColor {
+  Color _resolveEffectiveColor(BuildContext context) {
     final list = widget.jamaahList;
     if (list == null || list.isEmpty) {
       return widget.waveColor;
     }
-    // High priority: SOS active
-    if (list.any((j) => j.sosActive)) {
-      return const Color(0xFFFF4D4D);
-    }
-    // Any member in danger distance tier
-    if (list.any((j) => j.tier == DistanceTier.terlalujJauh)) {
-      return const Color(0xFFFF7A59);
+    // High priority: SOS active or in danger distance tier
+    if (list.any((j) => j.sosActive) ||
+        list.any((j) => j.tier == DistanceTier.terlalujJauh)) {
+      return context.hc.danger;
     }
     // Any member in warning tier
     if (list.any((j) => j.tier == DistanceTier.waspada)) {
-      return const Color(0xFFFFB84D);
+      return context.hc.warning;
     }
     // All members safe
-    if (widget.waveColor == AppColors.accentGoldStar) {
-      return const Color(0xFF6CDEA0);
-    }
-    return widget.waveColor;
+    return context.hc.success;
   }
 
   @override
   Widget build(BuildContext context) {
-    final activeColor = _effectiveColor;
+    final activeColor = _resolveEffectiveColor(context);
 
     final buttonContent = AnimatedScale(
       scale: _isSyncing ? 0.97 : 1.0,
@@ -133,23 +127,28 @@ class _MiniSparklineButtonState extends State<MiniSparklineButton>
             onTap: _isSyncing ? null : _handleTap,
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
-              child: AnimatedBuilder(
-                animation: Listenable.merge([_pulseCtrl, _syncCtrl]),
-                builder: (context, _) {
-                  final opacity = _isSyncing
-                      ? 0.60 +
-                            0.40 *
-                                (0.5 +
-                                    0.5 *
-                                        math.sin(_syncCtrl.value * 2 * math.pi))
-                      : 1.0;
+              child: RepaintBoundary(
+                child: AnimatedBuilder(
+                  animation: Listenable.merge([_pulseCtrl, _syncCtrl]),
+                  builder: (context, _) {
+                    final opacity = _isSyncing
+                        ? 0.60 +
+                              0.40 *
+                                  (0.5 +
+                                      0.5 *
+                                          math.sin(
+                                            _syncCtrl.value * 2 * math.pi,
+                                          ))
+                        : 1.0;
 
-                  return Opacity(
-                    opacity: opacity,
-                    child: CustomPaint(
+                    return CustomPaint(
                       painter: _SparklineWavePainter(
-                        waveColor: widget.waveColor,
-                        effectiveColor: activeColor,
+                        waveColor: widget.waveColor.withValues(
+                          alpha: widget.waveColor.a * opacity,
+                        ),
+                        effectiveColor: activeColor.withValues(
+                          alpha: activeColor.a * opacity,
+                        ),
                         jamaahList: widget.jamaahList,
                         pulsePhase: _pulseCtrl.value,
                         syncPhase: _isSyncing ? _syncCtrl.value : 0.0,
@@ -158,9 +157,9 @@ class _MiniSparklineButtonState extends State<MiniSparklineButton>
                         groupLabel: context.tr('dashboard.groupShort'),
                         safeLabel: context.tr('dashboard.safe'),
                       ),
-                    ),
-                  );
-                },
+                    );
+                  },
+                ),
               ),
             ),
           ),

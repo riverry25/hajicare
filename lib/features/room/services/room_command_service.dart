@@ -321,14 +321,114 @@ class RoomCommandService {
       );
     }
 
+    final roomDoc = await _firestore.collection('rooms').doc(roomId).get();
+    if (!roomDoc.exists) return;
+    final roomData = roomDoc.data() ?? {};
+    final roomCode = (roomData['code'] as String?)?.trim().toUpperCase();
+    final user = FirebaseAuth.instance.currentUser;
+    final actorName = user?.displayName ?? 'Admin';
+
+    // 1. Mark room as inactive and deleting so no further joins occur
     await _firestore.collection('rooms').doc(roomId).update({
       'isActive': false,
-      'status': 'inactive',
+      'status': 'deleting',
       'updatedAt': FieldValue.serverTimestamp(),
     });
 
-    final user = FirebaseAuth.instance.currentUser;
-    final actorName = user?.displayName ?? 'Admin';
+    // 2. Batched member cleanup & clearing activeRoomId on user profiles
+    while (true) {
+      final membersSnap = await _firestore
+          .collection('rooms')
+          .doc(roomId)
+          .collection('members')
+          .limit(100)
+          .get();
+      if (membersSnap.docs.isEmpty) break;
+
+      final batch = _firestore.batch();
+      for (final mDoc in membersSnap.docs) {
+        batch.delete(mDoc.reference);
+        batch.set(_firestore.collection('users').doc(mDoc.id), {
+          'activeRoomId': null,
+          'sosActive': false,
+          'updatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+
+        // Notify every member of the deleted room
+        if (mDoc.id != user?.uid) {
+          final notifRef = _firestore.collection('notifications').doc();
+          batch.set(notifRef, {
+            'title': 'Rombongan Dihapus',
+            'message':
+                'Rombongan "${roomData['name'] ?? ''}" sudah dihapus oleh pengelola.',
+            'type': 'room_deleted',
+            'recipientId': mDoc.id,
+            'senderId': user?.uid,
+            'senderName': actorName,
+            'senderRole': 'admin',
+            'targetRoomId': roomId,
+            'isRead': false,
+            'createdAt': FieldValue.serverTimestamp(),
+          });
+        }
+      }
+      await batch.commit();
+    }
+
+    // 3. Mark pending invitations as expired
+    final invitationsSnap = await _firestore
+        .collection('invitations')
+        .where('roomId', isEqualTo: roomId)
+        .where('status', isEqualTo: 'pending')
+        .limit(100)
+        .get();
+    if (invitationsSnap.docs.isNotEmpty) {
+      final batch = _firestore.batch();
+      for (final inv in invitationsSnap.docs) {
+        batch.update(inv.reference, {
+          'status': 'expired',
+          'expiredReason': 'room_deleted',
+          'expiredAt': FieldValue.serverTimestamp(),
+        });
+      }
+      await batch.commit();
+    }
+
+    // 4. Cancel all active SOS events belonging to this deleted room
+    try {
+      final roomSosSnap = await _firestore
+          .collection('sos_events')
+          .where('roomId', isEqualTo: roomId)
+          .where('status', whereIn: const ['active', 'baru', 'direspons'])
+          .get();
+      if (roomSosSnap.docs.isNotEmpty) {
+        final sosBatch = _firestore.batch();
+        for (final doc in roomSosSnap.docs) {
+          sosBatch.set(doc.reference, {
+            'status': 'cancelled',
+            'cancelledReason': 'room_deleted',
+            'resolvedAt': FieldValue.serverTimestamp(),
+            'resolvedBy': user?.uid ?? 'admin',
+            'cancelledAt': FieldValue.serverTimestamp(),
+            'cancelledBy': user?.uid ?? 'admin',
+          }, SetOptions(merge: true));
+        }
+        await sosBatch.commit();
+      }
+    } catch (e) {
+      debugPrint(
+        '[RoomCommandService] Error cleaning room SOS on deleteRoom: $e',
+      );
+    }
+
+    // 5. Delete roomCode and room document
+    final finalBatch = _firestore.batch();
+    if (roomCode != null && roomCode.isNotEmpty) {
+      finalBatch.delete(_firestore.collection('roomCodes').doc(roomCode));
+    }
+    finalBatch.delete(_firestore.collection('rooms').doc(roomId));
+    await finalBatch.commit();
+
     logActivity(
       type: ActivityType.roomDeactivated,
       title: 'Rombongan Ditutup/Dihapus',
@@ -496,18 +596,47 @@ class RoomCommandService {
     );
   }
 
-  Future<void> leaveRoom(String roomId) async {
+  Future<void> leaveRoom(String roomId, {String? successorUid}) async {
     try {
-      await _backend.call('leaveRoom', {'roomId': roomId});
+      await _backend.call('leaveRoom', {
+        'roomId': roomId,
+        if (successorUid != null && successorUid.isNotEmpty)
+          'successorUid': successorUid,
+      });
       return;
     } catch (backendError) {
       debugPrint(
         '[RoomCommandService] Backend leaveRoom failed ($backendError), using direct Firestore fallback',
       );
+      if (backendError is TrustedBackendException &&
+          backendError.code == 'failed-precondition') {
+        throw RoomCommandException(backendError.message);
+      }
     }
 
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
+
+    final roomDoc = await _firestore.collection('rooms').doc(roomId).get();
+    if (!roomDoc.exists) return;
+    final roomData = roomDoc.data() ?? {};
+    final isCreator = roomData['createdBy'] == user.uid;
+    final currentCoOwnerId = (roomData['coOwnerId'] as String?)?.trim();
+
+    final membersSnap = await _firestore
+        .collection('rooms')
+        .doc(roomId)
+        .collection('members')
+        .get();
+    final otherPendamping = membersSnap.docs
+        .where((d) => d.id != user.uid && d.data()['role'] == 'pendamping')
+        .toList();
+
+    if (isCreator && otherPendamping.isEmpty) {
+      throw const RoomCommandException(
+        'Sebagai pemilik rombongan satu-satunya, Anda tidak dapat keluar tanpa menunjuk penerus atau menghapus rombongan.',
+      );
+    }
 
     final batch = _firestore.batch();
     batch.delete(
@@ -517,15 +646,68 @@ class RoomCommandService {
           .collection('members')
           .doc(user.uid),
     );
-    batch.update(_firestore.collection('rooms').doc(roomId), {
+    final roomUpdates = <String, dynamic>{
       'memberCount': FieldValue.increment(-1),
       'pendampingIds': FieldValue.arrayRemove([user.uid]),
       'updatedAt': FieldValue.serverTimestamp(),
-    });
+    };
+
+    if (isCreator) {
+      String? finalSuccessor = successorUid;
+      if (finalSuccessor == null ||
+          !otherPendamping.any((d) => d.id == finalSuccessor)) {
+        if (currentCoOwnerId != null &&
+            otherPendamping.any((d) => d.id == currentCoOwnerId)) {
+          finalSuccessor = currentCoOwnerId;
+        } else {
+          finalSuccessor = otherPendamping.first.id;
+        }
+      }
+      roomUpdates['createdBy'] = finalSuccessor;
+      roomUpdates['pendampingId'] = finalSuccessor;
+      if (currentCoOwnerId == finalSuccessor) {
+        roomUpdates['coOwnerId'] = null;
+      }
+    } else {
+      if (currentCoOwnerId == user.uid) {
+        roomUpdates['coOwnerId'] = null;
+      }
+      if (roomData['pendampingId'] == user.uid) {
+        roomUpdates['pendampingId'] = otherPendamping.isNotEmpty
+            ? otherPendamping.first.id
+            : null;
+      }
+    }
+
+    batch.update(_firestore.collection('rooms').doc(roomId), roomUpdates);
     batch.set(_firestore.collection('users').doc(user.uid), {
       'activeRoomId': null,
+      'sosActive': false,
       'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
+
+    // Cancel any active SOS events for this user so they don't linger / get orphaned
+    try {
+      final userSosSnap = await _firestore
+          .collection('sos_events')
+          .where('userId', isEqualTo: user.uid)
+          .where('status', whereIn: const ['active', 'baru', 'direspons'])
+          .get();
+      for (final doc in userSosSnap.docs) {
+        batch.set(doc.reference, {
+          'status': 'cancelled',
+          'cancelledReason': 'member_left_room',
+          'resolvedAt': FieldValue.serverTimestamp(),
+          'resolvedBy': user.uid,
+          'cancelledAt': FieldValue.serverTimestamp(),
+          'cancelledBy': user.uid,
+        }, SetOptions(merge: true));
+      }
+    } catch (e) {
+      debugPrint(
+        '[RoomCommandService] Error preparing SOS cleanup on leaveRoom: $e',
+      );
+    }
 
     final activityRef = _firestore.collection('activities').doc();
     final uName = user.displayName ?? 'Anggota';
@@ -539,12 +721,222 @@ class RoomCommandService {
       'timestamp': FieldValue.serverTimestamp(),
     });
 
+    // Notify room companions if the leaving member is a jamaah
+    final uMember = membersSnap.docs
+        .where((d) => d.id == user.uid)
+        .firstOrNull
+        ?.data();
+    final isJamaah = uMember?['role'] != 'pendamping';
+    if (isJamaah) {
+      final companionUids = <String>{
+        ...otherPendamping.map((d) => d.id),
+        if (roomData['createdBy'] != null) roomData['createdBy'] as String,
+        if (roomData['pendampingId'] != null)
+          roomData['pendampingId'] as String,
+      }..remove(user.uid);
+
+      final rName = roomData['name'] as String? ?? 'Rombongan';
+      for (final compUid in companionUids) {
+        final notifRef = _firestore.collection('notifications').doc();
+        batch.set(notifRef, {
+          'title': 'Jamaah Keluar Rombongan',
+          'message': '$uName telah keluar dari rombongan "$rName".',
+          'type': 'member_left',
+          'recipientId': compUid,
+          'senderId': user.uid,
+          'senderName': uName,
+          'senderRole': 'jamaah',
+          'targetRoomId': roomId,
+          'isRead': false,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+      }
+    }
+
     await batch.commit();
+  }
+
+  Future<void> setCoOwner({
+    required String roomId,
+    required String newCoOwnerUid,
+  }) async {
+    try {
+      await _backend.call('setCoOwner', {
+        'roomId': roomId,
+        'coOwnerUid': newCoOwnerUid,
+      });
+      return;
+    } catch (backendError) {
+      debugPrint(
+        '[RoomCommandService] Backend setCoOwner failed ($backendError), fallback to Firestore',
+      );
+    }
+
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      throw const RoomCommandException('Pengguna belum masuk.');
+    }
+
+    final roomDoc = await _firestore.collection('rooms').doc(roomId).get();
+    if (!roomDoc.exists) {
+      throw const RoomCommandException('Rombongan tidak ditemukan.');
+    }
+    final roomData = roomDoc.data() ?? {};
+    if (roomData['createdBy'] != user.uid) {
+      throw const RoomCommandException(
+        'Hanya Owner Utama yang dapat menunjuk Owner Kedua.',
+      );
+    }
+
+    final targetMember = await _firestore
+        .collection('rooms')
+        .doc(roomId)
+        .collection('members')
+        .doc(newCoOwnerUid)
+        .get();
+    if (!targetMember.exists || targetMember.data()?['role'] != 'pendamping') {
+      throw const RoomCommandException(
+        'Calon Owner Kedua harus berstatus Pendamping aktif dalam rombongan.',
+      );
+    }
+
+    final targetName =
+        (targetMember.data()?['name'] as String?)?.trim() ?? 'Pendamping';
+
+    await _firestore.collection('rooms').doc(roomId).update({
+      'coOwnerId': newCoOwnerUid,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+
+    await logActivity(
+      type: ActivityType.roomUpdated,
+      title: 'Owner Kedua Ditunjuk',
+      description: '$targetName ditunjuk sebagai Owner Kedua rombongan.',
+      roomId: roomId,
+      userId: user.uid,
+      userName: user.displayName ?? 'Owner Utama',
+      role: 'pendamping',
+    );
+  }
+
+  Future<void> removeCoOwner({required String roomId}) async {
+    try {
+      await _backend.call('removeCoOwner', {'roomId': roomId});
+      return;
+    } catch (backendError) {
+      debugPrint(
+        '[RoomCommandService] Backend removeCoOwner failed ($backendError), fallback to Firestore',
+      );
+    }
+
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      throw const RoomCommandException('Pengguna belum masuk.');
+    }
+
+    final roomDoc = await _firestore.collection('rooms').doc(roomId).get();
+    if (!roomDoc.exists) {
+      throw const RoomCommandException('Rombongan tidak ditemukan.');
+    }
+    final roomData = roomDoc.data() ?? {};
+    if (roomData['createdBy'] != user.uid) {
+      throw const RoomCommandException(
+        'Hanya Owner Utama yang dapat mencabut status Owner Kedua.',
+      );
+    }
+
+    await _firestore.collection('rooms').doc(roomId).update({
+      'coOwnerId': null,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+
+    await logActivity(
+      type: ActivityType.roomUpdated,
+      title: 'Status Owner Kedua Dicabut',
+      description: 'Status Owner Kedua telah dicabut dari rombongan.',
+      roomId: roomId,
+      userId: user.uid,
+      userName: user.displayName ?? 'Owner Utama',
+      role: 'pendamping',
+    );
+  }
+
+  Future<void> transferOwnership({
+    required String roomId,
+    required String newOwnerUid,
+  }) async {
+    try {
+      await _backend.call('transferOwnership', {
+        'roomId': roomId,
+        'newOwnerUid': newOwnerUid,
+      });
+      return;
+    } catch (backendError) {
+      debugPrint(
+        '[RoomCommandService] Backend transferOwnership failed ($backendError), fallback to Firestore',
+      );
+    }
+
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      throw const RoomCommandException('Pengguna belum masuk.');
+    }
+
+    final roomDoc = await _firestore.collection('rooms').doc(roomId).get();
+    if (!roomDoc.exists) {
+      throw const RoomCommandException('Rombongan tidak ditemukan.');
+    }
+    final roomData = roomDoc.data() ?? {};
+    if (roomData['createdBy'] != user.uid) {
+      throw const RoomCommandException(
+        'Hanya Owner Utama yang dapat mewariskan kepemilikan rombongan.',
+      );
+    }
+
+    final targetMember = await _firestore
+        .collection('rooms')
+        .doc(roomId)
+        .collection('members')
+        .doc(newOwnerUid)
+        .get();
+    if (!targetMember.exists || targetMember.data()?['role'] != 'pendamping') {
+      throw const RoomCommandException(
+        'Penerus kepemilikan harus berstatus Pendamping aktif dalam rombongan.',
+      );
+    }
+
+    final targetName =
+        (targetMember.data()?['name'] as String?)?.trim() ?? 'Pendamping';
+
+    final updates = <String, dynamic>{
+      'createdBy': newOwnerUid,
+      'pendampingId': newOwnerUid,
+      'updatedAt': FieldValue.serverTimestamp(),
+    };
+    if (roomData['coOwnerId'] == newOwnerUid) {
+      updates['coOwnerId'] = null;
+    }
+
+    await _firestore.collection('rooms').doc(roomId).update(updates);
+
+    await logActivity(
+      type: ActivityType.roomUpdated,
+      title: 'Kepemilikan Rombongan Dialihkan',
+      description: 'Kepemilikan utama rombongan dialihkan kepada $targetName.',
+      roomId: roomId,
+      userId: user.uid,
+      userName: user.displayName ?? 'Owner Utama',
+      role: 'pendamping',
+    );
   }
 
   Future<void> removeJamaah({
     required String roomId,
     required String jamaahUid,
+    String? actorUid,
+    String? actorName,
+    String? actorRole,
+    String? roomName,
   }) async {
     try {
       await _backend.call('removeJamaah', {
@@ -557,6 +949,32 @@ class RoomCommandService {
         '[RoomCommandService] Backend removeJamaah failed ($backendError), using direct Firestore fallback',
       );
     }
+
+    final currentUser = FirebaseAuth.instance.currentUser;
+    final senderUid = (actorUid != null && actorUid.trim().isNotEmpty)
+        ? actorUid.trim()
+        : (currentUser?.uid ?? 'pendamping');
+    final senderName = (actorName != null && actorName.trim().isNotEmpty)
+        ? actorName.trim()
+        : (currentUser?.displayName ?? 'Pengurus');
+    final senderRole = (actorRole != null && actorRole.trim().isNotEmpty)
+        ? actorRole.trim()
+        : 'pendamping';
+
+    // Resolve room name for descriptive notification and activity
+    String resolvedRoomName = roomName?.trim() ?? '';
+    if (resolvedRoomName.isEmpty) {
+      try {
+        final rDoc = await _firestore.collection('rooms').doc(roomId).get();
+        if (rDoc.exists) {
+          resolvedRoomName =
+              (rDoc.data()?['name'] as String?)?.trim() ?? 'Rombongan';
+        }
+      } catch (_) {
+        resolvedRoomName = 'Rombongan';
+      }
+    }
+    if (resolvedRoomName.isEmpty) resolvedRoomName = 'Rombongan';
 
     final batch = _firestore.batch();
     batch.delete(
@@ -572,17 +990,58 @@ class RoomCommandService {
     });
     batch.set(_firestore.collection('users').doc(jamaahUid), {
       'activeRoomId': null,
+      'sosActive': false,
       'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
 
+    // Cancel any active SOS events for the removed jamaah
+    try {
+      final jamaahSosSnap = await _firestore
+          .collection('sos_events')
+          .where('userId', isEqualTo: jamaahUid)
+          .where('status', whereIn: const ['active', 'baru', 'direspons'])
+          .get();
+      for (final doc in jamaahSosSnap.docs) {
+        batch.set(doc.reference, {
+          'status': 'cancelled',
+          'cancelledReason': 'member_removed_from_room',
+          'resolvedAt': FieldValue.serverTimestamp(),
+          'resolvedBy': senderUid,
+          'cancelledAt': FieldValue.serverTimestamp(),
+          'cancelledBy': senderUid,
+        }, SetOptions(merge: true));
+      }
+    } catch (e) {
+      debugPrint(
+        '[RoomCommandService] Error preparing SOS cleanup on removeJamaah: $e',
+      );
+    }
+
+    // 1. Log activity for room history / admin
     final activityRef = _firestore.collection('activities').doc();
     batch.set(activityRef, {
       'type': 'member_left',
       'title': 'Jamaah Dikeluarkan',
-      'description': 'Jamaah telah dikeluarkan dari rombongan oleh pengurus.',
+      'description':
+          'Jamaah telah dikeluarkan dari rombongan "$resolvedRoomName" oleh pengurus.',
       'roomId': roomId,
       'userId': jamaahUid,
       'timestamp': FieldValue.serverTimestamp(),
+    });
+
+    // 2. Personal notification for the removed jamaah
+    final notifRef = _firestore.collection('notifications').doc();
+    batch.set(notifRef, {
+      'title': 'Dikeluarkan dari Rombongan',
+      'message': 'Anda telah dikeluarkan dari rombongan "$resolvedRoomName".',
+      'type': 'room_removed',
+      'recipientId': jamaahUid,
+      'senderId': senderUid,
+      'senderRole': senderRole,
+      'senderName': senderName,
+      'targetRoomId': roomId,
+      'isRead': false,
+      'createdAt': FieldValue.serverTimestamp(),
     });
 
     await batch.commit();

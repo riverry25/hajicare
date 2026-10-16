@@ -6,6 +6,8 @@ import '../../../core/locales/app_translations.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/state/app_settings_controller.dart';
 import '../../../core/state/hajicare_controller.dart';
+import '../../../core/theme/theme_context.dart';
+import '../../../core/theme/app_breakpoints.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -29,13 +31,24 @@ import '../widgets/distance_sparkline_widget.dart';
 import '../widgets/companion_contact_sheet.dart';
 import '../widgets/hajj_schedule_guide_sheet.dart';
 import '../widgets/jamaah_active_assistance_banner.dart';
+import '../widgets/active_adhan_dashboard_banner.dart';
+import 'package:flutter_map/flutter_map.dart' as fmap;
+import 'package:latlong2/latlong.dart';
+import '../../../core/constants/app_constants.dart';
 import '../services/assistance_request_service.dart';
+import '../../../core/widgets/haji_transparent_dialog.dart';
+import '../../../core/widgets/haji_dialog_hero_header.dart';
 
 part 'dashboard_jamaah_header.dart';
 part 'dashboard_jamaah_sections.dart';
 
 class DashboardJamaahScreen extends StatelessWidget {
   const DashboardJamaahScreen({super.key});
+
+  /// Menampilkan dialog pemantauan smartband (ramah lansia, tanpa lat/lng teknis)
+  static void showSmartbandDialog(BuildContext context) {
+    const DashboardJamaahScreen()._showSmartBandDialog(context);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -49,7 +62,7 @@ class DashboardJamaahScreen extends StatelessWidget {
     return Theme(
       data: DashboardTypography.applyTo(Theme.of(context)),
       child: Scaffold(
-        backgroundColor: AppColors.scaffoldColor(context),
+        backgroundColor: context.hc.canvas,
         extendBody: true,
         body: Obx(() {
           settings?.rxLocale.value;
@@ -94,58 +107,44 @@ class DashboardJamaahScreen extends StatelessWidget {
     DashboardController dashboardCtrl,
     PrayerTimesController prayerCtrl,
   ) {
-    final isDark = AppColors.isDark(context);
-    final headingColor = AppColors.textHeadingColor(context);
-
-    final heroGradient = LinearGradient(
-      colors: isDark
-          ? [
-              const Color(0xFF1B120B),
-              const Color(0xFF281A11),
-              const Color(0xFF332115),
-            ]
-          : [
-              const Color(0xFF26170E),
-              const Color(0xFF382317),
-              const Color(0xFF4A3020),
-            ],
-      begin: Alignment.topCenter,
-      end: Alignment.bottomCenter,
-    );
+    final isDark = context.hc.isDark;
+    final headingColor = context.hc.textPrimary;
+    final dashGradient = context.hc.dashboardHeroGradient;
 
     return Scaffold(
-      backgroundColor: isDark
-          ? const Color(0xFF1B120B)
-          : const Color(0xFF26170E),
+      backgroundColor: context.hc.canvas,
       body: Container(
-        decoration: BoxDecoration(gradient: heroGradient),
+        decoration: BoxDecoration(gradient: dashGradient),
         child: Obx(() {
           final jamaah = state.self;
 
           return SingleChildScrollView(
             physics: const ClampingScrollPhysics(),
-            child: Column(
-              children: [
-                // ── Top Hero Card (Seamless Gradient Canvas) ─────────────
-                _buildHeroSection(
-                  context: context,
-                  jamaah: jamaah,
-                  state: state,
-                  dashboardCtrl: dashboardCtrl,
-                  prayerCtrl: prayerCtrl,
-                  isDark: isDark,
-                ),
+            child: ResponsiveCenter(
+              maxWidth: AppBreakpoints.maxTabletContentWidth,
+              child: Column(
+                children: [
+                  // ── Top Hero Card (Seamless Gradient Canvas) ─────────────
+                  _buildHeroSection(
+                    context: context,
+                    jamaah: jamaah,
+                    state: state,
+                    dashboardCtrl: dashboardCtrl,
+                    prayerCtrl: prayerCtrl,
+                    isDark: isDark,
+                  ),
 
-                // ── Curved White/Cream Canvas Sheet ──────────────────────
-                _buildCurvedBody(
-                  context: context,
-                  jamaah: jamaah,
-                  state: state,
-                  dashboardCtrl: dashboardCtrl,
-                  isDark: isDark,
-                  headingColor: headingColor,
-                ),
-              ],
+                  // ── Curved White/Cream Canvas Sheet ──────────────────────
+                  _buildCurvedBody(
+                    context: context,
+                    jamaah: jamaah,
+                    state: state,
+                    dashboardCtrl: dashboardCtrl,
+                    isDark: isDark,
+                    headingColor: headingColor,
+                  ),
+                ],
+              ),
             ),
           );
         }),

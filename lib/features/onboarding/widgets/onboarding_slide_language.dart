@@ -1,13 +1,18 @@
-import '../../../../core/locales/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+
+import '../../../../core/locales/app_localizations.dart';
 import '../../../../core/state/app_settings_controller.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/theme/app_typography.dart';
+import '../../../../core/theme/theme_context.dart';
 import 'onboarding_hero_banner.dart';
 
+/// First slide of the onboarding flow: Language Selection & Warm Welcoming.
+/// Implements a stacked destination-card layout inspired by WanderWise,
+/// featuring a subtle curved dashed route in the background and dynamic card
+/// expansion/elevation when selected, preserving real-time multi-language switching.
 class OnboardingSlideLanguage extends StatelessWidget {
   final int activeIndex;
 
@@ -16,411 +21,523 @@ class OnboardingSlideLanguage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final settings = Get.find<AppSettingsController>();
-    final isDark = AppColors.isDark(context);
+    final colors = context.hc;
+    final isDark = colors.isDark;
 
-    return Container(
-      margin: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.md,
-        vertical: AppSpacing.sm,
-      ),
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      decoration: BoxDecoration(
-        color: AppColors.cardBgColor(context),
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(
-          color: isDark
-              ? AppColors.darkCardBorder
-              : AppColors.goldLight.withValues(alpha: 0.3),
-        ),
-      ),
-      child: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            OnboardingHeroBanner(
-              badgeText: context.tr('onboarding.elderlyAccess'),
-              stageText: context.tr('onboardingStage1'),
-              title: context.tr('onboarding.chooseLanguageTitle'),
-              icon: Icons.mosque,
+    return Obx(() {
+      final currentCode = settings.currentLocale.languageCode;
+
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          final isShortScreen = constraints.maxHeight < 680;
+          final heroHeight = isShortScreen ? 315.0 : 345.0;
+          final minContentHeight = constraints.maxHeight.isFinite
+              ? constraints.maxHeight
+              : 0.0;
+
+          return SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.screenEdgeGutter,
+              vertical: AppSpacing.xs,
             ),
-
-            const SizedBox(height: AppSpacing.lg),
-
-            // Stepper indicator
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: isDark
-                    ? AppColors.darkSurfaceContainer
-                    : AppColors.canvasCream.withValues(alpha: .35),
-                borderRadius: BorderRadius.circular(18),
-              ),
-              child: _buildStepper(
-                context: context,
-                activeIndex: activeIndex,
-                label: context.tr('onboarding.stage1Of3'),
-              ),
-            ),
-
-            const SizedBox(height: AppSpacing.lg),
-
-            // Section intro header
-            _buildLanguageHeader(context),
-
-            const SizedBox(height: AppSpacing.lg),
-
-            Padding(
-              padding: const EdgeInsets.only(left: 5),
-              child: Text(
-                context.tr('onboarding.chooseLanguageDesc'),
-                style: AppTypography.bodySmall.copyWith(
-                  color: AppColors.textBodyColor(context),
-                ),
-              ),
-            ),
-
-            const SizedBox(height: AppSpacing.lg),
-
-            // 2x2 Language Grid
-            Obx(() {
-              final currentCode = settings.currentLocale.languageCode;
-              final textScale = MediaQuery.textScalerOf(context).scale(1);
-              final dynamicAspectRatio = textScale > 1.35
-                  ? 1.05
-                  : (textScale > 1.15 ? 1.18 : 1.35);
-
-              final languages = [
-                (
-                  'id',
-                  'Indonesia',
-                  context.tr('onboarding.indonesiaSubtitle'),
-                  context.tr('onboarding.mainLanguage'),
-                ),
-                (
-                  'jv',
-                  'Basa Jawi',
-                  context.tr('onboarding.jawiSubtitle'),
-                  context.tr('onboarding.regionalLanguage'),
-                ),
-                (
-                  'su',
-                  'Basa Sunda',
-                  context.tr('onboarding.sundaSubtitle'),
-                  context.tr('onboarding.regionalLanguage'),
-                ),
-                (
-                  'en',
-                  'English',
-                  context.tr('onboarding.englishSubtitle'),
-                  context.tr('onboarding.globalLanguage'),
-                ),
-              ];
-
-              return GridView.builder(
-                itemCount: languages.length,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: AppSpacing.sm,
-                  mainAxisSpacing: AppSpacing.sm,
-                  childAspectRatio: dynamicAspectRatio,
-                ),
-                itemBuilder: (context, index) {
-                  final lang = languages[index];
-                  final isSelected = currentCode == lang.$1;
-
-                  return _buildLanguageCard(
-                    context: context,
-                    title: lang.$2,
-                    subtitle: lang.$3,
-                    type: lang.$4,
-                    isSelected: isSelected,
-                    onTap: () {
-                      settings.setLocale(Locale(lang.$1));
-                    },
-                  );
-                },
-              );
-            }),
-
-            const SizedBox(height: AppSpacing.xl),
-
-            // Accessibility hint footer
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: isDark
-                    ? AppColors.statusPositive.withValues(alpha: .15)
-                    : AppColors.statusPositive.withValues(alpha: .08),
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(
-                  color: isDark
-                      ? AppColors.statusPositive.withValues(alpha: .3)
-                      : AppColors.statusPositive.withValues(alpha: .15),
-                ),
-              ),
-              child: Row(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: minContentHeight),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Icon(
-                    Icons.volume_up_rounded,
-                    color: isDark
-                        ? AppColors.statusSafe
-                        : AppColors.statusPositive,
+                  const SizedBox(height: AppSpacing.xs),
+
+                  // ── 1. Visual Showcase: WanderWise Stacked Language Cards ──
+                  OnboardingHeroBanner(
+                    badgeText: context.tr('onboarding.elderlyAccess'),
+                    stageText: context.tr('onboardingStage1'),
+                    title: context.tr('onboarding.chooseLanguageTitle'),
+                    icon: Icons.language_rounded,
+                    height: heroHeight,
+                    child: Stack(
+                      children: [
+                        // Subtle curved dashed path in the background
+                        Positioned.fill(
+                          child: CustomPaint(
+                            painter: _CurvedDashedPathPainter(
+                              color: isDark
+                                  ? colors.accent.withValues(alpha: 0.22)
+                                  : colors.borderStrong.withValues(alpha: 0.45),
+                            ),
+                          ),
+                        ),
+
+                        // Foreground Interactive Showcase
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 10,
+                          ),
+                          child: Column(
+                            children: [
+                              // Top Frosted Welcome Pill (Ahlan wa Sahlan)
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 4.5,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: isDark
+                                      ? colors.surface.withValues(alpha: 0.85)
+                                      : Colors.white.withValues(alpha: 0.90),
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.pill,
+                                  ),
+                                  border: Border.all(
+                                    color: colors.accent.withValues(
+                                      alpha: isDark ? 0.40 : 0.60,
+                                    ),
+                                    width: 1.0,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: colors.shadow.withValues(
+                                        alpha: isDark ? 0.20 : 0.05,
+                                      ),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.explore_rounded,
+                                      size: 13,
+                                      color: colors.accent,
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Flexible(
+                                      child: Text(
+                                        'Ahlan wa Sahlan',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          color: colors.textPrimary,
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                              const SizedBox(height: 8),
+
+                              // 4 Stacked Language Destination Cards
+                              Expanded(
+                                child: Builder(
+                                  builder: (context) {
+                                    final languages = [
+                                      _LanguageItemData(
+                                        code: 'id',
+                                        title: 'Indonesia',
+                                        subtitle: context.tr(
+                                          'onboarding.indonesiaSubtitle',
+                                        ),
+                                        flag: '🇮🇩',
+                                      ),
+                                      _LanguageItemData(
+                                        code: 'jv',
+                                        title: 'Basa Jawi',
+                                        subtitle: context.tr(
+                                          'onboarding.jawiSubtitle',
+                                        ),
+                                        flag: '🕌',
+                                      ),
+                                      _LanguageItemData(
+                                        code: 'su',
+                                        title: 'Basa Sunda',
+                                        subtitle: context.tr(
+                                          'onboarding.sundaSubtitle',
+                                        ),
+                                        flag: '🌿',
+                                      ),
+                                      _LanguageItemData(
+                                        code: 'en',
+                                        title: 'English',
+                                        subtitle: context.tr(
+                                          'onboarding.englishSubtitle',
+                                        ),
+                                        flag: '🇬🇧',
+                                      ),
+                                    ];
+
+                                    return Column(
+                                      children: languages.map((item) {
+                                        final isSelected =
+                                            currentCode == item.code;
+
+                                        return Expanded(
+                                          flex: isSelected ? 6 : 4,
+                                          child: AnimatedScale(
+                                            scale: isSelected ? 1.025 : 0.985,
+                                            duration: const Duration(
+                                              milliseconds: 250,
+                                            ),
+                                            curve: Curves.easeOutCubic,
+                                            child: Padding(
+                                              padding: EdgeInsets.symmetric(
+                                                vertical: isSelected
+                                                    ? 3.0
+                                                    : 2.0,
+                                              ),
+                                              child: _buildWanderWiseCard(
+                                                context: context,
+                                                item: item,
+                                                isSelected: isSelected,
+                                                isDark: isDark,
+                                                onSelect: () {
+                                                  HapticFeedback.selectionClick();
+                                                  settings.setLocale(
+                                                    Locale(item.code),
+                                                  );
+                                                },
+                                              ),
+                                            ),
+                                          ),
+                                        );
+                                      }).toList(),
+                                    );
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
 
-                  const SizedBox(width: 12),
+                  const SizedBox(height: AppSpacing.md),
 
-                  Expanded(
+                  // ── 2. Editorial Headline & Narrative Description ──────
+                  Text(
+                    context.tr('onboarding.chooseLanguageTitle'),
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: colors.textPrimary,
+                      fontSize: isShortScreen ? 26.0 : 29.5,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: -0.6,
+                      height: 1.18,
+                    ),
+                  ),
+
+                  const SizedBox(height: 10),
+
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
                     child: Text(
-                      context.tr('onboarding.audioGuideHint'),
-                      style: AppTypography.bodySmall.copyWith(
-                        color: AppColors.textBodyColor(context),
+                      context.tr('onboarding.chooseLanguageDesc'),
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: colors.textSecondary,
+                        fontSize: 14.0,
+                        fontWeight: FontWeight.w500,
+                        height: 1.45,
                       ),
                     ),
                   ),
+
+                  const SizedBox(height: AppSpacing.xs),
                 ],
               ),
             ),
-          ],
-        ),
-      ),
-    );
+          );
+        },
+      );
+    });
   }
 
-  Widget _buildStepper({
+  Widget _buildWanderWiseCard({
     required BuildContext context,
-    required int activeIndex,
-    required String label,
-  }) {
-    final isDark = AppColors.isDark(context);
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: AppSpacing.sm2),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Row(
-            children: List.generate(3, (index) {
-              final isActive = activeIndex == index;
-
-              return Padding(
-                padding: EdgeInsets.only(right: index < 2 ? 8 : 0),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
-                  width: isActive ? 32 : 10,
-                  height: 10,
-                  decoration: BoxDecoration(
-                    color: isActive
-                        ? (isDark
-                              ? AppColors.accentGoldStar
-                              : AppColors.espressoDark)
-                        : (isDark
-                              ? AppColors.darkOutlineVariant
-                              : AppColors.outlineVariant),
-                    borderRadius: BorderRadius.circular(AppRadius.pill),
-                  ),
-                ),
-              );
-            }),
-          ),
-          const SizedBox(width: AppSpacing.sm),
-          Flexible(
-            child: Text(
-              label,
-              textAlign: TextAlign.end,
-              style: AppTypography.captionSmall.copyWith(
-                color: isDark ? AppColors.darkTextBody : AppColors.tanMedium,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildLanguageHeader(BuildContext context) {
-    final isDark = AppColors.isDark(context);
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isDark
-            ? AppColors.darkSurfaceContainer
-            : AppColors.canvasCream.withValues(alpha: .35),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              color: isDark
-                  ? AppColors.darkSurfaceContainerHighest
-                  : AppColors.surfaceWhite,
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              Icons.translate,
-              size: 26,
-              color: isDark ? AppColors.darkPrimary : AppColors.espressoDark,
-            ),
-          ),
-
-          const SizedBox(width: 16),
-
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  context.tr('onboarding.introTitle'),
-                  style: AppTypography.titleLarge.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textHeadingColor(context),
-                  ),
-                ),
-
-                const SizedBox(height: 4),
-
-                Text(
-                  context.tr('onboarding.introDesc'),
-                  style: AppTypography.bodySmall.copyWith(
-                    color: AppColors.textSecondaryColor(context),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildLanguageCard({
-    required BuildContext context,
-    required String title,
-    required String subtitle,
-    required String type,
+    required _LanguageItemData item,
     required bool isSelected,
-    required VoidCallback onTap,
+    required bool isDark,
+    required VoidCallback onSelect,
   }) {
-    final isDark = AppColors.isDark(context);
-    final textScale = MediaQuery.textScalerOf(context).scale(1);
-    final cardPadding = textScale > 1.15 ? 12.0 : AppSpacing.cardPadding;
+    final colors = context.hc;
 
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(AppRadius.card),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: EdgeInsets.all(cardPadding),
-        decoration: BoxDecoration(
-          color: isDark
-              ? AppColors.darkSurfaceContainer
-              : AppColors.surfaceWhite,
-          borderRadius: BorderRadius.circular(AppRadius.card),
-          border: Border.all(
-            color: isSelected
-                ? (isDark ? AppColors.darkPrimary : AppColors.primaryContainer)
-                : AppColors.cardBorderColor(context),
-            width: isSelected ? 2.0 : 1.0,
+    // Strict alignment with HajiColors (ThemeExtension):
+    // In Light Mode: Signature rich espresso (colors.primary) provides high-contrast, premium, non-orange selection.
+    // In Dark Mode: Warm desert amber/gold (colors.accent) glows softly against charcoal surfaces.
+    final selectedColor = isDark ? colors.accent : colors.primary;
+    final onSelectedColor = isDark ? colors.canvas : colors.onPrimary;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onSelect,
+        borderRadius: BorderRadius.circular(14),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeOutCubic,
+          padding: EdgeInsets.symmetric(
+            horizontal: isSelected ? 12 : 10,
+            vertical: isSelected ? 6.0 : 4.0,
           ),
-          boxShadow: [
-            BoxShadow(
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: isSelected
+                ? (isDark
+                      ? colors.surface.withValues(alpha: 0.95)
+                      : colors.surface)
+                : (isDark
+                      ? colors.surface.withValues(alpha: 0.55)
+                      : colors.surface.withValues(alpha: 0.85)),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
               color: isSelected
-                  ? (isDark
-                        ? AppColors.darkPrimary.withValues(alpha: 0.15)
-                        : AppColors.primary.withValues(alpha: 0.08))
+                  ? selectedColor
                   : (isDark
-                        ? Colors.black.withValues(alpha: 0.2)
-                        : Colors.black.withValues(alpha: 0.03)),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
+                        ? colors.border.withValues(alpha: 0.5)
+                        : colors.border.withValues(alpha: 0.7)),
+              width: isSelected ? 1.6 : 1.0,
             ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Flexible(
-                  child: Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: textScale > 1.15 ? 6 : 8,
-                      vertical: 3,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? (isDark
-                                ? AppColors.goldPrimary.withValues(alpha: 0.25)
-                                : AppColors.goldPrimary.withValues(alpha: 0.15))
-                          : (isDark
-                                ? AppColors.darkSurfaceContainerHighest
-                                : AppColors.canvasCream),
-                      borderRadius: BorderRadius.circular(AppRadius.pill),
-                    ),
-                    child: Text(
-                      type,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppTypography.captionSmall.copyWith(
-                        color: isSelected
-                            ? (isDark
-                                  ? AppColors.accentGoldStar
-                                  : AppColors.espressoDark)
-                            : AppColors.textBodyColor(context),
-                        fontWeight: FontWeight.w700,
+            boxShadow: isSelected
+                ? [
+                    // Cohesive theme glow matching HajiColors primary / accent (zero neon orange)
+                    BoxShadow(
+                      color: selectedColor.withValues(
+                        alpha: isDark ? 0.28 : 0.14,
                       ),
+                      blurRadius: 16,
+                      offset: const Offset(0, 4),
                     ),
+                    BoxShadow(
+                      color: colors.shadow.withValues(
+                        alpha: isDark ? 0.30 : 0.08,
+                      ),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ]
+                : [
+                    BoxShadow(
+                      color: colors.shadow.withValues(
+                        alpha: isDark ? 0.15 : 0.04,
+                      ),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+          ),
+          child: Row(
+            children: [
+              // ── Left: Unified Flag Thumbnail (Cohesive HajiCare Palette) ──
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 250),
+                width: isSelected ? 42 : 36,
+                height: isSelected ? 42 : 36,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: isDark
+                        ? (isSelected
+                              ? [colors.primaryContainer, colors.surfaceSubtle]
+                              : [colors.surfaceSubtle, colors.surface])
+                        : (isSelected
+                              ? [colors.primaryContainer, colors.surfaceSand]
+                              : [colors.surfaceSubtle, colors.surface]),
+                  ),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: isSelected
+                        ? (isDark
+                              ? colors.accent.withValues(alpha: 0.6)
+                              : colors.borderStrong)
+                        : colors.border.withValues(alpha: 0.7),
+                    width: 1.0,
                   ),
                 ),
-                const SizedBox(width: 4),
-                AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 200),
-                  child: isSelected
-                      ? const Icon(
-                          Icons.check_circle_rounded,
-                          key: ValueKey(true),
-                          color: AppColors.statusSafe,
-                          size: 20,
-                        )
-                      : Icon(
-                          Icons.radio_button_unchecked_rounded,
-                          key: const ValueKey(false),
-                          color: isDark
-                              ? AppColors.darkOutline
-                              : AppColors.tanMedium,
-                          size: 20,
-                        ),
+                alignment: Alignment.center,
+                child: Text(
+                  item.flag,
+                  style: TextStyle(fontSize: isSelected ? 18 : 15),
                 ),
-              ],
-            ),
-            const Spacer(),
-            Text(
-              title,
-              style: AppTypography.titleMedium.copyWith(
-                fontWeight: FontWeight.w800,
-                color: AppColors.textHeadingColor(context),
               ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 3),
-            Text(
-              subtitle,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: AppTypography.caption.copyWith(
-                color: AppColors.textSecondaryColor(context),
+
+              const SizedBox(width: 10),
+
+              // ── Middle: Language Name & Subtitle ───────────────────────
+              Expanded(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Title
+                      Text(
+                        item.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: colors.textPrimary,
+                          fontSize: isSelected ? 13.5 : 12.0,
+                          height: 1.15,
+                          fontWeight: isSelected
+                              ? FontWeight.w800
+                              : FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 2.0),
+
+                      // Subtitle
+                      Text(
+                        item.subtitle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: colors.textSecondary,
+                          fontSize: isSelected ? 10.0 : 9.0,
+                          height: 1.15,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-            ),
-          ],
+
+              const SizedBox(width: 8),
+
+              // ── Right: Clean Selection Indicator (Cohesive Theme Radio/Check) ──
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                width: isSelected ? 26 : 22,
+                height: isSelected ? 26 : 22,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: isSelected ? selectedColor : Colors.transparent,
+                  border: isSelected
+                      ? null
+                      : Border.all(
+                          color: isDark
+                              ? colors.border.withValues(alpha: 0.5)
+                              : colors.border.withValues(alpha: 0.8),
+                          width: 1.2,
+                        ),
+                  boxShadow: isSelected
+                      ? [
+                          BoxShadow(
+                            color: selectedColor.withValues(alpha: 0.30),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ]
+                      : null,
+                ),
+                alignment: Alignment.center,
+                child: isSelected
+                    ? Icon(
+                        Icons.check_rounded,
+                        size: 15,
+                        color: onSelectedColor,
+                      )
+                    : null,
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
+}
+
+/// Data container for language options in Slide 1.
+class _LanguageItemData {
+  final String code;
+  final String title;
+  final String subtitle;
+  final String flag;
+
+  const _LanguageItemData({
+    required this.code,
+    required this.title,
+    required this.subtitle,
+    required this.flag,
+  });
+}
+
+/// Draws an elegant, smooth S-curved dashed travel route behind the cards
+/// matching the WanderWise reference design.
+class _CurvedDashedPathPainter extends CustomPainter {
+  final Color color;
+
+  const _CurvedDashedPathPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 1.3
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+
+    final path = Path();
+    path.moveTo(size.width * 0.12, size.height * 0.08);
+    path.cubicTo(
+      size.width * 0.88,
+      size.height * 0.05,
+      size.width * 0.94,
+      size.height * 0.36,
+      size.width * 0.50,
+      size.height * 0.44,
+    );
+    path.cubicTo(
+      size.width * 0.06,
+      size.height * 0.52,
+      size.width * 0.04,
+      size.height * 0.78,
+      size.width * 0.54,
+      size.height * 0.88,
+    );
+    path.cubicTo(
+      size.width * 0.84,
+      size.height * 0.94,
+      size.width * 0.92,
+      size.height * 0.97,
+      size.width * 0.95,
+      size.height * 0.98,
+    );
+
+    _drawDashedPath(canvas, path, paint, dashWidth: 5.0, dashSpace: 4.5);
+  }
+
+  void _drawDashedPath(
+    Canvas canvas,
+    Path source,
+    Paint paint, {
+    required double dashWidth,
+    required double dashSpace,
+  }) {
+    for (final metric in source.computeMetrics()) {
+      var distance = 0.0;
+      while (distance < metric.length) {
+        final length = (distance + dashWidth < metric.length)
+            ? dashWidth
+            : metric.length - distance;
+        final extract = metric.extractPath(distance, distance + length);
+        canvas.drawPath(extract, paint);
+        distance += dashWidth + dashSpace;
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _CurvedDashedPathPainter oldDelegate) =>
+      oldDelegate.color != color;
 }

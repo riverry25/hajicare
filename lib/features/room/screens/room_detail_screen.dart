@@ -7,12 +7,13 @@ import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:latlong2/latlong.dart';
+import '../../../core/routes/app_routes.dart';
 import '../../../core/services/app_alert_service.dart';
 import '../../../core/state/hajicare_controller.dart';
-import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/theme_context.dart';
+import '../../../core/theme/app_breakpoints.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
-import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/user_feedback_message.dart';
 import '../../../core/widgets/app_card.dart';
 import '../../dashboard/controllers/dashboard_controller.dart';
@@ -23,14 +24,16 @@ import '../widgets/edit_room_dialog.dart';
 import '../widgets/room_qr_dialog.dart';
 
 class RoomDetailScreen extends StatefulWidget {
-  const RoomDetailScreen({super.key});
+  final RoomService? roomService;
+
+  const RoomDetailScreen({super.key, this.roomService});
 
   @override
   State<RoomDetailScreen> createState() => _RoomDetailScreenState();
 }
 
 class _RoomDetailScreenState extends State<RoomDetailScreen> {
-  final RoomService _roomService = RoomService();
+  late final RoomService _roomService;
   AdminRoomController? _adminController;
 
   RoomModel? _room;
@@ -40,6 +43,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
   List<RoomMemberModel> _allMembers = [];
   StreamSubscription<RoomModel?>? _roomSub;
   StreamSubscription<List<RoomMemberModel>>? _membersSub;
+  bool _isProcessingAction = false;
 
   // Search & Filter State
   late final TextEditingController _searchController;
@@ -51,9 +55,31 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
   int _limitPerPage = 8; // Default limit per page
   static const List<int> _availableLimits = [5, 8, 15];
 
+  User? get _currentFirebaseUser {
+    try {
+      return FirebaseAuth.instance.currentUser;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  String? get _effectiveUid {
+    final authUid = _currentFirebaseUser?.uid;
+    if (authUid != null && authUid.isNotEmpty) return authUid;
+    if (Get.isRegistered<HajiCareController>()) {
+      return Get.find<HajiCareController>().currentUid;
+    }
+    return null;
+  }
+
   @override
   void initState() {
     super.initState();
+    _roomService =
+        widget.roomService ??
+        (Get.isRegistered<RoomService>()
+            ? Get.find<RoomService>()
+            : RoomService());
     _searchController = TextEditingController();
 
     if (Get.isRegistered<AdminRoomController>()) {
@@ -120,72 +146,127 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
 
   void _subscribeToRoom(String roomId) {
     _roomSub?.cancel();
-    _roomSub = _roomService
-        .getRoomStream(roomId)
-        .listen(
-          (roomData) {
-            if (!mounted) return;
-            WidgetsBinding.instance.addPostFrameCallback((_) {
+    try {
+      _roomSub = _roomService
+          .getRoomStream(roomId)
+          .listen(
+            (roomData) {
               if (!mounted) return;
-              setState(() {
-                if (roomData != null) {
-                  _room = roomData;
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (!mounted) return;
+                if (roomData == null || !roomData.isActive) {
+                  if (!_isProcessingAction && !_isLoadingRoom) {
+                    if (Navigator.of(context).canPop()) {
+                      Get.back();
+                    } else {
+                      Get.offAllNamed(AppRoutes.dashboardJamaah);
+                    }
+                    AppAlert.info(
+                      Get.context,
+                      title: context.tr('room.roomClosedTitle'),
+                      message: context.tr('room.roomClosedDesc'),
+                    );
+                  }
+                  return;
                 }
-                _isLoadingRoom = false;
-              });
-            });
-          },
-          onError: (e) {
-            debugPrint('[RoomDetailScreen] Error listening to room: $e');
-            if (!mounted) return;
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (mounted) {
                 setState(() {
+                  _room = roomData;
                   _isLoadingRoom = false;
                 });
-              }
-            });
-          },
-        );
+              });
+            },
+            onError: (e) {
+              debugPrint('[RoomDetailScreen] Error listening to room: $e');
+              if (!mounted) return;
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted) {
+                  setState(() {
+                    _isLoadingRoom = false;
+                  });
+                }
+              });
+            },
+          );
+    } catch (e) {
+      debugPrint('[RoomDetailScreen] Could not subscribe to room: $e');
+      if (mounted) {
+        setState(() {
+          _isLoadingRoom = false;
+        });
+      }
+    }
   }
 
   void _subscribeToMembers(String roomId) {
     _membersSub?.cancel();
-    _membersSub = _roomService
-        .getRoomMembersStream(roomId)
-        .listen(
-          (members) {
-            if (!mounted) return;
-            WidgetsBinding.instance.addPostFrameCallback((_) {
+    try {
+      _membersSub = _roomService
+          .getRoomMembersStream(roomId)
+          .listen(
+            (members) {
               if (!mounted) return;
-              setState(() {
-                _allMembers = members;
-                _isLoadingMembers = false;
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (!mounted) return;
+                final currentUid = _effectiveUid;
+                final hajiCare = Get.isRegistered<HajiCareController>()
+                    ? Get.find<HajiCareController>()
+                    : null;
+                final isAdmin = hajiCare?.role == UserRole.admin;
+                if (!isAdmin && currentUid != null && members.isNotEmpty) {
+                  final isStillMember = members.any((m) => m.uid == currentUid);
+                  if (!isStillMember &&
+                      !_isProcessingAction &&
+                      !_isLoadingMembers) {
+                    if (Navigator.of(context).canPop()) {
+                      Get.back();
+                    } else {
+                      Get.offAllNamed(AppRoutes.dashboardJamaah);
+                    }
+                    AppAlert.info(
+                      Get.context,
+                      title: context.tr('room.membershipStatusTitle'),
+                      message: context.tr('room.membershipRevokedDesc'),
+                    );
+                    return;
+                  }
+                }
 
-                final maxPages = _totalPages;
-                if (_currentPage > maxPages) {
-                  _currentPage = maxPages.clamp(1, 999);
+                setState(() {
+                  _allMembers = members;
+                  _isLoadingMembers = false;
+
+                  final maxPages = _totalPages;
+                  if (_currentPage > maxPages) {
+                    _currentPage = maxPages.clamp(1, 999);
+                  }
+                });
+
+                // Sync with AdminRoomController safely if present
+                if (_adminController != null) {
+                  _adminController!.roomMembers.value = members;
                 }
               });
-
-              // Sync with AdminRoomController safely if present
-              if (_adminController != null) {
-                _adminController!.roomMembers.value = members;
-              }
-            });
-          },
-          onError: (e) {
-            debugPrint('[RoomDetailScreen] Error listening to members: $e');
-            if (!mounted) return;
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (mounted) {
-                setState(() {
-                  _isLoadingMembers = false;
-                });
-              }
-            });
-          },
-        );
+            },
+            onError: (e) {
+              debugPrint('[RoomDetailScreen] Error listening to members: $e');
+              if (!mounted) return;
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted) {
+                  setState(() {
+                    _isLoadingMembers = false;
+                  });
+                }
+              });
+            },
+          );
+    } catch (e) {
+      debugPrint('[RoomDetailScreen] Could not subscribe to members: $e');
+      if (mounted) {
+        setState(() {
+          _isLoadingMembers = false;
+        });
+      }
+    }
   }
 
   // ── Computed Getters ────────────────────────────────────────────────────────
@@ -235,9 +316,19 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
   int get _pendampingCount => _allMembers.where((m) => m.isPendamping).length;
   int get _sosCount => _allMembers.where((m) => _isMemberSos(m)).length;
 
-  String _formatDate(DateTime? dt) {
+  String _formatDate(DateTime? dt, [BuildContext? ctx]) {
     if (dt == null) return '-';
-    final lang = Get.locale?.languageCode ?? 'id';
+    String lang = 'id';
+    if (ctx != null) {
+      try {
+        lang = Localizations.localeOf(ctx).languageCode;
+      } catch (_) {
+        lang = Get.locale?.languageCode ?? 'id';
+      }
+    } else {
+      lang = Get.locale?.languageCode ?? 'id';
+    }
+
     if (lang == 'en') {
       const monthsEn = [
         'January',
@@ -254,6 +345,22 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
         'December',
       ];
       return '${dt.day} ${monthsEn[dt.month - 1]} ${dt.year}';
+    } else if (lang == 'su') {
+      const monthsSu = [
+        'Januari',
+        'Pébruari',
+        'Maret',
+        'April',
+        'Méi',
+        'Juni',
+        'Juli',
+        'Agustus',
+        'Séptémber',
+        'Oktober',
+        'Nopémber',
+        'Désémber',
+      ];
+      return '${dt.day} ${monthsSu[dt.month - 1]} ${dt.year}';
     }
     const months = [
       'Januari',
@@ -270,6 +377,27 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
       'Desember',
     ];
     return '${dt.day} ${months[dt.month - 1]} ${dt.year}';
+  }
+
+  String _getMemberLocationStatus(
+    BuildContext context,
+    RoomMemberModel member, [
+    DateTime? now,
+  ]) {
+    if (!member.hasLocation || member.locationUpdatedAt == null) {
+      return context.tr('room.locationNotAvailable');
+    }
+    final currentTime = now ?? DateTime.now();
+    final diff = currentTime.difference(member.locationUpdatedAt!);
+    final seconds = diff.inSeconds;
+
+    if (seconds <= 30) {
+      return context.tr('room.onlineStatus');
+    } else if (seconds <= 120) {
+      return context.tr('room.lastSeenSecondsAgo', {'seconds': seconds});
+    } else {
+      return context.tr('room.locationNotUpdated');
+    }
   }
 
   String _capitalizeWords(String? input) {
@@ -291,13 +419,14 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
         ? Get.find<HajiCareController>()
         : null;
     final isJamaah = hajiCare?.role == UserRole.jamaah;
-    final currentUid = FirebaseAuth.instance.currentUser?.uid;
+    final currentUid = _effectiveUid;
     final isAdmin = hajiCare?.role == UserRole.admin;
     final isPendampingRole = hajiCare?.role == UserRole.pendamping;
-    final isCreator = _room != null && _room!.createdBy == currentUid;
-    final isPendampingMember = _allMembers.any(
-      (m) => m.uid == currentUid && m.isPendamping,
-    );
+    final isCreator =
+        _room != null && currentUid != null && _room!.createdBy == currentUid;
+    final isPendampingMember =
+        currentUid != null &&
+        _allMembers.any((m) => m.uid == currentUid && m.isPendamping);
 
     return !isJamaah &&
         (isAdmin || isPendampingRole || isCreator || isPendampingMember);
@@ -325,9 +454,10 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
         ? Get.find<HajiCareController>()
         : null;
     if (hajiCare?.role == UserRole.jamaah) return false;
-    final currentUid = FirebaseAuth.instance.currentUser?.uid;
+    final currentUid = _effectiveUid;
     final isAdmin = hajiCare?.role == UserRole.admin;
-    final isCreator = _room != null && _room!.createdBy == currentUid;
+    final isCreator =
+        _room != null && currentUid != null && _room!.createdBy == currentUid;
 
     return isAdmin || isCreator;
   }
@@ -348,24 +478,32 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
   }
 
   void _handleDeleteRoom(BuildContext context, RoomModel room) {
+    if (_isProcessingAction || !mounted) return;
     HapticFeedback.mediumImpact();
     AppAlert.confirm(
       context,
       title: context.tr('room.deleteRoomTitle'),
-      message: context.tr('room.deleteRoomDesc', {'name': room.name}),
-      confirmText: context.tr('room.delete'),
+      message: context.tr('room.deleteRoomConfirmMessage'),
+      confirmText: context.tr('room.deleteRoom'),
       cancelText: context.tr('common.cancel'),
       isDestructive: true,
       onConfirm: () async {
+        if (_isProcessingAction || !mounted) return;
+        setState(() => _isProcessingAction = true);
+        AppAlert.loading(
+          context,
+          message: context.tr('room.deletingRoomLoading'),
+        );
         try {
-          final user = FirebaseAuth.instance.currentUser;
-          final currentUid = user?.uid ?? '';
-          final senderName = user?.displayName?.trim().isNotEmpty == true
-              ? user!.displayName!
-              : 'Petugas / Pendamping';
+          final user = _currentFirebaseUser;
+          final currentUid = _effectiveUid ?? '';
           final hajiCare = Get.isRegistered<HajiCareController>()
               ? Get.find<HajiCareController>()
               : null;
+          final senderName = user?.displayName?.trim().isNotEmpty == true
+              ? user!.displayName!
+              : (hajiCare?.pendampingName.value ??
+                    context.tr('room.defaultOfficerCompanion'));
           final userRole = hajiCare?.role == UserRole.admin
               ? 'admin'
               : 'pendamping';
@@ -377,17 +515,30 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
             userRole: userRole,
           );
 
+          await hajiCare?.clearActiveRoomSession();
+
           if (context.mounted) {
-            AppAlert.success(
-              context,
+            AppAlert.dismissLoading(context);
+            await AppAlert.success(
+              Get.context,
               title: context.tr('room.roomDeleted'),
               message: context.tr('room.roomDeletedDesc', {'name': room.name}),
+              autoDismissDuration: const Duration(seconds: 3),
             );
-            await hajiCare?.leaveRoom();
-            Get.back();
+            if (!context.mounted) return;
+            if (Navigator.of(context).canPop()) {
+              Get.back();
+            } else {
+              Get.offAllNamed(
+                hajiCare?.role == UserRole.pendamping
+                    ? AppRoutes.dashboardPendamping
+                    : AppRoutes.dashboardJamaah,
+              );
+            }
           }
         } catch (e) {
           if (context.mounted) {
+            AppAlert.dismissLoading(context);
             AppAlert.error(
               context,
               title: context.tr('room.deleteFailed'),
@@ -397,21 +548,538 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
               ),
             );
           }
+        } finally {
+          if (mounted) {
+            setState(() => _isProcessingAction = false);
+          }
         }
       },
     );
   }
 
+  void _handleSetCoOwner(
+    BuildContext context,
+    RoomMemberModel target,
+    RoomModel room,
+  ) {
+    if (_isProcessingAction || !mounted) return;
+    HapticFeedback.lightImpact();
+
+    final primaryColor = context.hc.brand;
+
+    AppAlert.confirm(
+      context,
+      title: room.coOwnerId != null && room.coOwnerId!.isNotEmpty
+          ? context.tr('room.replaceCoOwnerBtn')
+          : context.tr('room.setCoOwnerBtn'),
+      message: context.tr('room.setCoOwnerConfirm', {'name': target.name}),
+      confirmText: context.tr('common.confirm'),
+      cancelText: context.tr('common.cancel'),
+      icon: Icons.verified_user_rounded,
+      confirmColor: primaryColor,
+      onConfirm: () async {
+        setState(() => _isProcessingAction = true);
+        AppAlert.loading(
+          context,
+          message: context.tr('room.settingCoOwnerLoading'),
+        );
+        try {
+          await _roomService.setCoOwner(
+            roomId: room.id,
+            newCoOwnerUid: target.uid,
+          );
+          if (context.mounted) {
+            AppAlert.dismissLoading(context);
+            await AppAlert.success(
+              Get.context,
+              title: context.tr('room.setCoOwnerSuccess'),
+              message: context.tr('room.setCoOwnerSuccessDesc', {
+                'name': target.name,
+              }),
+            );
+          }
+        } catch (e) {
+          if (context.mounted) {
+            AppAlert.dismissLoading(context);
+            AppAlert.error(
+              context,
+              title: context.tr('room.setCoOwnerFailed'),
+              message: UserFeedbackMessage.from(
+                e,
+                fallback: context.tr('room.setCoOwnerFailedFallback'),
+              ),
+            );
+          }
+        } finally {
+          if (mounted) setState(() => _isProcessingAction = false);
+        }
+      },
+    );
+  }
+
+  void _handleRemoveCoOwner(
+    BuildContext context,
+    RoomMemberModel target,
+    RoomModel room,
+  ) {
+    if (_isProcessingAction || !mounted) return;
+    HapticFeedback.lightImpact();
+
+    AppAlert.confirm(
+      context,
+      title: context.tr('room.removeCoOwnerBtn'),
+      message: context.tr('room.removeCoOwnerConfirm', {'name': target.name}),
+      confirmText: context.tr('room.revokeAction'),
+      cancelText: context.tr('common.cancel'),
+      isDestructive: true,
+      icon: Icons.remove_moderator_rounded,
+      onConfirm: () async {
+        setState(() => _isProcessingAction = true);
+        AppAlert.loading(
+          context,
+          message: context.tr('room.removingCoOwnerLoading'),
+        );
+        try {
+          await _roomService.removeCoOwner(roomId: room.id);
+          if (context.mounted) {
+            AppAlert.dismissLoading(context);
+            await AppAlert.success(
+              Get.context,
+              title: context.tr('room.removeCoOwnerSuccess'),
+              message: context.tr('room.removeCoOwnerSuccessDesc', {
+                'name': target.name,
+              }),
+            );
+          }
+        } catch (e) {
+          if (context.mounted) {
+            AppAlert.dismissLoading(context);
+            AppAlert.error(
+              context,
+              title: context.tr('room.removeCoOwnerFailed'),
+              message: UserFeedbackMessage.from(
+                e,
+                fallback: context.tr('room.removeCoOwnerFailedFallback'),
+              ),
+            );
+          }
+        } finally {
+          if (mounted) setState(() => _isProcessingAction = false);
+        }
+      },
+    );
+  }
+
+  void _handleTransferOwnership(
+    BuildContext context,
+    RoomMemberModel target,
+    RoomModel room,
+  ) {
+    if (_isProcessingAction || !mounted) return;
+    HapticFeedback.mediumImpact();
+
+    final primaryColor = context.hc.brand;
+
+    AppAlert.confirm(
+      context,
+      title: context.tr('room.transferOwnershipBtn'),
+      message: context.tr('room.transferOwnershipConfirm', {
+        'name': target.name,
+      }),
+      confirmText: context.tr('room.transferAction'),
+      cancelText: context.tr('common.cancel'),
+      isDestructive: false,
+      icon: Icons.admin_panel_settings_rounded,
+      confirmColor: primaryColor,
+      onConfirm: () async {
+        setState(() => _isProcessingAction = true);
+        AppAlert.loading(
+          context,
+          message: context.tr('room.transferringOwnershipLoading'),
+        );
+        try {
+          await _roomService.transferOwnership(
+            roomId: room.id,
+            newOwnerUid: target.uid,
+          );
+          if (context.mounted) {
+            AppAlert.dismissLoading(context);
+            await AppAlert.success(
+              Get.context,
+              title: context.tr('room.transferOwnershipSuccess'),
+              message: context.tr('room.transferOwnershipSuccessDesc', {
+                'name': target.name,
+              }),
+            );
+          }
+        } catch (e) {
+          if (context.mounted) {
+            AppAlert.dismissLoading(context);
+            AppAlert.error(
+              context,
+              title: context.tr('room.transferOwnershipFailed'),
+              message: UserFeedbackMessage.from(
+                e,
+                fallback: context.tr('room.transferOwnershipFailedFallback'),
+              ),
+            );
+          }
+        } finally {
+          if (mounted) setState(() => _isProcessingAction = false);
+        }
+      },
+    );
+  }
+
+  void _showSelectSuccessorSheet(
+    BuildContext context,
+    RoomModel room,
+    List<RoomMemberModel> candidates,
+  ) {
+    final isDark = context.isDarkTheme;
+    final cardBg = context.hc.surface;
+    final headingColor = context.hc.textPrimary;
+    final bodyColor = context.hc.textSecondary;
+    final dividerColor = context.hc.border;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      constraints: const BoxConstraints(maxWidth: AppBreakpoints.maxSheetWidth),
+      builder: (sheetCtx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: Container(
+              decoration: BoxDecoration(
+                color: cardBg,
+                borderRadius: BorderRadius.circular(28),
+                border: Border.all(color: dividerColor),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.08),
+                    blurRadius: 24,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      margin: const EdgeInsets.only(bottom: 16),
+                      decoration: BoxDecoration(
+                        color: dividerColor,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: const Color(
+                            0xFFF59E0B,
+                          ).withValues(alpha: 0.15),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.supervisor_account_rounded,
+                          color: Color(0xFFD97706),
+                          size: 22,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              context.tr('room.noCoOwnerSelectCompanionTitle'),
+                              style: AppTypography.titleMedium.copyWith(
+                                color: headingColor,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              context.tr('room.noCoOwnerSelectCompanionDesc'),
+                              style: AppTypography.captionSmall.copyWith(
+                                color: bodyColor,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Divider(height: 1, color: dividerColor),
+                  const SizedBox(height: 12),
+                  ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxHeight: MediaQuery.of(context).size.height * 0.45,
+                    ),
+                    child: ListView.separated(
+                      shrinkWrap: true,
+                      itemCount: candidates.length,
+                      separatorBuilder: (context, index) =>
+                          const SizedBox(height: 8),
+                      itemBuilder: (ctx, index) {
+                        final candidate = candidates[index];
+                        final initial = candidate.name.trim().isNotEmpty
+                            ? candidate.name.trim()[0].toUpperCase()
+                            : '?';
+                        return Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: () {
+                              Navigator.pop(sheetCtx);
+                              AppAlert.confirm(
+                                context,
+                                title: context.tr('room.bequeathAndLeaveTitle'),
+                                message: context.tr(
+                                  'room.bequeathToSelectedDesc',
+                                  {'name': candidate.name},
+                                ),
+                                confirmText: context.tr(
+                                  'room.bequeathAndLeaveAction',
+                                ),
+                                cancelText: context.tr('common.cancel'),
+                                isDestructive: true,
+                                onConfirm: () => _executeLeaveRoom(
+                                  context,
+                                  room,
+                                  successorUid: candidate.uid,
+                                  successorName: candidate.name,
+                                ),
+                              );
+                            },
+                            borderRadius: BorderRadius.circular(AppRadius.md),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 10,
+                              ),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.md,
+                                ),
+                                border: Border.all(color: dividerColor),
+                              ),
+                              child: Row(
+                                children: [
+                                  CircleAvatar(
+                                    radius: 18,
+                                    backgroundColor: const Color(
+                                      0xFF1D4ED8,
+                                    ).withValues(alpha: 0.15),
+                                    child: Text(
+                                      initial,
+                                      style: const TextStyle(
+                                        color: Color(0xFF1D4ED8),
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Text(
+                                      candidate.name,
+                                      style: TextStyle(
+                                        color: headingColor,
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                  ),
+                                  const Icon(
+                                    Icons.arrow_forward_ios_rounded,
+                                    size: 14,
+                                    color: Colors.grey,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: TextButton(
+                      onPressed: () => Navigator.pop(sheetCtx),
+                      child: Text(
+                        context.tr('common.cancel'),
+                        style: TextStyle(color: bodyColor),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _handleLeaveRoom(BuildContext context, RoomModel room) {
+    if (_isProcessingAction || !mounted) return;
+    HapticFeedback.lightImpact();
+
+    final currentUid = _effectiveUid;
+    if (currentUid == null) return;
+
+    final isOwner = room.isPrimaryOwner(currentUid);
+    final otherPendamping = _allMembers
+        .where((m) => m.isPendamping && m.uid != currentUid)
+        .toList();
+
+    if (isOwner) {
+      final activeCoOwner = room.coOwnerId != null && room.coOwnerId!.isNotEmpty
+          ? otherPendamping.where((m) => m.uid == room.coOwnerId).firstOrNull
+          : null;
+
+      if (activeCoOwner != null) {
+        // Scenario A: Co-Owner exists and is active -> Prompt to bequeath & leave
+        AppAlert.confirm(
+          context,
+          title: context.tr('room.bequeathAndLeaveTitle'),
+          message: context.tr('room.bequeathToCoOwnerDesc', {
+            'name': activeCoOwner.name,
+          }),
+          confirmText: context.tr('room.bequeathAndLeaveAction'),
+          cancelText: context.tr('common.cancel'),
+          isDestructive: true,
+          onConfirm: () => _executeLeaveRoom(
+            context,
+            room,
+            successorUid: activeCoOwner.uid,
+            successorName: activeCoOwner.name,
+          ),
+        );
+      } else if (otherPendamping.isNotEmpty) {
+        // Scenario B/C: No Co-Owner or Co-Owner invalid, other companions exist -> Select Companion
+        _showSelectSuccessorSheet(context, room, otherPendamping);
+      } else {
+        // Sole companion/owner cannot leave room orphaned
+        AppAlert.warning(
+          context,
+          title: context.tr('room.soleOwnerCannotLeaveTitle'),
+          message: context.tr('room.soleOwnerCannotLeaveDesc'),
+          okText: context.tr('common.close'),
+        );
+      }
+    } else {
+      // Scenario D: Regular companion or jamaah leaving
+      AppAlert.confirm(
+        context,
+        title: context.tr('room.leaveRoomTitle'),
+        message: context.tr('room.leaveRoomDesc'),
+        confirmText: context.tr('room.leaveRoomConfirm'),
+        cancelText: context.tr('common.cancel'),
+        isDestructive: true,
+        onConfirm: () => _executeLeaveRoom(context, room),
+      );
+    }
+  }
+
+  Future<void> _executeLeaveRoom(
+    BuildContext context,
+    RoomModel room, {
+    String? successorUid,
+    String? successorName,
+  }) async {
+    if (_isProcessingAction || !mounted) return;
+    setState(() => _isProcessingAction = true);
+    AppAlert.loading(context, message: context.tr('room.leavingRoomLoading'));
+
+    try {
+      final hajiCare = Get.isRegistered<HajiCareController>()
+          ? Get.find<HajiCareController>()
+          : null;
+      final user = _currentFirebaseUser;
+      final currentUid = _effectiveUid ?? '';
+      final uName = user?.displayName?.trim().isNotEmpty == true
+          ? user!.displayName!
+          : (hajiCare?.pendampingName.value ??
+                context.tr('room.defaultMemberName'));
+      final roleStr = hajiCare?.role == UserRole.pendamping
+          ? 'pendamping'
+          : 'jamaah';
+
+      await _roomService.leaveRoom(
+        roomId: room.id,
+        uid: currentUid,
+        userName: uName,
+        role: roleStr,
+        roomName: room.name,
+        successorUid: successorUid,
+      );
+      await hajiCare?.clearActiveRoomSession();
+
+      if (context.mounted) {
+        AppAlert.dismissLoading(context);
+        final msg = successorName != null
+            ? context.tr('room.leaveRoomBequeathedSuccessDesc', {
+                'name': successorName,
+              })
+            : context.tr('room.leaveRoomSuccessDesc');
+
+        await AppAlert.success(
+          Get.context,
+          title: context.tr('room.leaveRoomSuccess'),
+          message: msg,
+          autoDismissDuration: const Duration(seconds: 3),
+        );
+        if (!context.mounted) return;
+        if (Navigator.of(context).canPop()) {
+          Get.back();
+        } else {
+          Get.offAllNamed(
+            hajiCare?.role == UserRole.pendamping
+                ? AppRoutes.dashboardPendamping
+                : AppRoutes.dashboardJamaah,
+          );
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        AppAlert.dismissLoading(context);
+        AppAlert.error(
+          context,
+          title: context.tr('room.leaveRoomFailed'),
+          message: UserFeedbackMessage.from(
+            e,
+            fallback: context.tr('room.leaveRoomFailedFallback'),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isProcessingAction = false);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final isDark = AppColors.isDark(context);
-    final scaffoldBg = isDark ? AppColors.darkScaffold : AppColors.canvasCream;
-    final cardBg = isDark ? AppColors.darkSurface : AppColors.surfaceWhite;
-    final headingColor = isDark
-        ? AppColors.darkTextHeading
-        : AppColors.espressoDark;
-    final bodyColor = isDark ? AppColors.darkTextBody : AppColors.textBody;
-    final primaryColor = isDark ? AppColors.darkPrimary : AppColors.primaryGold;
+    final isDark = context.isDarkTheme;
+    final scaffoldBg = context.hc.canvas;
+    final cardBg = context.hc.surface;
+    final headingColor = context.hc.textPrimary;
+    final bodyColor = context.hc.textSecondary;
+    final primaryColor = context.hc.brand;
 
     // Loading State
     if (_isLoadingRoom && _room == null) {
@@ -608,13 +1276,13 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                       Icon(
                         Icons.delete_outline_rounded,
                         size: 18,
-                        color: AppColors.error,
+                        color: context.hc.danger,
                       ),
                       const SizedBox(width: 10),
                       Text(
                         context.tr('room.deleteRoom'),
                         style: TextStyle(
-                          color: AppColors.error,
+                          color: context.hc.danger,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -634,161 +1302,308 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
           _subscribeToMembers(room.id);
           await Future.delayed(const Duration(milliseconds: 500));
         },
-        child: ListView(
-          padding: const EdgeInsets.all(AppSpacing.screenEdgeGutter),
-          physics: const AlwaysScrollableScrollPhysics(
-            parent: BouncingScrollPhysics(),
-          ),
-          children: [
-            // ── 1. Hero Room Information Card (Tailwind Floating Card style matching Image 2) ──
-            Stack(
-              clipBehavior: Clip.none,
-              alignment: Alignment.topCenter,
-              children: [
-                // Main Card Body (Below floating hero)
-                Container(
-                  margin: const EdgeInsets.only(top: 28),
-                  decoration: BoxDecoration(
-                    color: cardBg,
-                    borderRadius: BorderRadius.circular(22),
-                    border: Border.all(
-                      color: isDark
-                          ? AppColors.darkCardBorder
-                          : AppColors.lightCardBorder,
-                      width: 1.2,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(
-                          alpha: isDark ? 0.28 : 0.05,
+        child: ResponsiveCenter(
+          maxWidth: AppBreakpoints.maxTabletContentWidth,
+          child: ListView(
+            padding: const EdgeInsets.all(AppSpacing.screenEdgeGutter),
+            physics: const AlwaysScrollableScrollPhysics(
+              parent: BouncingScrollPhysics(),
+            ),
+            children: [
+              // ── 1. Hero Room Information Card (Tailwind Floating Card style matching Image 2) ──
+              Stack(
+                clipBehavior: Clip.none,
+                alignment: Alignment.topCenter,
+                children: [
+                  // Main Card Body (Below floating hero)
+                  Container(
+                    margin: const EdgeInsets.only(top: 28),
+                    decoration: BoxDecoration(
+                      color: cardBg,
+                      borderRadius: BorderRadius.circular(22),
+                      border: Border.all(color: context.hc.border, width: 1.2),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(
+                            alpha: isDark ? 0.28 : 0.05,
+                          ),
+                          blurRadius: 18,
+                          offset: const Offset(0, 8),
                         ),
-                        blurRadius: 18,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Top Spacing to clear floating hero container
-                      const SizedBox(height: 82),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Top Spacing to clear floating hero container
+                        const SizedBox(height: 82),
 
-                      // ── Main Body Information (Room Data & Privileged Actions) ──
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(18, 0, 18, 18),
-                        child: Column(
-                          children: [
-                            // Kode Room Banner Tile
-                            Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                                vertical: 11,
-                              ),
-                              decoration: BoxDecoration(
-                                color: isDark
-                                    ? AppColors.darkPrimaryContainer.withValues(
-                                        alpha: 0.35,
-                                      )
-                                    : AppColors.surfaceContainerLow,
-                                borderRadius: BorderRadius.circular(15),
-                                border: Border.all(
-                                  color: isDark
-                                      ? AppColors.darkCardBorder
-                                      : AppColors.canvasCreamSubtle,
-                                  width: 1.0,
+                        // ── Main Body Information (Room Data & Privileged Actions) ──
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(18, 0, 18, 18),
+                          child: Column(
+                            children: [
+                              // Kode Room Banner Tile
+                              Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 11,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: context.hc.surfaceSand.withValues(
+                                    alpha: 0.35,
+                                  ),
+                                  borderRadius: BorderRadius.circular(15),
+                                  border: Border.all(
+                                    color: context.hc.border,
+                                    width: 1.0,
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(7),
+                                      decoration: BoxDecoration(
+                                        color: primaryColor.withValues(
+                                          alpha: isDark ? 0.20 : 0.12,
+                                        ),
+                                        borderRadius: BorderRadius.circular(9),
+                                      ),
+                                      child: Icon(
+                                        Icons.key_rounded,
+                                        size: 17,
+                                        color: primaryColor,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            context.tr('room.roomCode'),
+                                            style: TextStyle(
+                                              color: bodyColor.withValues(
+                                                alpha: 0.7,
+                                              ),
+                                              fontSize: 10.5,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 1),
+                                          Text(
+                                            room.code,
+                                            style: TextStyle(
+                                              color: headingColor,
+                                              fontWeight: FontWeight.w900,
+                                              letterSpacing: 2.8,
+                                              fontSize: 15.5,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    InkWell(
+                                      onTap: () {
+                                        HapticFeedback.lightImpact();
+                                        Clipboard.setData(
+                                          ClipboardData(text: room.code),
+                                        );
+                                        AppAlert.success(
+                                          context,
+                                          title: context.tr('room.codeCopied'),
+                                          message: context.tr(
+                                            'room.codeCopiedMsg',
+                                            {'code': room.code},
+                                          ),
+                                        );
+                                      },
+                                      borderRadius: BorderRadius.circular(10),
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 11,
+                                          vertical: 6,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: cardBg,
+                                          borderRadius: BorderRadius.circular(
+                                            9,
+                                          ),
+                                          border: Border.all(
+                                            color: context.hc.border,
+                                          ),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(
+                                              Icons.copy_rounded,
+                                              size: 13,
+                                              color: primaryColor,
+                                            ),
+                                            const SizedBox(width: 5),
+                                            Text(
+                                              context.tr('common.copy'),
+                                              style: TextStyle(
+                                                color: primaryColor,
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.w700,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                              child: Row(
+
+                              const SizedBox(height: 12),
+
+                              // Maktab & Kloter Grid (Spacious 2-column cards)
+                              Row(
                                 children: [
-                                  Container(
-                                    padding: const EdgeInsets.all(7),
-                                    decoration: BoxDecoration(
-                                      color: primaryColor.withValues(
-                                        alpha: isDark ? 0.20 : 0.12,
-                                      ),
-                                      borderRadius: BorderRadius.circular(9),
-                                    ),
-                                    child: Icon(
-                                      Icons.key_rounded,
-                                      size: 17,
-                                      color: primaryColor,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
                                   Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          context.tr('room.roomCode'),
-                                          style: TextStyle(
-                                            color: bodyColor.withValues(
-                                              alpha: 0.7,
-                                            ),
-                                            fontSize: 10.5,
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 1),
-                                        Text(
-                                          room.code,
-                                          style: TextStyle(
-                                            color: headingColor,
-                                            fontWeight: FontWeight.w900,
-                                            letterSpacing: 2.8,
-                                            fontSize: 15.5,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  InkWell(
-                                    onTap: () {
-                                      HapticFeedback.lightImpact();
-                                      Clipboard.setData(
-                                        ClipboardData(text: room.code),
-                                      );
-                                      AppAlert.success(
-                                        context,
-                                        title: context.tr('room.codeCopied'),
-                                        message: context.tr(
-                                          'room.codeCopiedMsg',
-                                          {'code': room.code},
-                                        ),
-                                      );
-                                    },
-                                    borderRadius: BorderRadius.circular(10),
                                     child: Container(
                                       padding: const EdgeInsets.symmetric(
-                                        horizontal: 11,
-                                        vertical: 6,
+                                        horizontal: 13,
+                                        vertical: 11,
                                       ),
                                       decoration: BoxDecoration(
-                                        color: cardBg,
-                                        borderRadius: BorderRadius.circular(9),
+                                        color: context.hc.surfaceSand
+                                            .withValues(alpha: 0.45),
+                                        borderRadius: BorderRadius.circular(14),
                                         border: Border.all(
-                                          color: isDark
-                                              ? AppColors.darkOutlineVariant
-                                              : const Color(0xFFE2E8F0),
+                                          color: context.hc.border,
                                         ),
                                       ),
                                       child: Row(
-                                        mainAxisSize: MainAxisSize.min,
                                         children: [
-                                          Icon(
-                                            Icons.copy_rounded,
-                                            size: 13,
-                                            color: primaryColor,
+                                          Container(
+                                            width: 32,
+                                            height: 32,
+                                            decoration: BoxDecoration(
+                                              color: context.hc.surfaceSand,
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                            ),
+                                            child: Icon(
+                                              Icons.hotel_rounded,
+                                              size: 16,
+                                              color: context.hc.brand,
+                                            ),
                                           ),
-                                          const SizedBox(width: 5),
-                                          Text(
-                                            context.tr('dashboard.copy'),
-                                            style: TextStyle(
-                                              color: primaryColor,
-                                              fontSize: 11,
-                                              fontWeight: FontWeight.w700,
+                                          const SizedBox(width: 9),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  context.tr('room.maktab'),
+                                                  style: TextStyle(
+                                                    color: bodyColor.withValues(
+                                                      alpha: 0.7,
+                                                    ),
+                                                    fontSize: 10.5,
+                                                    fontWeight: FontWeight.w500,
+                                                  ),
+                                                  maxLines: 1,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                ),
+                                                const SizedBox(height: 1),
+                                                Text(
+                                                  room.maktab?.isNotEmpty ==
+                                                          true
+                                                      ? _capitalizeWords(
+                                                          room.maktab!,
+                                                        )
+                                                      : '-',
+                                                  style: TextStyle(
+                                                    color: headingColor,
+                                                    fontWeight: FontWeight.w700,
+                                                    fontSize: 13,
+                                                  ),
+                                                  maxLines: 1,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 13,
+                                        vertical: 11,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: context.hc.surfaceSand
+                                            .withValues(alpha: 0.45),
+                                        borderRadius: BorderRadius.circular(14),
+                                        border: Border.all(
+                                          color: context.hc.border,
+                                        ),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          Container(
+                                            width: 32,
+                                            height: 32,
+                                            decoration: BoxDecoration(
+                                              color: context.hc.surfaceSand,
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                            ),
+                                            child: Icon(
+                                              Icons.flight_takeoff_rounded,
+                                              size: 16,
+                                              color: context.hc.brand,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 9),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  context.tr('room.kloter'),
+                                                  style: TextStyle(
+                                                    color: bodyColor.withValues(
+                                                      alpha: 0.7,
+                                                    ),
+                                                    fontSize: 10.5,
+                                                    fontWeight: FontWeight.w500,
+                                                  ),
+                                                  maxLines: 1,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                ),
+                                                const SizedBox(height: 1),
+                                                Text(
+                                                  room.kloter?.isNotEmpty ==
+                                                          true
+                                                      ? room.kloter!
+                                                      : '-',
+                                                  style: TextStyle(
+                                                    color: headingColor,
+                                                    fontWeight: FontWeight.w700,
+                                                    fontSize: 13,
+                                                  ),
+                                                  maxLines: 1,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                ),
+                                              ],
                                             ),
                                           ),
                                         ],
@@ -797,627 +1612,481 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                                   ),
                                 ],
                               ),
-                            ),
 
-                            const SizedBox(height: 12),
-
-                            // Maktab & Kloter Grid (Spacious 2-column cards)
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 13,
-                                      vertical: 11,
+                              if (room.createdAt != null) ...[
+                                const SizedBox(height: 12),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.event_note_rounded,
+                                      size: 13,
+                                      color: bodyColor.withValues(alpha: 0.5),
                                     ),
-                                    decoration: BoxDecoration(
-                                      color: isDark
-                                          ? AppColors.darkSurfaceContainer
-                                          : AppColors.canvasCream.withValues(
-                                              alpha: 0.45,
-                                            ),
-                                      borderRadius: BorderRadius.circular(14),
-                                      border: Border.all(
-                                        color: isDark
-                                            ? AppColors.darkCardBorder
-                                            : AppColors.lightCardBorder
-                                                  .withValues(alpha: 0.6),
+                                    const SizedBox(width: 5),
+                                    Flexible(
+                                      child: Text(
+                                        context.tr('room.createdAtDate', {
+                                          'date': _formatDate(
+                                            room.createdAt,
+                                            context,
+                                          ),
+                                        }),
+                                        style: TextStyle(
+                                          color: bodyColor.withValues(
+                                            alpha: 0.65,
+                                          ),
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
                                       ),
                                     ),
-                                    child: Row(
+                                  ],
+                                ),
+                              ],
+
+                              const SizedBox(height: 16),
+
+                              // ── Aksi Room: Tombol QR Code & Keluar Room (Berdampingan secara responsif) ──
+                              LayoutBuilder(
+                                builder: (context, constraints) {
+                                  final isNarrow = constraints.maxWidth < 360;
+
+                                  final qrButton = SizedBox(
+                                    height: 46,
+                                    child: ElevatedButton.icon(
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: primaryColor,
+                                        foregroundColor: context.hc.onPrimary,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            AppRadius.pill,
+                                          ),
+                                        ),
+                                        elevation: 0,
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 10,
+                                        ),
+                                      ),
+                                      icon: const Icon(
+                                        Icons.qr_code_2_rounded,
+                                        size: 18,
+                                      ),
+                                      label: Text(
+                                        context.tr('room.viewShareQrBtn'),
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 12.5,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      onPressed: () => RoomQrDialog.show(
+                                        context,
+                                        room: room,
+                                      ),
+                                    ),
+                                  );
+
+                                  final leaveButton = SizedBox(
+                                    height: 46,
+                                    child: OutlinedButton.icon(
+                                      style: OutlinedButton.styleFrom(
+                                        foregroundColor: context.hc.danger,
+                                        side: BorderSide(
+                                          color: context.hc.danger.withValues(
+                                            alpha: isDark ? 0.6 : 0.45,
+                                          ),
+                                          width: 1.2,
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            AppRadius.pill,
+                                          ),
+                                        ),
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 10,
+                                        ),
+                                      ),
+                                      icon: Icon(
+                                        Icons.logout_rounded,
+                                        size: 18,
+                                        color: context.hc.danger,
+                                      ),
+                                      label: Text(
+                                        context.tr('room.leaveRoomBtn'),
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 12.5,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      onPressed: _isProcessingAction
+                                          ? null
+                                          : () =>
+                                                _handleLeaveRoom(context, room),
+                                    ),
+                                  );
+
+                                  if (isNarrow) {
+                                    return Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.stretch,
                                       children: [
-                                        Container(
-                                          width: 32,
-                                          height: 32,
-                                          decoration: BoxDecoration(
-                                            color: isDark
-                                                ? AppColors.darkPrimaryContainer
-                                                : AppColors.canvasCreamSubtle,
+                                        qrButton,
+                                        const SizedBox(height: 10),
+                                        leaveButton,
+                                      ],
+                                    );
+                                  }
+
+                                  return Row(
+                                    children: [
+                                      Expanded(child: qrButton),
+                                      const SizedBox(width: 10),
+                                      Expanded(child: leaveButton),
+                                    ],
+                                  );
+                                },
+                              ),
+
+                              // ── Role Privileges: Tombol Edit & Hapus (Admin & Creator Pendamping ONLY) ──
+                              if (_canEditOrDeleteRoom()) ...[
+                                const SizedBox(height: 10),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: OutlinedButton.icon(
+                                        style: OutlinedButton.styleFrom(
+                                          foregroundColor: headingColor,
+                                          side: BorderSide(
+                                            color: context.hc.border,
+                                            width: 1.2,
+                                          ),
+                                          shape: RoundedRectangleBorder(
                                             borderRadius: BorderRadius.circular(
-                                              8,
+                                              AppRadius.pill,
                                             ),
                                           ),
-                                          child: Icon(
-                                            Icons.hotel_rounded,
-                                            size: 16,
-                                            color: isDark
-                                                ? AppColors.goldLight
-                                                : AppColors.espressoDark,
+                                          padding: const EdgeInsets.symmetric(
+                                            vertical: 10,
                                           ),
                                         ),
-                                        const SizedBox(width: 9),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                context.tr('room.maktab'),
-                                                style: TextStyle(
-                                                  color: bodyColor.withValues(
-                                                    alpha: 0.7,
-                                                  ),
-                                                  fontSize: 10.5,
-                                                  fontWeight: FontWeight.w500,
-                                                ),
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                              const SizedBox(height: 1),
-                                              Text(
-                                                room.maktab?.isNotEmpty == true
-                                                    ? _capitalizeWords(
-                                                        room.maktab!,
-                                                      )
-                                                    : '-',
-                                                style: TextStyle(
-                                                  color: headingColor,
-                                                  fontWeight: FontWeight.w700,
-                                                  fontSize: 13,
-                                                ),
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                            ],
+                                        icon: Icon(
+                                          Icons.edit_outlined,
+                                          size: 15,
+                                          color: primaryColor,
+                                        ),
+                                        label: Flexible(
+                                          child: Text(
+                                            context.tr('room.editRoom'),
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.w700,
+                                              fontSize: 12.5,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
                                           ),
                                         ),
-                                      ],
+                                        onPressed: () =>
+                                            _showEditRoomSheet(context, room),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: OutlinedButton.icon(
+                                        style: OutlinedButton.styleFrom(
+                                          foregroundColor: context.hc.danger,
+                                          side: BorderSide(
+                                            color: context.hc.danger.withValues(
+                                              alpha: 0.45,
+                                            ),
+                                            width: 1.2,
+                                          ),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              AppRadius.pill,
+                                            ),
+                                          ),
+                                          padding: const EdgeInsets.symmetric(
+                                            vertical: 10,
+                                          ),
+                                        ),
+                                        icon: const Icon(
+                                          Icons.delete_outline_rounded,
+                                          size: 15,
+                                        ),
+                                        label: Flexible(
+                                          child: Text(
+                                            context.tr('room.deleteRoom'),
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.w700,
+                                              fontSize: 12.5,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                        onPressed: () =>
+                                            _handleDeleteRoom(context, room),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+
+                        // ── Member Breakdown Strip ──────────────────────────────────
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 13,
+                          ),
+                          decoration: BoxDecoration(
+                            color: context.hc.surfaceSand.withValues(
+                              alpha: 0.35,
+                            ),
+                            borderRadius: const BorderRadius.vertical(
+                              bottom: Radius.circular(22),
+                            ),
+                            border: Border(
+                              top: BorderSide(color: context.hc.border),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: _buildStatSummaryItem(
+                                  label: context.tr('room.totalMembers'),
+                                  value: '$_totalCount',
+                                  color: headingColor,
+                                ),
+                              ),
+                              Container(
+                                height: 24,
+                                width: 1,
+                                color: context.hc.border,
+                              ),
+                              Expanded(
+                                child: _buildStatSummaryItem(
+                                  label: context.tr('room.roleJamaah'),
+                                  value: '$_jamaahCount',
+                                  color: context.hc.islamic,
+                                ),
+                              ),
+                              Container(
+                                height: 24,
+                                width: 1,
+                                color: context.hc.border,
+                              ),
+                              Expanded(
+                                child: _buildStatSummaryItem(
+                                  label: context.tr('room.roleCompanion'),
+                                  value: '$_pendampingCount',
+                                  color: const Color(0xFF1D4ED8),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Floating Hero Header (Protruding at top, like Image 2)
+                  Positioned(
+                    top: 0,
+                    left: 14,
+                    right: 14,
+                    height: 96,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: isDark
+                              ? [
+                                  const Color(0xFF38251A),
+                                  const Color(0xFF1F140D),
+                                ]
+                              : [
+                                  context.hc.brand,
+                                  context.hc.brand.withValues(alpha: 0.85),
+                                ],
+                        ),
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(
+                          color: context.hc.accent.withValues(alpha: 0.45),
+                          width: 1.2,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: context.hc.shadow,
+                            blurRadius: 18,
+                            offset: const Offset(0, 8),
+                          ),
+                        ],
+                      ),
+                      child: Stack(
+                        children: [
+                          // Ambient Glow Circles
+                          Positioned(
+                            top: -15,
+                            right: -15,
+                            child: Container(
+                              width: 75,
+                              height: 75,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: context.hc.accent.withValues(
+                                  alpha: 0.12,
+                                ),
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            bottom: -20,
+                            left: -20,
+                            child: Container(
+                              width: 70,
+                              height: 70,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: context.hc.accent.withValues(
+                                  alpha: 0.08,
+                                ),
+                              ),
+                            ),
+                          ),
+                          // Inner Content
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Container(
+                                  width: 48,
+                                  height: 48,
+                                  decoration: BoxDecoration(
+                                    color: context.hc.accent.withValues(
+                                      alpha: 0.22,
+                                    ),
+                                    borderRadius: BorderRadius.circular(14),
+                                    border: Border.all(
+                                      color: context.hc.accent.withValues(
+                                        alpha: 0.55,
+                                      ),
+                                      width: 1.4,
                                     ),
                                   ),
+                                  child: Icon(
+                                    Icons.meeting_room_rounded,
+                                    color: context.hc.accent,
+                                    size: 25,
+                                  ),
                                 ),
-                                const SizedBox(width: 10),
+                                const SizedBox(width: 14),
                                 Expanded(
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 13,
-                                      vertical: 11,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: isDark
-                                          ? AppColors.darkSurfaceContainer
-                                          : AppColors.canvasCream.withValues(
-                                              alpha: 0.45,
-                                            ),
-                                      borderRadius: BorderRadius.circular(14),
-                                      border: Border.all(
-                                        color: isDark
-                                            ? AppColors.darkCardBorder
-                                            : AppColors.lightCardBorder
-                                                  .withValues(alpha: 0.6),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        room.capitalizedName,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w800,
+                                          fontSize: 17,
+                                          letterSpacing: -0.2,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
                                       ),
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        Container(
-                                          width: 32,
-                                          height: 32,
-                                          decoration: BoxDecoration(
-                                            color: isDark
-                                                ? AppColors.darkPrimaryContainer
-                                                : AppColors.canvasCreamSubtle,
-                                            borderRadius: BorderRadius.circular(
-                                              8,
-                                            ),
+                                      const SizedBox(height: 3),
+                                      Text(
+                                        context.tr('room.maktabGroupSub'),
+                                        style: TextStyle(
+                                          color: Colors.white.withValues(
+                                            alpha: 0.72,
                                           ),
-                                          child: Icon(
-                                            Icons.flight_takeoff_rounded,
-                                            size: 16,
-                                            color: isDark
-                                                ? AppColors.goldLight
-                                                : AppColors.espressoDark,
-                                          ),
+                                          fontSize: 11.5,
+                                          fontWeight: FontWeight.w500,
                                         ),
-                                        const SizedBox(width: 9),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                context.tr('room.kloter'),
-                                                style: TextStyle(
-                                                  color: bodyColor.withValues(
-                                                    alpha: 0.7,
-                                                  ),
-                                                  fontSize: 10.5,
-                                                  fontWeight: FontWeight.w500,
-                                                ),
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                              const SizedBox(height: 1),
-                                              Text(
-                                                room.kloter?.isNotEmpty == true
-                                                    ? room.kloter!
-                                                    : '-',
-                                                style: TextStyle(
-                                                  color: headingColor,
-                                                  fontWeight: FontWeight.w700,
-                                                  fontSize: 13,
-                                                ),
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ],
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 4.5,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color:
+                                        (room.isActive
+                                                ? const Color(0xFF1B633E)
+                                                : Colors.black45)
+                                            .withValues(alpha: 0.75),
+                                    borderRadius: BorderRadius.circular(
+                                      AppRadius.pill,
                                     ),
+                                    border: Border.all(
+                                      color: room.isActive
+                                          ? const Color(0xFF4ADE80)
+                                          : Colors.white30,
+                                      width: 1.0,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Container(
+                                        width: 6,
+                                        height: 6,
+                                        decoration: BoxDecoration(
+                                          color: room.isActive
+                                              ? const Color(0xFF4ADE80)
+                                              : Colors.white70,
+                                          shape: BoxShape.circle,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 5),
+                                      Text(
+                                        room.isActive
+                                            ? context.tr('room.active')
+                                            : context.tr('room.inactive'),
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 11,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ],
                             ),
-
-                            if (room.createdAt != null) ...[
-                              const SizedBox(height: 12),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.event_note_rounded,
-                                    size: 13,
-                                    color: bodyColor.withValues(alpha: 0.5),
-                                  ),
-                                  const SizedBox(width: 5),
-                                  Flexible(
-                                    child: Text(
-                                      context.tr('room.createdAtDate', {
-                                        'date': _formatDate(room.createdAt),
-                                      }),
-                                      style: TextStyle(
-                                        color: bodyColor.withValues(
-                                          alpha: 0.65,
-                                        ),
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-
-                            const SizedBox(height: 16),
-
-                            // Tombol QR Code
-                            SizedBox(
-                              width: double.infinity,
-                              height: 46,
-                              child: ElevatedButton.icon(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: primaryColor,
-                                  foregroundColor: isDark
-                                      ? AppColors.darkOnPrimary
-                                      : Colors.white,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(
-                                      AppRadius.pill,
-                                    ),
-                                  ),
-                                  elevation: 0,
-                                ),
-                                icon: const Icon(
-                                  Icons.qr_code_2_rounded,
-                                  size: 19,
-                                ),
-                                label: Flexible(
-                                  child: Text(
-                                    context.tr('room.viewShareQrBtn'),
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 13.5,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                                onPressed: () =>
-                                    RoomQrDialog.show(context, room: room),
-                              ),
-                            ),
-
-                            // ── Role Privileges: Tombol Edit & Hapus (Admin & Creator Pendamping ONLY) ──
-                            if (_canEditOrDeleteRoom()) ...[
-                              const SizedBox(height: 10),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: OutlinedButton.icon(
-                                      style: OutlinedButton.styleFrom(
-                                        foregroundColor: headingColor,
-                                        side: BorderSide(
-                                          color: isDark
-                                              ? AppColors.darkOutlineVariant
-                                              : AppColors.lightCardBorder,
-                                          width: 1.2,
-                                        ),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            AppRadius.pill,
-                                          ),
-                                        ),
-                                        padding: const EdgeInsets.symmetric(
-                                          vertical: 10,
-                                        ),
-                                      ),
-                                      icon: Icon(
-                                        Icons.edit_outlined,
-                                        size: 15,
-                                        color: primaryColor,
-                                      ),
-                                      label: Flexible(
-                                        child: Text(
-                                          context.tr('room.editRoom'),
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.w700,
-                                            fontSize: 12.5,
-                                          ),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ),
-                                      onPressed: () =>
-                                          _showEditRoomSheet(context, room),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Expanded(
-                                    child: OutlinedButton.icon(
-                                      style: OutlinedButton.styleFrom(
-                                        foregroundColor: AppColors.error,
-                                        side: BorderSide(
-                                          color: AppColors.error.withValues(
-                                            alpha: 0.45,
-                                          ),
-                                          width: 1.2,
-                                        ),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            AppRadius.pill,
-                                          ),
-                                        ),
-                                        padding: const EdgeInsets.symmetric(
-                                          vertical: 10,
-                                        ),
-                                      ),
-                                      icon: const Icon(
-                                        Icons.delete_outline_rounded,
-                                        size: 15,
-                                      ),
-                                      label: Flexible(
-                                        child: Text(
-                                          context.tr('room.deleteRoom'),
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.w700,
-                                            fontSize: 12.5,
-                                          ),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ),
-                                      onPressed: () =>
-                                          _handleDeleteRoom(context, room),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
-
-                      // ── Member Breakdown Strip ──────────────────────────────────
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 13,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isDark
-                              ? AppColors.darkSurfaceContainer.withValues(
-                                  alpha: 0.5,
-                                )
-                              : AppColors.canvasCream.withValues(alpha: 0.35),
-                          borderRadius: const BorderRadius.vertical(
-                            bottom: Radius.circular(22),
-                          ),
-                          border: Border(
-                            top: BorderSide(
-                              color: isDark
-                                  ? AppColors.darkCardBorder
-                                  : AppColors.lightCardBorder.withValues(
-                                      alpha: 0.5,
-                                    ),
-                            ),
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: _buildStatSummaryItem(
-                                label: context.tr('room.totalMembers'),
-                                value: '$_totalCount',
-                                color: headingColor,
-                              ),
-                            ),
-                            Container(
-                              height: 24,
-                              width: 1,
-                              color: isDark
-                                  ? AppColors.darkCardBorder
-                                  : AppColors.lightCardBorder.withValues(
-                                      alpha: 0.6,
-                                    ),
-                            ),
-                            Expanded(
-                              child: _buildStatSummaryItem(
-                                label: context.tr('room.roleJamaah'),
-                                value: '$_jamaahCount',
-                                color: AppColors.emeraldIslamic,
-                              ),
-                            ),
-                            Container(
-                              height: 24,
-                              width: 1,
-                              color: isDark
-                                  ? AppColors.darkCardBorder
-                                  : AppColors.lightCardBorder.withValues(
-                                      alpha: 0.6,
-                                    ),
-                            ),
-                            Expanded(
-                              child: _buildStatSummaryItem(
-                                label: context.tr('room.roleCompanion'),
-                                value: '$_pendampingCount',
-                                color: const Color(0xFF1D4ED8),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // Floating Hero Header (Protruding at top, like Image 2)
-                Positioned(
-                  top: 0,
-                  left: 14,
-                  right: 14,
-                  height: 96,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: isDark
-                            ? [const Color(0xFF38251A), const Color(0xFF1F140D)]
-                            : [AppColors.espressoDark, const Color(0xFF563B2A)],
-                      ),
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(
-                        color: AppColors.goldPrimary.withValues(alpha: 0.45),
-                        width: 1.2,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.espressoDark.withValues(alpha: 0.35),
-                          blurRadius: 18,
-                          offset: const Offset(0, 8),
-                        ),
-                      ],
-                    ),
-                    child: Stack(
-                      children: [
-                        // Ambient Glow Circles
-                        Positioned(
-                          top: -15,
-                          right: -15,
-                          child: Container(
-                            width: 75,
-                            height: 75,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: AppColors.goldPrimary.withValues(
-                                alpha: 0.12,
-                              ),
-                            ),
-                          ),
-                        ),
-                        Positioned(
-                          bottom: -20,
-                          left: -20,
-                          child: Container(
-                            width: 70,
-                            height: 70,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: AppColors.goldPrimary.withValues(
-                                alpha: 0.08,
-                              ),
-                            ),
-                          ),
-                        ),
-                        // Inner Content
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Container(
-                                width: 48,
-                                height: 48,
-                                decoration: BoxDecoration(
-                                  color: AppColors.goldPrimary.withValues(
-                                    alpha: 0.22,
-                                  ),
-                                  borderRadius: BorderRadius.circular(14),
-                                  border: Border.all(
-                                    color: AppColors.goldPrimary.withValues(
-                                      alpha: 0.55,
-                                    ),
-                                    width: 1.4,
-                                  ),
-                                ),
-                                child: const Icon(
-                                  Icons.meeting_room_rounded,
-                                  color: AppColors.goldAccent,
-                                  size: 25,
-                                ),
-                              ),
-                              const SizedBox(width: 14),
-                              Expanded(
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      room.capitalizedName,
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w800,
-                                        fontSize: 17,
-                                        letterSpacing: -0.2,
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                    const SizedBox(height: 3),
-                                    Text(
-                                      context.tr('room.maktabGroupSub'),
-                                      style: TextStyle(
-                                        color: Colors.white.withValues(
-                                          alpha: 0.72,
-                                        ),
-                                        fontSize: 11.5,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 4.5,
-                                ),
-                                decoration: BoxDecoration(
-                                  color:
-                                      (room.isActive
-                                              ? const Color(0xFF1B633E)
-                                              : Colors.black45)
-                                          .withValues(alpha: 0.75),
-                                  borderRadius: BorderRadius.circular(
-                                    AppRadius.pill,
-                                  ),
-                                  border: Border.all(
-                                    color: room.isActive
-                                        ? const Color(0xFF4ADE80)
-                                        : Colors.white30,
-                                    width: 1.0,
-                                  ),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Container(
-                                      width: 6,
-                                      height: 6,
-                                      decoration: BoxDecoration(
-                                        color: room.isActive
-                                            ? const Color(0xFF4ADE80)
-                                            : Colors.white70,
-                                        shape: BoxShape.circle,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 5),
-                                    Text(
-                                      room.isActive
-                                          ? context.tr('room.active')
-                                          : context.tr('room.inactive'),
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w700,
-                                        fontSize: 11,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
                     ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.lg),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.lg),
 
-            // ── 2. Search Bar & Filter Chips ──────────────────────────────────
-            _buildSearchAndFilters(
-              context,
-              cardBg,
-              headingColor,
-              bodyColor,
-              primaryColor,
-              isDark,
-            ),
-
-            const SizedBox(height: AppSpacing.md),
-
-            // ── 3. Pagination Summary & Limit Selector ────────────────────────
-            _buildPaginationHeader(
-              headingColor,
-              bodyColor,
-              primaryColor,
-              isDark,
-            ),
-
-            const SizedBox(height: AppSpacing.sm),
-
-            // ── 4. Members List (Paginated) ───────────────────────────────────
-            _buildMembersList(
-              context,
-              room,
-              cardBg,
-              headingColor,
-              bodyColor,
-              primaryColor,
-              isDark,
-            ),
-
-            const SizedBox(height: AppSpacing.md),
-
-            // ── 5. Pagination Footer Navigation ───────────────────────────────
-            if (_filteredMembers.isNotEmpty)
-              _buildPaginationFooter(
+              // ── 2. Search Bar & Filter Chips ──────────────────────────────────
+              _buildSearchAndFilters(
+                context,
                 cardBg,
                 headingColor,
                 bodyColor,
@@ -1425,8 +2094,44 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                 isDark,
               ),
 
-            const SizedBox(height: 36),
-          ],
+              const SizedBox(height: AppSpacing.md),
+
+              // ── 3. Pagination Summary & Limit Selector ────────────────────────
+              _buildPaginationHeader(
+                headingColor,
+                bodyColor,
+                primaryColor,
+                isDark,
+              ),
+
+              const SizedBox(height: AppSpacing.sm),
+
+              // ── 4. Members List (Paginated) ───────────────────────────────────
+              _buildMembersList(
+                context,
+                room,
+                cardBg,
+                headingColor,
+                bodyColor,
+                primaryColor,
+                isDark,
+              ),
+
+              const SizedBox(height: AppSpacing.md),
+
+              // ── 5. Pagination Footer Navigation ───────────────────────────────
+              if (_filteredMembers.isNotEmpty)
+                _buildPaginationFooter(
+                  cardBg,
+                  headingColor,
+                  bodyColor,
+                  primaryColor,
+                  isDark,
+                ),
+
+              const SizedBox(height: 36),
+            ],
+          ),
         ),
       ),
     );
@@ -1615,9 +2320,9 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
     Color itemBg;
     if (isSelected) {
       if (isSos) {
-        itemBg = isDark ? const Color(0xFF5C1D1D) : AppColors.sosEmergency;
+        itemBg = context.hc.danger;
       } else {
-        itemBg = isDark ? const Color(0xFF2C1E16) : AppColors.espressoDark;
+        itemBg = context.hc.brand;
       }
     } else {
       itemBg = cardBg;
@@ -1625,31 +2330,27 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
 
     Color itemBorderColor;
     if (isSelected) {
-      itemBorderColor = isSos ? const Color(0xFFFF6B6B) : AppColors.goldPrimary;
+      itemBorderColor = isSos ? context.hc.danger : context.hc.accent;
     } else if (hasActiveSos) {
-      itemBorderColor = AppColors.sosEmergency.withValues(alpha: 0.55);
+      itemBorderColor = context.hc.danger.withValues(alpha: 0.55);
     } else {
-      itemBorderColor = isDark
-          ? AppColors.darkOutlineVariant
-          : const Color(0xFFE2E8F0);
+      itemBorderColor = context.hc.border;
     }
 
     Color iconColor;
     if (isSelected) {
-      iconColor = isSos ? Colors.white : AppColors.goldPrimary;
+      iconColor = isSos ? context.hc.onPrimary : context.hc.onPrimaryContainer;
     } else if (isSos) {
-      iconColor = AppColors.sosEmergency;
+      iconColor = context.hc.danger;
     } else {
-      iconColor = isDark ? AppColors.darkTextBody : AppColors.espressoDark;
+      iconColor = isDark ? context.hc.textSecondary : context.hc.textPrimary;
     }
 
     Color textColor;
     if (isSelected) {
       textColor = Colors.white;
     } else if (isSos) {
-      textColor = hasActiveSos
-          ? (isDark ? const Color(0xFFFF8A8A) : AppColors.sosEmergency)
-          : headingColor;
+      textColor = hasActiveSos ? context.hc.danger : headingColor;
     } else {
       textColor = headingColor;
     }
@@ -1659,16 +2360,16 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
     if (isSelected) {
       badgeBg = isSos
           ? Colors.white.withValues(alpha: 0.25)
-          : AppColors.goldPrimary;
-      badgeTextColor = isSos ? Colors.white : AppColors.espressoDark;
+          : context.hc.accent;
+      badgeTextColor = isSos ? context.hc.onPrimary : context.hc.brand;
     } else if (isSos && count > 0) {
-      badgeBg = AppColors.sosEmergency.withValues(alpha: isDark ? 0.25 : 0.14);
-      badgeTextColor = AppColors.sosEmergency;
+      badgeBg = context.hc.danger.withValues(alpha: isDark ? 0.25 : 0.14);
+      badgeTextColor = context.hc.danger;
     } else {
       badgeBg = isDark
           ? Colors.white.withValues(alpha: 0.08)
-          : AppColors.canvasCream;
-      badgeTextColor = isDark ? AppColors.darkTextBody : bodyColor;
+          : context.hc.surfaceSand;
+      badgeTextColor = isDark ? context.hc.textSecondary : bodyColor;
     }
 
     return Material(
@@ -1694,12 +2395,8 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                 ? [
                     BoxShadow(
                       color: isSos
-                          ? AppColors.sosEmergency.withValues(
-                              alpha: isDark ? 0.40 : 0.25,
-                            )
-                          : AppColors.espressoDark.withValues(
-                              alpha: isDark ? 0.35 : 0.16,
-                            ),
+                          ? context.hc.danger.withValues(alpha: 0.25)
+                          : context.hc.shadow,
                       blurRadius: 10,
                       offset: const Offset(0, 3),
                     ),
@@ -1721,18 +2418,16 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                 height: 28,
                 decoration: BoxDecoration(
                   color: isSelected
-                      ? AppColors.surfaceWhite.withValues(alpha: 0.14)
+                      ? context.hc.onPrimary.withValues(alpha: 0.14)
                       : (isSos
-                            ? AppColors.sosEmergency.withValues(alpha: 0.12)
-                            : (isDark
-                                  ? Colors.white.withValues(alpha: 0.06)
-                                  : AppColors.canvasCream)),
+                            ? context.hc.danger.withValues(alpha: 0.12)
+                            : context.hc.surfaceSand),
                   borderRadius: BorderRadius.circular(8),
                   border: isSelected
                       ? Border.all(
                           color: isSos
                               ? Colors.white.withValues(alpha: 0.5)
-                              : AppColors.goldPrimary.withValues(alpha: 0.4),
+                              : context.hc.accent.withValues(alpha: 0.4),
                         )
                       : null,
                 ),
@@ -1758,10 +2453,8 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                       ? null
                       : Border.all(
                           color: isSos && count > 0
-                              ? AppColors.sosEmergency.withValues(alpha: 0.4)
-                              : (isDark
-                                    ? AppColors.darkOutlineVariant
-                                    : const Color(0xFFE2E8F0)),
+                              ? context.hc.danger.withValues(alpha: 0.4)
+                              : context.hc.border,
                           width: 1,
                         ),
                 ),
@@ -1900,9 +2593,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
       if (_searchQuery.isNotEmpty || _selectedFilter != 'Semua') {
         return AppCard(
           backgroundColor: cardBg,
-          borderColor: isDark
-              ? AppColors.darkCardBorder
-              : AppColors.canvasCreamSubtle,
+          borderColor: context.hc.border,
           child: Padding(
             padding: const EdgeInsets.symmetric(
               vertical: AppSpacing.xl,
@@ -1962,9 +2653,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
 
       return AppCard(
         backgroundColor: cardBg,
-        borderColor: isDark
-            ? AppColors.darkCardBorder
-            : AppColors.canvasCreamSubtle,
+        borderColor: context.hc.border,
         child: Padding(
           padding: const EdgeInsets.all(AppSpacing.xl),
           child: Center(
@@ -2072,11 +2761,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
       decoration: BoxDecoration(
         color: cardBg,
         borderRadius: BorderRadius.circular(AppRadius.pill),
-        border: Border.all(
-          color: isDark
-              ? AppColors.darkOutlineVariant
-              : const Color(0xFFE2E8F0),
-        ),
+        border: Border.all(color: context.hc.border),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -2220,25 +2905,34 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
     bool canManage,
   ) {
     final effectiveMember = _resolveRealtimeMember(member);
-    final isDark = AppColors.isDark(context);
-    final headingColor = isDark
-        ? AppColors.darkTextHeading
-        : AppColors.espressoDark;
-    final bodyColor = isDark ? AppColors.darkTextBody : AppColors.textBody;
-    final primaryColor = isDark ? AppColors.darkPrimary : AppColors.primaryGold;
-    final cardBg = isDark ? AppColors.darkSurface : Colors.white;
-    final dividerColor = isDark
-        ? AppColors.darkCardBorder
-        : AppColors.canvasCreamSubtle;
+    final isDark = context.isDarkTheme;
+    final headingColor = context.hc.textPrimary;
+    final bodyColor = context.hc.textSecondary;
+    final primaryColor = context.hc.brand;
+    final cardBg = context.hc.surface;
+    final dividerColor = context.hc.border;
+    final currentUid = _effectiveUid;
+    final hajiCare = Get.isRegistered<HajiCareController>()
+        ? Get.find<HajiCareController>()
+        : null;
+    final isAdmin = hajiCare?.role == UserRole.admin;
+    final isViewerPrimaryOwner =
+        currentUid != null && (room.isPrimaryOwner(currentUid) || isAdmin);
+    final isTargetSelf =
+        currentUid != null && currentUid == effectiveMember.uid;
 
     // Avatar background color according to role / status
     Color avatarBg;
     if (effectiveMember.sosActive) {
       avatarBg = const Color(0xFFDC2626);
+    } else if (effectiveMember.isPrimaryOwner(room)) {
+      avatarBg = const Color(0xFFD97706);
+    } else if (effectiveMember.isCoOwner(room)) {
+      avatarBg = const Color(0xFF7C3AED);
     } else if (effectiveMember.isPendamping) {
       avatarBg = const Color(0xFF1D4ED8);
     } else if (effectiveMember.isJamaah) {
-      avatarBg = AppColors.emeraldIslamic;
+      avatarBg = context.hc.islamic;
     } else {
       avatarBg = primaryColor;
     }
@@ -2246,39 +2940,61 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
     // Role badge color scheme
     Color roleBadgeBg;
     Color roleBadgeTextColor;
-    if (effectiveMember.isPendamping) {
+    String roleBadgeLabel;
+    IconData roleBadgeIcon;
+
+    if (effectiveMember.isPrimaryOwner(room)) {
+      roleBadgeBg = isDark
+          ? const Color(0xFFF59E0B).withValues(alpha: 0.25)
+          : const Color(0xFFFEF3C7);
+      roleBadgeTextColor = isDark
+          ? const Color(0xFFFBBF24)
+          : const Color(0xFFB45309);
+      roleBadgeLabel = context.tr('room.rolePrimaryOwner');
+      roleBadgeIcon = Icons.stars_rounded;
+    } else if (effectiveMember.isCoOwner(room)) {
+      roleBadgeBg = isDark
+          ? const Color(0xFF8B5CF6).withValues(alpha: 0.25)
+          : const Color(0xFFEDE9FE);
+      roleBadgeTextColor = isDark
+          ? const Color(0xFFA78BFA)
+          : const Color(0xFF6D28D9);
+      roleBadgeLabel = context.tr('room.roleCoOwner');
+      roleBadgeIcon = Icons.verified_user_rounded;
+    } else if (effectiveMember.isPendamping) {
       roleBadgeBg = isDark
           ? const Color(0xFF1E3A8A).withValues(alpha: 0.4)
           : const Color(0xFFE0E7FF);
       roleBadgeTextColor = isDark
           ? const Color(0xFF93C5FD)
           : const Color(0xFF1D4ED8);
+      roleBadgeLabel = context.tr('room.roleCompanion');
+      roleBadgeIcon = Icons.health_and_safety_rounded;
     } else if (effectiveMember.isJamaah) {
-      roleBadgeBg = isDark
-          ? AppColors.emeraldIslamic.withValues(alpha: 0.25)
-          : AppColors.statusSafe.withValues(alpha: 0.12);
-      roleBadgeTextColor = isDark
-          ? const Color(0xFF6EE7B7)
-          : AppColors.statusSafe;
+      roleBadgeBg = context.hc.success.withValues(alpha: isDark ? 0.25 : 0.12);
+      roleBadgeTextColor = context.hc.success;
+      roleBadgeLabel = context.tr('room.roleJamaah');
+      roleBadgeIcon = Icons.person_rounded;
     } else {
       roleBadgeBg = primaryColor.withValues(alpha: 0.12);
       roleBadgeTextColor = primaryColor;
+      roleBadgeLabel = context.tr('room.roleAdmin');
+      roleBadgeIcon = Icons.admin_panel_settings_rounded;
     }
 
     final distanceText = _getMemberDistance(effectiveMember);
 
     // Primary action button colors adaptive to theme (vibrant pill like Image 1)
-    final actionBtnBg = isDark
-        ? AppColors.darkPrimary
-        : (effectiveMember.isPendamping
-              ? const Color(0xFF1D4ED8)
-              : AppColors.emeraldIslamic);
-    final actionBtnFg = isDark ? AppColors.darkOnPrimary : Colors.white;
+    final actionBtnBg = effectiveMember.isPendamping
+        ? context.hc.accent
+        : context.hc.islamic;
+    final actionBtnFg = context.hc.onPrimary;
 
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
+      constraints: const BoxConstraints(maxWidth: AppBreakpoints.maxSheetWidth),
       builder: (ctx) {
         return SafeArea(
           child: Padding(
@@ -2342,19 +3058,25 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                                 AppRadius.pill,
                               ),
                             ),
-                            child: Text(
-                              (effectiveMember.isPendamping
-                                      ? context.tr('room.roleCompanion')
-                                      : effectiveMember.isJamaah
-                                      ? context.tr('room.roleJamaah')
-                                      : context.tr('room.roleAdmin'))
-                                  .toUpperCase(),
-                              style: TextStyle(
-                                color: roleBadgeTextColor,
-                                fontWeight: FontWeight.w700,
-                                fontSize: 10.5,
-                                letterSpacing: 0.8,
-                              ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  roleBadgeIcon,
+                                  size: 12,
+                                  color: roleBadgeTextColor,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  roleBadgeLabel.toUpperCase(),
+                                  style: TextStyle(
+                                    color: roleBadgeTextColor,
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 10.5,
+                                    letterSpacing: 0.8,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                           if (effectiveMember.sosActive) ...[
@@ -2365,15 +3087,17 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                                 vertical: 3,
                               ),
                               decoration: BoxDecoration(
-                                color: AppColors.error.withValues(alpha: 0.15),
+                                color: context.hc.danger.withValues(
+                                  alpha: 0.15,
+                                ),
                                 borderRadius: BorderRadius.circular(
                                   AppRadius.pill,
                                 ),
                               ),
                               child: Text(
                                 context.tr('room.sosActiveBadge'),
-                                style: const TextStyle(
-                                  color: AppColors.error,
+                                style: TextStyle(
+                                  color: context.hc.danger,
                                   fontWeight: FontWeight.w800,
                                   fontSize: 10,
                                   letterSpacing: 0.6,
@@ -2402,14 +3126,17 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                                     decoration: BoxDecoration(
                                       shape: BoxShape.circle,
                                       color: effectiveMember.hasLocation
-                                          ? AppColors.emeraldIslamic
+                                          ? context.hc.islamic
                                           : Colors.grey,
                                     ),
                                   ),
                                   const SizedBox(width: 6),
                                   Flexible(
                                     child: Text(
-                                      effectiveMember.getLocationStatus(),
+                                      _getMemberLocationStatus(
+                                        context,
+                                        effectiveMember,
+                                      ),
                                       style: TextStyle(
                                         color: headingColor,
                                         fontWeight: FontWeight.w600,
@@ -2446,7 +3173,10 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                             _buildDetailHorizontalRow(
                               label: context.tr('room.joinDate'),
                               valueText: effectiveMember.joinedAt != null
-                                  ? _formatDate(effectiveMember.joinedAt)
+                                  ? _formatDate(
+                                      effectiveMember.joinedAt,
+                                      context,
+                                    )
                                   : context.tr('room.unknown'),
                               headingColor: headingColor,
                               bodyColor: bodyColor,
@@ -2594,11 +3324,178 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                                     ),
                                   ),
                                   style: OutlinedButton.styleFrom(
-                                    foregroundColor: AppColors.error,
+                                    foregroundColor: context.hc.danger,
                                     side: BorderSide(
-                                      color: AppColors.error.withValues(
+                                      color: context.hc.danger.withValues(
                                         alpha: 0.35,
                                       ),
+                                      width: 1,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(
+                                        AppRadius.pill,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                            // Co-Owner and Ownership actions for Primary Owner viewing another Companion
+                            if (isViewerPrimaryOwner &&
+                                !isTargetSelf &&
+                                effectiveMember.isPendamping) ...[
+                              if (effectiveMember.hasLocation)
+                                const SizedBox(height: 10),
+
+                              // Button 1: Set / Replace / Remove Co-Owner
+                              if (effectiveMember.isCoOwner(room))
+                                SizedBox(
+                                  width: double.infinity,
+                                  height: 46,
+                                  child: OutlinedButton.icon(
+                                    onPressed: () {
+                                      Navigator.pop(ctx);
+                                      _handleRemoveCoOwner(
+                                        context,
+                                        effectiveMember,
+                                        room,
+                                      );
+                                    },
+                                    icon: const Icon(
+                                      Icons.remove_moderator_rounded,
+                                      size: 16,
+                                    ),
+                                    label: Flexible(
+                                      child: Text(
+                                        context.tr('room.removeCoOwnerBtn'),
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 13.5,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor: isDark
+                                          ? const Color(0xFFA78BFA)
+                                          : const Color(0xFF7C3AED),
+                                      side: BorderSide(
+                                        color: isDark
+                                            ? const Color(
+                                                0xFFA78BFA,
+                                              ).withValues(alpha: 0.4)
+                                            : const Color(
+                                                0xFF7C3AED,
+                                              ).withValues(alpha: 0.4),
+                                        width: 1,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(
+                                          AppRadius.pill,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                )
+                              else
+                                SizedBox(
+                                  width: double.infinity,
+                                  height: 46,
+                                  child: OutlinedButton.icon(
+                                    onPressed: () {
+                                      Navigator.pop(ctx);
+                                      _handleSetCoOwner(
+                                        context,
+                                        effectiveMember,
+                                        room,
+                                      );
+                                    },
+                                    icon: const Icon(
+                                      Icons.verified_user_rounded,
+                                      size: 16,
+                                    ),
+                                    label: Flexible(
+                                      child: Text(
+                                        room.coOwnerId != null &&
+                                                room.coOwnerId!.isNotEmpty
+                                            ? context.tr(
+                                                'room.replaceCoOwnerBtn',
+                                              )
+                                            : context.tr('room.setCoOwnerBtn'),
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 13.5,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor: isDark
+                                          ? const Color(0xFFA78BFA)
+                                          : const Color(0xFF7C3AED),
+                                      side: BorderSide(
+                                        color: isDark
+                                            ? const Color(
+                                                0xFFA78BFA,
+                                              ).withValues(alpha: 0.4)
+                                            : const Color(
+                                                0xFF7C3AED,
+                                              ).withValues(alpha: 0.4),
+                                        width: 1,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(
+                                          AppRadius.pill,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+
+                              const SizedBox(height: 10),
+
+                              // Button 2: Transfer Primary Ownership
+                              SizedBox(
+                                width: double.infinity,
+                                height: 46,
+                                child: OutlinedButton.icon(
+                                  onPressed: () {
+                                    Navigator.pop(ctx);
+                                    _handleTransferOwnership(
+                                      context,
+                                      effectiveMember,
+                                      room,
+                                    );
+                                  },
+                                  icon: const Icon(
+                                    Icons.stars_rounded,
+                                    size: 16,
+                                  ),
+                                  label: Flexible(
+                                    child: Text(
+                                      context.tr('room.transferOwnershipBtn'),
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 13.5,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: isDark
+                                        ? const Color(0xFFFBBF24)
+                                        : const Color(0xFFD97706),
+                                    side: BorderSide(
+                                      color: isDark
+                                          ? const Color(
+                                              0xFFFBBF24,
+                                            ).withValues(alpha: 0.4)
+                                          : const Color(
+                                              0xFFD97706,
+                                            ).withValues(alpha: 0.4),
                                       width: 1,
                                     ),
                                     shape: RoundedRectangleBorder(
@@ -2629,10 +3526,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         color: avatarBg,
-                        border: Border.all(
-                          color: isDark ? AppColors.darkSurface : Colors.white,
-                          width: 4,
-                        ),
+                        border: Border.all(color: context.hc.surface, width: 4),
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withValues(
@@ -2763,11 +3657,11 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
       isDestructive: true,
       onConfirm: () async {
         try {
-          final user = FirebaseAuth.instance.currentUser;
-          final actorUid = user?.uid ?? 'petugas';
+          final user = _currentFirebaseUser;
+          final actorUid = _effectiveUid ?? 'petugas';
           final actorName = user?.displayName?.trim().isNotEmpty == true
               ? user!.displayName!
-              : 'Petugas Maktab';
+              : context.tr('room.defaultActorOfficer');
 
           await _roomService.removeJamaahFromRoom(
             roomId: room.id,
@@ -2775,6 +3669,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
             actorUid: actorUid,
             actorRole: 'pendamping',
             actorName: actorName,
+            roomName: room.name,
           );
 
           if (context.mounted) {
@@ -2871,7 +3766,25 @@ class _MemberTile extends StatelessWidget {
     String roleLabel;
     IconData roleIcon;
 
-    if (member.isPendamping) {
+    if (member.isPrimaryOwner(room)) {
+      badgeBg = isDark
+          ? const Color(0xFFF59E0B).withValues(alpha: 0.25)
+          : const Color(0xFFFEF3C7);
+      badgeTextColor = isDark
+          ? const Color(0xFFFBBF24)
+          : const Color(0xFFB45309);
+      roleLabel = context.tr('room.rolePrimaryOwner');
+      roleIcon = Icons.stars_rounded;
+    } else if (member.isCoOwner(room)) {
+      badgeBg = isDark
+          ? const Color(0xFF8B5CF6).withValues(alpha: 0.25)
+          : const Color(0xFFEDE9FE);
+      badgeTextColor = isDark
+          ? const Color(0xFFA78BFA)
+          : const Color(0xFF6D28D9);
+      roleLabel = context.tr('room.roleCoOwner');
+      roleIcon = Icons.verified_user_rounded;
+    } else if (member.isPendamping) {
       badgeBg = isDark
           ? const Color(0xFF1E3A8A).withValues(alpha: 0.4)
           : const Color(0xFFE0E7FF);
@@ -2881,10 +3794,8 @@ class _MemberTile extends StatelessWidget {
       roleLabel = context.tr('room.roleCompanion');
       roleIcon = Icons.health_and_safety_rounded;
     } else if (member.isJamaah) {
-      badgeBg = isDark
-          ? AppColors.emeraldIslamic.withValues(alpha: 0.25)
-          : AppColors.statusSafe.withValues(alpha: 0.12);
-      badgeTextColor = isDark ? const Color(0xFF6EE7B7) : AppColors.statusSafe;
+      badgeBg = context.hc.success.withValues(alpha: isDark ? 0.25 : 0.12);
+      badgeTextColor = context.hc.success;
       roleLabel = context.tr('room.roleJamaah');
       roleIcon = Icons.person_rounded;
     } else {
@@ -2912,9 +3823,7 @@ class _MemberTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadius.card),
         child: AppCard(
           backgroundColor: cardBg,
-          borderColor: isDark
-              ? AppColors.darkCardBorder
-              : AppColors.canvasCreamSubtle,
+          borderColor: context.hc.border,
           padding: const EdgeInsets.symmetric(
             horizontal: AppSpacing.cardPadding,
             vertical: AppSpacing.sm + 2,
@@ -2928,21 +3837,21 @@ class _MemberTile extends StatelessWidget {
                     height: 42,
                     decoration: BoxDecoration(
                       color: hasSos
-                          ? AppColors.sosEmergency.withValues(alpha: 0.18)
+                          ? context.hc.danger.withValues(alpha: 0.18)
                           : badgeBg,
                       borderRadius: BorderRadius.circular(AppRadius.md),
                       border: Border.all(
                         color: hasSos
-                            ? AppColors.sosEmergency.withValues(alpha: 0.6)
+                            ? context.hc.danger.withValues(alpha: 0.6)
                             : badgeTextColor.withValues(alpha: 0.3),
                         width: hasSos ? 1.8 : 1.0,
                       ),
                     ),
                     child: Center(
                       child: hasSos
-                          ? const Icon(
+                          ? Icon(
                               Icons.sos_rounded,
-                              color: AppColors.sosEmergency,
+                              color: context.hc.danger,
                               size: 22,
                             )
                           : Text(
@@ -2964,7 +3873,7 @@ class _MemberTile extends StatelessWidget {
                         width: 11,
                         height: 11,
                         decoration: BoxDecoration(
-                          color: AppColors.sosEmergency,
+                          color: context.hc.danger,
                           shape: BoxShape.circle,
                           border: Border.all(color: Colors.white, width: 1.5),
                         ),
@@ -2999,29 +3908,25 @@ class _MemberTile extends StatelessWidget {
                               vertical: 2,
                             ),
                             decoration: BoxDecoration(
-                              color: AppColors.sosEmergency.withValues(
-                                alpha: 0.14,
-                              ),
+                              color: context.hc.danger.withValues(alpha: 0.14),
                               borderRadius: BorderRadius.circular(4),
                               border: Border.all(
-                                color: AppColors.sosEmergency.withValues(
-                                  alpha: 0.4,
-                                ),
+                                color: context.hc.danger.withValues(alpha: 0.4),
                               ),
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(
+                                Icon(
                                   Icons.sos_rounded,
                                   size: 9,
-                                  color: AppColors.sosEmergency,
+                                  color: context.hc.danger,
                                 ),
                                 const SizedBox(width: 3),
                                 Text(
                                   context.tr('room.sosActiveBadge'),
-                                  style: const TextStyle(
-                                    color: AppColors.sosEmergency,
+                                  style: TextStyle(
+                                    color: context.hc.danger,
                                     fontSize: 9,
                                     fontWeight: FontWeight.w900,
                                     letterSpacing: 0.3,
@@ -3035,8 +3940,8 @@ class _MemberTile extends StatelessWidget {
                           Container(
                             width: 6,
                             height: 6,
-                            decoration: const BoxDecoration(
-                              color: AppColors.statusPositive,
+                            decoration: BoxDecoration(
+                              color: context.hc.success,
                               shape: BoxShape.circle,
                             ),
                           ),

@@ -27,11 +27,16 @@ void main() {
   });
 
   Widget buildTestWidget({required ThemeMode themeMode}) {
+    final loc = Get.isRegistered<AppSettingsController>()
+        ? Get.find<AppSettingsController>().rxLocale.value
+        : const Locale('id', 'ID');
     return GetMaterialApp(
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: themeMode,
-      locale: const Locale('id', 'ID'),
+      locale: loc,
+      translations: AppTranslations(),
+      supportedLocales: AppTranslations.supportedLocales,
       localizationsDelegates: const [
         AppLocalizations.delegate,
         GlobalMaterialLocalizations.delegate,
@@ -166,6 +171,102 @@ void main() {
         expect(find.byType(OnboardingSlideLanguage), findsOneWidget);
         expect(find.text('Indonesia'), findsOneWidget);
         expect(tester.takeException(), isNull);
+      },
+    );
+
+    testWidgets(
+      'Navigates between slides via PageController on OnboardingScreen',
+      (tester) async {
+        Get.put(AppSettingsController(), permanent: true);
+        final ctrl = Get.put(OnboardingController(), permanent: true);
+
+        await tester.pumpWidget(buildTestWidget(themeMode: ThemeMode.light));
+        await tester.pumpAndSettle();
+
+        expect(ctrl.currentPage.value, 0);
+
+        // Advance to slide 2 (Safety)
+        ctrl.nextPage(3);
+        await tester.pumpAndSettle();
+        expect(ctrl.currentPage.value, 1);
+        expect(find.byType(OnboardingSlideSafety), findsOneWidget);
+
+        // Advance to slide 3 (Accessibility)
+        ctrl.nextPage(3);
+        await tester.pumpAndSettle();
+        expect(ctrl.currentPage.value, 2);
+        expect(find.byType(OnboardingSlideAccessibility), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'Renders all onboarding slides on compact screen (320x568) without overflow',
+      (tester) async {
+        Get.put(AppSettingsController(), permanent: true);
+        Get.put(OnboardingController(), permanent: true);
+
+        tester.view.physicalSize = const Size(320, 568);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(() {
+          tester.view.resetPhysicalSize();
+          tester.view.resetDevicePixelRatio();
+        });
+
+        await tester.pumpWidget(buildTestWidget(themeMode: ThemeMode.dark));
+        await tester.pumpAndSettle();
+
+        expect(find.byType(OnboardingScreen), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      },
+    );
+
+    testWidgets(
+      'Dynamically updates slide 2 and Next button when locale changes',
+      (tester) async {
+        final settings = Get.put(AppSettingsController(), permanent: true);
+        await settings.loadSettings();
+        final ctrl = Get.put(OnboardingController(), permanent: true);
+
+        await tester.pumpWidget(buildTestWidget(themeMode: ThemeMode.light));
+        await tester.pumpAndSettle();
+
+        // 1. Initial ID state: button is 'Lanjut'
+        expect(find.text('Lanjut'), findsOneWidget);
+
+        // 2. Switch locale to English
+        await settings.setLocale(const Locale('en'));
+        await tester.pump();
+        await tester.pumpAndSettle();
+
+        expect(find.text('Next'), findsOneWidget);
+
+        // Advance to slide 2 (Safety)
+        ctrl.nextPage(3);
+        await tester.pumpAndSettle();
+
+        expect(find.byType(OnboardingSlideSafety), findsOneWidget);
+        // Slide 2 title in English
+        expect(find.text('Keep Safe Distance & Stay Monitored'), findsWidgets);
+        // Location pill in English
+        expect(find.text('Currently at '), findsOneWidget);
+
+        // 3. Switch locale to Javanese while on slide 2
+        await settings.setLocale(const Locale('jv'));
+        await tester.pump();
+        await tester.pumpAndSettle();
+
+        expect(find.text('Lajeng'), findsOneWidget);
+        expect(find.text('Jagi Jarak Aman & Kapantau'), findsWidgets);
+        expect(find.text('Saweg wonten ing '), findsOneWidget);
+
+        // 4. Switch locale to Sundanese while on slide 2
+        await settings.setLocale(const Locale('su'));
+        await tester.pump();
+        await tester.pumpAndSettle();
+
+        expect(find.text('Lajeng'), findsOneWidget);
+        expect(find.text('Jaga Jarak Aman & Kapantau'), findsWidgets);
+        expect(find.text('Nuju di '), findsOneWidget);
       },
     );
   });

@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import '../theme/app_colors.dart';
 import '../theme/app_radius.dart';
 import '../theme/app_sizes.dart';
 import '../theme/app_spacing.dart';
-import '../theme/app_typography.dart';
+import '../theme/theme_context.dart';
 
 class PillButton extends StatelessWidget {
   final String label;
@@ -27,25 +26,28 @@ class PillButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final hc = context.hc;
+    final textTheme = context.text;
+
+    final effectiveTextColor =
+        textColor ?? (isOutline ? (color ?? hc.textPrimary) : hc.onPrimary);
+
     Widget buttonChild = Row(
       mainAxisSize: isFullWidth ? MainAxisSize.max : MainAxisSize.min,
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         if (icon != null) ...[
           Icon(icon, size: 20),
-          const SizedBox(width: AppSpacing.sm),
+          const SizedBox(width: AppSpacing.s8),
         ],
         Flexible(
           child: Text(
             label,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: AppTypography.labelLarge.copyWith(
-              color:
-                  textColor ??
-                  (isOutline
-                      ? (color ?? AppColors.primaryContainer)
-                      : AppColors.surfaceWhite),
+            style: textTheme.labelLarge.copyWith(
+              color: effectiveTextColor,
+              fontWeight: FontWeight.w700,
             ),
           ),
         ),
@@ -56,8 +58,8 @@ class PillButton extends StatelessWidget {
       return OutlinedButton(
         onPressed: onPressed,
         style: OutlinedButton.styleFrom(
-          side: BorderSide(color: color ?? AppColors.goldLight, width: 1.5),
-          foregroundColor: textColor ?? AppColors.primaryContainer,
+          side: BorderSide(color: color ?? hc.borderStrong, width: 1.5),
+          foregroundColor: effectiveTextColor,
           minimumSize: Size(
             isFullWidth ? double.infinity : AppSizes.touchTargetMin,
             AppSizes.buttonHeightSecondary,
@@ -65,7 +67,7 @@ class PillButton extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.pill),
           ),
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl2),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s24),
         ),
         child: buttonChild,
       );
@@ -74,8 +76,8 @@ class PillButton extends StatelessWidget {
     return ElevatedButton(
       onPressed: onPressed,
       style: ElevatedButton.styleFrom(
-        backgroundColor: color ?? AppColors.primaryContainer,
-        foregroundColor: textColor ?? AppColors.surfaceWhite,
+        backgroundColor: color ?? hc.primary,
+        foregroundColor: effectiveTextColor,
         minimumSize: Size(
           isFullWidth ? double.infinity : AppSizes.touchTargetMin,
           AppSizes.buttonHeightPrimary,
@@ -83,7 +85,7 @@ class PillButton extends StatelessWidget {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.pill),
         ),
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl2),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s24),
       ),
       child: buttonChild,
     );

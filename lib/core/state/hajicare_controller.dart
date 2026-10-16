@@ -8,6 +8,7 @@ import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/jamaah_data.dart';
 import '../services/location_service.dart';
+import '../services/secure_storage_service.dart';
 import '../utils/app_logger.dart';
 import '../../features/room/models/room_model.dart';
 import '../../features/room/models/room_member_model.dart';
@@ -72,6 +73,7 @@ class HajiCareController extends GetxController {
   final pendampingLocation = Rxn<GeoPoint>();
   final pendampingLocationUpdatedAt = Rxn<DateTime>();
   final isPendampingGpsActive = false.obs;
+  final nearestPendamping = Rxn<RoomMemberModel>();
 
   /// Kloter aktif: memprioritaskan data dari activeRoom jika ada, fallback ke data user pendamping
   String? get effectiveKloter {
@@ -101,7 +103,6 @@ class HajiCareController extends GetxController {
   final safeRadiusMeters = 200.0.obs;
   StreamSubscription<Position>? _gpsStreamSub;
   int _sessionGeneration = 0;
-  String? _locationTrackingRoomId;
   DateTime? _lastLocationBroadcastTime;
   Position? _lastBroadcastPosition;
 
@@ -120,6 +121,7 @@ class HajiCareController extends GetxController {
   /// ID of the sos_events doc created when this device triggered an SOS.
   /// Used to push live GPS updates into the SOS event while active.
   String? _activeSosEventId;
+  String? _confirmedRoomId;
 
   JamaahData? _self;
 
@@ -178,8 +180,7 @@ class HajiCareController extends GetxController {
 
   Future<void> _loadCachedUserData() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final savedRoomId = prefs.getString(keyActiveRoomId);
+      final savedRoomId = await SecureStorageService.instance.getActiveRoomId();
 
       if (savedRoomId != null && savedRoomId.trim().isNotEmpty) {
         _cachedRoomId = savedRoomId.trim();
@@ -199,7 +200,7 @@ class HajiCareController extends GetxController {
   }
 
   /// Immediately applies user role and active room to reactive state
-  /// and updates SharedPreferences cache.
+  /// and updates encrypted SecureStorageService cache.
   Future<void> applyUserData({
     required String roleStr,
     String? roomId,
@@ -226,18 +227,13 @@ class HajiCareController extends GetxController {
       pendampingName.value = name.trim();
     }
 
-    // Persist to SharedPreferences
+    // Persist to encrypted SecureStorageService
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(keyUserRole, normalizedRole);
-      if (trimmedRoomId != null) {
-        await prefs.setString(keyActiveRoomId, trimmedRoomId);
-      } else {
-        await prefs.remove(keyActiveRoomId);
-      }
+      await SecureStorageService.instance.setUserRole(normalizedRole);
+      await SecureStorageService.instance.setActiveRoomId(trimmedRoomId);
     } catch (e) {
       AppLogger.error(
-        'Error saving user data to cache: $e',
+        'Error saving user data to secure storage: $e',
         tag: 'HajiCareController',
       );
     }
@@ -332,7 +328,6 @@ class HajiCareController extends GetxController {
     _sessionGeneration++;
     _gpsStreamSub?.cancel();
     _gpsStreamSub = null;
-    _locationTrackingRoomId = null;
     _userDocSub?.cancel();
     _roomDocSub?.cancel();
     _roomMembersSub?.cancel();
@@ -358,6 +353,7 @@ class HajiCareController extends GetxController {
     myCurrentPosition.value = null;
     isMyGpsActive.value = false;
     calculatedDistance.value = null;
+    nearestPendamping.value = null;
     pendampingLocation.value = null;
     pendampingLocationUpdatedAt.value = null;
     pendampingKloter.value = null;
@@ -559,11 +555,13 @@ class HajiCareController extends GetxController {
   }
 
   void _clearRoomListeners() {
+    _confirmedRoomId = null;
     _roomDocSub?.cancel();
     _roomMembersSub?.cancel();
     _pendampingDocSub?.cancel();
     activeRoom.value = null;
     activeRoomMembers.clear();
+    nearestPendamping.value = null;
     pendampingLocation.value = null;
     pendampingLocationUpdatedAt.value = null;
     isPendampingGpsActive.value = false;
@@ -591,6 +589,11 @@ class HajiCareController extends GetxController {
           (doc) {
             if (doc.exists) {
               final r = RoomModel.fromFirestore(doc);
+              final status = (doc.data()?['status'] as String?)?.toLowerCase();
+              if (!r.isActive || status == 'deleting' || status == 'inactive') {
+                clearActiveRoomSession();
+                return;
+              }
               activeRoom.value = r;
               activeRoom.refresh();
               safeRadiusMeters.value = r.safeRadius;
@@ -600,6 +603,8 @@ class HajiCareController extends GetxController {
               if (r.kloter != null && r.kloter!.isNotEmpty) {
                 pendampingKloter.value = r.kloter;
               }
+            } else {
+              clearActiveRoomSession();
             }
           },
           onError: (e) {
@@ -623,35 +628,60 @@ class HajiCareController extends GetxController {
               .toList();
           activeRoomMembers.value = members;
 
+          // If current user is not admin, track and verify presence in members.
+          // Only evict if this user was already confirmed to be in this room,
+          // preventing premature eviction while the initial membership write syncs.
+          if (_role.value != UserRole.admin && snap.docs.isNotEmpty) {
+            final isStillInRoom = snap.docs.any((d) => d.id == currentUid);
+            if (isStillInRoom) {
+              _confirmedRoomId = roomId;
+            } else if (_confirmedRoomId == roomId) {
+              _verifyAndHandleEviction(roomId, currentUid);
+              return;
+            }
+          }
+
           if (_role.value == UserRole.pendamping) {
             final jamaahMembers = members.where((m) => m.isJamaah).toList();
             _syncJamaahFromRoomMembers(jamaahMembers);
           } else if (_role.value == UserRole.jamaah) {
-            // Resolve pendamping name and real coordinates from room members
-            final pendampingMember = members.firstWhereOrNull(
-              (m) => m.isPendamping,
-            );
-            if (pendampingMember != null) {
-              pendampingName.value = pendampingMember.name;
-              _listenToPendampingLocation(
-                pendampingMember.uid,
-                pendampingMember,
+            // If pendampingName still has placeholder default, populate from any active companion
+            if (pendampingName.value == 'Pendamping Anda') {
+              final anyPendamping = members.firstWhereOrNull(
+                (m) => m.isPendamping,
               );
-            } else {
-              pendampingLocation.value = null;
-              isPendampingGpsActive.value = false;
+              if (anyPendamping != null) {
+                pendampingName.value = anyPendamping.name;
+              }
             }
           }
           _recalculateRealDistance();
         });
   }
 
-  void _listenToPendampingLocation(String _, RoomMemberModel memberFallback) {
-    _pendampingDocSub?.cancel();
-    _pendampingDocSub = null;
-    pendampingLocation.value = memberFallback.currentLocation;
-    pendampingLocationUpdatedAt.value = memberFallback.locationUpdatedAt;
-    isPendampingGpsActive.value = memberFallback.hasLocation;
+  Future<void> _verifyAndHandleEviction(String roomId, String? uid) async {
+    if (uid == null || activeRoomId.value != roomId) return;
+    try {
+      final doc = await _firestore
+          .collection('rooms')
+          .doc(roomId)
+          .collection('members')
+          .doc(uid)
+          .get();
+      if (!doc.exists && activeRoomId.value == roomId) {
+        AppLogger.info(
+          'User $uid was removed from room $roomId by creator/admin',
+          tag: 'HajiCareController',
+        );
+        _confirmedRoomId = null;
+        clearActiveRoomSession();
+      }
+    } catch (e) {
+      AppLogger.warn(
+        'Error verifying membership eviction: $e',
+        tag: 'HajiCareController',
+      );
+    }
   }
 
   void _syncJamaahFromRoomMembers(List<RoomMemberModel> members) {
@@ -721,40 +751,38 @@ class HajiCareController extends GetxController {
   // ── REAL GPS LOCATION TRACKING (NO DUMMY DATA) ─────────────────────────────
 
   /// Starts real device GPS tracking and broadcasts position to Firestore.
-  Future<void> startLocationTracking(String uid) async {
+  Future<void> startLocationTracking([String? uid]) async {
+    final effectiveUid = uid ?? currentUid;
     final generation = _sessionGeneration;
     _gpsStreamSub?.cancel();
 
-    // 1. Initial Position check
+    // 1. Fast Initial Position: Check OS last known position first (instant 0ms response)
     try {
-      final result = await _locationService.getCurrentPosition();
-      if (isClosed || generation != _sessionGeneration || currentUid != uid) {
-        return;
-      }
-      if (result.isSuccess && result.position != null) {
-        myCurrentPosition.value = result.position;
+      final lastKnown = await _locationService.getLastKnownPosition();
+      if (!isClosed && generation == _sessionGeneration && lastKnown != null) {
+        myCurrentPosition.value = lastKnown;
         isMyGpsActive.value = true;
-        _broadcastLocationToFirestore(uid, result.position!);
-      } else {
-        isMyGpsActive.value = false;
+        if (effectiveUid != null) {
+          _broadcastLocationToFirestore(effectiveUid, lastKnown);
+        }
+        _recalculateRealDistance();
       }
     } catch (e) {
-      AppLogger.warn('Initial GPS fetch error: $e', tag: 'HajiCareController');
-      isMyGpsActive.value = false;
+      debugPrint('[HajiCareController] Fast lastKnown check: $e');
     }
 
-    // 2. Realtime continuous stream
+    // 2. Start continuous GPS stream immediately (distanceFilter: 0 for instant stationary & movement updates)
     try {
-      if (isClosed || generation != _sessionGeneration || currentUid != uid) {
-        return;
-      }
+      if (isClosed || generation != _sessionGeneration) return;
       _gpsStreamSub = _locationService
-          .getPositionStream(distanceFilter: 2, accuracy: LocationAccuracy.high)
+          .getPositionStream(distanceFilter: 0, accuracy: LocationAccuracy.high)
           .listen(
             (position) {
               myCurrentPosition.value = position;
               isMyGpsActive.value = true;
-              _broadcastLocationToFirestore(uid, position);
+              if (effectiveUid != null) {
+                _broadcastLocationToFirestore(effectiveUid, position);
+              }
               _recalculateRealDistance();
             },
             onError: (e) {
@@ -768,6 +796,24 @@ class HajiCareController extends GetxController {
         tag: 'HajiCareController',
       );
       isMyGpsActive.value = false;
+    }
+
+    // 3. Concurrently fetch fresh initial position in background (timeout 5s)
+    try {
+      final result = await _locationService.getCurrentPosition(
+        timeout: const Duration(seconds: 5),
+      );
+      if (isClosed || generation != _sessionGeneration) return;
+      if (result.isSuccess && result.position != null) {
+        myCurrentPosition.value = result.position;
+        isMyGpsActive.value = true;
+        if (effectiveUid != null) {
+          _broadcastLocationToFirestore(effectiveUid, result.position!);
+        }
+        _recalculateRealDistance();
+      }
+    } catch (e) {
+      AppLogger.warn('Initial GPS fetch error: $e', tag: 'HajiCareController');
     }
   }
 
@@ -829,11 +875,15 @@ class HajiCareController extends GetxController {
   }
 
   /// Recalculates real mathematical distance between users using GPS coordinates.
+  @visibleForTesting
+  void recalculateRealDistance() => _recalculateRealDistance();
+
   void _recalculateRealDistance() {
     if (_role.value == UserRole.jamaah) {
       final currentRoom = activeRoomId.value?.trim();
       if (currentRoom == null || currentRoom.isEmpty) {
         calculatedDistance.value = null;
+        nearestPendamping.value = null;
         if (_self != null) {
           _self!.distance = 0.0;
         }
@@ -842,24 +892,87 @@ class HajiCareController extends GetxController {
       }
 
       final myPos = myCurrentPosition.value;
-      final pLoc = pendampingLocation.value;
+      if (myPos == null) {
+        calculatedDistance.value = null;
+        nearestPendamping.value = null;
+        if (_self != null) {
+          _self!.distance = 0.0;
+        }
+        jamaahList.refresh();
+        return;
+      }
 
-      if (myPos != null && pLoc != null) {
+      // Step 2: Ambil semua Pendamping dalam room yang sama dengan lokasi GPS valid
+      final allCompanionsWithLocation = activeRoomMembers.where((m) {
+        if (!m.isPendamping || !m.hasLocation) return false;
+        final lat = m.latitude!;
+        final lng = m.longitude!;
+        return lat >= -90.0 && lat <= 90.0 && lng >= -180.0 && lng <= 180.0;
+      }).toList();
+
+      if (allCompanionsWithLocation.isEmpty) {
+        calculatedDistance.value = null;
+        nearestPendamping.value = null;
+        pendampingLocation.value = null;
+        pendampingLocationUpdatedAt.value = null;
+        isPendampingGpsActive.value = false;
+        if (_self != null) {
+          _self!.distance = 0.0;
+        }
+        jamaahList.refresh();
+        return;
+      }
+
+      // Step 3 & 4: Hitung jarak geospasial ke setiap Pendamping dan pilih jarak terkecil (argmin).
+      // Evaluasi kesegaran: utamakan lokasi yang diperbarui dalam 30 menit terakhir.
+      final now = DateTime.now();
+      const freshnessThreshold = Duration(minutes: 30);
+      final freshCompanions = allCompanionsWithLocation.where((m) {
+        if (m.locationUpdatedAt == null) return false;
+        return now.difference(m.locationUpdatedAt!) <= freshnessThreshold;
+      }).toList();
+
+      final candidateCompanions = freshCompanions.isNotEmpty
+          ? freshCompanions
+          : allCompanionsWithLocation;
+
+      RoomMemberModel? closest;
+      double minDistance = double.infinity;
+
+      for (final comp in candidateCompanions) {
         final d = _locationService.calculateDistanceMeters(
           myPos.latitude,
           myPos.longitude,
-          pLoc.latitude,
-          pLoc.longitude,
+          comp.latitude!,
+          comp.longitude!,
         );
-        calculatedDistance.value = d;
+        if (d < minDistance) {
+          minDistance = d;
+          closest = comp;
+        }
+      }
+
+      // Step 5: Tampilkan hasil yang benar
+      if (closest != null && !minDistance.isInfinite) {
+        nearestPendamping.value = closest;
+        pendampingName.value = closest.name;
+        pendampingLocation.value = closest.currentLocation;
+        pendampingLocationUpdatedAt.value = closest.locationUpdatedAt;
+        isPendampingGpsActive.value = true;
+        calculatedDistance.value = minDistance;
+
         if (_self != null) {
-          _self!.distance = d;
+          _self!.distance = minDistance;
           _self!.currentLocation = GeoPoint(myPos.latitude, myPos.longitude);
           _self!.isGpsActive = true;
           _self!.refresh(safeRadius: safeRadiusMeters.value);
         }
       } else {
         calculatedDistance.value = null;
+        nearestPendamping.value = null;
+        pendampingLocation.value = null;
+        pendampingLocationUpdatedAt.value = null;
+        isPendampingGpsActive.value = false;
         if (_self != null) {
           _self!.distance = 0.0;
         }
@@ -924,10 +1037,28 @@ class HajiCareController extends GetxController {
     return false;
   }
 
+  /// Safely clears all local active room state, streams, and SharedPreferences cache.
+  Future<void> clearActiveRoomSession() async {
+    _clearRoomListeners();
+    activeRoomId.value = null;
+    activeRoom.value = null;
+    _cachedRoomId = null;
+    try {
+      await SecureStorageService.instance.setActiveRoomId(null);
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(keyActiveRoomId);
+    } catch (e) {
+      AppLogger.warn(
+        'Error removing cached roomId: $e',
+        tag: 'HajiCareController',
+      );
+    }
+  }
+
   /// Leaves the current active room for this user.
   Future<bool> leaveRoom() async {
     final uid = currentUid;
-    final roomId = activeRoomId.value;
+    final roomId = activeRoomId.value ?? _cachedRoomId;
     if (uid == null || roomId == null || roomId.isEmpty) return false;
 
     try {
@@ -938,6 +1069,27 @@ class HajiCareController extends GetxController {
           _self?.name ?? _firebaseAuth.currentUser?.displayName ?? 'Jamaah';
       final rName = activeRoom.value?.name;
 
+      // Cancel own active SOS before leaving room so it never lingers or gets orphaned
+      if (_self?.sosActive == true || _activeSosEventId != null) {
+        try {
+          await _roomService.resolveSos(
+            userId: uid,
+            roomId: roomId,
+            eventId: _activeSosEventId,
+            resolvedByUid: uid,
+          );
+        } catch (_) {}
+        _activeSosEventId = null;
+        if (_self != null) {
+          _self!.sosActive = false;
+          _self!.refresh();
+        }
+        activeSosEvents.removeWhere(
+          (e) => e['userId'] == uid || e['jamaahId'] == uid,
+        );
+        activeSosCount.value = activeSosEvents.length;
+      }
+
       await _roomService.leaveRoom(
         roomId: roomId,
         uid: uid,
@@ -946,23 +1098,11 @@ class HajiCareController extends GetxController {
         roomName: rName,
       );
 
-      _clearRoomListeners();
-      activeRoomId.value = null;
-      activeRoom.value = null;
-      _cachedRoomId = null;
-      try {
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.remove(keyActiveRoomId);
-      } catch (e) {
-        AppLogger.warn(
-          'Error removing cached roomId: $e',
-          tag: 'HajiCareController',
-        );
-      }
+      await clearActiveRoomSession();
       return true;
     } catch (e) {
       AppLogger.error('Error leaving room: $e', tag: 'HajiCareController');
-      return false;
+      rethrow;
     }
   }
 
@@ -1109,6 +1249,42 @@ class HajiCareController extends GetxController {
         return false;
       }
 
+      // Verify that the room document exists and is active
+      try {
+        final roomDoc = await _firestore.collection('rooms').doc(roomId).get();
+        if (!roomDoc.exists ||
+            roomDoc.data()?['isActive'] == false ||
+            roomDoc.data()?['status'] == 'deleting') {
+          AppLogger.warn(
+            'Cannot trigger SOS: room $roomId is not active or deleted',
+            tag: 'HajiCareController',
+          );
+          await clearActiveRoomSession();
+          return false;
+        }
+
+        // Verify user is an active member in this room
+        final memberDoc = await _firestore
+            .collection('rooms')
+            .doc(roomId)
+            .collection('members')
+            .doc(user.uid)
+            .get();
+        if (!memberDoc.exists) {
+          AppLogger.warn(
+            'Cannot trigger SOS: user ${user.uid} is not an active member of room $roomId',
+            tag: 'HajiCareController',
+          );
+          await clearActiveRoomSession();
+          return false;
+        }
+      } catch (e) {
+        AppLogger.warn(
+          'Error checking room membership during triggerSos: $e',
+          tag: 'HajiCareController',
+        );
+      }
+
       final roomName = activeRoom.value?.name ?? 'Rombongan';
       final userName = _self?.name ?? user.displayName ?? 'Jamaah';
       currentRoomName = roomName;
@@ -1176,16 +1352,11 @@ class HajiCareController extends GetxController {
   }
 
   void _syncLocationRequirement(String uid, String? roomId) {
-    if (roomId == null || roomId.isEmpty) {
-      _gpsStreamSub?.cancel();
-      _gpsStreamSub = null;
-      _locationTrackingRoomId = null;
-      isMyGpsActive.value = false;
-      return;
+    // Always maintain real GPS stream so Map, Dashboard, and Prayer Times
+    // remain immediately synchronized with live device GPS.
+    if (_gpsStreamSub == null) {
+      startLocationTracking(uid);
     }
-    if (_locationTrackingRoomId == roomId && _gpsStreamSub != null) return;
-    _locationTrackingRoomId = roomId;
-    startLocationTracking(uid);
   }
 
   /// Resolves an active SOS event in Firestore.
@@ -1348,12 +1519,8 @@ class HajiCareController extends GetxController {
 
   /// Re-triggers GPS location tracking (e.g. after user enables GPS from settings).
   Future<bool> refreshLocation() async {
-    final uid = currentUid;
-    if (uid != null) {
-      await startLocationTracking(uid);
-      return isMyGpsActive.value;
-    }
-    return false;
+    await startLocationTracking(currentUid);
+    return isMyGpsActive.value;
   }
 
   @override

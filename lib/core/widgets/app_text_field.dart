@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import '../theme/app_colors.dart';
 import '../theme/app_radius.dart';
 import '../theme/app_sizes.dart';
 import '../theme/app_spacing.dart';
-import '../theme/app_typography.dart';
+import '../theme/theme_context.dart';
 
 class AppTextField extends StatelessWidget {
   final String? label;
@@ -35,6 +34,9 @@ class AppTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final hc = context.hc;
+    final textTheme = context.text;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -42,11 +44,12 @@ class AppTextField extends StatelessWidget {
         if (label != null) ...[
           Text(
             label!,
-            style: AppTypography.labelLarge.copyWith(
-              color: AppColors.textHeading,
+            style: textTheme.labelLarge.copyWith(
+              color: hc.textPrimary,
+              fontWeight: FontWeight.w700,
             ),
           ),
-          const SizedBox(height: AppSpacing.sm),
+          const SizedBox(height: AppSpacing.s8),
         ],
         TextFormField(
           controller: controller,
@@ -54,41 +57,36 @@ class AppTextField extends StatelessWidget {
           keyboardType: isPhone ? TextInputType.phone : keyboardType,
           validator: validator,
           onChanged: onChanged,
-          style: AppTypography.bodyMedium.copyWith(
-            color: AppColors.espressoDark,
+          style: textTheme.bodyMedium.copyWith(
+            color: hc.textPrimary,
             fontWeight: FontWeight.w600,
           ),
           decoration: InputDecoration(
             hintText: hintText,
-            hintStyle: AppTypography.bodyMedium.copyWith(
-              color: AppColors.outline,
-            ),
+            hintStyle: textTheme.bodyMedium.copyWith(color: hc.textTertiary),
             contentPadding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.lg,
-              vertical: AppSpacing.md,
+              horizontal: AppSpacing.s16,
+              vertical: AppSpacing.s12,
             ),
             filled: true,
-            fillColor: AppColors.surfaceWhite,
-            prefixIcon: isPhone ? _buildPhonePrefix() : prefixIcon,
+            fillColor: hc.surface,
+            prefixIcon: isPhone ? _buildPhonePrefix(context) : prefixIcon,
             suffixIcon: suffixIcon,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppRadius.lg),
-              borderSide: const BorderSide(color: AppColors.canvasCreamSubtle),
+              borderSide: BorderSide(color: hc.border),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppRadius.lg),
-              borderSide: const BorderSide(color: AppColors.canvasCreamSubtle),
+              borderSide: BorderSide(color: hc.border),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppRadius.lg),
-              borderSide: const BorderSide(
-                color: AppColors.tanMedium,
-                width: 1.5,
-              ),
+              borderSide: BorderSide(color: hc.primary, width: 1.5),
             ),
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppRadius.lg),
-              borderSide: const BorderSide(color: AppColors.sosEmergency),
+              borderSide: BorderSide(color: hc.danger),
             ),
             constraints: const BoxConstraints(
               minHeight: AppSizes.buttonHeightSecondary,
@@ -99,22 +97,25 @@ class AppTextField extends StatelessWidget {
     );
   }
 
-  Widget _buildPhonePrefix() {
+  Widget _buildPhonePrefix(BuildContext context) {
+    final hc = context.hc;
+    final textTheme = context.text;
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-      margin: const EdgeInsets.only(right: AppSpacing.sm),
-      decoration: const BoxDecoration(
-        border: Border(right: BorderSide(color: AppColors.canvasCreamSubtle)),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12),
+      margin: const EdgeInsets.only(right: AppSpacing.s8),
+      decoration: BoxDecoration(
+        border: Border(right: BorderSide(color: hc.border)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           const Text('🇮🇩', style: TextStyle(fontSize: 16)),
-          const SizedBox(width: AppSpacing.sm2),
+          const SizedBox(width: AppSpacing.s4),
           Text(
             phonePrefix,
-            style: AppTypography.bodyMedium.copyWith(
-              color: AppColors.espressoDark,
+            style: textTheme.bodyMedium.copyWith(
+              color: hc.textPrimary,
               fontWeight: FontWeight.bold,
             ),
           ),

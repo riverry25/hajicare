@@ -8,6 +8,7 @@ import '../../../core/services/trusted_backend_service.dart';
 import '../../../core/state/app_startup_controller.dart';
 import '../../../core/state/hajicare_controller.dart';
 import '../../../core/utils/app_dialog.dart';
+import '../../../core/utils/input_sanitizer.dart';
 
 class RegisterController extends GetxController {
   final obscurePassword = true.obs;
@@ -35,9 +36,12 @@ class RegisterController extends GetxController {
     isLoading.value = true;
     errorMessage.value = null;
 
-    final name = fullNameController.text.trim();
-    final nik = nikController.text.trim();
-    final email = emailController.text.trim();
+    final name = InputSanitizer.sanitizeDisplayName(fullNameController.text);
+    final nik = InputSanitizer.sanitizeText(nikController.text, maxLength: 30);
+    final email = InputSanitizer.sanitizeText(
+      emailController.text,
+      maxLength: 254,
+    );
     final password = passwordController.text;
     final chosenRole = selectedRole.value.trim().toLowerCase();
     final effectiveRole =
@@ -47,6 +51,13 @@ class RegisterController extends GetxController {
 
     if (email.isEmpty || password.isEmpty || name.isEmpty) {
       errorMessage.value = AppTranslations.tr('auth.errFillAllRegister');
+      _showErrorSnackbar(errorMessage.value!);
+      isLoading.value = false;
+      return;
+    }
+
+    if (!InputSanitizer.isValidPassword(password, minLength: 6)) {
+      errorMessage.value = AppTranslations.tr('auth.errWeakPassword');
       _showErrorSnackbar(errorMessage.value!);
       isLoading.value = false;
       return;

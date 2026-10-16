@@ -5,9 +5,9 @@ import 'package:get/get.dart';
 import '../../../../core/locales/app_translations.dart';
 import '../../../../core/routes/app_routes.dart';
 import '../../../../core/state/hajicare_controller.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/theme_context.dart';
 import '../presentation/dashboard_typography.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/app_status_badge.dart';
@@ -73,9 +73,9 @@ class JamaahDistanceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = AppColors.isDark(context);
-    final headingColor = AppColors.textHeadingColor(context);
-    final bodyColor = AppColors.textBodyColor(context);
+    final isDark = context.hc.isDark;
+    final headingColor = context.hc.textPrimary;
+    final bodyColor = context.hc.textSecondary;
 
     // Check if user has active room
     final controller = Get.isRegistered<HajiCareController>()
@@ -86,9 +86,7 @@ class JamaahDistanceCard extends StatelessWidget {
     if (!hasActiveRoom) {
       return AppCard(
         padding: const EdgeInsets.all(AppSpacing.cardPadding),
-        borderColor: isDark
-            ? AppColors.darkCardBorder
-            : AppColors.goldLight.withValues(alpha: 0.5),
+        borderColor: context.hc.border,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -98,14 +96,12 @@ class JamaahDistanceCard extends StatelessWidget {
                   width: 48,
                   height: 48,
                   decoration: BoxDecoration(
-                    color: isDark
-                        ? AppColors.darkPrimaryContainer
-                        : AppColors.canvasCream,
+                    color: context.hc.primaryContainer,
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
                     Icons.lock_outline_rounded,
-                    color: isDark ? AppColors.goldLight : AppColors.goldDark,
+                    color: context.hc.primary,
                     size: 26,
                   ),
                 ),
@@ -148,10 +144,8 @@ class JamaahDistanceCard extends StatelessWidget {
                   ),
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: isDark
-                      ? AppColors.darkPrimary
-                      : AppColors.primaryGold,
-                  foregroundColor: Colors.white,
+                  backgroundColor: context.hc.primary,
+                  foregroundColor: context.hc.onPrimary,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(AppRadius.pill),
                   ),
@@ -168,7 +162,7 @@ class JamaahDistanceCard extends StatelessWidget {
     if (!jamaah.isGpsActive) {
       return AppCard(
         padding: const EdgeInsets.all(AppSpacing.cardPadding),
-        borderColor: AppColors.error.withValues(alpha: isDark ? 0.6 : 0.4),
+        borderColor: context.hc.danger.withValues(alpha: isDark ? 0.6 : 0.4),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -178,12 +172,12 @@ class JamaahDistanceCard extends StatelessWidget {
                   width: 48,
                   height: 48,
                   decoration: BoxDecoration(
-                    color: AppColors.error.withValues(alpha: 0.12),
+                    color: context.hc.danger.withValues(alpha: 0.12),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.location_off_rounded,
-                    color: AppColors.error,
+                    color: context.hc.danger,
                     size: 26,
                   ),
                 ),
@@ -224,12 +218,12 @@ class JamaahDistanceCard extends StatelessWidget {
                 label: Text(
                   context.tr('dashboard.enableGpsNow'),
                   style: DashboardTypography.labelLarge.copyWith(
-                    color: AppColors.surfaceWhite,
+                    color: Colors.white,
                   ),
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.error,
-                  foregroundColor: AppColors.surfaceWhite,
+                  backgroundColor: context.hc.danger,
+                  foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(AppRadius.pill),
                   ),
@@ -248,6 +242,7 @@ class JamaahDistanceCard extends StatelessWidget {
     if (!hasDistance) {
       return AppCard(
         padding: const EdgeInsets.all(AppSpacing.cardPadding),
+        borderColor: context.hc.border,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -257,16 +252,12 @@ class JamaahDistanceCard extends StatelessWidget {
                   width: 48,
                   height: 48,
                   decoration: BoxDecoration(
-                    color: isDark
-                        ? AppColors.darkPrimaryContainer
-                        : AppColors.canvasCream,
+                    color: context.hc.primaryContainer,
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
                     Icons.radar_rounded,
-                    color: isDark
-                        ? AppColors.goldLight
-                        : AppColors.espressoDark,
+                    color: context.hc.primary,
                     size: 26,
                   ),
                 ),
@@ -304,10 +295,8 @@ class JamaahDistanceCard extends StatelessWidget {
             ClipRRect(
               borderRadius: BorderRadius.circular(AppRadius.pill),
               child: LinearProgressIndicator(
-                backgroundColor: isDark
-                    ? AppColors.darkSurfaceContainerHighest
-                    : AppColors.canvasCreamSubtle,
-                color: AppColors.goldPrimary,
+                backgroundColor: context.hc.surfaceSand,
+                color: context.hc.accent,
                 minHeight: 6,
               ),
             ),
@@ -321,6 +310,7 @@ class JamaahDistanceCard extends StatelessWidget {
 
     return AppCard(
       padding: const EdgeInsets.all(AppSpacing.cardPadding),
+      borderColor: context.hc.border,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -332,14 +322,12 @@ class JamaahDistanceCard extends StatelessWidget {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: isDark
-                      ? AppColors.darkPrimaryContainer
-                      : AppColors.canvasCream,
+                  color: context.hc.primaryContainer,
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
                   Icons.radar_rounded,
-                  color: isDark ? AppColors.goldLight : AppColors.espressoDark,
+                  color: context.hc.primary,
                   size: 24,
                 ),
               ),
@@ -403,15 +391,9 @@ class JamaahDistanceCard extends StatelessWidget {
               vertical: AppSpacing.md,
             ),
             decoration: BoxDecoration(
-              color: isDark
-                  ? AppColors.darkSurfaceContainer
-                  : AppColors.canvasCream.withValues(alpha: 0.5),
+              color: context.hc.surfaceSubtle,
               borderRadius: BorderRadius.circular(AppRadius.lg),
-              border: Border.all(
-                color: isDark
-                    ? AppColors.darkCardBorder
-                    : AppColors.lightCardBorder,
-              ),
+              border: Border.all(color: context.hc.border),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -491,9 +473,7 @@ class JamaahDistanceCard extends StatelessWidget {
                   (jamaah.distance /
                           (controller?.safeRadiusMeters.value ?? 200.0))
                       .clamp(0.0, 1.0),
-              backgroundColor: isDark
-                  ? AppColors.darkSurfaceContainerHighest
-                  : AppColors.canvasCreamSubtle,
+              backgroundColor: context.hc.surfaceSand,
               color: tierColor,
               minHeight: 8,
             ),
@@ -522,8 +502,8 @@ class JamaahDistanceCard extends StatelessWidget {
                   Container(
                     width: 7,
                     height: 7,
-                    decoration: const BoxDecoration(
-                      color: AppColors.statusSafe,
+                    decoration: BoxDecoration(
+                      color: context.hc.success,
                       shape: BoxShape.circle,
                     ),
                   ),
@@ -531,7 +511,7 @@ class JamaahDistanceCard extends StatelessWidget {
                   Text(
                     context.tr('dashboard.gpsAccuracy'),
                     style: DashboardTypography.captionSmall.copyWith(
-                      color: AppColors.statusSafe,
+                      color: context.hc.success,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -561,14 +541,12 @@ class JamaahDistanceCard extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.all(6),
                         decoration: BoxDecoration(
-                          color: isDark
-                              ? AppColors.darkPrimaryContainer
-                              : AppColors.canvasCream,
+                          color: context.hc.surfaceSubtle,
                           borderRadius: BorderRadius.circular(AppRadius.sm),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.map_rounded,
-                          color: AppColors.tanMedium,
+                          color: context.hc.primary,
                           size: 18,
                         ),
                       ),

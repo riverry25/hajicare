@@ -358,36 +358,17 @@ class SmartMultiPassDetector {
     ];
 
     try {
-      final img.Image? decoded = img.decodeImage(originalBytes);
-      if (decoded == null) return tiledResults;
+      final payload = await compute(_generateTileBytesWorker, originalBytes);
+      if (payload == null || payload.tileBytes.length != tiles.length) {
+        return tiledResults;
+      }
 
-      final int imageW = decoded.width;
-      final int imageH = decoded.height;
+      final int imageW = payload.imageW;
+      final int imageH = payload.imageH;
 
       for (int i = 0; i < tiles.length; i++) {
         final tileNorm = tiles[i];
-        final int cropX = (tileNorm.left * imageW).round().clamp(0, imageW - 1);
-        final int cropY = (tileNorm.top * imageH).round().clamp(0, imageH - 1);
-        final int cropW = (tileNorm.width * imageW).round().clamp(
-          1,
-          imageW - cropX,
-        );
-        final int cropH = (tileNorm.height * imageH).round().clamp(
-          1,
-          imageH - cropY,
-        );
-
-        final cropped = img.copyCrop(
-          decoded,
-          x: cropX,
-          y: cropY,
-          width: cropW,
-          height: cropH,
-        );
-
-        final tileBytes = Uint8List.fromList(
-          img.encodeJpg(cropped, quality: 85),
-        );
+        final tileBytes = payload.tileBytes[i];
 
         // Inference on tile
         final Map<String, dynamic> result = await yolo.predict(
@@ -451,6 +432,52 @@ class SmartMultiPassDetector {
     }
 
     return tiledResults;
+  }
+
+  static _TiledCropPayload? _generateTileBytesWorker(Uint8List originalBytes) {
+    try {
+      final img.Image? decoded = img.decodeImage(originalBytes);
+      if (decoded == null) return null;
+
+      final int imageW = decoded.width;
+      final int imageH = decoded.height;
+
+      const tiles = [
+        Rect.fromLTWH(0.0, 0.0, 0.58, 0.58), // Top-Left
+        Rect.fromLTWH(0.42, 0.0, 0.58, 0.58), // Top-Right
+        Rect.fromLTWH(0.0, 0.42, 0.58, 0.58), // Bottom-Left
+        Rect.fromLTWH(0.42, 0.42, 0.58, 0.58), // Bottom-Right
+      ];
+
+      final List<Uint8List> tileBytes = [];
+      for (int i = 0; i < tiles.length; i++) {
+        final tileNorm = tiles[i];
+        final int cropX = (tileNorm.left * imageW).round().clamp(0, imageW - 1);
+        final int cropY = (tileNorm.top * imageH).round().clamp(0, imageH - 1);
+        final int cropW = (tileNorm.width * imageW).round().clamp(
+          1,
+          imageW - cropX,
+        );
+        final int cropH = (tileNorm.height * imageH).round().clamp(
+          1,
+          imageH - cropY,
+        );
+
+        final cropped = img.copyCrop(
+          decoded,
+          x: cropX,
+          y: cropY,
+          width: cropW,
+          height: cropH,
+        );
+
+        tileBytes.add(Uint8List.fromList(img.encodeJpg(cropped, quality: 85)));
+      }
+      return _TiledCropPayload(imageW, imageH, tileBytes);
+    } catch (e) {
+      debugPrint('[MoneyAI] Tile generation worker error: $e');
+      return null;
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -565,4 +592,12 @@ class SmartMultiPassDetector {
     if (unionArea <= 0) return 0.0;
     return (intersectionArea / unionArea).clamp(0.0, 1.0);
   }
+}
+
+class _TiledCropPayload {
+  final int imageW;
+  final int imageH;
+  final List<Uint8List> tileBytes;
+
+  const _TiledCropPayload(this.imageW, this.imageH, this.tileBytes);
 }

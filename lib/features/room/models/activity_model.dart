@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/haji_colors.dart';
 
 enum ActivityType {
   roomCreated,
@@ -156,28 +156,34 @@ class ActivityModel {
     }
   }
 
-  Color get color {
+  StatusTone get tone {
     switch (type) {
       case ActivityType.roomCreated:
-        return AppColors.accentGoldStar;
+        return StatusTone.islamic;
       case ActivityType.roomActivated:
-        return AppColors.statusSafe;
+        return StatusTone.success;
       case ActivityType.roomDeactivated:
-        return AppColors.textSecondary;
+        return StatusTone.neutral;
       case ActivityType.roomUpdated:
-        return AppColors.primaryGold;
+        return StatusTone.islamic;
       case ActivityType.memberJoined:
         return role?.toLowerCase() == 'pendamping'
-            ? AppColors.primaryGold
-            : const Color(0xFF2E7D32);
+            ? StatusTone.islamic
+            : StatusTone.success;
       case ActivityType.memberLeft:
-        return AppColors.error;
+        return StatusTone.danger;
       case ActivityType.sosActive:
-        return AppColors.sosEmergency;
+        return StatusTone.danger;
       case ActivityType.unknown:
-        return AppColors.textSecondary;
+        return StatusTone.neutral;
     }
   }
+
+  /// Resolve color using current theme context tokens
+  Color resolveColor(HajiColors colors) => colors.tone(tone);
+
+  /// Default color using light palette
+  Color get color => HajiColors.light.tone(tone);
 
   String get timeAgo {
     final diff = DateTime.now().difference(timestamp);

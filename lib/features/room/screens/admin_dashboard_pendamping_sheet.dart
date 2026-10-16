@@ -14,7 +14,7 @@ extension _AdminDashboardPendampingSheet on _AdminDashboardHome {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
+      backgroundColor: context.hc.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(
           top: Radius.circular(AppRadius.sheet),
@@ -55,16 +55,16 @@ extension _AdminDashboardPendampingSheet on _AdminDashboardHome {
                             Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: AppColors.secondary.withValues(
+                                color: context.hc.accent.withValues(
                                   alpha: 0.15,
                                 ),
                                 borderRadius: BorderRadius.circular(
                                   AppRadius.sm,
                                 ),
                               ),
-                              child: const Icon(
+                              child: Icon(
                                 Icons.health_and_safety_rounded,
-                                color: AppColors.secondary,
+                                color: context.hc.accent,
                                 size: 20,
                               ),
                             ),
@@ -165,19 +165,11 @@ extension _AdminDashboardPendampingSheet on _AdminDashboardHome {
                                       AppRadius.card,
                                     ),
                                     border: Border.all(
-                                      color: isDark
-                                          ? AppColors.darkCardBorder
-                                          : AppColors.lightCardBorder,
+                                      color: context.hc.border,
                                     ),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: isDark
-                                            ? Colors.black.withValues(
-                                                alpha: 0.15,
-                                              )
-                                            : AppColors.primary.withValues(
-                                                alpha: 0.03,
-                                              ),
+                                        color: context.hc.shadow,
                                         blurRadius: 6,
                                         offset: const Offset(0, 2),
                                       ),
@@ -223,7 +215,7 @@ extension _AdminDashboardPendampingSheet on _AdminDashboardHome {
                                               width: 40,
                                               height: 40,
                                               decoration: BoxDecoration(
-                                                color: AppColors.secondary
+                                                color: context.hc.accent
                                                     .withValues(
                                                       alpha: isDark
                                                           ? 0.22
@@ -234,9 +226,9 @@ extension _AdminDashboardPendampingSheet on _AdminDashboardHome {
                                                       AppRadius.md,
                                                     ),
                                               ),
-                                              child: const Icon(
+                                              child: Icon(
                                                 Icons.shield_rounded,
-                                                color: AppColors.secondary,
+                                                color: context.hc.accent,
                                                 size: 20,
                                               ),
                                             ),
@@ -280,9 +272,11 @@ extension _AdminDashboardPendampingSheet on _AdminDashboardHome {
                                                         decoration: BoxDecoration(
                                                           color:
                                                               (isOnline
-                                                                      ? AppColors
-                                                                            .statusSafe
-                                                                      : AppColors
+                                                                      ? context
+                                                                            .hc
+                                                                            .success
+                                                                      : context
+                                                                            .hc
                                                                             .textSecondary)
                                                                   .withValues(
                                                                     alpha:
@@ -297,9 +291,11 @@ extension _AdminDashboardPendampingSheet on _AdminDashboardHome {
                                                           border: Border.all(
                                                             color:
                                                                 (isOnline
-                                                                        ? AppColors
-                                                                              .statusSafe
-                                                                        : AppColors
+                                                                        ? context
+                                                                              .hc
+                                                                              .success
+                                                                        : context
+                                                                              .hc
                                                                               .textSecondary)
                                                                     .withValues(
                                                                       alpha:
@@ -316,9 +312,11 @@ extension _AdminDashboardPendampingSheet on _AdminDashboardHome {
                                                               height: 5,
                                                               decoration: BoxDecoration(
                                                                 color: isOnline
-                                                                    ? AppColors
-                                                                          .statusSafe
-                                                                    : AppColors
+                                                                    ? context
+                                                                          .hc
+                                                                          .success
+                                                                    : context
+                                                                          .hc
                                                                           .textSecondary,
                                                                 shape: BoxShape
                                                                     .circle,
@@ -340,9 +338,11 @@ extension _AdminDashboardPendampingSheet on _AdminDashboardHome {
                                                                   .copyWith(
                                                                     color:
                                                                         isOnline
-                                                                        ? AppColors
-                                                                              .statusSafe
-                                                                        : AppColors
+                                                                        ? context
+                                                                              .hc
+                                                                              .success
+                                                                        : context
+                                                                              .hc
                                                                               .textSecondary,
                                                                     fontWeight:
                                                                         FontWeight

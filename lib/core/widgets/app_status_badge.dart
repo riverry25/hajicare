@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import '../theme/app_colors.dart';
 import '../theme/app_radius.dart';
 import '../theme/app_spacing.dart';
-import '../theme/app_typography.dart';
+import '../theme/theme_context.dart';
 
 enum AppStatusType { safe, warning, danger, neutral, custom }
 
@@ -26,12 +25,12 @@ class AppStatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final (bg, text) = _getColors();
+    final (bg, text) = _getColors(context);
 
     return Container(
       padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.sm,
-        vertical: AppSpacing.sm2 / 2,
+        horizontal: AppSpacing.s8,
+        vertical: 3.0,
       ),
       decoration: BoxDecoration(
         color: backgroundColor ?? bg,
@@ -49,14 +48,14 @@ class AppStatusBadge extends StatelessWidget {
                 shape: BoxShape.circle,
               ),
             ),
-            const SizedBox(width: AppSpacing.sm2),
+            const SizedBox(width: AppSpacing.s4),
           ] else if (icon != null) ...[
             Icon(icon, size: 12, color: textColor ?? text),
-            const SizedBox(width: AppSpacing.sm2),
+            const SizedBox(width: AppSpacing.s4),
           ],
           Text(
             label,
-            style: AppTypography.captionSmall.copyWith(
+            style: context.text.labelSmall.copyWith(
               color: textColor ?? text,
               fontWeight: FontWeight.bold,
             ),
@@ -66,29 +65,22 @@ class AppStatusBadge extends StatelessWidget {
     );
   }
 
-  (Color, Color) _getColors() {
+  (Color, Color) _getColors(BuildContext context) {
+    final hc = context.hc;
+
     switch (statusType) {
       case AppStatusType.safe:
-        return (
-          AppColors.statusPositive.withValues(alpha: 0.15),
-          AppColors.statusPositive,
-        );
+        return (hc.successContainer, hc.success);
       case AppStatusType.warning:
-        return (
-          AppColors.distanceWarning.withValues(alpha: 0.15),
-          AppColors.distanceWarning,
-        );
+        return (hc.warningContainer, hc.warning);
       case AppStatusType.danger:
-        return (
-          AppColors.sosEmergency.withValues(alpha: 0.15),
-          AppColors.sosEmergency,
-        );
+        return (hc.dangerContainer, hc.danger);
       case AppStatusType.neutral:
-        return (AppColors.canvasCream, AppColors.espressoDark);
+        return (hc.surfaceSubtle, hc.textPrimary);
       case AppStatusType.custom:
         return (
-          backgroundColor ?? AppColors.canvasCream,
-          textColor ?? AppColors.espressoDark,
+          backgroundColor ?? hc.surfaceSubtle,
+          textColor ?? hc.textPrimary,
         );
     }
   }

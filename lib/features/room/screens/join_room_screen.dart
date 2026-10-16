@@ -2,14 +2,12 @@ import '../../../core/locales/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
-import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/theme_context.dart';
 import '../../../core/widgets/app_card.dart';
 import '../controllers/join_room_controller.dart';
 import '../widgets/qr_scanner_dialog.dart';
-import '../../../core/state/app_settings_controller.dart';
 
 class JoinRoomScreen extends StatelessWidget {
   const JoinRoomScreen({super.key});
@@ -17,251 +15,249 @@ class JoinRoomScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = Get.find<JoinRoomController>();
-    final settings = Get.isRegistered<AppSettingsController>()
-        ? Get.find<AppSettingsController>()
-        : null;
-    final isDark = AppColors.isDark(context);
-    final scaffoldBg = AppColors.scaffoldColor(context);
-    final cardBg = AppColors.cardBgColor(context);
-    final headingColor = AppColors.textHeadingColor(context);
-    final bodyColor = AppColors.textBodyColor(context);
-    final primaryColor = isDark ? AppColors.goldLight : AppColors.goldPrimary;
+    final hc = context.hc;
+    final text = context.text;
 
-    return Obx(() {
-      settings?.rxLocale.value;
-      return Scaffold(
-        backgroundColor: scaffoldBg,
-        appBar: AppBar(
-          backgroundColor: scaffoldBg,
-          elevation: 0,
-          leading: IconButton(
-            icon: Icon(
-              Icons.arrow_back_ios_new_rounded,
-              color: headingColor,
-              size: 20,
-            ),
-            onPressed: () {
-              if (Navigator.of(context).canPop()) {
-                Get.back();
-              } else {
-                controller.selectedMode.value == 0
-                    ? Get.offAllNamed('/dashboard_pendamping')
-                    : (controller.isPendamping
-                          ? Get.offAllNamed('/dashboard_pendamping')
-                          : Get.offAllNamed('/dashboard_jamaah'));
-              }
-            },
+    return Scaffold(
+      backgroundColor: hc.canvas,
+      appBar: AppBar(
+        backgroundColor: hc.canvas,
+        elevation: 0,
+        leading: IconButton(
+          icon: Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: hc.textPrimary,
+            size: 20,
           ),
-          title: Text(
-            controller.isPendamping
-                ? context.tr('profileRoomMonitoring')
-                : context.tr('room.joinRoomTitle'),
-            style: AppTypography.titleMedium.copyWith(
-              color: headingColor,
+          onPressed: () {
+            if (controller.isSyncing.value) return;
+            if (Navigator.of(context).canPop()) {
+              Get.back();
+            } else {
+              controller.selectedMode.value == 0
+                  ? Get.offAllNamed('/dashboard_pendamping')
+                  : (controller.isPendamping
+                        ? Get.offAllNamed('/dashboard_pendamping')
+                        : Get.offAllNamed('/dashboard_jamaah'));
+            }
+          },
+        ),
+        title: Obx(
+          () => Text(
+            controller.isSyncing.value
+                ? context.tr('room.syncing')
+                : (controller.isPendamping
+                      ? context.tr('profileRoomMonitoring')
+                      : context.tr('room.joinRoomTitle')),
+            style: text.titleMedium.copyWith(
+              color: hc.textPrimary,
               fontWeight: FontWeight.bold,
             ),
           ),
-          centerTitle: true,
         ),
-        body: SafeArea(
-          child: Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.screenEdgeGutter,
-                vertical: AppSpacing.md,
-              ),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 480),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    // Top Hero Icon
-                    Center(
-                      child: Container(
-                        width: 80,
-                        height: 80,
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              primaryColor.withValues(alpha: 0.18),
-                              primaryColor.withValues(alpha: 0.05),
-                            ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: primaryColor.withValues(alpha: 0.35),
-                            width: 2,
-                          ),
+        centerTitle: true,
+      ),
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.screenEdgeGutter,
+              vertical: AppSpacing.md,
+            ),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 480),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Top Hero Icon
+                  Center(
+                    child: Container(
+                      width: 80,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            hc.brand.withValues(alpha: 0.15),
+                            hc.brand.withValues(alpha: 0.05),
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
                         ),
-                        child: Center(
-                          child: Icon(
-                            Icons.meeting_room_rounded,
-                            size: 38,
-                            color: primaryColor,
-                          ),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: hc.border, width: 2),
+                      ),
+                      child: Center(
+                        child: Icon(
+                          Icons.meeting_room_rounded,
+                          size: 38,
+                          color: hc.brand,
                         ),
                       ),
                     ),
-                    const SizedBox(height: AppSpacing.md),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
 
-                    // Header Title & Subtitle
-                    Obx(() {
-                      final isCreating =
-                          controller.isPendamping &&
-                          controller.selectedMode.value == 0;
+                  // Header Title & Subtitle
+                  Obx(() {
+                    if (controller.isSyncing.value) {
                       return Column(
                         children: [
                           Text(
-                            isCreating
-                                ? context.tr('roomCreateNew')
-                                : context.tr('room.joinRoomTitle'),
+                            context.tr('room.syncingRoomData'),
                             textAlign: TextAlign.center,
-                            style: AppTypography.headlineMedium.copyWith(
-                              color: headingColor,
+                            style: text.headlineMedium.copyWith(
+                              color: hc.textPrimary,
                               fontWeight: FontWeight.w800,
                             ),
                           ),
                           const SizedBox(height: AppSpacing.xs),
                           Text(
-                            isCreating
-                                ? context.tr('roomCreateSubtitle')
-                                : context.tr('roomJoinSubtitle'),
+                            context.tr('room.syncingPleaseWait'),
                             textAlign: TextAlign.center,
-                            style: AppTypography.bodySmall.copyWith(
-                              color: bodyColor,
+                            style: text.bodySmall.copyWith(
+                              color: hc.textSecondary,
                               height: 1.4,
                             ),
                           ),
                         ],
                       );
-                    }),
-                    const SizedBox(height: AppSpacing.lg),
-
-                    // Mode Switcher for Pendamping
-                    if (controller.isPendamping) ...[
-                      Obx(
-                        () => Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: BoxDecoration(
-                            color: isDark
-                                ? AppColors.darkSurface
-                                : AppColors.canvasCream,
-                            borderRadius: BorderRadius.circular(AppRadius.pill),
-                            border: Border.all(
-                              color: isDark
-                                  ? AppColors.darkCardBorder
-                                  : AppColors.lightCardBorder,
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: _ModeTabButton(
-                                  label: context.tr('room.createRoomBtn'),
-                                  icon: Icons.add_business_rounded,
-                                  isSelected:
-                                      controller.selectedMode.value == 0,
-                                  primaryColor: primaryColor,
-                                  headingColor: headingColor,
-                                  isDark: isDark,
-                                  onTap: () =>
-                                      controller.selectedMode.value = 0,
-                                ),
-                              ),
-                              Expanded(
-                                child: _ModeTabButton(
-                                  label: context.tr('room.joinRoomTitle'),
-                                  icon: Icons.login_rounded,
-                                  isSelected:
-                                      controller.selectedMode.value == 1,
-                                  primaryColor: primaryColor,
-                                  headingColor: headingColor,
-                                  isDark: isDark,
-                                  onTap: () =>
-                                      controller.selectedMode.value = 1,
-                                ),
-                              ),
-                            ],
+                    }
+                    final isCreating =
+                        controller.isPendamping &&
+                        controller.selectedMode.value == 0;
+                    return Column(
+                      children: [
+                        Text(
+                          isCreating
+                              ? context.tr('roomCreateNew')
+                              : context.tr('room.joinRoomTitle'),
+                          textAlign: TextAlign.center,
+                          style: text.headlineMedium.copyWith(
+                            color: hc.textPrimary,
+                            fontWeight: FontWeight.w800,
                           ),
                         ),
-                      ),
-                      const SizedBox(height: AppSpacing.md),
-                    ],
+                        const SizedBox(height: AppSpacing.xs),
+                        Text(
+                          isCreating
+                              ? context.tr('roomCreateSubtitle')
+                              : context.tr('roomJoinSubtitle'),
+                          textAlign: TextAlign.center,
+                          style: text.bodySmall.copyWith(
+                            color: hc.textSecondary,
+                            height: 1.4,
+                          ),
+                        ),
+                      ],
+                    );
+                  }),
+                  const SizedBox(height: AppSpacing.lg),
 
-                    // Main Form Card
-                    AppCard(
-                      backgroundColor: cardBg,
-                      child: Padding(
-                        padding: const EdgeInsets.all(AppSpacing.lg),
-                        child: Obx(() {
-                          if (controller.isPendamping &&
-                              controller.selectedMode.value == 0) {
-                            return _buildCreateRoomForm(
-                              context,
-                              controller,
-                              primaryColor,
-                              headingColor,
-                              isDark,
-                            );
-                          } else {
-                            return _buildJoinRoomForm(
-                              context,
-                              controller,
-                              primaryColor,
-                              headingColor,
-                              isDark,
-                            );
-                          }
-                        }),
-                      ),
+                  // Mode Switcher for Pendamping
+                  if (controller.isPendamping) ...[
+                    Obx(() {
+                      if (controller.isSyncing.value) {
+                        return const SizedBox.shrink();
+                      }
+                      return Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: hc.surfaceSand,
+                          borderRadius: BorderRadius.circular(AppRadius.pill),
+                          border: Border.all(color: hc.border),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: _ModeTabButton(
+                                label: context.tr('room.createRoomBtn'),
+                                icon: Icons.add_business_rounded,
+                                isSelected: controller.selectedMode.value == 0,
+                                onTap: () => controller.selectedMode.value = 0,
+                              ),
+                            ),
+                            Expanded(
+                              child: _ModeTabButton(
+                                label: context.tr('room.joinRoomTitle'),
+                                icon: Icons.login_rounded,
+                                isSelected: controller.selectedMode.value == 1,
+                                onTap: () => controller.selectedMode.value = 1,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }),
+                    const SizedBox(height: AppSpacing.md),
+                  ],
+
+                  // Main Form Card
+                  AppCard(
+                    backgroundColor: hc.surface,
+                    child: Padding(
+                      padding: const EdgeInsets.all(AppSpacing.lg),
+                      child: Obx(() {
+                        if (controller.isSyncing.value) {
+                          return _buildSyncingSkeleton(context, controller);
+                        }
+                        if (controller.isPendamping &&
+                            controller.selectedMode.value == 0) {
+                          return _buildCreateRoomForm(context, controller);
+                        } else {
+                          return _buildJoinRoomForm(context, controller);
+                        }
+                      }),
                     ),
-                    const SizedBox(height: AppSpacing.lg),
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
 
-                    // Bottom Info & Switch Account
-                    Center(
+                  // Bottom Info & Switch Account
+                  Obx(() {
+                    if (controller.isSyncing.value) {
+                      return const SizedBox.shrink();
+                    }
+                    return Center(
                       child: TextButton.icon(
                         onPressed: () => controller.switchAccount(),
                         icon: Icon(
                           Icons.logout_rounded,
                           size: 16,
-                          color: bodyColor,
+                          color: hc.textSecondary,
                         ),
                         label: Text(
                           context.tr('roomSwitchAccount'),
-                          style: AppTypography.bodySmall.copyWith(
-                            color: bodyColor,
+                          style: text.bodySmall.copyWith(
+                            color: hc.textSecondary,
                           ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
+                    );
+                  }),
+                ],
               ),
             ),
           ),
         ),
-      );
-    });
+      ),
+    );
   }
 
   Widget _buildCreateRoomForm(
     BuildContext context,
     JoinRoomController controller,
-    Color primaryColor,
-    Color headingColor,
-    bool isDark,
   ) {
+    final hc = context.hc;
+    final text = context.text;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         // Room Name Field
         Text(
           context.tr('roomNameRequired'),
-          style: AppTypography.labelMedium.copyWith(
-            color: headingColor,
+          style: text.labelMedium.copyWith(
+            color: hc.textPrimary,
             fontWeight: FontWeight.w700,
           ),
         ),
@@ -269,27 +265,28 @@ class JoinRoomScreen extends StatelessWidget {
         TextField(
           controller: controller.createRoomNameController,
           inputFormatters: [LengthLimitingTextInputFormatter(100)],
-          style: AppTypography.bodyMedium.copyWith(color: headingColor),
+          style: text.bodyMedium.copyWith(color: hc.textPrimary),
           decoration: InputDecoration(
             hintText: context.tr('roomNameHint'),
-            hintStyle: AppTypography.bodyMedium.copyWith(
-              color: AppColors.textSecondaryColor(context),
-            ),
-            prefixIcon: Icon(
-              Icons.groups_rounded,
-              color: primaryColor,
-              size: 20,
-            ),
+            hintStyle: text.bodyMedium.copyWith(color: hc.textTertiary),
+            prefixIcon: Icon(Icons.groups_rounded, color: hc.brand, size: 20),
             filled: true,
-            fillColor: isDark
-                ? AppColors.darkPrimaryContainer.withValues(alpha: 0.25)
-                : AppColors.canvasCream.withValues(alpha: 0.5),
+            fillColor: hc.surfaceSand.withValues(alpha: 0.5),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 16,
               vertical: 14,
             ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppRadius.md),
+              borderSide: BorderSide(color: hc.border),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              borderSide: BorderSide(color: hc.border),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              borderSide: BorderSide(color: hc.brand, width: 1.5),
             ),
           ),
         ),
@@ -298,8 +295,8 @@ class JoinRoomScreen extends StatelessWidget {
         // Maktab Field
         Text(
           context.tr('roomMaktabOptional'),
-          style: AppTypography.labelMedium.copyWith(
-            color: headingColor,
+          style: text.labelMedium.copyWith(
+            color: hc.textPrimary,
             fontWeight: FontWeight.w700,
           ),
         ),
@@ -307,24 +304,28 @@ class JoinRoomScreen extends StatelessWidget {
         TextField(
           controller: controller.createMaktabController,
           inputFormatters: [LengthLimitingTextInputFormatter(60)],
-          style: AppTypography.bodyMedium.copyWith(color: headingColor),
+          style: text.bodyMedium.copyWith(color: hc.textPrimary),
           decoration: InputDecoration(
             hintText: context.tr('roomMaktabHint'),
-            prefixIcon: Icon(
-              Icons.hotel_rounded,
-              color: primaryColor,
-              size: 20,
-            ),
+            hintStyle: text.bodyMedium.copyWith(color: hc.textTertiary),
+            prefixIcon: Icon(Icons.hotel_rounded, color: hc.brand, size: 20),
             filled: true,
-            fillColor: isDark
-                ? AppColors.darkPrimaryContainer.withValues(alpha: 0.25)
-                : AppColors.canvasCream.withValues(alpha: 0.5),
+            fillColor: hc.surfaceSand.withValues(alpha: 0.5),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 16,
               vertical: 14,
             ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppRadius.md),
+              borderSide: BorderSide(color: hc.border),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              borderSide: BorderSide(color: hc.border),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              borderSide: BorderSide(color: hc.brand, width: 1.5),
             ),
           ),
         ),
@@ -333,8 +334,8 @@ class JoinRoomScreen extends StatelessWidget {
         // Kloter Field
         Text(
           context.tr('roomKloterOptional'),
-          style: AppTypography.labelMedium.copyWith(
-            color: headingColor,
+          style: text.labelMedium.copyWith(
+            color: hc.textPrimary,
             fontWeight: FontWeight.w700,
           ),
         ),
@@ -342,24 +343,32 @@ class JoinRoomScreen extends StatelessWidget {
         TextField(
           controller: controller.createKloterController,
           inputFormatters: [LengthLimitingTextInputFormatter(60)],
-          style: AppTypography.bodyMedium.copyWith(color: headingColor),
+          style: text.bodyMedium.copyWith(color: hc.textPrimary),
           decoration: InputDecoration(
             hintText: context.tr('roomKloterHint'),
+            hintStyle: text.bodyMedium.copyWith(color: hc.textTertiary),
             prefixIcon: Icon(
               Icons.flight_takeoff_rounded,
-              color: primaryColor,
+              color: hc.brand,
               size: 20,
             ),
             filled: true,
-            fillColor: isDark
-                ? AppColors.darkPrimaryContainer.withValues(alpha: 0.25)
-                : AppColors.canvasCream.withValues(alpha: 0.5),
+            fillColor: hc.surfaceSand.withValues(alpha: 0.5),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 16,
               vertical: 14,
             ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppRadius.md),
+              borderSide: BorderSide(color: hc.border),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              borderSide: BorderSide(color: hc.border),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              borderSide: BorderSide(color: hc.brand, width: 1.5),
             ),
           ),
         ),
@@ -374,12 +383,12 @@ class JoinRoomScreen extends StatelessWidget {
                   ? null
                   : () => controller.createRoom(),
               icon: controller.isLoading.value
-                  ? const SizedBox(
+                  ? SizedBox(
                       width: 20,
                       height: 20,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: Colors.white,
+                        color: hc.onPrimary,
                       ),
                     )
                   : const Icon(Icons.add_circle_outline_rounded, size: 20),
@@ -387,15 +396,14 @@ class JoinRoomScreen extends StatelessWidget {
                 controller.isLoading.value
                     ? context.tr('roomCreating')
                     : context.tr('roomCreateNow'),
-                style: AppTypography.labelLarge.copyWith(
-                  color: isDark
-                      ? AppColors.espressoDark
-                      : AppColors.surfaceWhite,
+                style: text.labelLarge.copyWith(
+                  color: hc.onPrimary,
                   fontWeight: FontWeight.bold,
                 ),
               ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: primaryColor,
+                backgroundColor: hc.brand,
+                foregroundColor: hc.onPrimary,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(AppRadius.pill),
                 ),
@@ -410,10 +418,10 @@ class JoinRoomScreen extends StatelessWidget {
   Widget _buildJoinRoomForm(
     BuildContext context,
     JoinRoomController controller,
-    Color primaryColor,
-    Color headingColor,
-    bool isDark,
   ) {
+    final hc = context.hc;
+    final text = context.text;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -432,11 +440,14 @@ class JoinRoomScreen extends StatelessWidget {
             icon: const Icon(Icons.qr_code_scanner_rounded, size: 22),
             label: Text(
               context.tr('roomScanCompanionQr'),
-              style: AppTypography.button.copyWith(fontWeight: FontWeight.bold),
+              style: text.labelLarge.copyWith(
+                color: hc.brand,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             style: OutlinedButton.styleFrom(
-              foregroundColor: primaryColor,
-              side: BorderSide(color: primaryColor, width: 1.5),
+              foregroundColor: hc.brand,
+              side: BorderSide(color: hc.brand, width: 1.5),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(AppRadius.pill),
               ),
@@ -448,39 +459,27 @@ class JoinRoomScreen extends StatelessWidget {
         // Divider with "ATAU KODE MANUAL"
         Row(
           children: [
-            Expanded(
-              child: Divider(
-                color: isDark
-                    ? AppColors.darkOutlineVariant
-                    : AppColors.surfaceVariant,
-              ),
-            ),
+            Expanded(child: Divider(color: hc.border)),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12),
               child: Text(
                 context.tr('roomOrManualCode'),
-                style: AppTypography.captionSmall.copyWith(
-                  color: AppColors.textSecondaryColor(context),
+                style: text.captionSmall.copyWith(
+                  color: hc.textSecondary,
                   fontWeight: FontWeight.bold,
                   letterSpacing: 1.0,
                 ),
               ),
             ),
-            Expanded(
-              child: Divider(
-                color: isDark
-                    ? AppColors.darkOutlineVariant
-                    : AppColors.surfaceVariant,
-              ),
-            ),
+            Expanded(child: Divider(color: hc.border)),
           ],
         ),
         const SizedBox(height: AppSpacing.md),
 
         Text(
           context.tr('roomCodeLengthLabel'),
-          style: AppTypography.labelMedium.copyWith(
-            color: headingColor,
+          style: text.labelMedium.copyWith(
+            color: hc.textPrimary,
             fontWeight: FontWeight.w700,
           ),
         ),
@@ -496,30 +495,35 @@ class JoinRoomScreen extends StatelessWidget {
             UpperCaseTextFormatter(),
           ],
           textAlign: TextAlign.center,
-          style: AppTypography.headlineMedium.copyWith(
-            color: primaryColor,
+          style: text.headlineMedium.copyWith(
+            color: hc.brand,
             fontWeight: FontWeight.w900,
             letterSpacing: 8,
           ),
           decoration: InputDecoration(
             counterText: '',
             hintText: 'KODE6',
-            hintStyle: AppTypography.headlineMedium.copyWith(
-              color: AppColors.textSecondaryColor(
-                context,
-              ).withValues(alpha: 0.4),
+            hintStyle: text.headlineMedium.copyWith(
+              color: hc.textTertiary.withValues(alpha: 0.5),
               letterSpacing: 8,
             ),
             filled: true,
-            fillColor: isDark
-                ? AppColors.darkPrimaryContainer.withValues(alpha: 0.25)
-                : AppColors.canvasCream.withValues(alpha: 0.5),
+            fillColor: hc.surfaceSand.withValues(alpha: 0.5),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 16,
               vertical: 14,
             ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppRadius.md),
+              borderSide: BorderSide(color: hc.border),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              borderSide: BorderSide(color: hc.border),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              borderSide: BorderSide(color: hc.brand, width: 1.5),
             ),
           ),
         ),
@@ -534,12 +538,12 @@ class JoinRoomScreen extends StatelessWidget {
                   ? null
                   : () => controller.joinRoom(),
               icon: controller.isLoading.value
-                  ? const SizedBox(
+                  ? SizedBox(
                       width: 20,
                       height: 20,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: Colors.white,
+                        color: hc.onPrimary,
                       ),
                     )
                   : const Icon(Icons.arrow_forward_rounded, size: 20),
@@ -547,15 +551,14 @@ class JoinRoomScreen extends StatelessWidget {
                 controller.isLoading.value
                     ? context.tr('roomJoiningProcessing')
                     : context.tr('room.joinRoomTitle'),
-                style: AppTypography.labelLarge.copyWith(
-                  color: isDark
-                      ? AppColors.espressoDark
-                      : AppColors.surfaceWhite,
+                style: text.labelLarge.copyWith(
+                  color: hc.onPrimary,
                   fontWeight: FontWeight.bold,
                 ),
               ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: primaryColor,
+                backgroundColor: hc.brand,
+                foregroundColor: hc.onPrimary,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(AppRadius.pill),
                 ),
@@ -566,38 +569,159 @@ class JoinRoomScreen extends StatelessWidget {
       ],
     );
   }
+
+  Widget _buildSyncingSkeleton(
+    BuildContext context,
+    JoinRoomController controller,
+  ) {
+    final hc = context.hc;
+    final text = context.text;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const SizedBox(height: AppSpacing.sm),
+        // Rotating Sync Progress Header
+        Center(
+          child: Container(
+            width: 64,
+            height: 64,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: hc.brand.withValues(alpha: 0.12),
+              border: Border.all(color: hc.border, width: 1.5),
+            ),
+            child: Center(
+              child: SizedBox(
+                width: 28,
+                height: 28,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.5,
+                  valueColor: AlwaysStoppedAnimation(hc.brand),
+                ),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.md),
+        // Real-time status text
+        Obx(
+          () => Text(
+            controller.syncStatus.value.isNotEmpty
+                ? controller.syncStatus.value
+                : context.tr('room.syncingRoomData'),
+            textAlign: TextAlign.center,
+            style: text.titleMedium.copyWith(
+              color: hc.textPrimary,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.xs),
+        Text(
+          context.tr('room.syncingPleaseWait'),
+          textAlign: TextAlign.center,
+          style: text.bodySmall.copyWith(color: hc.textSecondary, height: 1.35),
+        ),
+        const SizedBox(height: AppSpacing.lg),
+
+        // Shimmering Preview Container
+        Container(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          decoration: BoxDecoration(
+            color: hc.surfaceSand,
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            border: Border.all(color: hc.border, width: 1.2),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 34,
+                    height: 34,
+                    decoration: BoxDecoration(
+                      color: hc.brand.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      Icons.meeting_room_rounded,
+                      size: 18,
+                      color: hc.brand,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          width: 140,
+                          height: 14,
+                          decoration: BoxDecoration(
+                            color: hc.border,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Container(
+                          width: 90,
+                          height: 10,
+                          decoration: BoxDecoration(
+                            color: hc.border.withValues(alpha: 0.6),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.md),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(AppRadius.pill),
+                child: LinearProgressIndicator(
+                  minHeight: 5,
+                  backgroundColor: hc.border.withValues(alpha: 0.3),
+                  valueColor: AlwaysStoppedAnimation(hc.brand),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: AppSpacing.md),
+      ],
+    );
+  }
 }
 
 class _ModeTabButton extends StatelessWidget {
   final String label;
   final IconData icon;
   final bool isSelected;
-  final Color primaryColor;
-  final Color headingColor;
-  final bool isDark;
   final VoidCallback onTap;
 
   const _ModeTabButton({
     required this.label,
     required this.icon,
     required this.isSelected,
-    required this.primaryColor,
-    required this.headingColor,
-    required this.isDark,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
+    final hc = context.hc;
+    final text = context.text;
+
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
-          color: isSelected
-              ? (isDark ? primaryColor : AppColors.espressoDark)
-              : Colors.transparent,
+          color: isSelected ? hc.brand : Colors.transparent,
           borderRadius: BorderRadius.circular(AppRadius.pill),
         ),
         child: Row(
@@ -606,17 +730,14 @@ class _ModeTabButton extends StatelessWidget {
             Icon(
               icon,
               size: 18,
-              color: isSelected
-                  ? (isDark ? AppColors.espressoDark : Colors.white)
-                  : AppColors.textSecondaryColor(context),
+              color: isSelected ? hc.onPrimary : hc.textSecondary,
             ),
             const SizedBox(width: 6),
             Text(
               label,
-              style: AppTypography.labelLarge.copyWith(
-                color: isSelected
-                    ? (isDark ? AppColors.espressoDark : Colors.white)
-                    : AppColors.textSecondaryColor(context),
+              style: text.labelLarge.copyWith(
+                color: isSelected ? hc.onPrimary : hc.textSecondary,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
               ),
             ),
           ],

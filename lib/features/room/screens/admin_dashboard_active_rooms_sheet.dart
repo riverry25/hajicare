@@ -14,7 +14,7 @@ extension _AdminDashboardActiveRoomsSheet on _AdminDashboardHome {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
+      backgroundColor: context.hc.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(
           top: Radius.circular(AppRadius.sheet),
@@ -54,20 +54,16 @@ extension _AdminDashboardActiveRoomsSheet on _AdminDashboardHome {
                             Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color:
-                                    (isDark
-                                            ? AppColors.darkPrimary
-                                            : AppColors.accentGoldStar)
-                                        .withValues(alpha: 0.15),
+                                color: context.hc.accent.withValues(
+                                  alpha: 0.15,
+                                ),
                                 borderRadius: BorderRadius.circular(
                                   AppRadius.sm,
                                 ),
                               ),
                               child: Icon(
                                 Icons.meeting_room_rounded,
-                                color: isDark
-                                    ? AppColors.darkPrimary
-                                    : AppColors.accentGoldStar,
+                                color: context.hc.accent,
                                 size: 20,
                               ),
                             ),
@@ -150,20 +146,12 @@ extension _AdminDashboardActiveRoomsSheet on _AdminDashboardHome {
                                       AppRadius.card,
                                     ),
                                     border: Border.all(
-                                      color: isDark
-                                          ? AppColors.darkCardBorder
-                                          : AppColors.lightCardBorder,
+                                      color: context.hc.border,
                                       width: 1.0,
                                     ),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: isDark
-                                            ? Colors.black.withValues(
-                                                alpha: 0.15,
-                                              )
-                                            : AppColors.primary.withValues(
-                                                alpha: 0.03,
-                                              ),
+                                        color: context.hc.shadow,
                                         blurRadius: 6,
                                         offset: const Offset(0, 2),
                                       ),
@@ -226,7 +214,7 @@ extension _AdminDashboardActiveRoomsSheet on _AdminDashboardHome {
                                                         vertical: 2.5,
                                                       ),
                                                   decoration: BoxDecoration(
-                                                    color: AppColors.statusSafe
+                                                    color: context.hc.success
                                                         .withValues(
                                                           alpha: isDark
                                                               ? 0.2
@@ -237,8 +225,7 @@ extension _AdminDashboardActiveRoomsSheet on _AdminDashboardHome {
                                                           AppRadius.pill,
                                                         ),
                                                     border: Border.all(
-                                                      color: AppColors
-                                                          .statusSafe
+                                                      color: context.hc.success
                                                           .withValues(
                                                             alpha: 0.3,
                                                           ),
@@ -252,9 +239,10 @@ extension _AdminDashboardActiveRoomsSheet on _AdminDashboardHome {
                                                         width: 5,
                                                         height: 5,
                                                         decoration:
-                                                            const BoxDecoration(
-                                                              color: AppColors
-                                                                  .statusSafe,
+                                                            BoxDecoration(
+                                                              color: context
+                                                                  .hc
+                                                                  .success,
                                                               shape: BoxShape
                                                                   .circle,
                                                             ),
@@ -264,16 +252,18 @@ extension _AdminDashboardActiveRoomsSheet on _AdminDashboardHome {
                                                         context.tr(
                                                           'adminDashboard.active',
                                                         ),
-                                                        style: DashboardTypography
-                                                            .captionSmall
-                                                            .copyWith(
-                                                              color: AppColors
-                                                                  .statusSafe,
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .bold,
-                                                              fontSize: 10,
-                                                            ),
+                                                        style:
+                                                            DashboardTypography
+                                                                .captionSmall
+                                                                .copyWith(
+                                                                  color: context
+                                                                      .hc
+                                                                      .success,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .bold,
+                                                                  fontSize: 10,
+                                                                ),
                                                       ),
                                                     ],
                                                   ),

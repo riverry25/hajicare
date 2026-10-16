@@ -139,5 +139,59 @@ void main() {
         expect(dashCtrl.currentIndex.value, equals(0));
       },
     );
+
+    testWidgets(
+      'HajiCareBottomNavBar has compact height and does NOT block body tap or scroll gestures',
+      (tester) async {
+        bool bodyButtonTapped = false;
+
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.lightTheme,
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+              FallbackMaterialLocalizationsDelegate(),
+              FallbackCupertinoLocalizationsDelegate(),
+              FallbackWidgetsLocalizationsDelegate(),
+            ],
+            home: Scaffold(
+              extendBody: true,
+              body: ListView(
+                children: [
+                  const SizedBox(height: 100),
+                  ElevatedButton(
+                    key: const Key('body_button'),
+                    onPressed: () => bodyButtonTapped = true,
+                    child: const Text('Body Action'),
+                  ),
+                  const SizedBox(height: 800),
+                  const Text('Bottom Element'),
+                ],
+              ),
+              bottomNavigationBar: const HajiCareBottomNavBar(currentIndex: 0),
+            ),
+          ),
+        );
+
+        await tester.pumpAndSettle();
+
+        // 1. Verify height is compact (less than 150dp), NOT full-screen (800dp+)
+        final navBarFinder = find.byType(HajiCareBottomNavBar);
+        final navBarSize = tester.getSize(navBarFinder);
+        expect(navBarSize.height, lessThan(150.0));
+
+        // 2. Verify button on body can be tapped
+        await tester.tap(find.byKey(const Key('body_button')));
+        await tester.pump();
+        expect(bodyButtonTapped, isTrue);
+
+        // 3. Verify list can be scrolled
+        await tester.scrollUntilVisible(find.text('Bottom Element'), 200);
+        expect(find.text('Bottom Element'), findsOneWidget);
+      },
+    );
   });
 }

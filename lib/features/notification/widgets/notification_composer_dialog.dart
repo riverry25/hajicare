@@ -5,11 +5,11 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../core/services/app_alert_service.dart';
 import '../../../core/state/hajicare_controller.dart';
-import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
-import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/theme_context.dart';
 import '../../../core/utils/user_feedback_message.dart';
+import '../../../core/widgets/haji_transparent_dialog.dart';
 import '../services/notification_service.dart';
 
 /// Interactive modal dialog for Admin and Pendamping to compose and send notifications
@@ -41,7 +41,7 @@ class NotificationComposerDialog extends StatefulWidget {
   }) {
     return showDialog(
       context: context,
-      barrierDismissible: false,
+      barrierDismissible: true,
       barrierColor: Colors.black.withValues(alpha: 0.58),
       useSafeArea: true,
       builder: (ctx) => NotificationComposerDialog(
@@ -258,11 +258,13 @@ class _NotificationComposerDialogState
 
   @override
   Widget build(BuildContext context) {
-    final isDark = AppColors.isDark(context);
-    final cardBg = isDark ? AppColors.darkSurface : AppColors.surfaceWhite;
-    final headingColor = AppColors.textHeadingColor(context);
-    final bodyColor = AppColors.textBodyColor(context);
-    final primaryColor = isDark ? AppColors.goldLight : AppColors.goldPrimary;
+    final colors = context.hc;
+    final text = context.text;
+    final isDark = context.isDark;
+    final cardBg = colors.surface;
+    final headingColor = colors.textPrimary;
+    final bodyColor = colors.textSecondary;
+    final primaryColor = colors.accent;
     final controller = Get.find<HajiCareController>();
     final isAdmin = controller.role == UserRole.admin;
     final media = MediaQuery.of(context);
@@ -276,10 +278,8 @@ class _NotificationComposerDialogState
 
     return PopScope(
       canPop: !_isSending,
-      child: Dialog(
+      child: HajiTransparentDialog(
         key: const Key('notification_composer_dialog'),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
         insetPadding: EdgeInsets.symmetric(
           horizontal: horizontalInset,
           vertical: 12,
@@ -298,14 +298,10 @@ class _NotificationComposerDialogState
                 decoration: BoxDecoration(
                   color: cardBg,
                   borderRadius: BorderRadius.circular(22),
-                  border: Border.all(
-                    color: isDark
-                        ? Colors.white.withValues(alpha: 0.10)
-                        : AppColors.goldLight.withValues(alpha: 0.42),
-                  ),
+                  border: Border.all(color: colors.border),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(
+                      color: colors.shadow.withValues(
                         alpha: isDark ? 0.45 : 0.18,
                       ),
                       blurRadius: 28,
@@ -330,7 +326,7 @@ class _NotificationComposerDialogState
                             children: [
                               Text(
                                 'Buat Notifikasi',
-                                style: AppTypography.titleMedium.copyWith(
+                                style: text.titleMedium.copyWith(
                                   color: headingColor,
                                   fontWeight: FontWeight.w800,
                                   fontSize: 19,
@@ -341,7 +337,7 @@ class _NotificationComposerDialogState
                                 isAdmin
                                     ? 'Sampaikan informasi resmi kepada penerima yang Anda pilih.'
                                     : 'Sampaikan informasi penting kepada jamaah dalam rombongan Anda.',
-                                style: AppTypography.bodySmall.copyWith(
+                                style: text.bodySmall.copyWith(
                                   color: bodyColor,
                                   height: 1.4,
                                 ),
@@ -483,22 +479,17 @@ class _NotificationComposerDialogState
     required Color primaryColor,
     required VoidCallback? onClose,
   }) {
+    final colors = context.hc;
     return DecoratedBox(
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: isDark
-              ? [const Color(0xFF3B281C), const Color(0xFF21160F)]
-              : [AppColors.espressoDark, const Color(0xFF5B3C28)],
-        ),
+        gradient: colors.dialogHeroGradient,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: AppColors.goldPrimary.withValues(alpha: 0.48),
+          color: colors.dialogHeroAccent.withValues(alpha: 0.35),
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.espressoDark.withValues(alpha: 0.35),
+            color: colors.shadow.withValues(alpha: 0.35),
             blurRadius: 18,
             offset: const Offset(0, 7),
           ),
@@ -523,22 +514,22 @@ class _NotificationComposerDialogState
                     height: 42,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: primaryColor.withValues(alpha: 0.16),
+                      color: colors.dialogHeroAccent.withValues(alpha: 0.16),
                       border: Border.all(
-                        color: AppColors.goldPrimary.withValues(alpha: 0.55),
+                        color: colors.dialogHeroAccent.withValues(alpha: 0.55),
                       ),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.campaign_rounded,
-                      color: AppColors.goldAccent,
+                      color: colors.dialogHeroAccent,
                       size: 23,
                     ),
                   ),
                   const SizedBox(height: 5),
-                  const Text(
+                  Text(
                     'PESAN UNTUK JAMAAH',
                     style: TextStyle(
-                      color: AppColors.goldLight,
+                      color: colors.dialogHeroAccent,
                       fontSize: 10,
                       fontWeight: FontWeight.w800,
                       letterSpacing: 1.25,
@@ -567,12 +558,13 @@ class _NotificationComposerDialogState
   }
 
   Widget _buildHeaderGlow(double size, double opacity) {
+    final colors = context.hc;
     return Container(
       width: size,
       height: size,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: AppColors.goldPrimary.withValues(alpha: opacity),
+        color: colors.accent.withValues(alpha: opacity),
       ),
     );
   }
@@ -582,6 +574,7 @@ class _NotificationComposerDialogState
     required String title,
     required Color headingColor,
   }) {
+    final text = context.text;
     return Row(
       children: [
         Icon(icon, size: 19, color: headingColor),
@@ -589,7 +582,7 @@ class _NotificationComposerDialogState
         Expanded(
           child: Text(
             title,
-            style: AppTypography.bodyMedium.copyWith(
+            style: text.bodyMedium.copyWith(
               color: headingColor,
               fontWeight: FontWeight.w800,
             ),
@@ -604,12 +597,13 @@ class _NotificationComposerDialogState
     required Color primaryColor,
     required String hintText,
   }) {
-    final idleColor = isDark ? AppColors.darkOutline : const Color(0xFFD1C2B5);
+    final colors = context.hc;
+    final idleColor = colors.border;
     return InputDecoration(
       labelText: 'Judul pesan *',
       hintText: hintText,
       hintStyle: TextStyle(
-        color: isDark ? Colors.white54 : AppColors.textMuted,
+        color: colors.textTertiary,
         fontSize: 14,
         fontWeight: FontWeight.w400,
       ),
@@ -620,11 +614,11 @@ class _NotificationComposerDialogState
       focusedBorder: UnderlineInputBorder(
         borderSide: BorderSide(color: primaryColor, width: 2),
       ),
-      errorBorder: const UnderlineInputBorder(
-        borderSide: BorderSide(color: AppColors.sosEmergency, width: 1.4),
+      errorBorder: UnderlineInputBorder(
+        borderSide: BorderSide(color: colors.danger, width: 1.4),
       ),
-      focusedErrorBorder: const UnderlineInputBorder(
-        borderSide: BorderSide(color: AppColors.sosEmergency, width: 2),
+      focusedErrorBorder: UnderlineInputBorder(
+        borderSide: BorderSide(color: colors.danger, width: 2),
       ),
     );
   }
@@ -637,9 +631,8 @@ class _NotificationComposerDialogState
     IconData? prefixIcon,
     bool alignLabelWithHint = false,
   }) {
-    final borderColor = isDark
-        ? AppColors.darkOutline
-        : AppColors.outlineVariant;
+    final colors = context.hc;
+    final borderColor = colors.border;
     final border = OutlineInputBorder(
       borderRadius: BorderRadius.circular(AppRadius.md),
       borderSide: BorderSide(color: borderColor),
@@ -664,6 +657,7 @@ class _NotificationComposerDialogState
     required Color headingColor,
     required Color bodyColor,
   }) {
+    final text = context.text;
     return Theme(
       data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
       child: Material(
@@ -679,14 +673,14 @@ class _NotificationComposerDialogState
           ),
           title: Text(
             'Lihat tampilan pesan',
-            style: AppTypography.bodySmall.copyWith(
+            style: text.bodySmall.copyWith(
               color: headingColor,
               fontWeight: FontWeight.w700,
             ),
           ),
           subtitle: Text(
             'Pratinjau yang akan dilihat jamaah',
-            style: AppTypography.captionSmall.copyWith(color: bodyColor),
+            style: text.labelSmall.copyWith(color: bodyColor),
           ),
           children: [
             _buildLivePreviewCard(
@@ -708,13 +702,12 @@ class _NotificationComposerDialogState
     required Color headingColor,
     required Color bodyColor,
   }) {
-    final dividerColor = isDark
-        ? AppColors.darkOutlineVariant
-        : AppColors.outlineVariant.withValues(alpha: 0.65);
+    final colors = context.hc;
+    final dividerColor = colors.border;
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
+        color: colors.surface,
         border: Border(top: BorderSide(color: dividerColor)),
       ),
       child: LayoutBuilder(
@@ -724,7 +717,7 @@ class _NotificationComposerDialogState
           final cancelButton = OutlinedButton(
             key: const Key('notification_cancel_button'),
             style: OutlinedButton.styleFrom(
-              foregroundColor: bodyColor,
+              foregroundColor: colors.textPrimary,
               minimumSize: const Size(0, 50),
               side: BorderSide(color: dividerColor),
               shape: RoundedRectangleBorder(
@@ -740,11 +733,9 @@ class _NotificationComposerDialogState
           final sendButton = ElevatedButton.icon(
             key: const Key('notification_send_button'),
             style: ElevatedButton.styleFrom(
-              backgroundColor: isDark
-                  ? AppColors.darkPrimaryContainer
-                  : AppColors.goldPrimary,
-              foregroundColor: isDark ? headingColor : Colors.white,
-              disabledBackgroundColor: primaryColor.withValues(alpha: 0.45),
+              backgroundColor: colors.primary,
+              foregroundColor: colors.onPrimary,
+              disabledBackgroundColor: colors.primary.withValues(alpha: 0.45),
               minimumSize: const Size(0, 50),
               elevation: 0,
               shape: RoundedRectangleBorder(
@@ -788,6 +779,7 @@ class _NotificationComposerDialogState
   }
 
   Widget _buildScopeChips(bool isAdmin, Color primaryColor, bool isDark) {
+    final colors = context.hc;
     final availableScopes = isAdmin
         ? [
             {
@@ -830,11 +822,7 @@ class _NotificationComposerDialogState
       runSpacing: 8,
       children: availableScopes.map((scope) {
         final isSelected = _selectedScope == scope['key'];
-        final selectedContentColor =
-            ThemeData.estimateBrightnessForColor(primaryColor) ==
-                Brightness.dark
-            ? Colors.white
-            : AppColors.espressoDark;
+        final selectedContentColor = colors.onPrimary;
         return ChoiceChip(
           showCheckmark: false,
           label: Row(
@@ -843,9 +831,7 @@ class _NotificationComposerDialogState
               Icon(
                 scope['icon'] as IconData,
                 size: 15,
-                color: isSelected
-                    ? selectedContentColor
-                    : (isDark ? AppColors.darkTextBody : AppColors.textBody),
+                color: isSelected ? selectedContentColor : colors.textSecondary,
               ),
               const SizedBox(width: 6),
               Text(
@@ -855,16 +841,14 @@ class _NotificationComposerDialogState
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                   color: isSelected
                       ? selectedContentColor
-                      : (isDark ? AppColors.darkTextBody : AppColors.textBody),
+                      : colors.textSecondary,
                 ),
               ),
             ],
           ),
           selected: isSelected,
-          selectedColor: primaryColor,
-          backgroundColor: isDark
-              ? AppColors.darkSurfaceContainer
-              : AppColors.surfaceVariant,
+          selectedColor: colors.primary,
+          backgroundColor: colors.surfaceSubtle,
           onSelected: _isSending
               ? null
               : (selected) {
@@ -878,14 +862,11 @@ class _NotificationComposerDialogState
   }
 
   Widget _buildTypeChips(Color primaryColor, bool isDark) {
+    final colors = context.hc;
     final types = [
-      {'key': 'announcement', 'label': 'Pengumuman', 'color': primaryColor},
-      {
-        'key': 'urgent',
-        'label': 'Penting / Mendesak',
-        'color': AppColors.statusCaution,
-      },
-      {'key': 'info', 'label': 'Informasi', 'color': AppColors.statusSafe},
+      {'key': 'announcement', 'label': 'Pengumuman', 'color': colors.primary},
+      {'key': 'urgent', 'label': 'Penting / Mendesak', 'color': colors.danger},
+      {'key': 'info', 'label': 'Informasi', 'color': colors.success},
     ];
 
     return Wrap(
@@ -894,10 +875,7 @@ class _NotificationComposerDialogState
       children: types.map((t) {
         final isSelected = _selectedType == t['key'];
         final color = t['color'] as Color;
-        final selectedContentColor =
-            ThemeData.estimateBrightnessForColor(color) == Brightness.dark
-            ? Colors.white
-            : AppColors.espressoDark;
+        const selectedContentColor = Colors.white;
         return ChoiceChip(
           showCheckmark: false,
           label: Text(
@@ -905,16 +883,12 @@ class _NotificationComposerDialogState
             style: TextStyle(
               fontSize: 12,
               fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-              color: isSelected
-                  ? selectedContentColor
-                  : (isDark ? AppColors.darkTextBody : AppColors.textBody),
+              color: isSelected ? selectedContentColor : colors.textSecondary,
             ),
           ),
           selected: isSelected,
           selectedColor: color,
-          backgroundColor: isDark
-              ? AppColors.darkSurfaceContainer
-              : AppColors.surfaceVariant,
+          backgroundColor: colors.surfaceSubtle,
           onSelected: _isSending
               ? null
               : (selected) {
@@ -935,29 +909,25 @@ class _NotificationComposerDialogState
     Color headingColor,
     Color bodyColor,
   ) {
+    final colors = context.hc;
+    final text = context.text;
     switch (_selectedScope) {
       case 'global':
         return Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: AppColors.statusSafe.withValues(alpha: 0.1),
+            color: colors.successContainer.withValues(alpha: 0.5),
             borderRadius: BorderRadius.circular(AppRadius.md),
-            border: Border.all(
-              color: AppColors.statusSafe.withValues(alpha: 0.3),
-            ),
+            border: Border.all(color: colors.success.withValues(alpha: 0.3)),
           ),
           child: Row(
             children: [
-              const Icon(
-                Icons.info_outline_rounded,
-                color: AppColors.statusSafe,
-                size: 20,
-              ),
+              Icon(Icons.info_outline_rounded, color: colors.success, size: 20),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
                   'Pesan akan dikirim kepada semua pengguna yang terdaftar. Periksa kembali isinya sebelum mengirim.',
-                  style: AppTypography.captionSmall.copyWith(
+                  style: text.labelSmall.copyWith(
                     color: headingColor,
                     height: 1.35,
                   ),
@@ -1013,9 +983,7 @@ class _NotificationComposerDialogState
           return Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: isDark
-                  ? AppColors.darkSurfaceContainer
-                  : AppColors.canvasCream,
+              color: colors.surfaceSand,
               borderRadius: BorderRadius.circular(AppRadius.md),
               border: Border.all(color: primaryColor.withValues(alpha: 0.3)),
             ),
@@ -1029,16 +997,14 @@ class _NotificationComposerDialogState
                     children: [
                       Text(
                         'Rombongan tujuan: $rName',
-                        style: AppTypography.bodySmall.copyWith(
+                        style: text.bodySmall.copyWith(
                           color: headingColor,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       Text(
                         'Pesan dikirim ke seluruh jamaah dalam rombongan ini.',
-                        style: AppTypography.captionSmall.copyWith(
-                          color: bodyColor,
-                        ),
+                        style: text.labelSmall.copyWith(color: bodyColor),
                       ),
                     ],
                   ),
@@ -1075,9 +1041,7 @@ class _NotificationComposerDialogState
             return Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: isDark
-                    ? AppColors.darkSurfaceContainer
-                    : AppColors.canvasCream,
+                color: colors.surfaceSand,
                 borderRadius: BorderRadius.circular(AppRadius.md),
                 border: Border.all(color: primaryColor.withValues(alpha: 0.3)),
               ),
@@ -1104,16 +1068,14 @@ class _NotificationComposerDialogState
                       children: [
                         Text(
                           _selectedTargetUserName!,
-                          style: AppTypography.bodySmall.copyWith(
+                          style: text.bodySmall.copyWith(
                             color: headingColor,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                         Text(
                           'Pesan hanya dikirim kepada jamaah ini.',
-                          style: AppTypography.captionSmall.copyWith(
-                            color: bodyColor,
-                          ),
+                          style: text.labelSmall.copyWith(color: bodyColor),
                         ),
                       ],
                     ),
@@ -1148,9 +1110,7 @@ class _NotificationComposerDialogState
             initialValue: members.any((j) => j.id == _selectedTargetUserId)
                 ? _selectedTargetUserId
                 : null,
-            dropdownColor: isDark
-                ? AppColors.darkSurfaceContainer
-                : AppColors.surfaceWhite,
+            dropdownColor: colors.surface,
             isExpanded: true,
             decoration: _outlinedInputDecoration(
               isDark: isDark,
@@ -1252,9 +1212,7 @@ class _NotificationComposerDialogState
           key: ValueKey('$field-${values.join('|')}'),
           initialValue: selectedValue,
           isExpanded: true,
-          dropdownColor: isDark
-              ? AppColors.darkSurfaceContainer
-              : AppColors.surfaceWhite,
+          dropdownColor: context.hc.surface,
           decoration: _outlinedInputDecoration(
             isDark: isDark,
             primaryColor: primaryColor,
@@ -1337,9 +1295,7 @@ class _NotificationComposerDialogState
           key: ValueKey('room-${rooms.map((doc) => doc.id).join('|')}'),
           initialValue: selectedValue,
           isExpanded: true,
-          dropdownColor: isDark
-              ? AppColors.darkSurfaceContainer
-              : AppColors.surfaceWhite,
+          dropdownColor: context.hc.surface,
           decoration: _outlinedInputDecoration(
             isDark: isDark,
             primaryColor: primaryColor,
@@ -1461,9 +1417,7 @@ class _NotificationComposerDialogState
                 ),
                 initialValue: selectedValue,
                 isExpanded: true,
-                dropdownColor: isDark
-                    ? AppColors.darkSurfaceContainer
-                    : AppColors.surfaceWhite,
+                dropdownColor: context.hc.surface,
                 decoration: _outlinedInputDecoration(
                   isDark: isDark,
                   primaryColor: primaryColor,
@@ -1506,6 +1460,7 @@ class _NotificationComposerDialogState
   }
 
   Widget _buildLoadingField(String message, Color bodyColor) {
+    final text = context.text;
     return Semantics(
       liveRegion: true,
       label: message,
@@ -1522,7 +1477,7 @@ class _NotificationComposerDialogState
             Expanded(
               child: Text(
                 message,
-                style: AppTypography.bodySmall.copyWith(color: bodyColor),
+                style: text.bodySmall.copyWith(color: bodyColor),
               ),
             ),
           ],
@@ -1538,12 +1493,12 @@ class _NotificationComposerDialogState
     required Color primaryColor,
     required Color bodyColor,
   }) {
+    final colors = context.hc;
+    final text = context.text;
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: isDark
-            ? AppColors.darkSurfaceContainer
-            : AppColors.canvasCream.withValues(alpha: 0.72),
+        color: colors.surfaceSand.withValues(alpha: 0.72),
         borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(color: primaryColor.withValues(alpha: 0.28)),
       ),
@@ -1554,10 +1509,7 @@ class _NotificationComposerDialogState
           Expanded(
             child: Text(
               message,
-              style: AppTypography.bodySmall.copyWith(
-                color: bodyColor,
-                height: 1.35,
-              ),
+              style: text.bodySmall.copyWith(color: bodyColor, height: 1.35),
             ),
           ),
         ],
@@ -1572,6 +1524,8 @@ class _NotificationComposerDialogState
     Color headingColor,
     Color bodyColor,
   ) {
+    final colors = context.hc;
+    final text = context.text;
     final titleText = _titleController.text.trim().isNotEmpty
         ? _titleController.text.trim()
         : 'Judul Notifikasi Anda';
@@ -1584,31 +1538,27 @@ class _NotificationComposerDialogState
     if (_selectedScope == 'global') {
       badgeColor = primaryColor;
     } else if (_selectedScope == 'maktab') {
-      badgeColor = AppColors.statusCaution;
+      badgeColor = colors.warning;
       scopeLabel =
           'MAKTAB ${_maktabController.text.trim().isNotEmpty ? _maktabController.text.trim() : ""}';
     } else if (_selectedScope == 'kloter') {
-      badgeColor = AppColors.statusCaution;
+      badgeColor = colors.warning;
       scopeLabel =
           'KLOTER ${_kloterController.text.trim().isNotEmpty ? _kloterController.text.trim() : ""}';
     } else if (_selectedScope == 'room') {
       badgeColor = primaryColor;
       scopeLabel = 'ROMBONGAN';
     } else {
-      badgeColor = AppColors.statusSafe;
+      badgeColor = colors.success;
       scopeLabel = 'PRIBADI';
     }
 
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurfaceContainer : AppColors.surfaceWhite,
+        color: colors.surface,
         borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(
-          color: isDark
-              ? AppColors.darkOutlineVariant
-              : AppColors.surfaceVariant,
-        ),
+        border: Border.all(color: colors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1634,17 +1584,14 @@ class _NotificationComposerDialogState
               const Spacer(),
               Text(
                 'Baru saja',
-                style: AppTypography.captionSmall.copyWith(
-                  color: bodyColor,
-                  fontSize: 11,
-                ),
+                style: text.labelSmall.copyWith(color: bodyColor, fontSize: 11),
               ),
             ],
           ),
           const SizedBox(height: 8),
           Text(
             titleText,
-            style: AppTypography.bodyMedium.copyWith(
+            style: text.bodyMedium.copyWith(
               color: headingColor,
               fontWeight: FontWeight.bold,
             ),
@@ -1652,10 +1599,7 @@ class _NotificationComposerDialogState
           const SizedBox(height: 4),
           Text(
             messageText,
-            style: AppTypography.bodySmall.copyWith(
-              color: bodyColor,
-              height: 1.3,
-            ),
+            style: text.bodySmall.copyWith(color: bodyColor, height: 1.3),
             maxLines: 3,
             overflow: TextOverflow.ellipsis,
           ),

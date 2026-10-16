@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_map/flutter_map.dart' as fmap;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 import 'package:hajicare/core/locales/app_localizations.dart';
 import 'package:hajicare/core/state/app_settings_controller.dart';
 import 'package:hajicare/core/theme/app_theme.dart';
+import 'package:hajicare/features/dashboard/screens/dashboard_jamaah_screen.dart';
 import 'package:hajicare/features/smartband/controllers/smartband_ble_test_controller.dart';
 import 'package:hajicare/features/smartband/controllers/smartband_ldr_controller.dart';
 import 'package:hajicare/features/smartband/screens/smartband_ble_test_screen.dart';
@@ -21,13 +23,15 @@ void main() {
     required Widget child,
     Locale locale = const Locale('id'),
     double textScale = 1.0,
+    ThemeData? theme,
   }) {
     if (!Get.isRegistered<AppSettingsController>()) {
       Get.put(AppSettingsController(), permanent: true);
     }
 
     return GetMaterialApp(
-      theme: AppTheme.lightTheme,
+      theme: theme ?? AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
       translations: AppTranslations(),
       locale: locale,
       supportedLocales: AppTranslations.supportedLocales,
@@ -138,5 +142,87 @@ void main() {
       ctrl.toggleSimulation(false);
       ctrl.onClose();
     });
+
+    testWidgets(
+      'Smartband Dialog displays senior-friendly fallback without raw coords when disconnected',
+      (tester) async {
+        final ctrl = Get.put(SmartbandLdrController());
+        ctrl.toggleSimulation(false);
+
+        await tester.pumpWidget(
+          buildTestApp(
+            child: Scaffold(
+              body: Builder(
+                builder: (context) => ElevatedButton(
+                  onPressed: () =>
+                      DashboardJamaahScreen.showSmartbandDialog(context),
+                  child: const Text('Open Dialog'),
+                ),
+              ),
+            ),
+          ),
+        );
+
+        await tester.tap(find.text('Open Dialog'));
+        await tester.pumpAndSettle();
+
+        // Dialog harus terbuka
+        expect(find.byType(Dialog), findsOneWidget);
+
+        // Memastikan tidak ada teks koordinat latitude/longitude teknis
+        expect(find.textContaining('Latitude'), findsNothing);
+        expect(find.textContaining('Longitude'), findsNothing);
+        expect(find.textContaining('21.422487'), findsNothing);
+
+        // Memastikan fallback ramah lansia muncul
+        expect(find.text('Lokasi Belum Terdeteksi'), findsOneWidget);
+        expect(find.text('Buka Peta Utama'), findsOneWidget);
+        expect(tester.takeException(), isNull);
+
+        ctrl.onClose();
+      },
+    );
+
+    testWidgets(
+      'Smartband Dialog displays mini map preview without raw coords when simulation is active',
+      (tester) async {
+        final ctrl = Get.put(SmartbandLdrController());
+        ctrl.toggleSimulation(true);
+
+        await tester.pumpWidget(
+          buildTestApp(
+            theme: AppTheme.darkTheme,
+            textScale: 1.3,
+            child: Scaffold(
+              body: Builder(
+                builder: (context) => ElevatedButton(
+                  onPressed: () =>
+                      DashboardJamaahScreen.showSmartbandDialog(context),
+                  child: const Text('Open Dialog'),
+                ),
+              ),
+            ),
+          ),
+        );
+
+        await tester.tap(find.text('Open Dialog'));
+        await tester.pumpAndSettle();
+
+        expect(find.byType(Dialog), findsOneWidget);
+
+        // Tidak ada koordinat mentah
+        expect(find.textContaining('Latitude'), findsNothing);
+        expect(find.textContaining('Longitude'), findsNothing);
+
+        // Mini map preview harus terpasang
+        expect(find.byType(fmap.FlutterMap), findsOneWidget);
+        expect(find.text('Area Masjidil Haram, Makkah'), findsOneWidget);
+        expect(find.text('GPS Aktif'), findsOneWidget);
+        expect(tester.takeException(), isNull);
+
+        ctrl.toggleSimulation(false);
+        ctrl.onClose();
+      },
+    );
   });
 }

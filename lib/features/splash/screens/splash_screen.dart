@@ -1,31 +1,65 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_radius.dart';
-import '../../../core/theme/app_spacing.dart';
-import '../../../core/theme/app_typography.dart';
 import '../../../core/state/app_startup_controller.dart';
+import '../../../core/theme/app_spacing.dart';
+import '../../../core/theme/theme_context.dart';
+import '../widgets/corner_capsules_loader.dart';
+import '../widgets/kabbah_hero_widget.dart';
 
+/// Refactored, modern Splash Screen with dynamic animated corner loading stripes
+/// and centered Ka'bah hero vector.
+/// Adheres to UI/UX Pro Max, Flutter Architecture, and Flutter Responsive standards.
 class SplashScreen extends StatefulWidget {
-  const SplashScreen({super.key});
+  final Duration bootstrapDelay;
+
+  const SplashScreen({
+    super.key,
+    this.bootstrapDelay = const Duration(milliseconds: 2400),
+  });
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
 class _SplashScreenState extends State<SplashScreen>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
+    with TickerProviderStateMixin {
+  late final AnimationController _entranceController;
+  late final Animation<double> _contentFade;
+
+  /// Drives the soft loading sweep of the corner capsules.
+  late final AnimationController _sweepController;
 
   @override
   void initState() {
     super.initState();
 
-    _controller = AnimationController(
-      duration: const Duration(milliseconds: 2200),
+    // 1. Entrance: corners grow in first (staggered inside the painter),
+    //    centre content fades in slightly later.
+    _entranceController = AnimationController(
+      duration: const Duration(milliseconds: 1600),
       vsync: this,
-    )..repeat(reverse: true);
+    );
+    _contentFade = CurvedAnimation(
+      parent: _entranceController,
+      curve: const Interval(0.25, 1.0, curve: Curves.easeOut),
+    );
+
+    // 2. Loop: one-directional sweep across the capsules.
+    _sweepController = AnimationController(
+      duration: const Duration(milliseconds: 2400),
+      vsync: this,
+    );
+
+    // Start after the first Flutter frame so the entrance is not consumed
+    // while the native launch screen is still covering the app.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _entranceController.forward();
+      _sweepController.repeat();
+    });
 
     _bootstrap();
   }
@@ -35,7 +69,8 @@ class _SplashScreenState extends State<SplashScreen>
 
     final results = await Future.wait([
       startup.determineInitialRoute(),
-      Future.delayed(const Duration(milliseconds: 2400)),
+      if (widget.bootstrapDelay > Duration.zero)
+        Future.delayed(widget.bootstrapDelay),
     ]);
 
     final destination = results.first as String;
@@ -47,206 +82,133 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   void dispose() {
-    _controller.dispose();
+    _entranceController.dispose();
+    _sweepController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.hc;
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final heroWidth = math.min(240.0, screenWidth * 0.6);
+
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: Stack(
-        children: [
-          // Main Content
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
-              child: Column(
-                children: [
-                  // Top Brand Pill Badge
+      backgroundColor: colors.canvas,
+      body: ClipRect(
+        child: Stack(
+          children: [
+            // 1. Top-Left Corner Animated Stripes Loader
+            Positioned(
+              top: 0,
+              left: 0,
+              child: CornerCapsulesLoader(
+                position: CornerPosition.topLeft,
+                entranceAnim: _entranceController,
+                shimmerAnim: _sweepController,
+              ),
+            ),
 
-                  // Center Logo & Identity
-                  Expanded(
-                    child: Center(
-                      child: SingleChildScrollView(
-                        physics: const NeverScrollableScrollPhysics(),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            AnimatedBuilder(
-                              animation: _controller,
-                              builder: (context, child) {
-                                final scale = 1.0 + (_controller.value * 0.02);
-                                return Transform.scale(
-                                  scale: scale,
-                                  child: child,
-                                );
-                              },
-                              child: _buildLogo(),
-                            ),
+            // 2. Bottom-Right Corner Animated Stripes Loader
+            Positioned(
+              bottom: 0,
+              right: 0,
+              child: CornerCapsulesLoader(
+                position: CornerPosition.bottomRight,
+                entranceAnim: _entranceController,
+                shimmerAnim: _sweepController,
+              ),
+            ),
 
-                            const SizedBox(height: 24),
-
-                            // Arabic Calligraphy Text
-                            Text(
-                              'رِعَايَةُ الحَجِيجِ وَالمُعْتَمِرِينَ',
-                              textAlign: TextAlign.center,
-                              style: AppTypography.arabicText(
-                                fontSize: 23,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.emeraldIslamic,
-                                height: 1.2,
-                              ),
-                            ),
-
-                            const SizedBox(height: 10),
-
-                            // App Brand Name
-                            RichText(
-                              textAlign: TextAlign.center,
-                              text: TextSpan(
-                                children: [
-                                  TextSpan(
-                                    text: 'Haji',
-                                    style: AppTypography.displayLarge.copyWith(
-                                      color: AppColors.textHeading,
-                                      fontWeight: FontWeight.w900,
-                                      fontSize: 34,
-                                      letterSpacing: -0.8,
-                                    ),
-                                  ),
-                                  TextSpan(
-                                    text: 'Care',
-                                    style: AppTypography.displayLarge.copyWith(
-                                      color: AppColors.goldPrimary,
-                                      fontWeight: FontWeight.w900,
-                                      fontSize: 34,
-                                      letterSpacing: -0.8,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-
-                            const SizedBox(height: 10),
-
-                            // Tagline
-                            Text(
-                              'Sahabat Setia & Amanah Ibadah Anda',
-                              textAlign: TextAlign.center,
-                              style: AppTypography.titleSmall.copyWith(
-                                color: AppColors.textBody,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: 0.2,
-                              ),
-                            ),
-
-                            const SizedBox(height: 6),
-
-                            // Subtle Feature Subtitle
-                            Text(
-                              'Pendampingan Pintar • Radar Jarak Jauh • Bantuan Lansia',
-                              textAlign: TextAlign.center,
-                              style: AppTypography.captionSmall.copyWith(
-                                color: AppColors.textMuted,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
+            // 3. Center Content (Ka'bah Hero + Brand Identity + Arabic Calligraphy)
+            SafeArea(
+              child: Center(
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.lg,
+                    vertical: AppSpacing.md,
                   ),
-
-                  // Bottom Progress Bar
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: AppSpacing.xxl),
+                  child: FadeTransition(
+                    opacity: _contentFade,
                     child: Column(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        Container(
-                          width: 210,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 10,
-                          ),
-                          child: Column(
+                        // Ka'bah Lottie animation
+                        KabbahHeroWidget(width: heroWidth),
+
+                        const SizedBox(height: AppSpacing.lg),
+
+                        // App Brand Name (HajiCare)
+                        RichText(
+                          textAlign: TextAlign.center,
+                          text: TextSpan(
                             children: [
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    'Memuat data...',
-                                    style: AppTypography.captionSmall.copyWith(
-                                      color: AppColors.textBody,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                  AnimatedBuilder(
-                                    animation: _controller,
-                                    builder: (context, child) {
-                                      final pct =
-                                          25 +
-                                          ((_controller.value * 75).round());
-                                      return Text(
-                                        '$pct%',
-                                        style: AppTypography.captionSmall
-                                            .copyWith(
-                                              color: AppColors.emeraldIslamic,
-                                              fontWeight: FontWeight.w800,
-                                            ),
-                                      );
-                                    },
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              Container(
-                                height: 4,
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFE5E5E5),
-                                  borderRadius: BorderRadius.circular(
-                                    AppRadius.pill,
-                                  ),
+                              TextSpan(
+                                text: 'Haji',
+                                style: context.text.displayLarge.copyWith(
+                                  color: colors.textPrimary,
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 36,
+                                  letterSpacing: -0.8,
                                 ),
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(
-                                    AppRadius.pill,
-                                  ),
-                                  child: AnimatedBuilder(
-                                    animation: _controller,
-                                    builder: (context, child) {
-                                      return FractionallySizedBox(
-                                        alignment: Alignment.centerLeft,
-                                        widthFactor:
-                                            0.25 + (_controller.value * 0.75),
-                                        child: Container(
-                                          decoration: const BoxDecoration(
-                                            color: AppColors.goldPrimary,
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                  ),
+                              ),
+                              TextSpan(
+                                text: 'Care',
+                                style: context.text.displayLarge.copyWith(
+                                  color: colors.accent,
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 36,
+                                  letterSpacing: -0.8,
                                 ),
                               ),
                             ],
                           ),
                         ),
-                        const SizedBox(height: 14),
+
+                        const SizedBox(height: 8),
+
+                        // Arabic Calligraphy Text
+                        Text(
+                          'رِعَايَةُ الحَجِيجِ وَالمُعْتَمِرِينَ',
+                          textAlign: TextAlign.center,
+                          style: AppTypography.arabicText(
+                            fontSize: 21,
+                            fontWeight: FontWeight.bold,
+                            color: colors.islamic,
+                            height: 1.25,
+                          ),
+                        ),
+
+                        const SizedBox(height: 10),
+
+                        // Tagline
+                        Text(
+                          'Sahabat Setia & Amanah Ibadah Anda',
+                          textAlign: TextAlign.center,
+                          style: context.text.bodyMedium.copyWith(
+                            color: colors.textSecondary,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 0.2,
+                          ),
+                        ),
+
+                        const SizedBox(height: AppSpacing.xl),
+
+                        // Bottom Verified Badge
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
+                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.verified_user_rounded,
-                              size: 14,
-                              color: AppColors.emeraldIslamic,
+                              size: 15,
+                              color: colors.islamic,
                             ),
                             const SizedBox(width: 6),
                             Text(
                               'Melayani Jamaah dengan Amanah & Ikhlas',
-                              style: AppTypography.captionSmall.copyWith(
-                                color: AppColors.textMuted,
+                              style: context.text.labelSmall.copyWith(
+                                color: colors.textTertiary,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -255,29 +217,11 @@ class _SplashScreenState extends State<SplashScreen>
                       ],
                     ),
                   ),
-                ],
+                ),
               ),
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildLogo() {
-    return SizedBox(
-      width: 140,
-      height: 140,
-      child: Image.asset(
-        'assets/icon.jpeg',
-        fit: BoxFit.contain,
-        errorBuilder: (context, error, stackTrace) {
-          return const Icon(
-            Icons.mosque_rounded,
-            size: 54,
-            color: AppColors.goldPrimary,
-          );
-        },
+          ],
+        ),
       ),
     );
   }

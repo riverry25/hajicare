@@ -12,7 +12,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkScaffold : AppColors.background,
+        color: context.hc.canvas,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
         boxShadow: [
           BoxShadow(
@@ -26,6 +26,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          const ActiveAdhanDashboardBanner(),
           // ── Quick Service Categories (Row of 4 Horizontal Items) ─
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
@@ -38,12 +39,8 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                     context: context,
                     label: context.tr('dashboard.quickComm'),
                     icon: Icons.record_voice_over_rounded,
-                    bgColor: isDark
-                        ? AppColors.darkSurfaceContainer
-                        : AppColors.canvasCream,
-                    iconColor: isDark
-                        ? AppColors.goldLight
-                        : AppColors.espressoDark,
+                    bgColor: context.hc.surfaceVariant,
+                    iconColor: context.hc.primary,
                     onTap: () => CommunicationGestureDialog.show(context),
                   ),
                 ),
@@ -52,12 +49,8 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                     context: context,
                     label: context.tr('dashboard.smartband'),
                     icon: Icons.watch_rounded,
-                    bgColor: isDark
-                        ? AppColors.darkSurfaceContainer
-                        : AppColors.canvasCream,
-                    iconColor: isDark
-                        ? AppColors.goldLight
-                        : AppColors.espressoDark,
+                    bgColor: context.hc.surfaceVariant,
+                    iconColor: context.hc.primary,
                     onTap: () => _showSmartBandDialog(context),
                   ),
                 ),
@@ -66,12 +59,8 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                     context: context,
                     label: context.tr('dashboard.medicalPost'),
                     icon: Icons.local_hospital_rounded,
-                    bgColor: isDark
-                        ? AppColors.darkSurfaceContainer
-                        : AppColors.canvasCream,
-                    iconColor: isDark
-                        ? AppColors.goldLight
-                        : AppColors.espressoDark,
+                    bgColor: context.hc.surfaceVariant,
+                    iconColor: context.hc.primary,
                     onTap: () => _showMedicalSheet(context),
                   ),
                 ),
@@ -80,12 +69,8 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                     context: context,
                     label: context.tr('dashboard.textToSign'),
                     icon: Icons.interpreter_mode_rounded,
-                    bgColor: isDark
-                        ? AppColors.darkSurfaceContainer
-                        : AppColors.canvasCream,
-                    iconColor: isDark
-                        ? AppColors.emeraldIslamic
-                        : AppColors.emeraldIslamic,
+                    bgColor: context.hc.surfaceVariant,
+                    iconColor: context.hc.success,
                     onTap: () => Get.toNamed(AppRoutes.textToSign),
                   ),
                 ),
@@ -120,21 +105,42 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
           const SizedBox(height: 24),
 
           // ── Section 1: "Status & Peringatan" ("Bot Alert") ────────
-          _buildSectionHeader(
-            title: context.tr('dashboard.statusAndAlert'),
-            subtitle: context.tr('dashboard.gpsMonitoringSub'),
-            actionText: context.tr('dashboard.viewMap'),
-            onAction: () => dashboardCtrl.changeTab(1),
-            headingColor: headingColor,
-            isDark: isDark,
-          ),
-          const SizedBox(height: 12),
-          _buildStatusAlertCard(context, jamaah, isDark, dashboardCtrl),
+          // Hanya ditampilkan jika jamaah sudah tergabung dalam room pemantauan
+          // atau terdapat alarm darurat SOS aktif. Jika belum memiliki room, section
+          // ini disembunyikan agar tidak menampilkan status "Terkoneksi & Aman" semu.
+          Obx(() {
+            final hasRoom =
+                (state.activeRoomId.value != null &&
+                    state.activeRoomId.value!.trim().isNotEmpty) ||
+                (state.activeRoom.value != null);
+            final hasSos = state.anySosActive || jamaah.sosActive;
 
-          const SizedBox(height: 26),
+            if (!hasRoom && !hasSos) {
+              return const SizedBox.shrink();
+            }
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildSectionHeader(
+                  context: context,
+                  title: context.tr('dashboard.statusAndAlert'),
+                  subtitle: context.tr('dashboard.gpsMonitoringSub'),
+                  actionText: context.tr('dashboard.viewMap'),
+                  onAction: () => dashboardCtrl.changeTab(1),
+                  headingColor: headingColor,
+                  isDark: isDark,
+                ),
+                const SizedBox(height: 12),
+                _buildStatusAlertCard(context, jamaah, isDark, dashboardCtrl),
+                const SizedBox(height: 26),
+              ],
+            );
+          }),
 
           // ── Section 2: "Kamar & Maktab" ───────────────────────────
           _buildSectionHeader(
+            context: context,
             title: context.tr('dashboard.roomAndMaktab'),
             subtitle: context.tr('dashboard.hotelRoomSub'),
             actionText: context.tr('dashboard.manage'),
@@ -158,6 +164,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
 
           // ── Section 3: "Info & Pengumuman" (Dynamic Info Notifications from Companion & Admin)
           _buildSectionHeader(
+            context: context,
             title: context.tr('dashboard.companionAndAdminInfo'),
             subtitle: context.tr('dashboard.companionAndAdminInfoSub'),
             actionText: context.tr('dashboard.viewAll'),
@@ -181,8 +188,8 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
     required Color iconColor,
     required VoidCallback onTap,
   }) {
-    final isDark = AppColors.isDark(context);
-    final textHeading = AppColors.textHeadingColor(context);
+    final isDark = context.hc.isDark;
+    final textHeading = context.hc.textPrimary;
 
     return InkWell(
       onTap: () {
@@ -202,17 +209,10 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
               decoration: BoxDecoration(
                 color: bgColor,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: isDark
-                      ? AppColors.darkOutlineVariant.withValues(alpha: 0.5)
-                      : AppColors.canvasCreamSubtle,
-                  width: 1.0,
-                ),
+                border: Border.all(color: context.hc.border, width: 1.0),
                 boxShadow: [
                   BoxShadow(
-                    color: isDark
-                        ? Colors.black.withValues(alpha: 0.25)
-                        : AppColors.espressoDark.withValues(alpha: 0.05),
+                    color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.05),
                     blurRadius: 6,
                     offset: const Offset(0, 2),
                   ),
@@ -245,6 +245,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
 
   // ── Section Header (Title + Subtitle + Action) ─────────────────────────────
   Widget _buildSectionHeader({
+    required BuildContext context,
     required String title,
     required String subtitle,
     required String actionText,
@@ -277,9 +278,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: DashboardTypography.captionSmall.copyWith(
-                    color: isDark
-                        ? AppColors.darkTextBody.withValues(alpha: 0.8)
-                        : AppColors.textMuted,
+                    color: context.hc.textSecondary,
                     height: 1.3,
                     fontSize: 11.5,
                   ),
@@ -296,7 +295,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
               child: Text(
                 actionText,
                 style: TextStyle(
-                  color: isDark ? AppColors.goldLight : AppColors.espressoDark,
+                  color: context.hc.primary,
                   fontWeight: FontWeight.w700,
                   fontSize: 12.5,
                 ),
@@ -422,16 +421,14 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
       Widget buildRadiusBadge() => Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(
-          color: AppColors.statusSafe.withValues(alpha: isDark ? 0.25 : 0.12),
+          color: context.hc.success.withValues(alpha: isDark ? 0.25 : 0.12),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: AppColors.statusSafe.withValues(alpha: 0.45),
-          ),
+          border: Border.all(color: context.hc.success.withValues(alpha: 0.45)),
         ),
         child: Text(
           '≤ ${safeRadius.toInt()} m',
           style: TextStyle(
-            color: AppColors.statusSafe,
+            color: context.hc.success,
             fontSize: 11,
             fontWeight: FontWeight.w700,
           ),
@@ -448,9 +445,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
         return Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: isDark
-                ? AppColors.darkSurfaceContainer
-                : AppColors.surfaceWhite,
+            color: context.hc.surface,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(color: borderColor, width: 1.5),
             boxShadow: [
@@ -475,26 +470,26 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
       // ── STATE SOS: Sinyal Darurat SOS Aktif ──────────────────────────────
       if (hc?.anySosActive == true || jamaah.sosActive) {
         return buildStatusCard(
-          borderColor: AppColors.sosEmergency,
-          bgTint: AppColors.sosEmergency,
+          borderColor: context.hc.danger,
+          bgTint: context.hc.danger,
           icon: buildStatusIcon(
-            color: AppColors.sosEmergency,
+            color: context.hc.danger,
             icon: Icons.emergency_rounded,
             isGradient: true,
-            gradientColors: const [Color(0xFFFF1744), Color(0xFFD50000)],
+            gradientColors: [context.hc.danger, context.hc.dangerContainer],
           ),
           content: buildStatusText(
             title: context.tr('dashboard.sosSignalActive'),
             subtitle: context.tr('dashboard.sosEmergencyConnected'),
-            titleColor: AppColors.sosEmergency,
-            subtitleColor: isDark ? Colors.white70 : const Color(0xFF8B1A1A),
+            titleColor: context.hc.danger,
+            subtitleColor: isDark ? Colors.white70 : context.hc.danger,
           ),
           trailing: InkWell(
             onTap: () => Get.toNamed(AppRoutes.modalSos),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               decoration: BoxDecoration(
-                color: AppColors.sosEmergency,
+                color: context.hc.danger,
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Text(
@@ -510,20 +505,42 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
         );
       }
 
+      // ── STATE NO ROOM: Belum terhubung ke room ───────────────────────────
+      final hasRoom =
+          (hc?.activeRoomId.value != null &&
+              hc!.activeRoomId.value!.trim().isNotEmpty) ||
+          hc?.activeRoom.value != null;
+      if (!hasRoom) {
+        final headingColor = context.hc.textPrimary;
+        return buildStatusCard(
+          borderColor: context.hc.border,
+          bgTint: context.hc.surfaceVariant,
+          icon: buildStatusIcon(
+            color: context.hc.warning,
+            icon: Icons.meeting_room_outlined,
+          ),
+          content: buildStatusText(
+            title: context.tr('dashboard.notConnectedToRoom'),
+            subtitle: context.tr('dashboard.jamaahNoRoomDesc'),
+            titleColor: headingColor,
+          ),
+        );
+      }
+
       // ── STATE A: GPS mati ─────────────────────────────────────────────────
       if (!gpsOn) {
         return buildStatusCard(
-          borderColor: AppColors.error.withValues(alpha: isDark ? 0.55 : 0.4),
-          bgTint: AppColors.error,
+          borderColor: context.hc.danger.withValues(alpha: isDark ? 0.55 : 0.4),
+          bgTint: context.hc.danger,
           icon: buildStatusIcon(
-            color: AppColors.error,
+            color: context.hc.danger,
             icon: Icons.location_off_rounded,
           ),
           content: buildStatusText(
             title: context.tr('dashboard.yourGpsInactive'),
             subtitle: context.tr('dashboard.yourGpsInactiveDesc'),
-            titleColor: AppColors.error,
-            subtitleColor: isDark ? Colors.white60 : const Color(0xFF8B1A1A),
+            titleColor: context.hc.danger,
+            subtitleColor: isDark ? Colors.white60 : context.hc.danger,
           ),
         );
       }
@@ -531,17 +548,17 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
       // ── STATE B: GPS nyala tapi sinyal stale / lokasi tidak diperbarui ────
       if (locationStale) {
         return buildStatusCard(
-          borderColor: AppColors.statusWarning.withValues(alpha: 0.55),
-          bgTint: AppColors.statusWarning,
+          borderColor: context.hc.warning.withValues(alpha: 0.55),
+          bgTint: context.hc.warning,
           icon: buildStatusIcon(
-            color: AppColors.statusWarning,
+            color: context.hc.warning,
             icon: Icons.signal_wifi_statusbar_connected_no_internet_4_rounded,
           ),
           content: buildStatusText(
             title: context.tr('dashboard.gpsSignalWeak'),
             subtitle: context.tr('dashboard.gpsSignalWeakDesc'),
-            titleColor: AppColors.statusWarning,
-            subtitleColor: isDark ? Colors.white60 : const Color(0xFF7A5C00),
+            titleColor: context.hc.warning,
+            subtitleColor: isDark ? Colors.white60 : context.hc.warning,
           ),
         );
       }
@@ -549,20 +566,20 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
       // ── STATE C: GPS nyala, dalam safe radius (aman) ──────────────────────
       if (liveTier == DistanceTier.aman) {
         return buildStatusCard(
-          borderColor: AppColors.statusSafe.withValues(
+          borderColor: context.hc.success.withValues(
             alpha: isDark ? 0.5 : 0.35,
           ),
-          bgTint: AppColors.statusSafe,
+          bgTint: context.hc.success,
           icon: buildStatusIcon(
-            color: AppColors.statusSafe,
+            color: context.hc.success,
             icon: Icons.verified_user_rounded,
             isGradient: true,
-            gradientColors: const [Color(0xFF1B633E), Color(0xFF2E8540)],
+            gradientColors: [context.hc.success, context.hc.successContainer],
           ),
           content: buildStatusText(
             title: context.tr('dashboard.connectedSafe'),
             subtitle: context.tr('dashboard.connectedSafeDesc'),
-            titleColor: AppColors.textHeadingColor(context),
+            titleColor: context.hc.textPrimary,
           ),
           trailing: buildRadiusBadge(),
         );
@@ -571,33 +588,31 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
       // ── STATE D: GPS nyala, mendekati batas radius (waspada) ─────────────
       if (liveTier == DistanceTier.waspada) {
         return buildStatusCard(
-          borderColor: AppColors.statusWarning.withValues(alpha: 0.55),
-          bgTint: AppColors.statusWarning,
+          borderColor: context.hc.warning.withValues(alpha: 0.55),
+          bgTint: context.hc.warning,
           icon: buildStatusIcon(
-            color: AppColors.statusWarning,
+            color: context.hc.warning,
             icon: Icons.warning_amber_rounded,
           ),
           content: buildStatusText(
             title: context.tr('dashboard.nearingRadius'),
             subtitle: context.tr('dashboard.nearingRadiusDesc'),
-            titleColor: AppColors.statusWarning,
-            subtitleColor: isDark ? Colors.white60 : const Color(0xFF7A5C00),
+            titleColor: context.hc.warning,
+            subtitleColor: isDark ? Colors.white60 : context.hc.warning,
           ),
           trailing: Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: AppColors.statusWarning.withValues(
-                alpha: isDark ? 0.25 : 0.12,
-              ),
+              color: context.hc.warning.withValues(alpha: isDark ? 0.25 : 0.12),
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: AppColors.statusWarning.withValues(alpha: 0.45),
+                color: context.hc.warning.withValues(alpha: 0.45),
               ),
             ),
             child: Text(
               '${jamaah.distance.toInt()} m',
               style: TextStyle(
-                color: AppColors.statusWarning,
+                color: context.hc.warning,
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
               ),
@@ -608,13 +623,13 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
 
       // ── STATE E: Keluar safe radius (terlalu jauh / separatedMode) ────────
       return buildStatusCard(
-        borderColor: AppColors.sosEmergency.withValues(alpha: 0.55),
-        bgTint: AppColors.sosEmergency,
+        borderColor: context.hc.danger.withValues(alpha: 0.55),
+        bgTint: context.hc.danger,
         icon: Container(
           width: 48,
           height: 48,
-          decoration: const BoxDecoration(
-            color: AppColors.sosEmergency,
+          decoration: BoxDecoration(
+            color: context.hc.danger,
             shape: BoxShape.circle,
           ),
           child: const Icon(
@@ -626,22 +641,22 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
         content: buildStatusText(
           title: context.tr('dashboard.outsideRadius'),
           subtitle: context.tr('dashboard.outsideRadiusDesc'),
-          titleColor: AppColors.sosEmergency,
-          subtitleColor: isDark ? Colors.white60 : const Color(0xFF7A1C24),
+          titleColor: context.hc.danger,
+          subtitleColor: isDark ? Colors.white60 : context.hc.danger,
         ),
         trailing: Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           decoration: BoxDecoration(
-            color: AppColors.sosEmergency.withValues(alpha: 0.14),
+            color: context.hc.danger.withValues(alpha: 0.14),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: AppColors.sosEmergency.withValues(alpha: 0.45),
+              color: context.hc.danger.withValues(alpha: 0.45),
             ),
           ),
           child: Text(
             '${jamaah.distance.toInt()} m',
             style: TextStyle(
-              color: AppColors.sosEmergency,
+              color: context.hc.danger,
               fontSize: 11,
               fontWeight: FontWeight.w700,
             ),
@@ -714,10 +729,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
     required bool isDark,
     required Color headingColor,
   }) {
-    final cardBg = isDark
-        ? AppColors.darkSurfaceContainer
-        : AppColors.surfaceWhite;
-    final bodyColor = isDark ? AppColors.darkTextBody : AppColors.textBody;
+    final bodyColor = context.hc.textSecondary;
     final textScale = MediaQuery.textScalerOf(context).scale(1);
 
     final isAdmin = (notif.senderRole ?? '').toLowerCase() == 'admin';
@@ -731,39 +743,35 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
     final Color roleBadgeBg;
 
     if (isAdmin) {
-      iconGradient = const [Color(0xFF6366F1), Color(0xFF4338CA)];
+      iconGradient = [context.hc.primaryContainer, context.hc.primary];
       cardIcon = Icons.admin_panel_settings_rounded;
       roleBadgeText = context.tr('dashboard.adminUpper');
-      roleBadgeColor = const Color(0xFF6366F1);
-      roleBadgeBg = const Color(
-        0xFF6366F1,
-      ).withValues(alpha: isDark ? 0.2 : 0.1);
+      roleBadgeColor = context.hc.primary;
+      roleBadgeBg = context.hc.surfaceVariant;
     } else if (isPendamping) {
-      iconGradient = const [Color(0xFFD4A857), Color(0xFFA67C52)];
+      iconGradient = [context.hc.sand, context.hc.sandDark];
       cardIcon = Icons.support_agent_rounded;
       roleBadgeText = context.tr('dashboard.companionUpper');
-      roleBadgeColor = AppColors.primaryGold;
-      roleBadgeBg = AppColors.primaryGold.withValues(alpha: isDark ? 0.2 : 0.1);
+      roleBadgeColor = context.hc.primary;
+      roleBadgeBg = context.hc.surfaceVariant;
     } else {
-      iconGradient = const [Color(0xFF0D9488), Color(0xFF0F766E)];
+      iconGradient = [context.hc.success, context.hc.successContainer];
       cardIcon = Icons.campaign_rounded;
       roleBadgeText = context.tr('dashboard.infoUpper');
-      roleBadgeColor = const Color(0xFF0D9488);
-      roleBadgeBg = const Color(
-        0xFF0D9488,
-      ).withValues(alpha: isDark ? 0.2 : 0.1);
+      roleBadgeColor = context.hc.success;
+      roleBadgeBg = context.hc.success.withValues(alpha: isDark ? 0.2 : 0.1);
     }
 
     final formattedTime = _formatNotificationTime(context, notif.createdAt);
 
     return Container(
       decoration: BoxDecoration(
-        color: cardBg,
+        color: context.hc.surface,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: !notif.isRead
-              ? AppColors.primaryGold.withValues(alpha: 0.55)
-              : (isDark ? AppColors.darkCardBorder : AppColors.lightCardBorder),
+              ? context.hc.sandDark.withValues(alpha: 0.55)
+              : context.hc.border,
           width: !notif.isRead ? 1.4 : 1.2,
         ),
         boxShadow: [
@@ -967,20 +975,15 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
     bool isDark,
     Color headingColor,
   ) {
-    final cardBg = isDark
-        ? AppColors.darkSurfaceContainer
-        : AppColors.surfaceWhite;
-    final bodyColor = isDark ? AppColors.darkTextBody : AppColors.textBody;
+    final cardBg = context.hc.surface;
+    final bodyColor = context.hc.textSecondary;
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: cardBg,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: isDark ? AppColors.darkCardBorder : AppColors.lightCardBorder,
-          width: 1.2,
-        ),
+        border: Border.all(color: context.hc.border, width: 1.2),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
@@ -996,14 +999,13 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: (isDark ? AppColors.goldLight : AppColors.primaryGold)
-                  .withValues(alpha: 0.12),
+              color: context.hc.primary.withValues(alpha: 0.10),
               borderRadius: BorderRadius.circular(15),
             ),
             child: Center(
               child: Icon(
                 Icons.campaign_outlined,
-                color: isDark ? AppColors.goldLight : AppColors.primaryGold,
+                color: context.hc.primary,
                 size: 26,
               ),
             ),
@@ -1086,9 +1088,9 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
     required bool isDark,
     required Color headingColor,
   }) {
-    final cardBg = AppColors.cardBgColor(context);
-    final borderColor = AppColors.cardBorderColor(context);
-    final bodyColor = AppColors.textBodyColor(context);
+    final cardBg = context.hc.surface;
+    final borderColor = context.hc.border;
+    final bodyColor = context.hc.textSecondary;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1148,11 +1150,11 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                     borderColor: borderColor,
                     headingColor: headingColor,
                     bodyColor: bodyColor,
-                    circleBg: isDark
-                        ? AppColors.emeraldIslamic.withValues(alpha: 0.22)
-                        : AppColors.emeraldLight,
-                    iconColor: AppColors.emeraldIslamic,
-                    accentColor: AppColors.emeraldIslamic,
+                    circleBg: context.hc.success.withValues(
+                      alpha: isDark ? 0.22 : 0.12,
+                    ),
+                    iconColor: context.hc.success,
+                    accentColor: context.hc.success,
                     onTap: () => Get.toNamed(AppRoutes.signLanguage),
                   ),
                   const SizedBox(height: 12),
@@ -1168,13 +1170,9 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                     borderColor: borderColor,
                     headingColor: headingColor,
                     bodyColor: bodyColor,
-                    circleBg: isDark
-                        ? AppColors.darkSurfaceContainerHighest
-                        : AppColors.canvasCreamSubtle,
-                    iconColor: isDark
-                        ? AppColors.goldLight
-                        : AppColors.secondary,
-                    accentColor: AppColors.secondary,
+                    circleBg: context.hc.surfaceVariant,
+                    iconColor: context.hc.primary,
+                    accentColor: context.hc.sandDark,
                     onTap: () => Get.toNamed(AppRoutes.hajjDua),
                   ),
                 ],
@@ -1198,13 +1196,9 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                     borderColor: borderColor,
                     headingColor: headingColor,
                     bodyColor: bodyColor,
-                    circleBg: isDark
-                        ? AppColors.tanMedium.withValues(alpha: 0.22)
-                        : AppColors.secondaryContainer.withValues(alpha: 0.45),
-                    iconColor: isDark
-                        ? AppColors.tanLight
-                        : AppColors.espressoDark,
-                    accentColor: AppColors.tanMedium,
+                    circleBg: context.hc.surfaceVariant,
+                    iconColor: context.hc.primary,
+                    accentColor: context.hc.sandDark,
                     onTap: () => _showHajiScheduleGuideSheet(context),
                   ),
                   const SizedBox(height: 12),
@@ -1220,11 +1214,11 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                     borderColor: borderColor,
                     headingColor: headingColor,
                     bodyColor: bodyColor,
-                    circleBg: isDark
-                        ? const Color(0xFF3E2723)
-                        : const Color(0xFFFBE9E7),
-                    iconColor: const Color(0xFFE64A19),
-                    accentColor: const Color(0xFFD84315),
+                    circleBg: context.hc.primary.withValues(
+                      alpha: isDark ? 0.22 : 0.12,
+                    ),
+                    iconColor: context.hc.primary,
+                    accentColor: context.hc.primary,
                     onTap: () => _showCompanionContactDialog(context, state),
                   ),
                 ],
@@ -1891,7 +1885,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
         },
       ),
       isScrollControlled: true,
-    );
+    ).whenComplete(noteController.dispose);
   }
 
   // ── Modal Sheet: Pos Medis & Ambulans ─────────────────────────────────────
@@ -2047,9 +2041,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
 
     showDialog(
       context: context,
-      builder: (ctx) => Dialog(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
+      builder: (ctx) => HajiTransparentDialog(
         insetPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
         child: ConstrainedBox(
           constraints: BoxConstraints(
@@ -2070,18 +2062,13 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                 ),
                 padding: const EdgeInsets.fromLTRB(16, 68, 16, 18),
                 decoration: BoxDecoration(
-                  color: isDark ? AppColors.darkSurface : Colors.white,
+                  color: context.hc.surface,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: isDark
-                        ? Colors.white.withValues(alpha: 0.1)
-                        : AppColors.goldLight.withValues(alpha: 0.35),
-                    width: 1,
-                  ),
+                  border: Border.all(color: context.hc.border, width: 1),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withValues(
-                        alpha: isDark ? 0.45 : 0.09,
+                        alpha: isDark ? 0.45 : 0.08,
                       ),
                       blurRadius: 24,
                       offset: const Offset(0, 10),
@@ -2091,56 +2078,21 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                 child: Obx(() {
                   final isConnected = ldrCtrl.isConnected;
                   final hr = ldrCtrl.heartRate.value;
-                  final isGpsFix = ldrCtrl.isGpsFix.value;
                   final lat = ldrCtrl.latitude.value;
                   final lng = ldrCtrl.longitude.value;
                   final lastLat = ldrCtrl.lastKnownLatitude.value;
                   final lastLng = ldrCtrl.lastKnownLongitude.value;
                   final relativeTime = ldrCtrl.relativeTimeText.value;
-                  final hasLastLocation = lastLat != null && lastLng != null;
-
-                  // Heart Rate status text
-                  final String hrStatus;
-                  if (!isConnected) {
-                    hrStatus = context.tr('dashboard.notAvailable');
-                  } else if (hr != null && hr > 0) {
-                    hrStatus = context.tr('dashboard.sensorActive');
-                  } else {
-                    hrStatus = context.tr('dashboard.measuring');
-                  }
-
-                  // GPS status & coordinates display
-                  final String gpsStatusText;
-                  final Color gpsStatusColor;
-                  final String displayLat;
-                  final String displayLng;
-
-                  if (!isConnected) {
-                    gpsStatusText = '—';
-                    gpsStatusColor = AppColors.textMuted;
-                    displayLat = hasLastLocation
-                        ? lastLat.toStringAsFixed(6)
-                        : SmartbandLdrController.staticGpsLatitude
-                              .toStringAsFixed(6);
-                    displayLng = hasLastLocation
-                        ? lastLng.toStringAsFixed(6)
-                        : SmartbandLdrController.staticGpsLongitude
-                              .toStringAsFixed(6);
-                  } else if (isGpsFix && lat != null && lng != null) {
-                    gpsStatusText =
-                        '🟢 ${context.tr('dashboard.gpsFixStatic')}';
-                    gpsStatusColor = AppColors.statusSafe;
-                    displayLat = lat.toStringAsFixed(6);
-                    displayLng = lng.toStringAsFixed(6);
-                  } else {
-                    gpsStatusText =
-                        '🟡 ${context.tr('dashboard.gpsSearching')}';
-                    gpsStatusColor = AppColors.primaryGold;
-                    displayLat = SmartbandLdrController.staticGpsLatitude
-                        .toStringAsFixed(6);
-                    displayLng = SmartbandLdrController.staticGpsLongitude
-                        .toStringAsFixed(6);
-                  }
+                  final hasLocation =
+                      (isConnected && lat != null && lng != null) ||
+                      (ldrCtrl.lastDataReceivedAt.value != null &&
+                          lastLat != null &&
+                          lastLng != null) ||
+                      (ldrCtrl.isSimulationMode.value &&
+                          (lat != null || lastLat != null));
+                  final LatLng? activeTarget = hasLocation
+                      ? LatLng(lat ?? lastLat!, lng ?? lastLng!)
+                      : null;
 
                   return SingleChildScrollView(
                     physics: const ClampingScrollPhysics(),
@@ -2174,163 +2126,140 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                         // ── STATUS GELANG CARD ──
                         Container(
                           width: double.infinity,
-                          padding: const EdgeInsets.all(12),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 12,
+                          ),
                           decoration: BoxDecoration(
                             color: isConnected
-                                ? AppColors.statusSafe.withValues(
+                                ? context.hc.success.withValues(
                                     alpha: isDark ? 0.15 : 0.08,
                                   )
-                                : AppColors.statusDanger.withValues(
-                                    alpha: isDark ? 0.15 : 0.08,
-                                  ),
-                            borderRadius: BorderRadius.circular(12),
+                                : context.hc.surfaceVariant,
+                            borderRadius: BorderRadius.circular(14),
                             border: Border.all(
                               color: isConnected
-                                  ? AppColors.statusSafe.withValues(alpha: 0.35)
-                                  : AppColors.statusDanger.withValues(
-                                      alpha: 0.3,
-                                    ),
+                                  ? context.hc.success.withValues(alpha: 0.35)
+                                  : context.hc.border,
                             ),
                           ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                          child: Row(
                             children: [
-                              Builder(
-                                builder: (context) {
-                                  final textScale = MediaQuery.textScalerOf(
-                                    context,
-                                  ).scale(1);
-                                  final statusText = isConnected
-                                      ? '🟢 ${context.tr('dashboard.bandConnected')}'
-                                      : (ldrCtrl.isScanning
-                                            ? '🔍 ${context.tr('dashboard.bandSearching')}'
-                                            : (ldrCtrl.isConnecting
-                                                  ? '🔄 ${context.tr('dashboard.bandConnecting')}'
-                                                  : (hasLastLocation
-                                                        ? '🔴 ${context.tr('dashboard.bandDisconnected')}'
-                                                        : '🔴 ${context.tr('dashboard.bandNotConnected')}')));
-                                  final statusColor = isConnected
-                                      ? AppColors.statusSafe
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: isConnected
+                                      ? context.hc.success.withValues(
+                                          alpha: 0.18,
+                                        )
                                       : (ldrCtrl.isBusy
-                                            ? AppColors.primaryGold
-                                            : AppColors.statusDanger);
-                                  final bleText = isConnected
-                                      ? '🟢 ${context.tr('dashboard.bleConnected')}'
+                                            ? context.hc.primary.withValues(
+                                                alpha: 0.18,
+                                              )
+                                            : context.hc.textTertiary
+                                                  .withValues(alpha: 0.15)),
+                                ),
+                                child: Icon(
+                                  isConnected
+                                      ? Icons.watch_rounded
                                       : (ldrCtrl.isBusy
-                                            ? '⏳ ${context.tr('dashboard.bleScanning')}'
-                                            : '🔴 ${context.tr('dashboard.bleDisconnected')}');
-
-                                  if (textScale > 1.15) {
-                                    return Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          statusText,
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w800,
-                                            color: statusColor,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 3),
-                                        Text(
-                                          bleText,
-                                          style: TextStyle(
-                                            fontSize: 10.5,
-                                            fontWeight: FontWeight.w600,
-                                            color: statusColor,
-                                          ),
-                                        ),
-                                      ],
-                                    );
-                                  }
-
-                                  return Row(
-                                    children: [
-                                      Expanded(
-                                        child: Text(
-                                          statusText,
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w800,
-                                            color: statusColor,
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        bleText,
-                                        style: TextStyle(
-                                          fontSize: 10.5,
-                                          fontWeight: FontWeight.w600,
-                                          color: statusColor,
-                                        ),
-                                      ),
-                                    ],
-                                  );
-                                },
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                ldrCtrl.deviceName.value,
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                  color: headingColor,
+                                            ? Icons.sync_rounded
+                                            : Icons.watch_off_rounded),
+                                  size: 18,
+                                  color: isConnected
+                                      ? context.hc.success
+                                      : (ldrCtrl.isBusy
+                                            ? context.hc.primary
+                                            : context.hc.textTertiary),
                                 ),
                               ),
-                              const SizedBox(height: 2),
-                              if (isConnected)
-                                Text(
-                                  'ID: ${ldrCtrl.braceletId.value}',
-                                  style: TextStyle(
-                                    fontSize: 11.5,
-                                    fontWeight: FontWeight.w600,
-                                    color: bodyColor.withValues(alpha: 0.8),
-                                  ),
-                                )
-                              else if (hasLastLocation)
-                                Column(
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(
-                                      context
-                                          .tr('dashboard.lastLocationCoords')
-                                          .replaceAll(
-                                            '{coords}',
-                                            '${lastLat.toStringAsFixed(6)}, ${lastLng.toStringAsFixed(6)}',
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            isConnected
+                                                ? context.tr(
+                                                    'smartband.statusConnected',
+                                                  )
+                                                : (ldrCtrl.isScanning
+                                                      ? context.tr(
+                                                          'smartband.statusScanning',
+                                                        )
+                                                      : (ldrCtrl.isConnecting
+                                                            ? context.tr(
+                                                                'smartband.statusConnecting',
+                                                              )
+                                                            : context.tr(
+                                                                'smartband.statusDisconnected',
+                                                              ))),
+                                            style: TextStyle(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w800,
+                                              color: isConnected
+                                                  ? context.hc.success
+                                                  : (ldrCtrl.isBusy
+                                                        ? context.hc.primary
+                                                        : headingColor),
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
                                           ),
+                                        ),
+                                        if (isConnected)
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 7,
+                                              vertical: 2,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: context.hc.success
+                                                  .withValues(alpha: 0.12),
+                                              borderRadius:
+                                                  BorderRadius.circular(6),
+                                            ),
+                                            child: Text(
+                                              '${ldrCtrl.batteryPercent.value}%',
+                                              style: TextStyle(
+                                                fontSize: 10.5,
+                                                fontWeight: FontWeight.bold,
+                                                color: context.hc.success,
+                                              ),
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      isConnected
+                                          ? 'ID: ${ldrCtrl.braceletId.value} • ${context.tr('smartband.justNow')}'
+                                          : (ldrCtrl.lastDataReceivedAt.value !=
+                                                    null
+                                                ? context.tr(
+                                                    'smartband.lastUpdate',
+                                                    {'time': relativeTime},
+                                                  )
+                                                : context.tr(
+                                                    'dashboard.connectBandDesc',
+                                                  )),
                                       style: TextStyle(
                                         fontSize: 11,
-                                        fontWeight: FontWeight.w500,
-                                        color: bodyColor.withValues(alpha: 0.8),
+                                        color: bodyColor.withValues(
+                                          alpha: 0.75,
+                                        ),
+                                        height: 1.25,
                                       ),
-                                    ),
-                                    Text(
-                                      context
-                                          .tr('dashboard.lastUpdateWithTime')
-                                          .replaceAll('{time}', relativeTime),
-                                      style: TextStyle(
-                                        fontSize: 10.5,
-                                        color: bodyColor.withValues(alpha: 0.6),
-                                      ),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
                                     ),
                                   ],
-                                )
-                              else
-                                Text(
-                                  context.tr('dashboard.connectBandDesc'),
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    height: 1.3,
-                                    color: isDark
-                                        ? Colors.white60
-                                        : const Color(0xFF64748B),
-                                  ),
                                 ),
+                              ),
                             ],
                           ),
                         ),
@@ -2342,102 +2271,74 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                           width: double.infinity,
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: isDark
-                                ? const Color(0xFF141A24)
-                                : const Color(0xFFF8FAFC),
+                            color: context.hc.surfaceVariant,
                             borderRadius: BorderRadius.circular(14),
                             border: Border.all(
-                              color: isDark
-                                  ? AppColors.darkCardBorder
-                                  : const Color(0xFFE2E8F0),
+                              color: context.hc.border,
                               width: 1.1,
                             ),
                           ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                          child: Row(
                             children: [
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Flexible(
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Container(
-                                          width: 28,
-                                          height: 28,
-                                          decoration: BoxDecoration(
-                                            shape: BoxShape.circle,
-                                            color: Colors.redAccent.withValues(
-                                              alpha: 0.12,
-                                            ),
-                                          ),
-                                          child: const Icon(
-                                            Icons.favorite_rounded,
-                                            color: Colors.redAccent,
-                                            size: 16,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 8),
-                                        Flexible(
-                                          child: Text(
-                                            context.tr('dashboard.heartRate'),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: TextStyle(
-                                              color: headingColor,
-                                              fontSize: 13.5,
-                                              fontWeight: FontWeight.w700,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
+                              Container(
+                                width: 38,
+                                height: 38,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: context.hc.danger.withValues(
+                                    alpha: 0.12,
                                   ),
-                                  const SizedBox(width: 8),
-                                  Flexible(
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 7,
-                                        vertical: 3,
+                                ),
+                                child: Icon(
+                                  Icons.favorite_rounded,
+                                  color: context.hc.danger,
+                                  size: 20,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      context.tr('dashboard.heartRate'),
+                                      style: TextStyle(
+                                        color: headingColor,
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w700,
                                       ),
-                                      decoration: BoxDecoration(
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      isConnected && hr != null && hr > 0
+                                          ? (hr >= 100
+                                                ? context.tr(
+                                                    'smartband.warning',
+                                                  )
+                                                : context.tr(
+                                                    'smartband.normal',
+                                                  ))
+                                          : (isConnected
+                                                ? context.tr(
+                                                    'dashboard.measuring',
+                                                  )
+                                                : context.tr(
+                                                    'dashboard.notAvailable',
+                                                  )),
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
                                         color:
                                             isConnected && hr != null && hr > 0
-                                            ? AppColors.statusSafe.withValues(
-                                                alpha: 0.12,
-                                              )
-                                            : (isConnected
-                                                  ? AppColors.primaryGold
-                                                        .withValues(alpha: 0.12)
-                                                  : Colors.grey.withValues(
-                                                      alpha: 0.12,
-                                                    )),
-                                        borderRadius: BorderRadius.circular(6),
-                                      ),
-                                      child: Text(
-                                        hrStatus,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: TextStyle(
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.w700,
-                                          color:
-                                              isConnected &&
-                                                  hr != null &&
-                                                  hr > 0
-                                              ? AppColors.statusSafe
-                                              : (isConnected
-                                                    ? AppColors.primaryGold
-                                                    : AppColors.textMuted),
-                                        ),
+                                            ? (hr >= 100
+                                                  ? context.hc.warning
+                                                  : context.hc.success)
+                                            : bodyColor.withValues(alpha: 0.6),
                                       ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
-                              const SizedBox(height: 8),
                               Row(
                                 crossAxisAlignment: CrossAxisAlignment.baseline,
                                 textBaseline: TextBaseline.alphabetic,
@@ -2447,9 +2348,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                                         ? '$hr'
                                         : '—',
                                     style: TextStyle(
-                                      fontFamily:
-                                          DashboardTypography.headingFontFamily,
-                                      fontSize: 34,
+                                      fontSize: 26,
                                       fontWeight: FontWeight.w800,
                                       color: isConnected && hr != null && hr > 0
                                           ? headingColor
@@ -2457,13 +2356,11 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                                       height: 1.0,
                                     ),
                                   ),
-                                  const SizedBox(width: 6),
+                                  const SizedBox(width: 4),
                                   Text(
                                     'BPM',
                                     style: TextStyle(
-                                      fontFamily:
-                                          DashboardTypography.headingFontFamily,
-                                      fontSize: 14,
+                                      fontSize: 11,
                                       fontWeight: FontWeight.w700,
                                       color: bodyColor.withValues(alpha: 0.7),
                                     ),
@@ -2476,7 +2373,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
 
                         const SizedBox(height: 12),
 
-                        // ── CARD 2: LOKASI JAMAAH (NEO-6M GPS) ──
+                        // ── CARD 2: LOKASI JAMAAH (PREVIEW MAP / FALLBACK) ──
                         Container(
                           width: double.infinity,
                           padding: const EdgeInsets.all(12),
@@ -2499,7 +2396,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Flexible(
+                                  Expanded(
                                     child: Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
@@ -2523,119 +2420,352 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                                             context.tr(
                                               'dashboard.pilgrimLocation',
                                             ),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
                                             style: TextStyle(
                                               color: headingColor,
                                               fontSize: 13.5,
                                               fontWeight: FontWeight.w700,
                                             ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
                                           ),
                                         ),
                                       ],
                                     ),
                                   ),
-                                  const SizedBox(width: 8),
-                                  Flexible(
-                                    child: Text.rich(
-                                      TextSpan(
-                                        children: [
-                                          TextSpan(
-                                            text: 'GPS: ',
-                                            style: TextStyle(
-                                              fontSize: 11,
-                                              fontWeight: FontWeight.w600,
-                                              color: bodyColor.withValues(
-                                                alpha: 0.8,
-                                              ),
-                                            ),
-                                          ),
-                                          TextSpan(
-                                            text: gpsStatusText,
-                                            style: TextStyle(
-                                              fontSize: 11,
-                                              fontWeight: FontWeight.w700,
-                                              color: gpsStatusColor,
-                                            ),
-                                          ),
-                                        ],
+                                  const SizedBox(width: 6),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 7,
+                                      vertical: 3,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: activeTarget != null
+                                          ? AppColors.statusSafe.withValues(
+                                              alpha: 0.12,
+                                            )
+                                          : Colors.grey.withValues(alpha: 0.12),
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Text(
+                                      activeTarget != null
+                                          ? (isConnected
+                                                ? 'GPS Aktif'
+                                                : 'Lokasi Terakhir')
+                                          : 'Belum Ada Sinyal',
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w700,
+                                        color: activeTarget != null
+                                            ? AppColors.statusSafe
+                                            : AppColors.textMuted,
                                       ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 8),
-                              _buildDialogDataRow(
-                                label: 'Latitude',
-                                value: displayLat,
-                                headingColor: headingColor,
-                                bodyColor: bodyColor,
-                              ),
-                              const SizedBox(height: 4),
-                              _buildDialogDataRow(
-                                label: 'Longitude',
-                                value: displayLng,
-                                headingColor: headingColor,
-                                bodyColor: bodyColor,
-                              ),
-                              const SizedBox(height: 4),
-                              _buildDialogDataRow(
-                                label: context.tr('dashboard.sourceLabel'),
-                                value: context.tr(
-                                  'dashboard.smartbandStaticGps',
-                                ),
-                                headingColor: headingColor,
-                                bodyColor: bodyColor,
-                              ),
-                              const SizedBox(height: 4),
-                              _buildDialogDataRow(
-                                label: context.tr('dashboard.updateLabel'),
-                                value: isConnected || hasLastLocation
-                                    ? relativeTime
-                                    : '—',
-                                headingColor: headingColor,
-                                bodyColor: bodyColor,
-                              ),
                               const SizedBox(height: 10),
-                              // ── TOMBOL MAPS ──
-                              SizedBox(
-                                width: double.infinity,
-                                child: OutlinedButton.icon(
-                                  onPressed: () {
+
+                              if (activeTarget != null) ...[
+                                // ── LIVE MINI MAP PREVIEW ──
+                                GestureDetector(
+                                  onTap: () {
                                     Navigator.of(ctx).pop();
                                     ldrCtrl.navigateToMap(context);
                                   },
-                                  style: OutlinedButton.styleFrom(
-                                    foregroundColor: isDark
-                                        ? AppColors.goldLight
-                                        : AppColors.espressoDark,
-                                    side: BorderSide(
-                                      color: AppColors.primaryGold.withValues(
-                                        alpha: 0.5,
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(10),
+                                    child: SizedBox(
+                                      height: 135,
+                                      width: double.infinity,
+                                      child: Stack(
+                                        children: [
+                                          fmap.FlutterMap(
+                                            options: fmap.MapOptions(
+                                              initialCenter: activeTarget,
+                                              initialZoom: 16.2,
+                                              interactionOptions:
+                                                  const fmap.InteractionOptions(
+                                                    flags: fmap
+                                                        .InteractiveFlag
+                                                        .none,
+                                                  ),
+                                            ),
+                                            children: [
+                                              fmap.TileLayer(
+                                                urlTemplate: isDark
+                                                    ? AppConstants
+                                                          .cartoDarkMatterUrl
+                                                    : AppConstants
+                                                          .cartoVoyagerUrl,
+                                                userAgentPackageName:
+                                                    'com.example.hajicare',
+                                              ),
+                                              fmap.MarkerLayer(
+                                                markers: [
+                                                  fmap.Marker(
+                                                    point: activeTarget,
+                                                    width: 36,
+                                                    height: 36,
+                                                    alignment: Alignment.center,
+                                                    child: Container(
+                                                      decoration: BoxDecoration(
+                                                        shape: BoxShape.circle,
+                                                        color: AppColors
+                                                            .primaryGold,
+                                                        border: Border.all(
+                                                          color: Colors.white,
+                                                          width: 2.2,
+                                                        ),
+                                                        boxShadow: [
+                                                          BoxShadow(
+                                                            color: Colors.black
+                                                                .withValues(
+                                                                  alpha: 0.25,
+                                                                ),
+                                                            blurRadius: 6,
+                                                          ),
+                                                        ],
+                                                      ),
+                                                      child: const Icon(
+                                                        Icons
+                                                            .person_pin_circle_rounded,
+                                                        color: Colors.white,
+                                                        size: 20,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                              const fmap.RichAttributionWidget(
+                                                attributions: [
+                                                  fmap.TextSourceAttribution(
+                                                    'OSM / CARTO',
+                                                  ),
+                                                ],
+                                              ),
+                                            ],
+                                          ),
+                                          Positioned(
+                                            top: 8,
+                                            left: 8,
+                                            child: Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 8,
+                                                    vertical: 4,
+                                                  ),
+                                              decoration: BoxDecoration(
+                                                color:
+                                                    (isDark
+                                                            ? AppColors
+                                                                  .espressoDark
+                                                            : Colors.white)
+                                                        .withValues(
+                                                          alpha: 0.92,
+                                                        ),
+                                                borderRadius:
+                                                    BorderRadius.circular(6),
+                                                boxShadow: [
+                                                  BoxShadow(
+                                                    color: Colors.black
+                                                        .withValues(
+                                                          alpha: 0.15,
+                                                        ),
+                                                    blurRadius: 4,
+                                                  ),
+                                                ],
+                                              ),
+                                              child: Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  const Icon(
+                                                    Icons.place_rounded,
+                                                    size: 12,
+                                                    color:
+                                                        AppColors.primaryGold,
+                                                  ),
+                                                  const SizedBox(width: 4),
+                                                  Text(
+                                                    'Area Masjidil Haram, Makkah',
+                                                    style: TextStyle(
+                                                      fontSize: 10,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      color: isDark
+                                                          ? Colors.white
+                                                          : AppColors
+                                                                .espressoDark,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                          Positioned(
+                                            bottom: 8,
+                                            right: 8,
+                                            child: Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 6,
+                                                    vertical: 3,
+                                                  ),
+                                              decoration: BoxDecoration(
+                                                color: Colors.black.withValues(
+                                                  alpha: 0.6,
+                                                ),
+                                                borderRadius:
+                                                    BorderRadius.circular(4),
+                                              ),
+                                              child: const Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  Icon(
+                                                    Icons.touch_app_rounded,
+                                                    size: 11,
+                                                    color: Colors.white,
+                                                  ),
+                                                  SizedBox(width: 3),
+                                                  Text(
+                                                    'Ketuk untuk perbesar',
+                                                    style: TextStyle(
+                                                      fontSize: 9.5,
+                                                      color: Colors.white,
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                        ],
                                       ),
-                                    ),
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 8,
-                                    ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                  ),
-                                  icon: const Icon(Icons.map_rounded, size: 16),
-                                  label: Text(
-                                    context.tr(
-                                      'dashboard.viewLocationOnMapUpper',
-                                    ),
-                                    style: TextStyle(
-                                      fontSize: 11.5,
-                                      fontWeight: FontWeight.bold,
-                                      letterSpacing: 0.5,
                                     ),
                                   ),
                                 ),
-                              ),
+                                const SizedBox(height: 8),
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: OutlinedButton.icon(
+                                    onPressed: () {
+                                      Navigator.of(ctx).pop();
+                                      ldrCtrl.navigateToMap(context);
+                                    },
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor: isDark
+                                          ? AppColors.goldLight
+                                          : AppColors.espressoDark,
+                                      side: BorderSide(
+                                        color: AppColors.primaryGold.withValues(
+                                          alpha: 0.5,
+                                        ),
+                                      ),
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 8,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                    ),
+                                    icon: const Icon(
+                                      Icons.map_rounded,
+                                      size: 15,
+                                    ),
+                                    label: Text(
+                                      context.tr(
+                                        'dashboard.viewLocationOnMapUpper',
+                                      ),
+                                      style: const TextStyle(
+                                        fontSize: 11.5,
+                                        fontWeight: FontWeight.bold,
+                                        letterSpacing: 0.5,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ] else ...[
+                                // ── FALLBACK KETIKA BELUM ADA LOKASI / BELUM UPDATE ──
+                                Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 18,
+                                    horizontal: 14,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: isDark
+                                        ? Colors.white.withValues(alpha: 0.04)
+                                        : Colors.black.withValues(alpha: 0.02),
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(
+                                      color: isDark
+                                          ? Colors.white12
+                                          : Colors.black.withValues(
+                                              alpha: 0.06,
+                                            ),
+                                    ),
+                                  ),
+                                  child: Column(
+                                    children: [
+                                      Icon(
+                                        Icons.location_searching_rounded,
+                                        size: 32,
+                                        color: bodyColor.withValues(alpha: 0.5),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        'Lokasi Belum Terdeteksi',
+                                        style: TextStyle(
+                                          fontSize: 12.5,
+                                          fontWeight: FontWeight.bold,
+                                          color: headingColor,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 3),
+                                      Text(
+                                        'Hubungkan smartband di area terbuka untuk memperbarui posisi jemaah secara otomatis.',
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          color: bodyColor.withValues(
+                                            alpha: 0.7,
+                                          ),
+                                          height: 1.3,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 10),
+                                      OutlinedButton.icon(
+                                        onPressed: () {
+                                          Navigator.of(ctx).pop();
+                                          Get.toNamed(AppRoutes.map);
+                                        },
+                                        style: OutlinedButton.styleFrom(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 14,
+                                            vertical: 7,
+                                          ),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              8,
+                                            ),
+                                          ),
+                                        ),
+                                        icon: const Icon(
+                                          Icons.explore_rounded,
+                                          size: 14,
+                                        ),
+                                        label: const Text(
+                                          'Buka Peta Utama',
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ],
                           ),
                         ),
@@ -2659,10 +2789,8 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                                   },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: isConnected
-                                  ? AppColors.statusDanger
-                                  : (isDark
-                                        ? AppColors.darkPrimaryContainer
-                                        : AppColors.espressoDark),
+                                  ? context.hc.danger
+                                  : context.hc.primary,
                               foregroundColor: Colors.white,
                               elevation: 1.5,
                               padding: const EdgeInsets.symmetric(vertical: 12),
@@ -2705,9 +2833,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                         Center(
                           child: TextButton.icon(
                             style: TextButton.styleFrom(
-                              foregroundColor: isDark
-                                  ? AppColors.goldLight
-                                  : AppColors.espressoDark,
+                              foregroundColor: context.hc.primary,
                               padding: const EdgeInsets.symmetric(
                                 vertical: 6,
                                 horizontal: 12,
@@ -2743,114 +2869,16 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                 top: 0,
                 left: 22,
                 right: 22,
-                height: 86,
-                child: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: isDark
-                          ? [const Color(0xFF38251A), const Color(0xFF1F140D)]
-                          : [AppColors.espressoDark, const Color(0xFF563B2A)],
-                    ),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: AppColors.goldPrimary.withValues(alpha: 0.4),
-                      width: 1.2,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.espressoDark.withValues(alpha: 0.35),
-                        blurRadius: 16,
-                        offset: const Offset(0, 6),
-                      ),
-                    ],
-                  ),
-                  child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            gradient: LinearGradient(
-                              colors: [
-                                AppColors.goldPrimary.withValues(alpha: 0.25),
-                                AppColors.goldPrimary.withValues(alpha: 0.08),
-                              ],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                            border: Border.all(
-                              color: AppColors.goldPrimary.withValues(
-                                alpha: 0.5,
-                              ),
-                              width: 1.5,
-                            ),
-                          ),
-                          child: const Center(
-                            child: Icon(
-                              Icons.watch_rounded,
-                              color: AppColors.accentGoldStar,
-                              size: 20,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        const Text(
-                          'HAJICARE SMARTBAND',
-                          style: TextStyle(
-                            color: AppColors.goldLight,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 1.1,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                child: HajiDialogHeroHeader(
+                  icon: Icons.watch_rounded,
+                  title: 'HAJICARE SMARTBAND',
+                  onClose: () => Navigator.of(ctx).pop(),
                 ),
               ),
             ],
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildDialogDataRow({
-    required String label,
-    required String value,
-    required Color headingColor,
-    required Color bodyColor,
-  }) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            color: bodyColor.withValues(alpha: 0.7),
-            fontSize: 11,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        const SizedBox(width: 8),
-        Flexible(
-          child: Text(
-            value,
-            textAlign: TextAlign.end,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: headingColor,
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

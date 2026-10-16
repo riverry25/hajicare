@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/services/app_alert_service.dart';
 import '../../../core/state/hajicare_controller.dart';
+import '../../../core/theme/haji_colors.dart';
 import '../../../core/utils/user_feedback_message.dart';
 import '../../room/services/room_service.dart';
 import '../models/notification_model.dart';
@@ -97,7 +98,9 @@ class NotificationController extends GetxController {
                             !knownIds.contains(item.id) &&
                             (item.isCompanionMessage ||
                                 item.isCompanionInfo ||
-                                item.isSosAlert),
+                                item.isSosAlert ||
+                                item.isRoomDeleted ||
+                                item.isMemberLeft),
                       )
                       .toList(growable: false)
                 : const <AppNotificationModel>[];
@@ -170,7 +173,7 @@ class NotificationController extends GetxController {
             size: 30,
           ),
           colorText: Colors.white,
-          backgroundColor: const Color(0xFFD32F2F),
+          backgroundColor: HajiColors.light.danger,
           mainButton: TextButton(
             onPressed: () {
               if (Get.isSnackbarOpen) Get.back();
@@ -182,6 +185,68 @@ class NotificationController extends GetxController {
                 color: Colors.white,
                 fontWeight: FontWeight.w900,
                 letterSpacing: 1,
+              ),
+            ),
+          ),
+        );
+        return;
+      }
+      if (notification.isRoomDeleted) {
+        Get.snackbar(
+          '⚠️ Rombongan Dihapus',
+          notification.message,
+          snackPosition: SnackPosition.TOP,
+          margin: const EdgeInsets.all(14),
+          borderRadius: 16,
+          duration: const Duration(seconds: 6),
+          icon: const Icon(
+            Icons.delete_forever_rounded,
+            color: Colors.white,
+            size: 28,
+          ),
+          colorText: Colors.white,
+          backgroundColor: HajiColors.light.danger,
+          mainButton: TextButton(
+            onPressed: () {
+              if (Get.isSnackbarOpen) Get.back();
+              Get.toNamed(AppRoutes.notification);
+            },
+            child: const Text(
+              'BUKA',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+        );
+        return;
+      }
+      if (notification.isMemberLeft) {
+        Get.snackbar(
+          '🚪 Jamaah Keluar Rombongan',
+          notification.message,
+          snackPosition: SnackPosition.TOP,
+          margin: const EdgeInsets.all(14),
+          borderRadius: 16,
+          duration: const Duration(seconds: 6),
+          icon: const Icon(
+            Icons.person_remove_rounded,
+            color: Colors.white,
+            size: 28,
+          ),
+          colorText: Colors.white,
+          backgroundColor: HajiColors.light.warning,
+          mainButton: TextButton(
+            onPressed: () {
+              if (Get.isSnackbarOpen) Get.back();
+              Get.toNamed(AppRoutes.notification);
+            },
+            child: const Text(
+              'BUKA',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w800,
               ),
             ),
           ),
@@ -204,13 +269,13 @@ class NotificationController extends GetxController {
           color: Colors.white,
         ),
         colorText: Colors.white,
-        backgroundColor: const Color(0xFF3A2518),
+        backgroundColor: HajiColors.light.primary,
         mainButton: TextButton(
           onPressed: () => Get.toNamed(AppRoutes.notification),
-          child: const Text(
+          child: Text(
             'BUKA',
             style: TextStyle(
-              color: Color(0xFFFFD180),
+              color: HajiColors.light.accent,
               fontWeight: FontWeight.w800,
             ),
           ),

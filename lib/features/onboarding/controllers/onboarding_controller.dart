@@ -34,6 +34,15 @@ class OnboardingController extends GetxController {
     }
   }
 
+  void previousPage() {
+    if (currentPage.value > 0) {
+      pageController.previousPage(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    }
+  }
+
   @override
   void onClose() {
     pageController.dispose();
