@@ -1520,6 +1520,23 @@ class RoomCommandService {
       await _firestore.collection('active_sos').doc(userId).delete();
     } catch (_) {}
 
+    // 4b. Clean up unhandled sos_alert notifications for this user in Firestore
+    try {
+      final notifsQuery = await _firestore
+          .collection('notifications')
+          .where('type', isEqualTo: 'sos_alert')
+          .where('senderId', isEqualTo: userId)
+          .limit(20)
+          .get();
+      if (notifsQuery.docs.isNotEmpty) {
+        final batch = _firestore.batch();
+        for (final doc in notifsQuery.docs) {
+          batch.delete(doc.reference);
+        }
+        await batch.commit();
+      }
+    } catch (_) {}
+
     // 5. Log resolution activity
     final currentAuth = FirebaseAuth.instance.currentUser;
     final actorName =

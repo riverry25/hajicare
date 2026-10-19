@@ -276,6 +276,9 @@ class RoomService {
     String? roomId,
   }) => _queries.getActiveSosEventsStream(roomId: roomId);
 
+  Stream<List<Map<String, dynamic>>> getUserActiveSosEventsStream(String uid) =>
+      _queries.getUserActiveSosEventsStream(uid);
+
   Stream<List<Map<String, dynamic>>> getResolvedSosEventsStream({
     int limit = 5,
   }) => _queries.getResolvedSosEventsStream(limit: limit);

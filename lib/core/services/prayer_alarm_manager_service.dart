@@ -262,13 +262,19 @@ class PrayerAlarmManagerService {
   /// Cancels all scheduled prayer alarms in range 70000..70099
   static Future<void> cancelAllPrayerAlarms({int daysAhead = 7}) async {
     if (kIsWeb || defaultTargetPlatform != TargetPlatform.android) return;
-    for (int day = 0; day < daysAhead; day++) {
-      for (int i = 0; i < 5; i++) {
-        final alarmId = basePrayerAlarmId + (day * 10) + i;
-        await AndroidAlarmManager.cancel(alarmId);
+    try {
+      for (int day = 0; day < daysAhead; day++) {
+        for (int i = 0; i < 5; i++) {
+          final alarmId = basePrayerAlarmId + (day * 10) + i;
+          await AndroidAlarmManager.cancel(alarmId);
+        }
       }
+      await AndroidAlarmManager.cancel(testAlarmId);
+    } catch (e) {
+      debugPrint(
+        '[PrayerAlarmManagerService] cancelAllPrayerAlarms ignored error: $e',
+      );
     }
-    await AndroidAlarmManager.cancel(testAlarmId);
   }
 
   static String _normalizePrayerKey(String raw) {

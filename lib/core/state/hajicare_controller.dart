@@ -55,7 +55,15 @@ class HajiCareController extends GetxController {
   FirebaseFirestore get _firestore =>
       _providedFirestore ?? FirebaseFirestore.instance;
 
+  String? _testUid;
+
+  @visibleForTesting
+  void setTestUid(String? uid) {
+    _testUid = uid;
+  }
+
   String? get currentUid {
+    if (_testUid != null) return _testUid;
     try {
       return _firebaseAuth.currentUser?.uid;
     } catch (_) {
@@ -329,10 +337,16 @@ class HajiCareController extends GetxController {
     _gpsStreamSub?.cancel();
     _gpsStreamSub = null;
     _userDocSub?.cancel();
+    _userDocSub = null;
     _roomDocSub?.cancel();
+    _roomDocSub = null;
     _roomMembersSub?.cancel();
+    _roomMembersSub = null;
     _pendampingDocSub?.cancel();
+    _pendampingDocSub = null;
     _sosEventsSub?.cancel();
+    _sosEventsSub = null;
+    _sosSubscriptionScope = null;
     for (var sub in _jamaahSubs.values) {
       sub.cancel();
     }
@@ -364,7 +378,10 @@ class HajiCareController extends GetxController {
 
   Future<void> _loadUserData(String uid) async {
     _userDocSub?.cancel();
+    _userDocSub = null;
     _sosEventsSub?.cancel();
+    _sosEventsSub = null;
+    _sosSubscriptionScope = null;
 
     try {
       final token = await _firebaseAuth.currentUser?.getIdTokenResult();
@@ -483,43 +500,49 @@ class HajiCareController extends GetxController {
     required bool isAdmin,
   }) {
     final effectiveRoomId = roomId ?? _cachedRoomId ?? activeRoomId.value;
-    final scope = isAdmin
-        ? 'admin'
-        : effectiveRoomId == null
-        ? 'user:$uid'
-        : 'room:$effectiveRoomId';
+    final isOfficer =
+        isAdmin ||
+        _role.value == UserRole.pendamping ||
+        _role.value == UserRole.admin;
+    final scope = isOfficer
+        ? ((effectiveRoomId != null && effectiveRoomId.isNotEmpty)
+              ? 'room:$effectiveRoomId'
+              : 'officer:global')
+        : ((effectiveRoomId != null && effectiveRoomId.isNotEmpty)
+              ? 'room:$effectiveRoomId'
+              : 'user:$uid');
     if (_sosSubscriptionScope == scope && _sosEventsSub != null) return;
 
     _sosEventsSub?.cancel();
+    _sosEventsSub = null;
     _sosSubscriptionScope = scope;
 
-    final stream = isAdmin
-        ? _roomService.getActiveSosEventsStream()
-        : effectiveRoomId == null
-        ? Stream<List<Map<String, dynamic>>>.value(const [])
-        : _roomService.getActiveSosEventsStream(roomId: effectiveRoomId);
+    final stream = isOfficer
+        ? ((effectiveRoomId != null && effectiveRoomId.isNotEmpty)
+              ? _roomService.getActiveSosEventsStream(roomId: effectiveRoomId)
+              : _roomService.getActiveSosEventsStream())
+        : ((effectiveRoomId != null && effectiveRoomId.isNotEmpty)
+              ? _roomService.getActiveSosEventsStream(roomId: effectiveRoomId)
+              : _roomService.getUserActiveSosEventsStream(uid));
 
     _sosEventsSub = stream.listen(
       (sosList) {
+        final activeDocIds = sosList
+            .map((e) => e['id']?.toString())
+            .whereType<String>()
+            .toSet();
+        // Self-healing prune: If an event document is no longer active in Firestore,
+        // prune it from dismissed IDs so memory never retains stale IDs.
+        dismissedSosIds.removeWhere((id) => !activeDocIds.contains(id));
+
+        // Filter strictly by the unique event document ID (never by person UID).
         final filteredList = sosList
-            .where(
-              (event) =>
-                  !isSosDismissed(event['id']?.toString()) &&
-                  !isSosDismissed(event['userId']?.toString()) &&
-                  !isSosDismissed(event['jamaahId']?.toString()),
-            )
+            .where((event) => !isSosDismissed(event['id']?.toString()))
             .toList();
         activeSosEvents.value = filteredList;
         activeSosCount.value = filteredList.length;
 
         for (final jamaah in jamaahList) {
-          if (isSosDismissed(jamaah.id)) {
-            if (jamaah.sosActive) {
-              jamaah.sosActive = false;
-              jamaah.refresh();
-            }
-            continue;
-          }
           final isActive = filteredList.any(
             (event) =>
                 event['userId'] == jamaah.id || event['jamaahId'] == jamaah.id,
@@ -531,11 +554,9 @@ class HajiCareController extends GetxController {
         }
 
         if (_self != null) {
-          final isSelfActive =
-              !isSosDismissed(uid) &&
-              filteredList.any(
-                (event) => event['userId'] == uid || event['jamaahId'] == uid,
-              );
+          final isSelfActive = filteredList.any(
+            (event) => event['userId'] == uid || event['jamaahId'] == uid,
+          );
           if (_self!.sosActive != isSelfActive) {
             _self!.sosActive = isSelfActive;
             _self!.refresh();
@@ -544,14 +565,58 @@ class HajiCareController extends GetxController {
             _activeSosEventId = null;
           }
         }
+
+        if (filteredList.isEmpty && uid.isNotEmpty && uid != 'local_user') {
+          _selfHealStaleSosStatus(uid, effectiveRoomId);
+        }
       },
       onError: (Object error) {
         AppLogger.warn(
           'Error listening to active SOS events: $error',
           tag: 'HajiCareController',
         );
+        _sosEventsSub?.cancel();
+        _sosEventsSub = null;
+        _sosSubscriptionScope = null;
+        Future.delayed(const Duration(seconds: 3), () {
+          if (!isClosed && (currentUid == uid || uid == 'local_user')) {
+            _listenToSosEvents(uid: uid, roomId: roomId, isAdmin: isAdmin);
+          }
+        });
+      },
+      onDone: () {
+        _sosEventsSub = null;
+        _sosSubscriptionScope = null;
       },
     );
+  }
+
+  void _selfHealStaleSosStatus(String uid, String? roomId) {
+    try {
+      if (_self?.sosActive == true) {
+        _self!.sosActive = false;
+        _self!.refresh();
+      }
+      _activeSosEventId = null;
+
+      // Clean Firestore users/{uid} sosActive flag if orphaned
+      _firestore
+          .collection('users')
+          .doc(uid)
+          .set({'sosActive': false}, SetOptions(merge: true))
+          .catchError((_) {});
+
+      // Clean rooms/{roomId}/members/{uid} sosActive flag if orphaned
+      if (roomId != null && roomId.isNotEmpty) {
+        _firestore
+            .collection('rooms')
+            .doc(roomId)
+            .collection('members')
+            .doc(uid)
+            .set({'sosActive': false}, SetOptions(merge: true))
+            .catchError((_) {});
+      }
+    } catch (_) {}
   }
 
   void _clearRoomListeners() {
@@ -688,6 +753,9 @@ class HajiCareController extends GetxController {
     final activeIds = members.map((member) => member.uid).toSet();
     jamaahList.removeWhere((jamaah) => !activeIds.contains(jamaah.id));
     for (final member in members) {
+      final isMemberActiveInSos = activeSosEvents.any(
+        (e) => e['userId'] == member.uid || e['jamaahId'] == member.uid,
+      );
       final index = jamaahList.indexWhere((j) => j.id == member.uid);
       if (index >= 0) {
         final j = jamaahList[index];
@@ -696,8 +764,9 @@ class HajiCareController extends GetxController {
           j.locationUpdatedAt = member.locationUpdatedAt ?? DateTime.now();
           j.isGpsActive = true;
         }
-        if (j.sosActive != member.sosActive) {
-          j.sosActive = member.sosActive;
+        final effectiveSosActive = isMemberActiveInSos && member.sosActive;
+        if (j.sosActive != effectiveSosActive) {
+          j.sosActive = effectiveSosActive;
           j.refresh();
         }
       } else {
@@ -711,7 +780,7 @@ class HajiCareController extends GetxController {
           isGpsActive: member.hasLocation,
           onlineStatus: true,
           activeRoomId: activeRoomId.value,
-          sosActive: member.sosActive,
+          sosActive: isMemberActiveInSos && member.sosActive,
         );
         jamaahList.add(newJ);
       }
@@ -728,7 +797,11 @@ class HajiCareController extends GetxController {
         .listen((doc) {
           if (doc.exists) {
             _self = JamaahData.fromFirestore(doc);
-            if (!_self!.sosActive) {
+            final isSelfActiveInSosEvents = activeSosEvents.any(
+              (e) => e['userId'] == uid || e['jamaahId'] == uid,
+            );
+            if (!isSelfActiveInSosEvents) {
+              _self!.sosActive = false;
               _activeSosEventId = null;
             }
             if (activeRoomId.value == null ||
@@ -1300,6 +1373,8 @@ class HajiCareController extends GetxController {
         maktab: effectiveMaktab,
       );
       _activeSosEventId = eventId;
+      dismissedSosIds.remove(eventId);
+      dismissedSosIds.remove(user.uid);
 
       if (_self != null) {
         _self!.sosActive = true;
@@ -1337,7 +1412,8 @@ class HajiCareController extends GetxController {
       stopwatch.stop();
       AppLogger.error('Error triggering SOS: $e', tag: 'HajiCareController');
       await SosValidationTrackerService.instance.logTrial(
-        userName: currentUserName ?? (_self?.name ?? user.displayName ?? 'Jamaah'),
+        userName:
+            currentUserName ?? (_self?.name ?? user.displayName ?? 'Jamaah'),
         roomName: currentRoomName ?? (activeRoom.value?.name ?? 'Rombongan'),
         latitude: myCurrentPosition.value?.latitude,
         longitude: myCurrentPosition.value?.longitude,
@@ -1364,8 +1440,7 @@ class HajiCareController extends GetxController {
     if (_isSosMutationInFlight) return false;
     _isSosMutationInFlight = true;
 
-    // Immediately mark in dismissed set for instant UI responsiveness
-    if (id.isNotEmpty) dismissedSosIds.add(id);
+    // Immediately mark eventId in dismissed set for instant UI responsiveness
     if (eventId != null && eventId.isNotEmpty) dismissedSosIds.add(eventId);
 
     try {
@@ -1445,6 +1520,27 @@ class HajiCareController extends GetxController {
         }
       }
 
+      // Clean up Firestore notification docs matching this user/event so pendampings' devices receive real-time updates
+      if (currentUid != null &&
+          currentUid!.isNotEmpty &&
+          currentUid != 'local_user') {
+        try {
+          final notifs = await _firestore
+              .collection('notifications')
+              .where('type', isEqualTo: 'sos_alert')
+              .where('senderId', isEqualTo: id)
+              .limit(10)
+              .get();
+          if (notifs.docs.isNotEmpty) {
+            final batch = _firestore.batch();
+            for (final doc in notifs.docs) {
+              batch.delete(doc.reference);
+            }
+            await batch.commit();
+          }
+        } catch (_) {}
+      }
+
       // Immediately purge from active list locally for instant UI response
       activeSosEvents.removeWhere(
         (e) =>
@@ -1488,8 +1584,13 @@ class HajiCareController extends GetxController {
 
   bool get anySosActive =>
       activeSosCount.value > 0 ||
-      (_self?.sosActive ?? false) ||
-      jamaahList.any((j) => j.sosActive);
+      activeSosEvents.isNotEmpty ||
+      ((_self?.sosActive ?? false) &&
+          (activeSosEvents.isNotEmpty || currentUid == null)) ||
+      jamaahList.any(
+        (j) =>
+            j.sosActive && (activeSosEvents.isNotEmpty || currentUid == null),
+      );
 
   bool get anyJamaahSeparated => jamaahList.any((j) => j.separatedMode);
 

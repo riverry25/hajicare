@@ -1110,8 +1110,7 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
           : 'Jamaah SOS';
       final normSosName = sosName.toLowerCase();
 
-      if (state.isSosDismissed(sosId) ||
-          (sosUid != null && state.isSosDismissed(sosUid))) {
+      if (state.isSosDismissed(sosId)) {
         continue;
       }
 
@@ -1425,8 +1424,7 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
           : 'Jamaah SOS';
       final normSosName = sosName.toLowerCase();
 
-      if (state.isSosDismissed(sosId) ||
-          (sosUid != null && state.isSosDismissed(sosUid))) {
+      if (state.isSosDismissed(sosId)) {
         continue;
       }
 

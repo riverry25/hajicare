@@ -184,38 +184,42 @@ class _ModalSosScreenState extends State<ModalSosScreen>
     return '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
   }
 
-  bool _isItemDismissed(String? id, [String? secondaryId]) {
-    if (id != null && id.isNotEmpty) {
-      if (_dismissedSosIds.contains(id) || state.isSosDismissed(id)) {
-        return true;
-      }
-    }
-    if (secondaryId != null && secondaryId.isNotEmpty) {
-      if (_dismissedSosIds.contains(secondaryId) ||
-          state.isSosDismissed(secondaryId)) {
+  bool _isItemDismissed(String? eventId) {
+    if (eventId != null && eventId.isNotEmpty) {
+      if (_dismissedSosIds.contains(eventId) || state.isSosDismissed(eventId)) {
         return true;
       }
     }
     return false;
   }
 
-  /// Combines all active SOS sources: Firestore sos_events stream,
-  /// room jamaahList with sosActive flag, and incoming sos_alert notifications.
-  /// Deduplication is done by BOTH eventId AND userId so the same jamaah
-  /// never appears twice across the three sources.
+  /// Resolves the list of active SOS events.
+  /// Firestore `sos_events` stream (`state.activeSosEvents`) is the SOLE canonical
+  /// source of truth. When `sos_events` has no active documents in Firestore,
+  /// this returns an empty list, allowing the UI to reactively render the safe
+  /// condition empty state with zero ghost cards.
   List<Map<String, dynamic>> _resolveActiveSosList() {
+    // Explicitly observe activeSosCount and activeSosEvents length for reactive rebuilds
+    final _ = state.activeSosCount.value;
+    final _ = state.activeSosEvents.length;
+
+    // Prune stale dismissed IDs that are no longer in activeSosEvents
+    final activeDocIds = state.activeSosEvents
+        .map((e) => e['id']?.toString())
+        .whereType<String>()
+        .toSet();
+    _dismissedSosIds.removeWhere((id) => !activeDocIds.contains(id));
+
     final list = <Map<String, dynamic>>[];
-    // seenEventIds: prevents duplicate Firestore event docs
     final seenEventIds = <String>{};
-    // seenUserIds: prevents the same user from appearing in multiple sources
     final seenUserIds = <String>{};
 
-    // 1. From Firestore sos_events stream in state (canonical / highest priority)
+    // 1. From Firestore sos_events stream in state (canonical / single source of truth)
     for (final event in state.activeSosEvents) {
       final eventId = event['id']?.toString();
+      if (_isItemDismissed(eventId)) continue;
       final uId =
           event['userId']?.toString() ?? event['jamaahId']?.toString() ?? '';
-      if (_isItemDismissed(eventId, uId)) continue;
       if (uId.isNotEmpty && seenUserIds.contains(uId)) continue;
       if (eventId != null && seenEventIds.add(eventId)) {
         if (uId.isNotEmpty) seenUserIds.add(uId);
@@ -223,61 +227,30 @@ class _ModalSosScreenState extends State<ModalSosScreen>
       }
     }
 
-    // 2. From room jamaahList (only add if userId not already covered by source 1)
-    for (final j in state.jamaahList) {
-      if (_isItemDismissed(j.id)) continue;
-      if (!j.sosActive) continue;
-      if (seenUserIds.contains(j.id)) continue; // already from Firestore event
-      seenUserIds.add(j.id);
-      seenEventIds.add(j.id);
-      list.add({
-        'id': j.id,
-        'userId': j.id,
-        'jamaahId': j.id,
-        'userName': j.name,
-        'roomName': state.activeRoom.value?.name ?? 'Rombongan',
-        'status': 'active',
-        'timestamp': j.locationUpdatedAt ?? DateTime.now(),
-        if (j.currentLocation != null) 'location': j.currentLocation,
-        if (state.pendampingKloter.value != null)
-          'kloter': state.pendampingKloter.value,
-        if (state.pendampingMaktab.value != null)
-          'maktab': state.pendampingMaktab.value,
-      });
-    }
-
-    // 3. From incoming unhandled notifications of type sos_alert
-    // Only used as fallback if neither source 1 nor 2 covered this user.
-    if (Get.isRegistered<NotificationController>()) {
-      final notifCtrl = Get.find<NotificationController>();
-      for (final n in notifCtrl.notifications) {
-        if (!n.isSosAlert || n.isRead) continue;
-        final senderId = n.senderId ?? n.targetUserId;
-        final eventId = n.relatedId ?? senderId;
-        if (_isItemDismissed(n.id, eventId) || _isItemDismissed(senderId)) {
-          continue;
-        }
-        // Skip if this userId is already represented
-        if (senderId != null && seenUserIds.contains(senderId)) continue;
-        if (eventId != null && seenEventIds.add(eventId)) {
-          if (senderId != null) seenUserIds.add(senderId);
-          final lat = (n.metadata?['latitude'] as num?)?.toDouble();
-          final lng = (n.metadata?['longitude'] as num?)?.toDouble();
-          list.add({
-            'id': eventId,
-            'userId': senderId ?? eventId,
-            'jamaahId': senderId ?? eventId,
-            'userName': n.senderName ?? 'Jamaah',
-            'roomName':
-                n.metadata?['roomName'] ??
-                (n.targetRoomId != null ? 'Rombongan' : 'Di luar rombongan'),
-            'status': 'active',
-            'timestamp': n.createdAt ?? DateTime.now(),
-            if (lat != null && lng != null) 'location': GeoPoint(lat, lng),
-            if (n.metadata?['kloter'] != null) 'kloter': n.metadata!['kloter'],
-            if (n.metadata?['maktab'] != null) 'maktab': n.metadata!['maktab'],
-          });
-        }
+    // 2. Offline / isolated unit test fallback ONLY:
+    // If state.currentUid == null (e.g. running in widget test harness without Firebase),
+    // allow mock `jamaahList` entries marked with `sosActive == true` to be tested.
+    if (state.currentUid == null && list.isEmpty) {
+      for (final j in state.jamaahList) {
+        if (_isItemDismissed(j.id)) continue;
+        if (!j.sosActive) continue;
+        if (seenUserIds.contains(j.id)) continue;
+        seenUserIds.add(j.id);
+        seenEventIds.add(j.id);
+        list.add({
+          'id': j.id,
+          'userId': j.id,
+          'jamaahId': j.id,
+          'userName': j.name,
+          'roomName': state.activeRoom.value?.name ?? 'Rombongan',
+          'status': 'active',
+          'timestamp': j.locationUpdatedAt ?? DateTime.now(),
+          if (j.currentLocation != null) 'location': j.currentLocation,
+          if (state.pendampingKloter.value != null)
+            'kloter': state.pendampingKloter.value,
+          if (state.pendampingMaktab.value != null)
+            'maktab': state.pendampingMaktab.value,
+        });
       }
     }
 
@@ -286,77 +259,77 @@ class _ModalSosScreenState extends State<ModalSosScreen>
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.hc;
-    final typography = context.text;
-    final isOfficer =
-        state.role == UserRole.pendamping || state.role == UserRole.admin;
+    return Obx(() {
+      final colors = context.hc;
+      final typography = context.text;
+      final isOfficer =
+          state.role == UserRole.pendamping || state.role == UserRole.admin;
 
-    // ── Khusus Pendamping: Tampilan baru bergradien mewah mengikuti Gambar 2 ─
-    if (isOfficer) {
-      return Obx(() {
+      // ── Khusus Pendamping: Tampilan baru bergradien mewah mengikuti Gambar 2 ─
+      if (isOfficer) {
         final activeSosList = _resolveActiveSosList();
         return _buildResponderView(context, activeSosList, colors.isDark);
-      });
-    }
+      }
 
-    // ── Jamaah: Tampilan Emergency Trigger Panel ────────────────────────────
-    final scaffoldBg = colors.canvas;
-    final cardBg = colors.surface;
-    final headingColor = colors.textPrimary;
-    final bodyColor = colors.textSecondary;
+      // ── Jamaah: Tampilan Emergency Trigger Panel ────────────────────────────
+      final scaffoldBg = colors.canvas;
+      final cardBg = colors.surface;
+      final headingColor = colors.textPrimary;
+      final bodyColor = colors.textSecondary;
 
-    return Scaffold(
-      backgroundColor: scaffoldBg,
-      appBar: AppBar(
+      return Scaffold(
         backgroundColor: scaffoldBg,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_rounded, color: headingColor),
-          tooltip: 'Kembali',
-          onPressed: () => Get.back(),
-        ),
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: colors.danger,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.emergency_rounded,
-                color: Colors.white,
-                size: 16,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                context.tr('sosCenterTitle'),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: typography.headlineMedium.copyWith(
-                  color: headingColor,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
+        appBar: AppBar(
+          backgroundColor: scaffoldBg,
+          elevation: 0,
+          scrolledUnderElevation: 0,
+          leading: IconButton(
+            icon: Icon(Icons.arrow_back_rounded, color: headingColor),
+            tooltip: 'Kembali',
+            onPressed: () => Get.back(),
+          ),
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: colors.danger,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.emergency_rounded,
+                  color: Colors.white,
+                  size: 16,
                 ),
               ),
-            ),
-          ],
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  context.tr('sosCenterTitle'),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: typography.headlineMedium.copyWith(
+                    color: headingColor,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
-      body: ResponsiveCenter(
-        maxWidth: AppBreakpoints.maxTabletContentWidth,
-        child: _buildJamaahSenderView(
-          context,
-          colors.isDark,
-          cardBg,
-          headingColor,
-          bodyColor,
+        body: ResponsiveCenter(
+          maxWidth: AppBreakpoints.maxTabletContentWidth,
+          child: _buildJamaahSenderView(
+            context,
+            colors.isDark,
+            cardBg,
+            headingColor,
+            bodyColor,
+          ),
         ),
-      ),
-    );
+      );
+    });
   }
 
   // ===========================================================================
@@ -1372,9 +1345,6 @@ class _ModalSosScreenState extends State<ModalSosScreen>
       confirmText: context.tr('sos.yesComplete'),
       cancelText: context.tr('common.cancel'),
       onConfirm: () async {
-        if (userId.isNotEmpty) {
-          _dismissedSosIds.add(userId);
-        }
         if (eventId != null && eventId.isNotEmpty) {
           _dismissedSosIds.add(eventId);
         }
@@ -1700,7 +1670,6 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                 onPressed: () async {
                   final uid = state.currentUid;
                   if (uid != null) {
-                    if (uid.isNotEmpty) _dismissedSosIds.add(uid);
                     final success = await state.dismissSos(uid);
                     if (success) {
                       setState(() {

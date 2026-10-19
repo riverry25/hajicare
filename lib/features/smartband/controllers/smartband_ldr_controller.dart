@@ -726,6 +726,15 @@ class SmartbandLdrController extends GetxController {
         ? '${mcpTemperature.value!.toStringAsFixed(1)}C'
         : '36.6C';
     lcdLine2.value = 'T:$tempStr ST:NORMAL';
+
+    // Synchronize cancellation to Firestore backend & Companion HP immediately
+    if (Get.isRegistered<HajiCareController>()) {
+      final hajiCtrl = Get.find<HajiCareController>();
+      final uid = hajiCtrl.currentUid;
+      if (uid != null && uid.isNotEmpty) {
+        hajiCtrl.dismissSos(uid);
+      }
+    }
   }
 
   /// Meneruskan pesan darurat SOS ke HP Pendamping via HajiCareController / Firestore

@@ -750,15 +750,8 @@ class PrayerTimesController extends GetxController {
       ),
     );
 
-    // Parallel background exact alarm scheduling via AndroidAlarmManager (alarmClock)
-    unawaited(
-      PrayerAlarmManagerService.scheduleUpcomingPrayers(
-        latitude: currentLat.value,
-        longitude: currentLng.value,
-        timezoneId: tz,
-        countryCode: cCode,
-      ),
-    );
+    // Cancel legacy AndroidAlarmManager alarms to prevent duplicate scheduling
+    unawaited(PrayerAlarmManagerService.cancelAllPrayerAlarms());
   }
 
   /// Trigger a test background adhan alarm [delaySeconds] from now so the user can verify

@@ -203,41 +203,84 @@ class RoomQueryService {
   Stream<List<Map<String, dynamic>>> getActiveSosEventsStream({
     String? roomId,
   }) {
-    final normalizedRoomId = roomId?.trim();
-    Query<Map<String, dynamic>> query = _firestore.collection('sos_events');
+    try {
+      final normalizedRoomId = roomId?.trim();
+      Query<Map<String, dynamic>> query = _firestore.collection('sos_events');
 
-    // Single-field queries only: served by automatic single-field indexes,
-    // avoiding FAILED_PRECONDITION when composite indexes are not deployed.
-    if (normalizedRoomId != null && normalizedRoomId.isNotEmpty) {
-      query = query.where('roomId', isEqualTo: normalizedRoomId);
-    } else {
-      query = query.where(
-        'status',
-        whereIn: const ['active', 'baru', 'direspons'],
-      );
+      // Single-field queries only: served by automatic single-field indexes,
+      // avoiding FAILED_PRECONDITION when composite indexes are not deployed.
+      if (normalizedRoomId != null && normalizedRoomId.isNotEmpty) {
+        query = query.where('roomId', isEqualTo: normalizedRoomId);
+      } else {
+        query = query.where(
+          'status',
+          whereIn: const ['active', 'baru', 'direspons'],
+        );
+      }
+
+      return query.limit(_sosWindow).snapshots().map((snapshot) {
+        const activeStatuses = {'active', 'baru', 'direspons'};
+        final items = snapshot.docs
+            .map((doc) => <String, dynamic>{'id': doc.id, ...doc.data()})
+            .where((item) {
+              final st = (item['status'] as String?)?.trim().toLowerCase();
+              final rId = (item['roomId'] as String?)?.trim();
+              final uId = (item['userId'] ?? item['jamaahId'])
+                  ?.toString()
+                  .trim();
+              if (rId == null || rId.isEmpty) return false;
+              if (uId == null || uId.isEmpty) return false;
+              return activeStatuses.contains(st);
+            })
+            .toList();
+        items.sort(
+          (a, b) => _eventTime(b, const [
+            'timestamp',
+            'createdAt',
+          ]).compareTo(_eventTime(a, const ['timestamp', 'createdAt'])),
+        );
+        return items;
+      });
+    } catch (e) {
+      debugPrint('[RoomQueryService] getActiveSosEventsStream fallback: $e');
+      return Stream.value(const []);
     }
+  }
 
-    return query.limit(_sosWindow).snapshots().map((snapshot) {
-      const activeStatuses = {'active', 'baru', 'direspons'};
-      final items = snapshot.docs
-          .map((doc) => <String, dynamic>{'id': doc.id, ...doc.data()})
-          .where((item) {
-            final st = (item['status'] as String?)?.trim().toLowerCase();
-            final rId = (item['roomId'] as String?)?.trim();
-            final uId = (item['userId'] ?? item['jamaahId'])?.toString().trim();
-            if (rId == null || rId.isEmpty) return false;
-            if (uId == null || uId.isEmpty) return false;
-            return activeStatuses.contains(st);
-          })
-          .toList();
-      items.sort(
-        (a, b) => _eventTime(b, const [
-          'timestamp',
-          'createdAt',
-        ]).compareTo(_eventTime(a, const ['timestamp', 'createdAt'])),
+  Stream<List<Map<String, dynamic>>> getUserActiveSosEventsStream(String uid) {
+    try {
+      final normalizedUid = uid.trim();
+      if (normalizedUid.isEmpty) {
+        return Stream.value(const []);
+      }
+      return _firestore
+          .collection('sos_events')
+          .where('userId', isEqualTo: normalizedUid)
+          .limit(_sosWindow)
+          .snapshots()
+          .map((snapshot) {
+            const activeStatuses = {'active', 'baru', 'direspons'};
+            final items = snapshot.docs
+                .map((doc) => <String, dynamic>{'id': doc.id, ...doc.data()})
+                .where((item) {
+                  final st = (item['status'] as String?)?.trim().toLowerCase();
+                  return activeStatuses.contains(st);
+                })
+                .toList();
+            items.sort(
+              (a, b) => _eventTime(b, const [
+                'timestamp',
+                'createdAt',
+              ]).compareTo(_eventTime(a, const ['timestamp', 'createdAt'])),
+            );
+            return items;
+          });
+    } catch (e) {
+      debugPrint(
+        '[RoomQueryService] getUserActiveSosEventsStream fallback: $e',
       );
-      return items;
-    });
+      return Stream.value(const []);
+    }
   }
 
   Stream<List<Map<String, dynamic>>> getResolvedSosEventsStream({

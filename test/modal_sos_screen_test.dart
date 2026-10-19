@@ -112,5 +112,126 @@ void main() {
         expect(find.text('Kondisi Aman'), findsOneWidget);
       },
     );
+
+    testWidgets(
+      'Realtime SOS sync: card and badge disappear reactively when Jamaah ends SOS without reopening page',
+      (tester) async {
+        tester.view.physicalSize = const Size(1080, 2400);
+        tester.view.devicePixelRatio = 2.0;
+        addTearDown(() => tester.view.resetPhysicalSize());
+
+        final state = Get.put(HajiCareController(), permanent: true);
+        state.setRole(UserRole.pendamping);
+
+        // 1. Initial State: Active SOS event emitted from Firestore
+        state.activeSosEvents.assignAll([
+          {
+            'id': 'sos-realtime-event-1',
+            'userId': 'jamaah-1',
+            'userName': 'Fadli Hifziansyah',
+            'roomName': 'Rombongan Maktab 48',
+            'status': 'active',
+            'timestamp': DateTime.now().subtract(const Duration(minutes: 5)),
+            'location': const GeoPoint(21.4225, 39.8262),
+          },
+        ]);
+
+        await tester.pumpWidget(
+          buildTestModalSosScreen(role: UserRole.pendamping),
+        );
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 200));
+
+        // Verify active SOS card & badge are visible
+        expect(find.text('Fadli Hifziansyah'), findsOneWidget);
+        expect(find.text('Rombongan Maktab 48'), findsOneWidget);
+        expect(find.text('1 Jamaah Perlu Bantuan Segera'), findsOneWidget);
+        expect(find.text('Kondisi Aman'), findsNothing);
+
+        // 2. Jamaah ends SOS -> Firestore activeSosEvents becomes empty in realtime
+        state.activeSosEvents.clear();
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 200));
+
+        // 3. Verify card vanished and safe condition is immediately rendered WITHOUT reopening
+        expect(find.text('Fadli Hifziansyah'), findsNothing);
+        expect(find.text('1 Jamaah Perlu Bantuan Segera'), findsNothing);
+        expect(find.text('Kondisi Aman Terkendali'), findsOneWidget);
+        expect(find.text('Kondisi Aman'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'Subsequent SOS from same Jamaah appears reactively even after previous SOS was resolved without reopening page',
+      (tester) async {
+        tester.view.physicalSize = const Size(1080, 2400);
+        tester.view.devicePixelRatio = 2.0;
+        addTearDown(() => tester.view.resetPhysicalSize());
+
+        final state = Get.put(HajiCareController(), permanent: true);
+        state.setRole(UserRole.pendamping);
+
+        // 1. Initial State: Jamaah triggers first SOS
+        state.activeSosEvents.assignAll([
+          {
+            'id': 'sos-event-first',
+            'userId': 'jamaah-1',
+            'userName': 'Fadli Hifziansyah',
+            'roomName': 'Rombongan Maktab 48',
+            'status': 'active',
+            'timestamp': DateTime.now().subtract(const Duration(minutes: 5)),
+            'location': const GeoPoint(21.4225, 39.8262),
+          },
+        ]);
+
+        await tester.pumpWidget(
+          buildTestModalSosScreen(role: UserRole.pendamping),
+        );
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 200));
+
+        expect(find.text('Fadli Hifziansyah'), findsOneWidget);
+
+        // 2. Pendamping taps "Selesai" to resolve first SOS
+        final selesaiBtn = find.text('Selesai');
+        expect(selesaiBtn, findsOneWidget);
+        await tester.tap(selesaiBtn);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 200));
+
+        // Confirm dialog appears
+        final confirmBtn = find.text('Ya, Selesaikan');
+        expect(confirmBtn, findsOneWidget);
+        await tester.tap(confirmBtn);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 200));
+
+        // First SOS card is now dismissed / cleared
+        state.activeSosEvents.clear();
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 200));
+        expect(find.text('Fadli Hifziansyah'), findsNothing);
+        expect(find.text('Kondisi Aman Terkendali'), findsOneWidget);
+
+        // 3. Same Jamaah triggers a NEW SOS signal with new event id
+        state.activeSosEvents.assignAll([
+          {
+            'id': 'sos-event-second',
+            'userId': 'jamaah-1',
+            'userName': 'Fadli Hifziansyah',
+            'roomName': 'Rombongan Maktab 48',
+            'status': 'active',
+            'timestamp': DateTime.now(),
+            'location': const GeoPoint(21.4225, 39.8262),
+          },
+        ]);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 200));
+
+        // 4. MUST appear reactively without reopening or reloading
+        expect(find.text('Fadli Hifziansyah'), findsOneWidget);
+        expect(find.text('Kondisi Aman Terkendali'), findsNothing);
+      },
+    );
   });
 }

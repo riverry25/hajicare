@@ -379,7 +379,6 @@ class _SosAlertDetailScreenState extends State<SosAlertDetailScreen> {
       confirmText: context.tr('sos.yesComplete'),
       cancelText: context.tr('common.cancel'),
       onConfirm: () async {
-        if (userId.isNotEmpty) _state.dismissedSosIds.add(userId);
         if (_eventId != null && _eventId!.isNotEmpty) {
           _state.dismissedSosIds.add(_eventId!);
         }

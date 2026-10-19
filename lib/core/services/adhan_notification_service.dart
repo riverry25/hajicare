@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'adhan_native_bridge.dart';
+import 'prayer_alarm_manager_service.dart';
 import 'prayer_calculation_service.dart';
 
 /// Top-level callback required by flutter_local_notifications for background notification actions.
@@ -347,27 +348,52 @@ class AdhanNotificationService {
         iOS: darwinDetails,
       );
 
-      // Primary reliable background notification scheduling
-      await _notificationsPlugin.zonedSchedule(
-        id: id,
-        title: 'Waktu Salat $prayerName Telah Tiba',
-        body:
-            'Mari tunaikan salat $prayerName. Suara adzan sedang berkumandang.',
-        scheduledDate: tzScheduled,
-        notificationDetails: notificationDetails,
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      );
-
-      // Redundant native Android AlarmManager scheduling for deep Doze mode compatibility
+      // Unified Single-Pipeline Adhan Scheduling:
+      // On Android, use the native AlarmManager foreground service (AdhanPlaybackService)
+      // which guarantees reliable audio + 1 persistent notification tray item with "Matikan Adzan".
+      bool nativeScheduled = false;
       if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
-        unawaited(
-          AdhanNativeBridge.scheduleNativeAdhan(
+        // Clear any lingering local notification for this prayer ID to prevent duplicate tray entries
+        await _notificationsPlugin.cancel(id: id);
+        try {
+          nativeScheduled = await AdhanNativeBridge.scheduleNativeAdhan(
             id: id,
             prayerName: prayerName,
             scheduledTime: scheduledTime,
             isSubuh: isSubuh,
-          ),
-        );
+          );
+        } catch (e) {
+          debugPrint(
+            '[AdhanNotificationService] Native Android alarm scheduling failed: $e',
+          );
+          nativeScheduled = false;
+        }
+      }
+
+      // If native scheduling is not supported or failed (e.g. iOS or fallback),
+      // schedule via flutter_local_notifications zonedSchedule.
+      if (!nativeScheduled) {
+        try {
+          await _notificationsPlugin.zonedSchedule(
+            id: id,
+            title: 'Waktu Salat $prayerName Telah Tiba',
+            body:
+                'Mari tunaikan salat $prayerName. Suara adzan sedang berkumandang.',
+            scheduledDate: tzScheduled,
+            notificationDetails: notificationDetails,
+            androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+          );
+        } catch (_) {
+          await _notificationsPlugin.zonedSchedule(
+            id: id,
+            title: 'Waktu Salat $prayerName Telah Tiba',
+            body:
+                'Mari tunaikan salat $prayerName. Suara adzan sedang berkumandang.',
+            scheduledDate: tzScheduled,
+            notificationDetails: notificationDetails,
+            androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+          );
+        }
       }
     } catch (e) {
       debugPrint(
@@ -575,6 +601,9 @@ class AdhanNotificationService {
         countryCode = 'ID';
       }
 
+      // Flush any legacy PrayerAlarmManagerService alarms from device AlarmManager
+      await PrayerAlarmManagerService.cancelAllPrayerAlarms();
+
       await scheduleUpcomingPrayers(
         latitude: lat,
         longitude: lng,
@@ -646,6 +675,7 @@ class AdhanNotificationService {
     try {
       await _notificationsPlugin.cancelAll();
       await AdhanNativeBridge.stopAdhanService();
+      await PrayerAlarmManagerService.cancelAllPrayerAlarms();
     } catch (e) {
       debugPrint('[AdhanNotificationService] [ERROR] Cancel all error: $e');
     }

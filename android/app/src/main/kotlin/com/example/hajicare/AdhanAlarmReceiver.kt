@@ -48,6 +48,7 @@ class AdhanAlarmReceiver : BroadcastReceiver() {
 
         val prayerName = intent?.getStringExtra(EXTRA_PRAYER_NAME) ?: "Waktu Salat"
         val isSubuh = intent?.getBooleanExtra(EXTRA_IS_SUBUH, false) ?: false
+        val notifIdExtra = intent?.getIntExtra(EXTRA_NOTIFICATION_ID, 0) ?: 0
 
         createNotificationChannel(context)
 
@@ -58,7 +59,7 @@ class AdhanAlarmReceiver : BroadcastReceiver() {
                 this.action = AdhanPlaybackService.ACTION_START
                 putExtra(AdhanPlaybackService.EXTRA_PRAYER_NAME, prayerName)
                 putExtra(AdhanPlaybackService.EXTRA_IS_SUBUH, isSubuh)
-                putExtra(AdhanPlaybackService.EXTRA_NOTIFICATION_ID, NOTIFICATION_ID)
+                putExtra(AdhanPlaybackService.EXTRA_NOTIFICATION_ID, notifIdExtra)
             }
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 context.startForegroundService(serviceIntent)
@@ -72,15 +73,22 @@ class AdhanAlarmReceiver : BroadcastReceiver() {
 
         // 2. Fallback to standalone AdhanAudioPlayer if foreground service cannot start
         if (!serviceStarted) {
+            if (notifIdExtra != 0) {
+                val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
+                nm?.cancel(notifIdExtra)
+            }
             AdhanAudioPlayer.play(context, isSubuh) {
                 val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
                 nm?.cancel(NOTIFICATION_ID)
+                if (notifIdExtra != 0) {
+                    nm?.cancel(notifIdExtra)
+                }
             }
-            showAdhanNotification(context, prayerName)
+            showAdhanNotification(context, prayerName, notifIdExtra)
         }
     }
 
-    private fun showAdhanNotification(context: Context, prayerName: String) {
+    private fun showAdhanNotification(context: Context, prayerName: String, notifIdExtra: Int = 0) {
         val openAppIntent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
         }
@@ -93,7 +101,7 @@ class AdhanAlarmReceiver : BroadcastReceiver() {
 
         val stopIntent = Intent(context, AdhanAlarmReceiver::class.java).apply {
             action = ACTION_STOP_ADHAN
-            putExtra(EXTRA_NOTIFICATION_ID, NOTIFICATION_ID)
+            putExtra(EXTRA_NOTIFICATION_ID, if (notifIdExtra != 0) notifIdExtra else NOTIFICATION_ID)
         }
         val stopPendingIntent = PendingIntent.getBroadcast(
             context,

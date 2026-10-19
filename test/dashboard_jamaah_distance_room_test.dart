@@ -169,6 +169,11 @@ void main() {
       expect(mapCtrl.selectedMember.value?.uid, 'pendamping-01');
       expect(mapCtrl.selectedMember.value?.latitude, closeTo(21.4150, 0.0001));
       expect(mapCtrl.selectedMember.value?.longitude, closeTo(39.8950, 0.0001));
+
+      // Allow snackbar animation to complete smoothly without pumpAndSettle
+      for (int i = 0; i < 25; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
     },
   );
 
@@ -202,6 +207,10 @@ void main() {
 
       final dashboardCtrl = Get.find<DashboardController>();
       expect(dashboardCtrl.currentIndex.value, 0); // Stays on home tab
+
+      // Dismiss info dialog cleanly
+      await tester.tap(find.text('Baik'));
+      await tester.pump(const Duration(milliseconds: 300));
     },
   );
 }
