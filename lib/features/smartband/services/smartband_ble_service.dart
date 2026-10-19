@@ -20,6 +20,7 @@ class SmartbandBleService {
   BluetoothDevice? _connectedDevice;
   BluetoothDevice? _foundDevice;
   BluetoothCharacteristic? _dataCharacteristic;
+  BluetoothCharacteristic? _writeCharacteristic;
 
   // Stream Controllers
   final _connectionStatusController =
@@ -321,6 +322,17 @@ class SmartbandBleService {
       _log('CONNECT SUCCESS');
       _log('CONNECTION STATE:\nCONNECTED');
 
+      // 2.5 Negosiasi MTU 247 (Diperlukan Android agar notifikasi JSON tidak terpotong)
+      if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+        try {
+          _log('REQUEST MTU 247');
+          final mtu = await device.requestMtu(247);
+          _log('MTU NEGOTIATED: $mtu');
+        } catch (e) {
+          _log('Peringatan: Gagal negosiasi MTU: $e');
+        }
+      }
+
       // 3. Discover Services
       await discoverServices(device);
 
@@ -385,6 +397,9 @@ class SmartbandBleService {
       if (cUuid == targetCharUuidNormalized) {
         targetChar = char;
       }
+      if (p.write || p.writeWithoutResponse) {
+        _writeCharacteristic = char;
+      }
     }
 
     if (targetChar == null) {
@@ -398,6 +413,31 @@ class SmartbandBleService {
 
     // 5. Subscribe ke BLE Notification
     await subscribeToDataNotification(targetChar);
+  }
+
+  /// Indikator apakah characteristic penulisan perintah BLE tersedia
+  bool get canWriteCommand => _writeCharacteristic != null;
+
+  /// Kirim perintah teks (misal: "BUZZ", "TEST_OLED", "PING") ke ESP32
+  Future<bool> sendCommand(String cmd) async {
+    final char = _writeCharacteristic;
+    if (char == null) {
+      _log('Characteristic penulisan BLE tidak tersedia');
+      return false;
+    }
+    try {
+      _log('SEND COMMAND: $cmd');
+      await char.write(
+        utf8.encode('$cmd\n'),
+        withoutResponse:
+            char.properties.writeWithoutResponse && !char.properties.write,
+      );
+      _log('COMMAND SENT: $cmd');
+      return true;
+    } catch (e) {
+      _log('COMMAND FAILED: $e');
+      return false;
+    }
   }
 
   /// 4. Subscribe ke BLE Notification data karakteristik
@@ -491,6 +531,7 @@ class SmartbandBleService {
     _deviceConnectionSubscription = null;
 
     _dataCharacteristic = null;
+    _writeCharacteristic = null;
     _connectedDevice = null;
   }
 

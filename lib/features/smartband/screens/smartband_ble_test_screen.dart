@@ -270,69 +270,85 @@ class SmartbandBleTestScreen extends GetView<SmartbandBleTestController> {
             ),
             const SizedBox(height: AppSpacing.sm),
 
-            // 2. Detak Jantung (MAX30102)
+            // 2. MAX30102: Detak Jantung & Kadar Oksigen SpO2
             _buildTelemetryTile(
               context,
               icon: Icons.favorite_rounded,
               iconColor: const Color(0xFFFF2E63),
-              label: 'MAX30102 Detak Jantung',
-              value: data != null ? '${data.heartRate} BPM' : '--',
+              label: 'MAX30102 Detak Jantung & SpO2',
+              value: data != null
+                  ? '${data.heartRate} BPM • ${data.spo2 != null ? "${data.spo2}% SpO2" : "--% SpO2"}'
+                  : '--',
               helper: data != null && data.heartRate == 0
                   ? 'Sensor sedang mengukur...'
                   : (data != null
-                        ? 'Detak jantung realtime aktif'
+                        ? 'Denyut nadi & kadar oksigen aktif'
                         : 'Menunggu payload...'),
             ),
             const SizedBox(height: AppSpacing.sm),
 
-            // 3. Suhu Tubuh (MCP9808)
+            // 3. Sensor Suhu Tubuh (MLX90614 / MCP9808)
             _buildTelemetryTile(
               context,
               icon: Icons.device_thermostat_rounded,
               iconColor: const Color(0xFFD4A857),
-              label: 'MCP9808 Suhu Tubuh',
+              label: 'MLX90614 / Suhu Tubuh Presisi',
               value: data?.temperature != null
                   ? '${data!.temperature!.toStringAsFixed(1)} °C'
-                  : '36.6 °C (Default)',
-              helper: 'Presisi tinggi sensor I2C',
+                  : '-- °C',
+              helper: 'Presisi tinggi sensor I2C digital',
             ),
             const SizedBox(height: AppSpacing.sm),
 
-            // 4. Deteksi Gerak & Jatuh (MPU6050)
+            // 4. MPU6050: Aktivitas Langkah & Deteksi Jatuh
             _buildTelemetryTile(
               context,
               icon: Icons.directions_walk_rounded,
               iconColor: const Color(0xFF10B981),
-              label: 'MPU6050 Postur & Jatuh',
+              label: 'MPU6050 Langkah & Deteksi Jatuh',
               value: (data?.fallDetected ?? false)
                   ? 'JATUH TERDETEKSI!'
-                  : 'Tegak Normal (${data?.accelG?.toStringAsFixed(2) ?? "1.02"} G)',
+                  : '${data?.stepCount ?? 0} Langkah • Tegak (${data?.accelG?.toStringAsFixed(2) ?? "1.02"} G)',
               helper:
                   'Roll: ${data?.roll?.toStringAsFixed(1) ?? "0.0"}° • Pitch: ${data?.pitch?.toStringAsFixed(1) ?? "0.0"}°',
             ),
             const SizedBox(height: AppSpacing.sm),
 
-            // 5. GPS Satelit (NEO-6M)
+            // 5. GPS NEO-6M: Koordinat Satelit Realtime
             _buildTelemetryTile(
               context,
               icon: Icons.satellite_alt_rounded,
               iconColor: const Color(0xFF0284C7),
-              label: 'NEO-6M Satelit GPS',
-              value: data?.latitude != null
+              label: 'GPS NEO-6M Satelit Realtime',
+              value:
+                  (data?.isValidLocation ?? false) &&
+                      data?.latitude != null &&
+                      data?.longitude != null
                   ? '${data!.latitude!.toStringAsFixed(6)}, ${data.longitude!.toStringAsFixed(6)}'
-                  : '21.422487, 39.826206',
-              helper: 'Sinyal GPS FIX (Pelataran Masjidil Haram)',
+                  : 'Mencari Sinyal Satelit...',
+              helper: (data?.isValidLocation ?? false)
+                  ? 'Sinyal GPS FIX (${data?.satellites ?? 0} Satelit Terkunci)'
+                  : 'Belum FIX (Menunggu akuisisi satelit)',
             ),
             const SizedBox(height: AppSpacing.sm),
 
-            // 6. Baterai LiPo
+            // 6. LCD 16x2 + I2C Backpack: Layar Pergelangan Tangan
+            _buildLcdMirrorTile(
+              context,
+              line1: data?.displayLcdLine1 ?? 'HR: --  SpO2: --%',
+              line2: data?.displayLcdLine2 ?? 'STATUS: STANDBY ',
+            ),
+            const SizedBox(height: AppSpacing.sm),
+
+            // 7. Baterai LiPo 3.7V
             _buildTelemetryTile(
               context,
               icon: Icons.battery_charging_full_rounded,
               iconColor: const Color(0xFF16A34A),
               label: 'Baterai LiPo 3.7V',
-              value:
-                  '${data?.batteryLevel ?? 88}% (${data?.batteryVoltage?.toStringAsFixed(2) ?? "3.96"}V)',
+              value: data?.batteryLevel != null
+                  ? '${data!.batteryLevel}% (${data.batteryVoltage?.toStringAsFixed(2) ?? "3.96"}V)'
+                  : '--',
               helper: (data?.isCharging ?? false)
                   ? 'Sedang Mengisi'
                   : 'Siap Pakai',
@@ -366,6 +382,132 @@ class SmartbandBleTestScreen extends GetView<SmartbandBleTestController> {
         ),
       );
     });
+  }
+
+  Widget _buildLcdMirrorTile(
+    BuildContext context, {
+    required String line1,
+    required String line2,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0F172A),
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: const Color(0xFF1E293B), width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.25),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Flexible(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF10B981).withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(
+                      color: const Color(0xFF10B981),
+                      width: 0.8,
+                    ),
+                  ),
+                  child: const FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      'I2C 0x27 • 16x2 LCD',
+                      style: TextStyle(
+                        fontFamily: 'monospace',
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF34D399),
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'LCD 16x2 / OLED Layar Gelang',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white.withValues(alpha: 0.85),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: const Color(0xFF042F2E),
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(color: const Color(0xFF0D9488), width: 1.2),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF0D9488).withValues(alpha: 0.2),
+                  blurRadius: 6,
+                  spreadRadius: 1,
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    line1.padRight(16).substring(0, 16),
+                    style: const TextStyle(
+                      fontFamily: 'monospace',
+                      fontSize: 14.5,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 2.2,
+                      color: Color(0xFF5EEAD4),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    line2.padRight(16).substring(0, 16),
+                    style: const TextStyle(
+                      fontFamily: 'monospace',
+                      fontSize: 14.5,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 2.2,
+                      color: Color(0xFF5EEAD4),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildTelemetryTile(
@@ -434,7 +576,7 @@ class SmartbandBleTestScreen extends GetView<SmartbandBleTestController> {
     );
   }
 
-  // ── 3. Tombol Aksi ────────────────────────────────────────────────────────
+  // ── 3. Tombol Aksi BLE ─────────────────────────────────────────────────────
   Widget _buildActionSection(BuildContext context) {
     return Obx(() {
       final status = controller.connectionStatus.value;
@@ -456,11 +598,11 @@ class SmartbandBleTestScreen extends GetView<SmartbandBleTestController> {
             ),
           ),
           icon: const Icon(Icons.link_off_rounded),
-          label: FittedBox(
+          label: const FittedBox(
             fit: BoxFit.scaleDown,
             child: Text(
-              context.tr('smartband.disconnectDevice'),
-              style: const TextStyle(fontWeight: FontWeight.bold),
+              'PUTUSKAN KONEKSI SMARTBAND',
+              style: TextStyle(fontWeight: FontWeight.bold),
             ),
           ),
         );
@@ -475,10 +617,10 @@ class SmartbandBleTestScreen extends GetView<SmartbandBleTestController> {
             borderRadius: BorderRadius.circular(AppRadius.button),
             border: Border.all(color: AppColors.primaryGold),
           ),
-          child: Row(
+          child: const Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const SizedBox(
+              SizedBox(
                 width: 18,
                 height: 18,
                 child: CircularProgressIndicator(
@@ -486,12 +628,12 @@ class SmartbandBleTestScreen extends GetView<SmartbandBleTestController> {
                   color: AppColors.primaryGold,
                 ),
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: 12),
               FittedBox(
                 fit: BoxFit.scaleDown,
                 child: Text(
-                  context.tr('smartband.statusConnecting'),
-                  style: const TextStyle(
+                  'MENGHUBUNGKAN KE SMARTBAND...',
+                  style: TextStyle(
                     color: AppColors.primaryGold,
                     fontWeight: FontWeight.bold,
                   ),
@@ -528,9 +670,7 @@ class SmartbandBleTestScreen extends GetView<SmartbandBleTestController> {
             label: FittedBox(
               fit: BoxFit.scaleDown,
               child: Text(
-                isScanning
-                    ? context.tr('smartband.statusScanning')
-                    : context.tr('smartband.connectDevice'),
+                isScanning ? 'MEMINDAI SMARTBAND...' : 'PINDAI SMARTBAND BLE',
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),
             ),
@@ -562,7 +702,7 @@ class SmartbandBleTestScreen extends GetView<SmartbandBleTestController> {
     });
   }
 
-  // ── 4. Log Realtime ────────────────────────────────────────────────────────
+  // ── 4. Terminal Log Realtime ────────────────────────────────────────────────
   Widget _buildLogsCard(BuildContext context) {
     final bodyColor = AppColors.textBodyColor(context);
 
@@ -591,7 +731,7 @@ class SmartbandBleTestScreen extends GetView<SmartbandBleTestController> {
                           fit: BoxFit.scaleDown,
                           alignment: Alignment.centerLeft,
                           child: Text(
-                            context.tr('smartband.bleLogs'),
+                            'LOG KOMUNIKASI BLE',
                             style: AppTypography.labelLarge.copyWith(
                               color: bodyColor.withValues(alpha: 0.7),
                               fontWeight: FontWeight.w600,
@@ -607,48 +747,46 @@ class SmartbandBleTestScreen extends GetView<SmartbandBleTestController> {
                   TextButton(
                     onPressed: () => controller.clearLogs(),
                     style: TextButton.styleFrom(
-                      padding: EdgeInsets.zero,
-                      minimumSize: const Size(50, 30),
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      foregroundColor: AppColors.statusDanger,
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
                     ),
-                    child: Text(
-                      context.tr('smartband.clearLogs'),
-                      style: const TextStyle(fontSize: 12),
-                    ),
+                    child: const Text('Clear', style: TextStyle(fontSize: 12)),
                   ),
               ],
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: AppSpacing.sm),
             const Divider(),
-            const SizedBox(height: 6),
+            const SizedBox(height: AppSpacing.xs),
             Container(
-              height: 160,
+              height: 140,
               width: double.infinity,
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.04),
-                borderRadius: BorderRadius.circular(AppRadius.sm),
+                color: const Color(0xFF0F172A),
+                borderRadius: BorderRadius.circular(AppRadius.md),
+                border: Border.all(color: const Color(0xFF1E293B)),
               ),
               child: logs.isEmpty
                   ? Center(
                       child: Text(
-                        'Belum ada aktivitas. Tekan [Hubungkan Gelang] untuk memulai.',
-                        style: AppTypography.caption.copyWith(
-                          color: bodyColor.withValues(alpha: 0.5),
+                        'Belum ada log komunikasi BLE.',
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.4),
+                          fontSize: 12,
                         ),
-                        textAlign: TextAlign.center,
                       ),
                     )
                   : ListView.builder(
                       itemCount: logs.length,
-                      itemBuilder: (context, index) {
+                      itemBuilder: (context, idx) {
                         return Padding(
                           padding: const EdgeInsets.symmetric(vertical: 2),
                           child: Text(
-                            logs[index],
+                            logs[idx],
                             style: const TextStyle(
                               fontFamily: 'monospace',
                               fontSize: 11,
+                              color: Color(0xFF38BDF8),
                             ),
                           ),
                         );

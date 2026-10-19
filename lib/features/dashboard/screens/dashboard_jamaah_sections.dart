@@ -2083,11 +2083,10 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                   final lastLat = ldrCtrl.lastKnownLatitude.value;
                   final lastLng = ldrCtrl.lastKnownLongitude.value;
                   final relativeTime = ldrCtrl.relativeTimeText.value;
+                  // hasLocation: juga cek data storage (lastKnown bahkan tanpa timestamp fresh)
                   final hasLocation =
                       (isConnected && lat != null && lng != null) ||
-                      (ldrCtrl.lastDataReceivedAt.value != null &&
-                          lastLat != null &&
-                          lastLng != null) ||
+                      (lastLat != null && lastLng != null) ||
                       (ldrCtrl.isSimulationMode.value &&
                           (lat != null || lastLat != null));
                   final LatLng? activeTarget = hasLocation
@@ -2121,6 +2120,56 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                             fontSize: 12,
                           ),
                         ),
+
+                        // ── BANNER DATA TERSIMPAN (muncul saat disconnected tapi ada data lama) ──
+                        if (!isConnected &&
+                            ldrCtrl.hasRestoredData.value &&
+                            ldrCtrl.lastDataReceivedAt.value != null) ...[
+                          const SizedBox(height: 10),
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
+                              color: isDark
+                                  ? const Color(0xFF1E3A2F)
+                                  : const Color(0xFFF0FDF4),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: isDark
+                                    ? Colors.green.withValues(alpha: 0.3)
+                                    : Colors.green.withValues(alpha: 0.2),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.history_rounded,
+                                  size: 14,
+                                  color: isDark
+                                      ? Colors.greenAccent
+                                      : Colors.green.shade700,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    'Menampilkan data terakhir • ${ldrCtrl.relativeTimeText.value}',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                      color: isDark
+                                          ? Colors.greenAccent
+                                          : Colors.green.shade700,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+
                         const SizedBox(height: 12),
 
                         // ── STATUS GELANG CARD ──
@@ -2267,108 +2316,530 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                         const SizedBox(height: 12),
 
                         // ── CARD 1: DETAK JANTUNG (MAX30102) ──
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: context.hc.surfaceVariant,
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(
-                              color: context.hc.border,
-                              width: 1.1,
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 38,
-                                height: 38,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: context.hc.danger.withValues(
-                                    alpha: 0.12,
-                                  ),
-                                ),
-                                child: Icon(
-                                  Icons.favorite_rounded,
-                                  color: context.hc.danger,
-                                  size: 20,
+                        // Tampilkan data dari storage jika tersedia (meski smartband mati)
+                        Builder(
+                          builder: (_) {
+                            final hasHr = hr != null && hr > 0;
+                            final isStored =
+                                !isConnected &&
+                                ldrCtrl.hasRestoredData.value &&
+                                hasHr;
+                            return Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: context.hc.surfaceVariant,
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(
+                                  color: isStored
+                                      ? context.hc.border.withValues(alpha: 0.5)
+                                      : context.hc.border,
+                                  width: 1.1,
                                 ),
                               ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: 38,
+                                    height: 38,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color:
+                                          (isConnected
+                                                  ? context.hc.danger
+                                                  : (hasHr
+                                                        ? context.hc.danger
+                                                        : Colors.grey))
+                                              .withValues(alpha: 0.12),
+                                    ),
+                                    child: Icon(
+                                      Icons.favorite_rounded,
+                                      color: isConnected
+                                          ? context.hc.danger
+                                          : (hasHr
+                                                ? context.hc.danger.withValues(
+                                                    alpha: 0.6,
+                                                  )
+                                                : Colors.grey),
+                                      size: 20,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            Text(
+                                              context.tr('dashboard.heartRate'),
+                                              style: TextStyle(
+                                                color: headingColor,
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.w700,
+                                              ),
+                                            ),
+                                            if (isStored) ...[
+                                              const SizedBox(width: 6),
+                                              Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 5,
+                                                      vertical: 1,
+                                                    ),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.grey.withValues(
+                                                    alpha: 0.15,
+                                                  ),
+                                                  borderRadius:
+                                                      BorderRadius.circular(4),
+                                                ),
+                                                child: Text(
+                                                  'Terakhir',
+                                                  style: TextStyle(
+                                                    fontSize: 9,
+                                                    color: bodyColor.withValues(
+                                                      alpha: 0.6,
+                                                    ),
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ],
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          hasHr
+                                              ? (hr >= 100
+                                                    ? context.tr(
+                                                        'smartband.warning',
+                                                      )
+                                                    : context.tr(
+                                                        'smartband.normal',
+                                                      ))
+                                              : (isConnected
+                                                    ? context.tr(
+                                                        'dashboard.measuring',
+                                                      )
+                                                    : context.tr(
+                                                        'dashboard.notAvailable',
+                                                      )),
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w600,
+                                            color: hasHr
+                                                ? (hr >= 100
+                                                      ? context.hc.warning
+                                                      : (isConnected
+                                                            ? context.hc.success
+                                                            : context.hc.success
+                                                                  .withValues(
+                                                                    alpha: 0.6,
+                                                                  )))
+                                                : bodyColor.withValues(
+                                                    alpha: 0.6,
+                                                  ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.baseline,
+                                    textBaseline: TextBaseline.alphabetic,
+                                    children: [
+                                      Text(
+                                        hasHr ? '$hr' : '—',
+                                        style: TextStyle(
+                                          fontSize: 26,
+                                          fontWeight: FontWeight.w800,
+                                          color: hasHr
+                                              ? (isConnected
+                                                    ? headingColor
+                                                    : headingColor.withValues(
+                                                        alpha: 0.65,
+                                                      ))
+                                              : AppColors.textMuted,
+                                          height: 1.0,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        'BPM',
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w700,
+                                          color: bodyColor.withValues(
+                                            alpha: 0.7,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+
+                        const SizedBox(height: 8),
+
+                        // ── ROW: SpO2 + LANGKAH (2 kolom) ──
+                        Builder(
+                          builder: (_) {
+                            final spo2Val = ldrCtrl.spo2.value;
+                            final stepsVal = ldrCtrl.stepCount.value;
+                            final tempVal = ldrCtrl.mcpTemperature.value;
+                            final hasSpo2 = spo2Val != null && spo2Val > 0;
+                            final hasSteps = stepsVal > 0;
+                            final hasTemp = tempVal != null && tempVal > 0;
+                            final isStored =
+                                !isConnected && ldrCtrl.hasRestoredData.value;
+
+                            return Column(
+                              children: [
+                                // SpO2 + Suhu row
+                                Row(
                                   children: [
-                                    Text(
-                                      context.tr('dashboard.heartRate'),
-                                      style: TextStyle(
-                                        color: headingColor,
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w700,
+                                    // SpO2
+                                    Expanded(
+                                      child: Container(
+                                        padding: const EdgeInsets.all(10),
+                                        decoration: BoxDecoration(
+                                          color: context.hc.surfaceVariant,
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                          border: Border.all(
+                                            color: context.hc.border,
+                                            width: 1,
+                                          ),
+                                        ),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Row(
+                                              children: [
+                                                Icon(
+                                                  Icons.air_rounded,
+                                                  size: 14,
+                                                  color: const Color(
+                                                    0xFF0EA5E9,
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 4),
+                                                Text(
+                                                  'SpO₂',
+                                                  style: TextStyle(
+                                                    fontSize: 11,
+                                                    fontWeight: FontWeight.w700,
+                                                    color: headingColor,
+                                                  ),
+                                                ),
+                                                if (isStored && hasSpo2) ...[
+                                                  const SizedBox(width: 4),
+                                                  Text(
+                                                    '(terakhir)',
+                                                    style: TextStyle(
+                                                      fontSize: 8.5,
+                                                      color: bodyColor
+                                                          .withValues(
+                                                            alpha: 0.5,
+                                                          ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ],
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              hasSpo2 ? '$spo2Val%' : '—',
+                                              style: TextStyle(
+                                                fontSize: 22,
+                                                fontWeight: FontWeight.w800,
+                                                color: hasSpo2
+                                                    ? (spo2Val < 95
+                                                          ? context.hc.warning
+                                                          : (isConnected
+                                                                ? headingColor
+                                                                : headingColor
+                                                                      .withValues(
+                                                                        alpha:
+                                                                            0.6,
+                                                                      )))
+                                                    : AppColors.textMuted,
+                                                height: 1.0,
+                                              ),
+                                            ),
+                                            Text(
+                                              hasSpo2
+                                                  ? (spo2Val < 95
+                                                        ? 'Rendah'
+                                                        : 'Normal')
+                                                  : (isConnected
+                                                        ? 'Mengukur...'
+                                                        : '-'),
+                                              style: TextStyle(
+                                                fontSize: 10,
+                                                color: hasSpo2
+                                                    ? (spo2Val < 95
+                                                          ? context.hc.warning
+                                                          : (isConnected
+                                                                ? context
+                                                                      .hc
+                                                                      .success
+                                                                : context
+                                                                      .hc
+                                                                      .success
+                                                                      .withValues(
+                                                                        alpha:
+                                                                            0.6,
+                                                                      )))
+                                                    : bodyColor.withValues(
+                                                        alpha: 0.55,
+                                                      ),
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                       ),
                                     ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      isConnected && hr != null && hr > 0
-                                          ? (hr >= 100
-                                                ? context.tr(
-                                                    'smartband.warning',
-                                                  )
-                                                : context.tr(
-                                                    'smartband.normal',
-                                                  ))
-                                          : (isConnected
-                                                ? context.tr(
-                                                    'dashboard.measuring',
-                                                  )
-                                                : context.tr(
-                                                    'dashboard.notAvailable',
-                                                  )),
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w600,
-                                        color:
-                                            isConnected && hr != null && hr > 0
-                                            ? (hr >= 100
-                                                  ? context.hc.warning
-                                                  : context.hc.success)
-                                            : bodyColor.withValues(alpha: 0.6),
+                                    const SizedBox(width: 8),
+                                    // Suhu
+                                    Expanded(
+                                      child: Container(
+                                        padding: const EdgeInsets.all(10),
+                                        decoration: BoxDecoration(
+                                          color: context.hc.surfaceVariant,
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                          border: Border.all(
+                                            color: context.hc.border,
+                                            width: 1,
+                                          ),
+                                        ),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Row(
+                                              children: [
+                                                Icon(
+                                                  Icons.thermostat_rounded,
+                                                  size: 14,
+                                                  color: const Color(
+                                                    0xFFEA580C,
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 4),
+                                                Text(
+                                                  'Suhu',
+                                                  style: TextStyle(
+                                                    fontSize: 11,
+                                                    fontWeight: FontWeight.w700,
+                                                    color: headingColor,
+                                                  ),
+                                                ),
+                                                if (isStored && hasTemp) ...[
+                                                  const SizedBox(width: 4),
+                                                  Text(
+                                                    '(terakhir)',
+                                                    style: TextStyle(
+                                                      fontSize: 8.5,
+                                                      color: bodyColor
+                                                          .withValues(
+                                                            alpha: 0.5,
+                                                          ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ],
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              hasTemp
+                                                  ? '${tempVal.toStringAsFixed(1)}°'
+                                                  : '—',
+                                              style: TextStyle(
+                                                fontSize: 22,
+                                                fontWeight: FontWeight.w800,
+                                                color: hasTemp
+                                                    ? (tempVal > 37.5
+                                                          ? context.hc.warning
+                                                          : (isConnected
+                                                                ? headingColor
+                                                                : headingColor
+                                                                      .withValues(
+                                                                        alpha:
+                                                                            0.6,
+                                                                      )))
+                                                    : AppColors.textMuted,
+                                                height: 1.0,
+                                              ),
+                                            ),
+                                            Text(
+                                              hasTemp
+                                                  ? (tempVal > 37.5
+                                                        ? 'Demam'
+                                                        : 'Normal')
+                                                  : (isConnected
+                                                        ? 'Mengukur...'
+                                                        : '-'),
+                                              style: TextStyle(
+                                                fontSize: 10,
+                                                color: hasTemp
+                                                    ? (tempVal > 37.5
+                                                          ? context.hc.warning
+                                                          : (isConnected
+                                                                ? context
+                                                                      .hc
+                                                                      .success
+                                                                : context
+                                                                      .hc
+                                                                      .success
+                                                                      .withValues(
+                                                                        alpha:
+                                                                            0.6,
+                                                                      )))
+                                                    : bodyColor.withValues(
+                                                        alpha: 0.55,
+                                                      ),
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                       ),
                                     ),
                                   ],
                                 ),
-                              ),
-                              Row(
-                                crossAxisAlignment: CrossAxisAlignment.baseline,
-                                textBaseline: TextBaseline.alphabetic,
-                                children: [
-                                  Text(
-                                    isConnected && hr != null && hr > 0
-                                        ? '$hr'
-                                        : '—',
-                                    style: TextStyle(
-                                      fontSize: 26,
-                                      fontWeight: FontWeight.w800,
-                                      color: isConnected && hr != null && hr > 0
-                                          ? headingColor
-                                          : AppColors.textMuted,
-                                      height: 1.0,
+                                const SizedBox(height: 8),
+                                // Card Langkah
+                                Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 10,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: context.hc.surfaceVariant,
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: context.hc.border,
+                                      width: 1,
                                     ),
                                   ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    'BPM',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w700,
-                                      color: bodyColor.withValues(alpha: 0.7),
-                                    ),
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        width: 34,
+                                        height: 34,
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          color: const Color(
+                                            0xFF7C3AED,
+                                          ).withValues(alpha: 0.12),
+                                        ),
+                                        child: const Icon(
+                                          Icons.directions_walk_rounded,
+                                          color: Color(0xFF7C3AED),
+                                          size: 18,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Row(
+                                              children: [
+                                                Text(
+                                                  'Total Langkah',
+                                                  style: TextStyle(
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.w700,
+                                                    color: headingColor,
+                                                  ),
+                                                ),
+                                                if (!isConnected &&
+                                                    hasSteps) ...[
+                                                  const SizedBox(width: 6),
+                                                  Container(
+                                                    padding:
+                                                        const EdgeInsets.symmetric(
+                                                          horizontal: 5,
+                                                          vertical: 1,
+                                                        ),
+                                                    decoration: BoxDecoration(
+                                                      color: Colors.grey
+                                                          .withValues(
+                                                            alpha: 0.15,
+                                                          ),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            4,
+                                                          ),
+                                                    ),
+                                                    child: Text(
+                                                      'Tersimpan',
+                                                      style: TextStyle(
+                                                        fontSize: 9,
+                                                        color: bodyColor
+                                                            .withValues(
+                                                              alpha: 0.6,
+                                                            ),
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ],
+                                            ),
+                                            Text(
+                                              hasSteps
+                                                  ? 'Terhitung sejak gelang aktif'
+                                                  : (isConnected
+                                                        ? 'Menghitung...'
+                                                        : 'Belum ada data'),
+                                              style: TextStyle(
+                                                fontSize: 10.5,
+                                                color: bodyColor.withValues(
+                                                  alpha: 0.6,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      Text(
+                                        hasSteps ? '$stepsVal' : '—',
+                                        style: TextStyle(
+                                          fontSize: 22,
+                                          fontWeight: FontWeight.w800,
+                                          color: hasSteps
+                                              ? (isConnected
+                                                    ? headingColor
+                                                    : headingColor.withValues(
+                                                        alpha: 0.65,
+                                                      ))
+                                              : AppColors.textMuted,
+                                          height: 1.0,
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                ],
-                              ),
-                            ],
-                          ),
+                                ),
+                              ],
+                            );
+                          },
                         ),
 
                         const SizedBox(height: 12),
@@ -2586,7 +3057,20 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                                                   ),
                                                   const SizedBox(width: 4),
                                                   Text(
-                                                    'Area Masjidil Haram, Makkah',
+                                                    (activeTarget.latitude >=
+                                                                21.0 &&
+                                                            activeTarget
+                                                                    .latitude <=
+                                                                22.0)
+                                                        ? 'Area Masjidil Haram, Makkah'
+                                                        : (activeTarget
+                                                                      .latitude >=
+                                                                  24.0 &&
+                                                              activeTarget
+                                                                      .latitude <=
+                                                                  25.0)
+                                                        ? 'Area Masjid Nabawi, Madinah'
+                                                        : 'Area Terlacak',
                                                     style: TextStyle(
                                                       fontSize: 10,
                                                       fontWeight:

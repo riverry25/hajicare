@@ -2041,6 +2041,11 @@ final Map<String, String> jvTranslations = {
   'smartband.fallAlertTitle': 'PÈNGET: Dhawah Katemokake!',
   'smartband.fallAlertDesc':
       'Sensor MPU6050 nemokake guncangan lan owah-owahan postur cepet.',
+  'smartband.sosAlertTitle': 'PÈNGET: Tombol SOS Dipencèt!',
+  'smartband.sosAlertDesc':
+      'Tombol darurat smartband dipencèt. Sinyal diterusake menyang HP pendamping.',
+  'smartband.sosTransmitted': 'SOS Sampun Kakintun dhateng Pendamping',
+  'smartband.testSosButton': 'Cobi Tombol SOS Smartband',
   'smartband.cancelAlert': 'Kula Slamet / Batalake',
   'smartband.autoSosIn': 'Kintun SOS Otomatis ing {seconds} detik',
   'smartband.heroHeartRate': 'Denyut Jantung',

@@ -2028,6 +2028,11 @@ const Map<String, String> idTranslations = {
   'smartband.fallAlertTitle': 'PERINGATAN: Jatuh Terdeteksi!',
   'smartband.fallAlertDesc':
       'Sensor MPU6050 mendeteksi lonjakan impak dan perubahan postur drastis.',
+  'smartband.sosAlertTitle': 'PERINGATAN: Tombol SOS Ditekan!',
+  'smartband.sosAlertDesc':
+      'Tombol darurat smartband ditekan. Sinyal diteruskan ke ponsel pendamping.',
+  'smartband.sosTransmitted': 'SOS Terkirim ke Pendamping',
+  'smartband.testSosButton': 'Uji Tombol SOS Smartband',
   'smartband.cancelAlert': 'Saya Aman / Batalkan',
   'smartband.autoSosIn': 'Kirim SOS Otomatis dalam {seconds} detik',
   'smartband.heroHeartRate': 'Detak Jantung',

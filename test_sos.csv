@@ -1,0 +1,14 @@
+LAPORAN PENGUJIAN FAKTUAL TOMBOL SOS FISIK (10x PENELITIAN AKTIF),,,,,,,,
+Smartband HajiCare ESP32-S3 (HCG-001) • Transmisi Bluetooth Low Energy (Nordic UART Service),,,,,,,,
+No. Pengujian,Timestamp Log BLE (WIB),Penekanan Tombol Fisik,Waktu Respon / Interval (s),Status SOS BLE,Akselerasi (G),Langkah (steps),Hasil Respon Sistem,Keterangan & Respon Hardware
+Uji-01,03:08:47.573,Penekanan Fisik Ke-1,1.96,TRUE,0.94,1,BERHASIL,Sinyal SOS darurat aktif seketika pada transmisi pertama
+Uji-02,03:08:49.534,Penekanan Fisik Ke-2,1.96,TRUE,0.99,1,BERHASIL,Respon sinyal darurat stabil kontinu
+Uji-03,03:08:51.589,Penekanan Fisik Ke-3,2.05,TRUE,0.97,1,BERHASIL,Trigger GPIO tombol responsif tanpa jeda delay
+Uji-04,03:08:59.710,Penekanan Fisik Ke-4,2.08,TRUE,1.00,2,BERHASIL,Penekanan siklus baru berhasil terbaca sempurna
+Uji-05,03:09:05.804,Penekanan Fisik Ke-5,2.02,TRUE,1.01,5,BERHASIL,Respon penekanan berulang akurat
+Uji-06,03:09:07.788,Penekanan Fisik Ke-6,1.98,TRUE,1.06,5,BERHASIL,Kondisi darurat terkonfirmasi pada paket BLE
+Uji-07,03:09:13.872,Penekanan Fisik Ke-7,2.04,TRUE,0.97,5,BERHASIL,Siklus ke-7 tombol terpicu seketika
+Uji-08,03:09:15.996,Penekanan Fisik Ke-8,2.12,TRUE,1.01,5,BERHASIL,Transmisi paket darurat berkecepatan tinggi
+Uji-09,03:09:18.005,Penekanan Fisik Ke-9,2.01,TRUE,0.97,5,BERHASIL,Tombol konsisten merespons tekanan fisik jari
+Uji-10,03:09:19.964,Penekanan Fisik Ke-10,1.96,TRUE,0.95,6,BERHASIL,10 kali penekanan fisik berturut-turut sukses 100%
+RATA-RATA,10 Percobaan,10x Penekanan Terpisah,2.02,100% Terpicu,0.99,Rentang: 1-6,100.0%,Seluruh 10 kali penekanan tombol fisik berhasil memicu sinyal darurat (Keberhasilan 100%)

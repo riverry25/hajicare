@@ -1,0 +1,14 @@
+LAPORAN PENGUJIAN FAKTUAL SENSOR SUHU MLX90614,,,,,,,,,,
+Smartband HajiCare ESP32-S3 (HCG-001) • Transmisi Bluetooth Low Energy (Nordic UART Service),,,,,,,,,,
+No. Pengujian,Timestamp Log BLE (WIB),Kontak Sensor (Kulit),Waktu Respon / Interval (s),HajiCare Band (°C),Termometer Acuan (°C),Absolute Error (°C),Relative Error (%),Motion Accel (G),Status Respon,Keterangan & Respon Termal
+Uji-01,00:49:36.416,Menempel (True),2.00,33.75,34.00,0.25,0.74,0.99,BERHASIL,Suhu permukaan kulit terbaca stabil kontinu
+Uji-02,00:49:38.425,Menempel (True),2.01,33.75,34.00,0.25,0.74,0.98,BERHASIL,Pembacaan kontinu konsisten
+Uji-03,00:49:40.541,Menempel (True),2.12,33.75,34.00,0.25,0.74,0.98,BERHASIL,Respon radiasi termal inframerah stabil
+Uji-04,00:49:42.485,Menempel (True),1.94,33.75,34.00,0.25,0.74,0.99,BERHASIL,Pembacaan kontinu presisi
+Uji-05,00:49:44.562,Menempel (True),2.08,33.88,34.00,0.12,0.35,0.98,BERHASIL,Fluktuasi termal mikro alami terdeteksi
+Uji-06,00:49:46.606,Menempel (True),2.04,33.88,34.00,0.12,0.35,0.96,BERHASIL,Pembacaan kontinu stabil
+Uji-07,00:49:48.624,Menempel (True),2.02,33.75,34.00,0.25,0.74,0.99,BERHASIL,Pembacaan kontinu konsisten
+Uji-08,00:49:50.667,Menempel (True),2.04,33.75,34.00,0.25,0.74,0.98,BERHASIL,Pembacaan kontinu konsisten
+Uji-09,00:49:52.674,Menempel (True),2.01,33.88,34.00,0.12,0.35,0.99,BERHASIL,Pembacaan kontinu stabil
+Uji-10,00:49:54.696,Menempel (True),2.02,33.75,34.00,0.25,0.74,0.98,BERHASIL,10 sampel pengujian selesai tercapai
+RATA-RATA,10 Percobaan,100% Kontak,2.03,33.79,34.00,0.21,0.62,0.98,100.0%,Seluruh 10 pengujian berhasil membaca suhu stabil (Rentang: 33.75 - 33.88 °C)

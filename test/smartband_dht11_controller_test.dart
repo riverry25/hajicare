@@ -182,4 +182,52 @@ void main() {
       },
     );
   });
+
+  group('SmartbandLdrController SOS & Fall Alert Emergency Tests', () {
+    late SmartbandLdrController controller;
+
+    setUp(() {
+      controller = SmartbandLdrController();
+    });
+
+    tearDown(() {
+      controller.onClose();
+    });
+
+    test(
+      'triggerSosSimulation mengaktifkan status SOS dan memperbarui LCD',
+      () {
+        expect(controller.isSosButtonPressed.value, isFalse);
+
+        controller.triggerSosSimulation();
+
+        expect(controller.isSosButtonPressed.value, isTrue);
+        expect(
+          controller.emergencyMessage.value,
+          equals('TOMBOL SOS SMARTBAND AKTIF'),
+        );
+        expect(controller.lcdLine2.value, contains('TOMBOL SOS'));
+
+        controller.cancelSosButtonAlert();
+        expect(controller.isSosButtonPressed.value, isFalse);
+        expect(controller.emergencyMessage.value, isEmpty);
+      },
+    );
+
+    test(
+      'triggerFallAlert mengaktifkan countdown jatuh dan status darurat',
+      () {
+        expect(controller.isFallDetected.value, isFalse);
+
+        controller.triggerFallSimulation();
+
+        expect(controller.isFallDetected.value, isTrue);
+        expect(controller.fallCountdownSeconds.value, equals(15));
+        expect(controller.lcdLine2.value, equals('!JATUH DETEKSI !'));
+
+        controller.cancelFallAlert();
+        expect(controller.isFallDetected.value, isFalse);
+      },
+    );
+  });
 }

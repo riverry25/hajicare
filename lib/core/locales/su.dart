@@ -2040,6 +2040,11 @@ final Map<String, String> suTranslations = {
   'smartband.fallAlertTitle': 'PÈNGET: Labuh Katiténan!',
   'smartband.fallAlertDesc':
       'Sensor MPU6050 ngadetéksi goncangan ageung sareng parobahan sikep ngadadak.',
+  'smartband.sosAlertTitle': 'PÈNGET: Tombol SOS Diteken!',
+  'smartband.sosAlertDesc':
+      'Tombol darurat smartband diteken. Sinyal diteruskeun ka hp pendamping.',
+  'smartband.sosTransmitted': 'SOS Parantos Kakirim ka Pendamping',
+  'smartband.testSosButton': 'Tés Tombol SOS Smartband',
   'smartband.cancelAlert': 'Abdi Aman / Batalkeun',
   'smartband.autoSosIn': 'Kirim SOS Otomatis dina {seconds} detik',
   'smartband.heroHeartRate': 'Keketeg Jantung',

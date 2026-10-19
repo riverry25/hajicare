@@ -33,11 +33,7 @@ class SmartbandBleTestController extends GetxController {
   void _subscribeToService() {
     connectionStatus.value = bleService.currentStatus;
     foundDevice.value = bleService.foundDevice;
-    currentData.value = bleService.lastData?.copyWith(
-      latitude: SmartbandData.staticDefaultLatitude,
-      longitude: SmartbandData.staticDefaultLongitude,
-      isValidLocation: true,
-    );
+    currentData.value = bleService.lastData;
 
     _statusSub = bleService.connectionStateStream.listen((status) {
       connectionStatus.value = status;
@@ -51,12 +47,7 @@ class SmartbandBleTestController extends GetxController {
     });
 
     _dataSub = bleService.receivedSmartbandData.listen((data) {
-      // Data GPS dibuat statis, data lainnya (heartRate, braceletId) tetap dinamis mengikuti BLE
-      currentData.value = data.copyWith(
-        latitude: SmartbandData.staticDefaultLatitude,
-        longitude: SmartbandData.staticDefaultLongitude,
-        isValidLocation: true,
-      );
+      currentData.value = data;
     });
 
     _deviceSub = bleService.foundDeviceStream.listen((dev) {
@@ -74,7 +65,8 @@ class SmartbandBleTestController extends GetxController {
     });
   }
 
-  /// Mulai pemindaian BLE
+  // ── Kontrol BLE ────────────────────────────────────────────────────────────
+
   Future<void> startScan() async {
     errorMessage.value = '';
     try {
@@ -84,7 +76,6 @@ class SmartbandBleTestController extends GetxController {
     }
   }
 
-  /// Hubungkan ke perangkat yang ditemukan
   Future<void> connect() async {
     errorMessage.value = '';
     try {
@@ -94,7 +85,6 @@ class SmartbandBleTestController extends GetxController {
     }
   }
 
-  /// Putuskan koneksi
   Future<void> disconnect() async {
     try {
       await bleService.disconnectSmartband();
@@ -103,7 +93,6 @@ class SmartbandBleTestController extends GetxController {
     }
   }
 
-  /// Bersihkan log riwayat
   void clearLogs() {
     logs.clear();
   }

@@ -61,8 +61,11 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // ── 0. BANNER PERINGATAN DARURAT JATUH (MPU6050) ──────────────
+              // ── 0A. BANNER PERINGATAN DARURAT JATUH (MPU6050) ──────────────
               _buildEmergencyFallBanner(context, ctrl),
+
+              // ── 0B. BANNER PERINGATAN DARURAT TOMBOL SOS SMARTBAND ─────────
+              _buildEmergencySosBanner(context, ctrl),
 
               // ── 1. STATUS GELANG & TOGGLE SIMULASI MODE ───────────────────
               _buildTopStatusBar(context, ctrl),
@@ -76,7 +79,11 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
               _buildVitalsSummaryCard(context, ctrl),
               const SizedBox(height: AppSpacing.gapCards),
 
-              // ── 4. GRAFIK TREN SENSOR BEZIER SPLINE ───────────────────────
+              // ── 4. LAYAR LCD 16x2 + I2C BACKPACK (Pergelangan Tangan) ──────
+              _buildLcdScreenCard(context, ctrl),
+              const SizedBox(height: AppSpacing.gapCards),
+
+              // ── 5. GRAFIK TREN SENSOR BEZIER SPLINE ───────────────────────
               _buildTrendSectionCard(context, ctrl),
               const SizedBox(height: AppSpacing.gapCards),
 
@@ -190,6 +197,139 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.white,
                 foregroundColor: const Color(0xFFDC2626),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.button),
+                ),
+                elevation: 0,
+              ),
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  context.tr('smartband.cancelAlert'),
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    });
+  }
+
+  // ── 0B. BANNER PERINGATAN DARURAT TOMBOL SOS SMARTBAND ────────────────────
+  Widget _buildEmergencySosBanner(
+    BuildContext context,
+    SmartbandLdrController ctrl,
+  ) {
+    return Obx(() {
+      if (!ctrl.isSosButtonPressed.value) return const SizedBox.shrink();
+
+      return Container(
+        margin: const EdgeInsets.only(bottom: AppSpacing.gapCards),
+        padding: const EdgeInsets.all(AppSpacing.cardPadding),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFFB91C1C), Color(0xFF991B1B)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(AppRadius.card),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFFB91C1C).withValues(alpha: 0.4),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.22),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.sos_rounded,
+                    color: Colors.white,
+                    size: 28,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          context.tr('smartband.sosAlertTitle'),
+                          style: AppTypography.titleMedium.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        context.tr('smartband.sosAlertDesc'),
+                        style: AppTypography.caption.copyWith(
+                          color: Colors.white.withValues(alpha: 0.92),
+                          height: 1.25,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.25),
+                borderRadius: BorderRadius.circular(AppRadius.chip),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    ctrl.isSosTransmitted.value
+                        ? Icons.check_circle_rounded
+                        : Icons.wifi_tethering_rounded,
+                    color: ctrl.isSosTransmitted.value
+                        ? const Color(0xFF4ADE80)
+                        : Colors.white,
+                    size: 16,
+                  ),
+                  const SizedBox(width: 6),
+                  Flexible(
+                    child: Text(
+                      ctrl.isSosTransmitted.value
+                          ? context.tr('smartband.sosTransmitted')
+                          : 'Meneruskan Sinyal Darurat ke Pendamping...',
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTypography.labelLarge.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            ElevatedButton(
+              onPressed: () => ctrl.cancelSosButtonAlert(),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: const Color(0xFFB91C1C),
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(AppRadius.button),
@@ -333,7 +473,7 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
 
       switch (sensorIdx) {
         case 1: // MCP9808 Suhu Tubuh
-          heroTitle = context.tr('smartband.heroTemperature');
+          heroTitle = 'MCP9808 Suhu Tubuh (°C)';
           final temp = ctrl.mcpTemperature.value ?? 36.6;
           heroValue = temp.toStringAsFixed(1);
           heroUnit = '°C';
@@ -349,17 +489,17 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
               ? AppColors.statusWarning
               : AppColors.statusSafe;
           break;
-        case 2: // MPU6050 Keseimbangan
-          heroTitle = context.tr('smartband.heroFall');
-          heroValue = '${ctrl.stabilityScore.value}';
-          heroUnit = '%';
-          arcPercent = (ctrl.stabilityScore.value / 100.0).clamp(0.0, 1.0);
+        case 2: // MPU6050 Langkah & Deteksi Jatuh
+          heroTitle = 'MPU6050 Langkah & Jatuh';
+          heroValue = '${ctrl.currentSteps}';
+          heroUnit = 'Langkah (${ctrl.stabilityScore.value}% Stabil)';
+          arcPercent = (ctrl.currentSteps / 6000.0).clamp(0.05, 1.0);
           arcColor = ctrl.isFallDetected.value
               ? AppColors.statusDanger
               : const Color(0xFF10B981);
           statusPillText = ctrl.isFallDetected.value
-              ? context.tr('smartband.danger')
-              : context.tr('smartband.optimal');
+              ? 'JATUH TERDETEKSI'
+              : 'POSTUR AMAN';
           statusPillBg = ctrl.isFallDetected.value
               ? AppColors.statusDanger.withValues(alpha: 0.15)
               : AppColors.statusSafe.withValues(alpha: 0.15);
@@ -368,14 +508,18 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
               : AppColors.statusSafe;
           break;
         case 3: // NEO-6M GPS
-          heroTitle = context.tr('smartband.heroGps');
+          heroTitle = 'GPS NEO-6M Satelit';
           heroValue = '${ctrl.gpsSatellites.value}';
-          heroUnit = 'SATS';
+          heroUnit = ctrl.isGpsFix.value ? 'Sats (FIX)' : 'Sats (Mencari)';
           arcPercent = (ctrl.gpsSatellites.value / 12.0).clamp(0.1, 1.0);
           arcColor = const Color(0xFF0284C7);
-          statusPillText = 'GPS AKTIF';
-          statusPillBg = AppColors.statusSafe.withValues(alpha: 0.15);
-          statusPillColor = AppColors.statusSafe;
+          statusPillText = ctrl.isGpsFix.value ? 'GPS FIX' : 'MENCARI SINYAL';
+          statusPillBg = ctrl.isGpsFix.value
+              ? AppColors.statusSafe.withValues(alpha: 0.15)
+              : AppColors.primaryGold.withValues(alpha: 0.15);
+          statusPillColor = ctrl.isGpsFix.value
+              ? AppColors.statusSafe
+              : AppColors.primaryGold;
           break;
         case 4: // LiPo Baterai
           heroTitle = context.tr('smartband.heroBattery');
@@ -383,21 +527,38 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
           heroUnit = '%';
           arcPercent = (ctrl.batteryPercent.value / 100.0).clamp(0.0, 1.0);
           arcColor = const Color(0xFF10B981);
-          statusPillText = '${ctrl.batteryVoltage.value}V';
+          statusPillText = '${ctrl.batteryVoltage.value.toStringAsFixed(2)}V';
           statusPillBg = AppColors.statusSafe.withValues(alpha: 0.15);
           statusPillColor = AppColors.statusSafe;
           break;
-        default: // MAX30102 Detak Jantung
-          heroTitle = context.tr('smartband.heroHeartRate');
+        case 5: // LCD 16x2 + I2C Backpack
+          heroTitle = 'LCD 16x2 Layar Gelang';
+          heroValue = '16x2';
+          heroUnit = 'Karakter Teks';
+          arcPercent = 1.0;
+          arcColor = const Color(0xFF14B8A6);
+          statusPillText = ctrl.isFallDetected.value
+              ? 'SOS JATUH'
+              : (ctrl.emergencyMessage.value.isNotEmpty
+                    ? 'PESAN SOS'
+                    : 'SINKRON AKTIF');
+          statusPillBg = const Color(0xFF14B8A6).withValues(alpha: 0.15);
+          statusPillColor = const Color(0xFF14B8A6);
+          break;
+        default: // MAX30102 Detak Jantung & SpO2
+          heroTitle = 'MAX30102 Jantung & SpO2';
           final hr =
               ctrl.heartRate.value ?? (ctrl.isSimulationMode.value ? 78 : 0);
           heroValue = hr > 0 ? '$hr' : '--';
-          heroUnit = context.tr('smartband.heartRateUnit');
+          final ox = ctrl.currentSpo2;
+          heroUnit = 'BPM • SpO2: ${ox > 0 ? "$ox%" : "--"}';
           arcPercent = hr > 0 ? ((hr - 40) / (140 - 40)).clamp(0.1, 1.0) : 0.0;
           arcColor = const Color(0xFF10B981);
           statusPillText = hr >= 100
               ? context.tr('smartband.warning')
-              : context.tr('smartband.normal');
+              : (ox > 0 && ox < 95
+                    ? 'SpO2 Rendah'
+                    : context.tr('smartband.normal'));
           statusPillBg = AppColors.statusSafe.withValues(alpha: 0.15);
           statusPillColor = AppColors.statusSafe;
           break;
@@ -509,6 +670,7 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
       final stability = ctrl.stabilityScore.value;
       final bat = ctrl.currentBattery;
       final selected = ctrl.selectedSensorIndex.value;
+      final isFall = ctrl.isFallDetected.value;
 
       return AppCard(
         padding: const EdgeInsets.all(AppSpacing.cardPadding),
@@ -526,7 +688,7 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
                         fit: BoxFit.scaleDown,
                         alignment: Alignment.centerLeft,
                         child: Text(
-                          'PEMANTAUAN FISIK & DAYA',
+                          'MODUL TELEMETRI GELANG',
                           style: AppTypography.labelLarge.copyWith(
                             color: bodyColor.withValues(alpha: 0.65),
                             letterSpacing: 1.0,
@@ -539,7 +701,7 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
                         fit: BoxFit.scaleDown,
                         alignment: Alignment.centerLeft,
                         child: Text(
-                          'Ringkasan 4 Parameter',
+                          '5 Modul Hardware Dinamis',
                           style: AppTypography.titleMedium.copyWith(
                             color: headingColor,
                             fontWeight: FontWeight.bold,
@@ -549,42 +711,61 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
                     ],
                   ),
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 9,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.statusSafe.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(AppRadius.chip),
-                    border: Border.all(
-                      color: AppColors.statusSafe.withValues(alpha: 0.3),
+                Flexible(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 9,
+                      vertical: 4,
                     ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(
-                        Icons.verified_rounded,
-                        size: 13,
-                        color: AppColors.statusSafe,
+                    decoration: BoxDecoration(
+                      color: isFall
+                          ? AppColors.statusDanger.withValues(alpha: 0.15)
+                          : AppColors.statusSafe.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(AppRadius.chip),
+                      border: Border.all(
+                        color: isFall
+                            ? AppColors.statusDanger.withValues(alpha: 0.4)
+                            : AppColors.statusSafe.withValues(alpha: 0.3),
                       ),
-                      const SizedBox(width: 4),
-                      Text(
-                        context.tr('smartband.allHealthy'),
-                        style: AppTypography.captionSmall.copyWith(
-                          color: AppColors.statusSafe,
-                          fontWeight: FontWeight.bold,
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          isFall
+                              ? Icons.warning_rounded
+                              : Icons.verified_rounded,
+                          size: 13,
+                          color: isFall
+                              ? AppColors.statusDanger
+                              : AppColors.statusSafe,
                         ),
-                      ),
-                    ],
+                        const SizedBox(width: 4),
+                        Flexible(
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              isFall
+                                  ? 'DARURAT JATUH'
+                                  : context.tr('smartband.allHealthy'),
+                              style: AppTypography.captionSmall.copyWith(
+                                color: isFall
+                                    ? AppColors.statusDanger
+                                    : AppColors.statusSafe,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 16),
 
-            // Baris 4 Sensor Ringkas Interaktif
+            // Baris 1: MAX30102 & MCP9808
             Row(
               children: [
                 Expanded(
@@ -596,10 +777,10 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
                     iconColor: const Color(0xFFEF4444),
                     valueText: hr > 0 ? '$hr' : '--',
                     unit: 'BPM',
-                    title: context.tr('smartband.heartRateLabel'),
-                    subtitle: hr >= 100
-                        ? context.tr('smartband.warning')
-                        : context.tr('smartband.normal'),
+                    title: 'MAX30102 Jantung & O2',
+                    subtitle: ctrl.currentSpo2 > 0
+                        ? '${ctrl.currentSpo2}% SpO2'
+                        : 'SpO2: --',
                     onTap: () => ctrl.selectSensor(0),
                   ),
                 ),
@@ -613,16 +794,18 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
                     iconColor: const Color(0xFFD4A857),
                     valueText: temp.toStringAsFixed(1),
                     unit: '°C',
-                    title: context.tr('smartband.tempLabel'),
+                    title: 'MCP9808 Suhu Tubuh',
                     subtitle: temp >= 37.5
                         ? context.tr('smartband.warning')
-                        : context.tr('smartband.normal'),
+                        : 'Presisi I2C Digital',
                     onTap: () => ctrl.selectSensor(1),
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 8),
+
+            // Baris 2: MPU6050 & GPS NEO-6M
             Row(
               children: [
                 Expanded(
@@ -632,11 +815,49 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
                     isSelected: selected == 2,
                     icon: Icons.directions_walk_rounded,
                     iconColor: const Color(0xFF10B981),
-                    valueText: '$stability',
-                    unit: '%',
-                    title: 'Stabilitas',
-                    subtitle: 'Normal',
+                    valueText: '${ctrl.currentSteps}',
+                    unit: 'Langkah',
+                    title: 'MPU6050 Langkah & Gerak',
+                    subtitle: isFall ? 'JATUH!' : '$stability% Stabil',
                     onTap: () => ctrl.selectSensor(2),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _buildInteractiveVitalItem(
+                    context,
+                    index: 3,
+                    isSelected: selected == 3,
+                    icon: Icons.satellite_alt_rounded,
+                    iconColor: const Color(0xFF0284C7),
+                    valueText: '${ctrl.gpsSatellites.value}',
+                    unit: 'Sats',
+                    title: 'GPS NEO-6M Satelit',
+                    subtitle: ctrl.isGpsFix.value ? 'Sinyal FIX' : 'Mencari...',
+                    onTap: () => ctrl.selectSensor(3),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+
+            // Baris 3: LCD 16x2 + I2C Backpack & Baterai LiPo
+            Row(
+              children: [
+                Expanded(
+                  child: _buildInteractiveVitalItem(
+                    context,
+                    index: 5,
+                    isSelected: selected == 5,
+                    icon: Icons.developer_board_rounded,
+                    iconColor: const Color(0xFF14B8A6),
+                    valueText: '16x2',
+                    unit: 'LCD',
+                    title: 'LCD 16x2 Backpack',
+                    subtitle: ctrl.emergencyMessage.value.isNotEmpty
+                        ? 'Pesan Darurat'
+                        : 'Layar Gelang',
+                    onTap: () => ctrl.selectSensor(5),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -646,11 +867,12 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
                     index: 4,
                     isSelected: selected == 4,
                     icon: Icons.battery_charging_full_rounded,
-                    iconColor: const Color(0xFF0284C7),
+                    iconColor: const Color(0xFF8B5CF6),
                     valueText: '$bat',
                     unit: '%',
                     title: context.tr('smartband.batteryLabel'),
-                    subtitle: 'LiPo 3.96V',
+                    subtitle:
+                        '${ctrl.batteryVoltage.value.toStringAsFixed(2)}V',
                     onTap: () => ctrl.selectSensor(4),
                   ),
                 ),
@@ -786,7 +1008,15 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
     );
   }
 
-  // ── 4. GRAFIK TREN SENSOR BEZIER CURVE ─────────────────────────────────────
+  // ── 4. LAYAR LCD 16x2 + I2C BACKPACK (Pergelangan Tangan) ───────────────────
+  Widget _buildLcdScreenCard(
+    BuildContext context,
+    SmartbandLdrController ctrl,
+  ) {
+    return _SmartbandLcd16x2Card(ctrl: ctrl);
+  }
+
+  // ── 5. GRAFIK TREN SENSOR BEZIER CURVE ─────────────────────────────────────
   Widget _buildTrendSectionCard(
     BuildContext context,
     SmartbandLdrController ctrl,
@@ -1189,53 +1419,111 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'Kondisi Postur',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            color: bodyColor.withValues(alpha: 0.65),
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            'Kondisi Postur',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: bodyColor.withValues(alpha: 0.65),
+                            ),
                           ),
                         ),
                         const SizedBox(height: 2),
-                        Text(
-                          context.tr(ctrl.postureKey.value),
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
-                            color: isFall
-                                ? AppColors.statusDanger
-                                : AppColors.statusSafe,
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            context.tr(ctrl.postureKey.value),
+                            style: TextStyle(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.bold,
+                              color: isFall
+                                  ? AppColors.statusDanger
+                                  : AppColors.statusSafe,
+                            ),
                           ),
                         ),
                       ],
                     ),
                   ),
+                  const SizedBox(width: 4),
                   Container(
                     height: 28,
                     width: 1,
                     color: isDark ? Colors.white12 : Colors.black12,
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 6),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'Tingkat Stabilitas',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            color: bodyColor.withValues(alpha: 0.65),
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            'Langkah',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: bodyColor.withValues(alpha: 0.65),
+                            ),
                           ),
                         ),
                         const SizedBox(height: 2),
-                        Text(
-                          '$stability% (Aman)',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
-                            color: headingColor,
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            '${ctrl.currentSteps}',
+                            style: TextStyle(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.bold,
+                              color: headingColor,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Container(
+                    height: 28,
+                    width: 1,
+                    color: isDark ? Colors.white12 : Colors.black12,
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            'Stabilitas',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: bodyColor.withValues(alpha: 0.65),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            '$stability% (${ctrl.accelG.value.toStringAsFixed(1)}G)',
+                            style: TextStyle(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.bold,
+                              color: isFall
+                                  ? AppColors.statusDanger
+                                  : headingColor,
+                            ),
                           ),
                         ),
                       ],
@@ -1246,25 +1534,63 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
             ),
             const SizedBox(height: 14),
 
-            // Tombol Simulasi Uji Sensor Jatuh
-            OutlinedButton.icon(
-              onPressed: () => ctrl.triggerFallSimulation(),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFFDC2626),
-                side: const BorderSide(color: Color(0xFFDC2626), width: 1.2),
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.button),
+            // Tombol Simulasi Uji: Deteksi Jatuh & Tombol SOS Smartband
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => ctrl.triggerFallSimulation(),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFFDC2626),
+                      side: const BorderSide(
+                        color: Color(0xFFDC2626),
+                        width: 1.2,
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 12,
+                        horizontal: 8,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.button),
+                      ),
+                    ),
+                    icon: const Icon(Icons.touch_app_rounded, size: 17),
+                    label: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        context.tr('smartband.testFallButton'),
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
                 ),
-              ),
-              icon: const Icon(Icons.touch_app_rounded, size: 18),
-              label: FittedBox(
-                fit: BoxFit.scaleDown,
-                child: Text(
-                  context.tr('smartband.testFallButton'),
-                  style: const TextStyle(fontWeight: FontWeight.bold),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () => ctrl.triggerSosSimulation(),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFB91C1C),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 12,
+                        horizontal: 8,
+                      ),
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.button),
+                      ),
+                    ),
+                    icon: const Icon(Icons.sos_rounded, size: 18),
+                    label: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        context.tr('smartband.testSosButton'),
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
                 ),
-              ),
+              ],
             ),
           ],
         ),
@@ -1272,7 +1598,7 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
     });
   }
 
-  // ── 6. LOKASI TERKINI JAMAAH (PREVIEW MAP CARTO) ──────────────────────────
+  // ── 7. LOKASI TERKINI JAMAAH (GPS NEO-6M CARTO MAP) ───────────────────────
   Widget _buildGpsSatelliteCard(
     BuildContext context,
     SmartbandLdrController ctrl,
@@ -1282,12 +1608,13 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
     final bodyColor = AppColors.textBodyColor(context);
 
     return Obx(() {
-      final lat =
-          ctrl.latitude.value ?? SmartbandLdrController.staticGpsLatitude;
-      final lng =
-          ctrl.longitude.value ?? SmartbandLdrController.staticGpsLongitude;
-      final target = LatLng(lat, lng);
+      final hasGps =
+          ctrl.latitude.value != null && ctrl.longitude.value != null;
+      final lat = ctrl.latitude.value ?? ctrl.lastKnownLatitude.value;
+      final lng = ctrl.longitude.value ?? ctrl.lastKnownLongitude.value;
+      final target = (lat != null && lng != null) ? LatLng(lat, lng) : null;
       final sats = ctrl.gpsSatellites.value;
+      final isFix = ctrl.isGpsFix.value && hasGps;
 
       return AppCard(
         padding: const EdgeInsets.all(AppSpacing.cardPadding),
@@ -1317,7 +1644,7 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
                         fit: BoxFit.scaleDown,
                         alignment: Alignment.centerLeft,
                         child: Text(
-                          'Lokasi Terkini Smartband',
+                          'GPS NEO-6M Posisi Satelit',
                           style: AppTypography.titleMedium.copyWith(
                             color: headingColor,
                             fontWeight: FontWeight.bold,
@@ -1325,9 +1652,11 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
                         ),
                       ),
                       Text(
-                        context.tr('smartband.satellitesCount', {
-                          'count': sats,
-                        }),
+                        isFix
+                            ? 'Sinyal Terkunci ($sats Satelit Aktif)'
+                            : (sats > 0
+                                  ? 'Sinkronisasi ($sats Satelit Terdeteksi)'
+                                  : 'Mencari sinyal satelit GPS...'),
                         style: AppTypography.captionSmall.copyWith(
                           color: bodyColor.withValues(alpha: 0.7),
                         ),
@@ -1341,14 +1670,23 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
                     vertical: 3,
                   ),
                   decoration: BoxDecoration(
-                    color: AppColors.statusSafe.withValues(alpha: 0.15),
+                    color: isFix
+                        ? AppColors.statusSafe.withValues(alpha: 0.15)
+                        : AppColors.primaryGold.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(AppRadius.chip),
+                    border: Border.all(
+                      color: isFix
+                          ? AppColors.statusSafe.withValues(alpha: 0.4)
+                          : AppColors.primaryGold.withValues(alpha: 0.4),
+                    ),
                   ),
-                  child: const Text(
-                    'GPS FIX',
+                  child: Text(
+                    isFix ? 'GPS FIX' : 'MENCARI FIX',
                     style: TextStyle(
                       fontSize: 10,
-                      color: AppColors.statusSafe,
+                      color: isFix
+                          ? AppColors.statusSafe
+                          : AppColors.primaryGold,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -1357,114 +1695,152 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
             ),
             const SizedBox(height: 12),
 
-            // Mini Map Preview dengan CARTO Basemap
+            // Mini Map Preview dengan CARTO Basemap atau Status Pencarian Satelit
             ClipRRect(
               borderRadius: BorderRadius.circular(AppRadius.md),
               child: SizedBox(
                 height: 145,
                 width: double.infinity,
-                child: Stack(
-                  children: [
-                    fmap.FlutterMap(
-                      options: fmap.MapOptions(
-                        initialCenter: target,
-                        initialZoom: 16.0,
-                        interactionOptions: const fmap.InteractionOptions(
-                          flags: fmap.InteractiveFlag.none,
-                        ),
-                      ),
-                      children: [
-                        fmap.TileLayer(
-                          urlTemplate: isDark
-                              ? AppConstants.cartoDarkMatterUrl
-                              : AppConstants.cartoVoyagerUrl,
-                          userAgentPackageName: 'com.example.hajicare',
-                        ),
-                        fmap.MarkerLayer(
-                          markers: [
-                            fmap.Marker(
-                              point: target,
-                              width: 36,
-                              height: 36,
-                              alignment: Alignment.center,
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: AppColors.primaryGold,
-                                  border: Border.all(
-                                    color: Colors.white,
-                                    width: 2.2,
-                                  ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withValues(
-                                        alpha: 0.25,
-                                      ),
-                                      blurRadius: 6,
-                                    ),
-                                  ],
-                                ),
-                                child: const Icon(
-                                  Icons.person_pin_circle_rounded,
-                                  color: Colors.white,
-                                  size: 20,
-                                ),
+                child: target != null
+                    ? Stack(
+                        children: [
+                          fmap.FlutterMap(
+                            options: fmap.MapOptions(
+                              initialCenter: target,
+                              initialZoom: 16.0,
+                              interactionOptions: const fmap.InteractionOptions(
+                                flags: fmap.InteractiveFlag.none,
                               ),
                             ),
-                          ],
-                        ),
-                        const fmap.RichAttributionWidget(
-                          attributions: [
-                            fmap.TextSourceAttribution('OSM / CARTO'),
-                          ],
-                        ),
-                      ],
-                    ),
-                    Positioned(
-                      top: 8,
-                      left: 8,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color:
-                              (isDark ? AppColors.espressoDark : Colors.white)
-                                  .withValues(alpha: 0.92),
-                          borderRadius: BorderRadius.circular(6),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.15),
-                              blurRadius: 4,
+                            children: [
+                              fmap.TileLayer(
+                                urlTemplate: isDark
+                                    ? AppConstants.cartoDarkMatterUrl
+                                    : AppConstants.cartoVoyagerUrl,
+                                userAgentPackageName: 'com.example.hajicare',
+                              ),
+                              fmap.MarkerLayer(
+                                markers: [
+                                  fmap.Marker(
+                                    point: target,
+                                    width: 36,
+                                    height: 36,
+                                    alignment: Alignment.center,
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: AppColors.primaryGold,
+                                        border: Border.all(
+                                          color: Colors.white,
+                                          width: 2.2,
+                                        ),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.black.withValues(
+                                              alpha: 0.25,
+                                            ),
+                                            blurRadius: 6,
+                                          ),
+                                        ],
+                                      ),
+                                      child: const Icon(
+                                        Icons.person_pin_circle_rounded,
+                                        color: Colors.white,
+                                        size: 20,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const fmap.RichAttributionWidget(
+                                attributions: [
+                                  fmap.TextSourceAttribution('OSM / CARTO'),
+                                ],
+                              ),
+                            ],
+                          ),
+                          Positioned(
+                            top: 8,
+                            left: 8,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color:
+                                    (isDark
+                                            ? AppColors.espressoDark
+                                            : Colors.white)
+                                        .withValues(alpha: 0.92),
+                                borderRadius: BorderRadius.circular(6),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.15),
+                                    blurRadius: 4,
+                                  ),
+                                ],
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(
+                                    Icons.place_rounded,
+                                    size: 12,
+                                    color: AppColors.primaryGold,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    '${lat!.toStringAsFixed(6)}, ${lng!.toStringAsFixed(6)}',
+                                    style: TextStyle(
+                                      fontSize: 10.5,
+                                      fontFamily: 'monospace',
+                                      fontWeight: FontWeight.bold,
+                                      color: isDark
+                                          ? Colors.white
+                                          : AppColors.espressoDark,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ],
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
+                          ),
+                        ],
+                      )
+                    : Container(
+                        color: isDark
+                            ? AppColors.darkSurfaceContainer
+                            : const Color(0xFFF1F5F9),
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             const Icon(
-                              Icons.place_rounded,
-                              size: 12,
+                              Icons.satellite_alt_rounded,
+                              size: 32,
                               color: AppColors.primaryGold,
                             ),
-                            const SizedBox(width: 4),
+                            const SizedBox(height: 8),
                             Text(
-                              'Area Masjidil Haram, Makkah',
+                              'Menunggu Akuisisi Sinyal Satelit GPS...',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: headingColor,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Pastikan smartband berada di ruang terbuka dengan pandangan langit bebas.',
                               style: TextStyle(
                                 fontSize: 10.5,
-                                fontWeight: FontWeight.bold,
-                                color: isDark
-                                    ? Colors.white
-                                    : AppColors.espressoDark,
+                                color: bodyColor.withValues(alpha: 0.7),
                               ),
+                              textAlign: TextAlign.center,
                             ),
                           ],
                         ),
                       ),
-                    ),
-                  ],
-                ),
               ),
             ),
             const SizedBox(height: 12),
@@ -1721,5 +2097,426 @@ class CubicBezierTrendChartPainter extends CustomPainter {
     return oldDelegate.dataPoints != dataPoints ||
         oldDelegate.lineColor != lineColor ||
         oldDelegate.gridColor != gridColor;
+  }
+}
+
+/// Widget Card Simulasi Layar Fisik LCD 16x2 + I2C Backpack pada Pergelangan Tangan
+class _SmartbandLcd16x2Card extends StatefulWidget {
+  final SmartbandLdrController ctrl;
+  const _SmartbandLcd16x2Card({required this.ctrl});
+
+  @override
+  State<_SmartbandLcd16x2Card> createState() => _SmartbandLcd16x2CardState();
+}
+
+class _SmartbandLcd16x2CardState extends State<_SmartbandLcd16x2Card> {
+  final TextEditingController _textController = TextEditingController();
+
+  @override
+  void dispose() {
+    _textController.dispose();
+    super.dispose();
+  }
+
+  void _sendPreset(String msg) {
+    widget.ctrl.sendEmergencyMessage(msg);
+    _textController.text = msg;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Pesan "$msg" disinkronkan ke LCD gelang.'),
+        duration: const Duration(seconds: 2),
+        backgroundColor: const Color(0xFF0F766E),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = AppColors.isDark(context);
+    final headingColor = AppColors.textHeadingColor(context);
+    final bodyColor = AppColors.textBodyColor(context);
+
+    return Obx(() {
+      final line1 = widget.ctrl.currentLcdLine1;
+      final line2 = widget.ctrl.currentLcdLine2;
+      final isFall = widget.ctrl.isFallDetected.value;
+      final isEmergency = isFall || widget.ctrl.isSosButtonPressed.value;
+
+      return AppCard(
+        padding: const EdgeInsets.all(AppSpacing.cardPadding),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF14B8A6).withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                  ),
+                  child: const Icon(
+                    Icons.developer_board_rounded,
+                    color: Color(0xFF14B8A6),
+                    size: 22,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          'LCD 16x2 + I2C Backpack',
+                          style: AppTypography.titleMedium.copyWith(
+                            color: headingColor,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          'Mirror Layar Fisik Pergelangan Tangan',
+                          style: AppTypography.captionSmall.copyWith(
+                            color: bodyColor.withValues(alpha: 0.7),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Flexible(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF14B8A6).withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(AppRadius.chip),
+                      border: Border.all(
+                        color: const Color(0xFF14B8A6).withValues(alpha: 0.4),
+                      ),
+                    ),
+                    child: const FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        'I2C 0x27 SINKRON',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF14B8A6),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+
+            // Authentic Physical LCD 16x2 Bezel Display Container
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFF0F172A),
+                borderRadius: BorderRadius.circular(AppRadius.card),
+                border: Border.all(
+                  color: isEmergency
+                      ? const Color(0xFFEF4444)
+                      : const Color(0xFF334155),
+                  width: 2.0,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: isEmergency
+                        ? const Color(0xFFEF4444).withValues(alpha: 0.3)
+                        : Colors.black.withValues(alpha: 0.4),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 7,
+                        height: 7,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: isEmergency
+                              ? const Color(0xFFEF4444)
+                              : const Color(0xFF22C55E),
+                          boxShadow: [
+                            BoxShadow(
+                              color: isEmergency
+                                  ? const Color(
+                                      0xFFEF4444,
+                                    ).withValues(alpha: 0.8)
+                                  : const Color(
+                                      0xFF22C55E,
+                                    ).withValues(alpha: 0.8),
+                              blurRadius: 6,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          isEmergency
+                              ? 'STATUS: SOS DARURAT'
+                              : 'LCD BACKLIGHT ON',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontFamily: 'monospace',
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: isEmergency
+                                ? const Color(0xFFFCA5A5)
+                                : const Color(0xFF86EFAC),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      const Text(
+                        '16x2 I2C',
+                        style: TextStyle(
+                          fontFamily: 'monospace',
+                          fontSize: 9.5,
+                          color: Color(0xFF94A3B8),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+
+                  // LCD Dot-Matrix Screen Glass Panel
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 12,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isFall
+                          ? const Color(0xFF450A0A)
+                          : const Color(0xFF042F2E),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(
+                        color: isFall
+                            ? const Color(0xFFDC2626)
+                            : const Color(0xFF0D9488),
+                        width: 1.5,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: isFall
+                              ? const Color(0xFFDC2626).withValues(alpha: 0.25)
+                              : const Color(0xFF0D9488).withValues(alpha: 0.25),
+                          blurRadius: 8,
+                          spreadRadius: 1,
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            line1.padRight(16).substring(0, 16),
+                            style: TextStyle(
+                              fontFamily: 'monospace',
+                              fontSize: 15.5,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 2.2,
+                              color: isFall
+                                  ? const Color(0xFFFCA5A5)
+                                  : const Color(0xFF5EEAD4),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 5),
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            line2.padRight(16).substring(0, 16),
+                            style: TextStyle(
+                              fontFamily: 'monospace',
+                              fontSize: 15.5,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 2.2,
+                              color: isFall
+                                  ? const Color(0xFFEF4444)
+                                  : const Color(0xFF5EEAD4),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
+
+            // Kirim Pesan Darurat ke Pergelangan Tangan
+            Text(
+              'Kirim Pesan Darurat / Panduan ke Gelang:',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: headingColor,
+              ),
+            ),
+            const SizedBox(height: 8),
+
+            // Preset Buttons
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  _buildPresetChip(
+                    'WASPADA PANAS',
+                    () => _sendPreset('WASPADA PANAS'),
+                  ),
+                  const SizedBox(width: 6),
+                  _buildPresetChip(
+                    'MINUM AIR SEGERA',
+                    () => _sendPreset('MINUM AIR SEGERA'),
+                  ),
+                  const SizedBox(width: 6),
+                  _buildPresetChip(
+                    'KUMPUL DI POSKO',
+                    () => _sendPreset('KUMPUL DI POSKO'),
+                  ),
+                  const SizedBox(width: 6),
+                  _buildPresetChip(
+                    '!MEDIS BUTUH!',
+                    () => _sendPreset('!MEDIS BUTUH!'),
+                    isAlert: true,
+                  ),
+                  const SizedBox(width: 6),
+                  _buildPresetChip('RESET NORMAL', () {
+                    widget.ctrl.sendEmergencyMessage('');
+                    _textController.clear();
+                  }),
+                ],
+              ),
+            ),
+            const SizedBox(height: 10),
+
+            // Input Custom Pesan
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _textController,
+                    maxLength: 16,
+                    decoration: InputDecoration(
+                      hintText: 'Teks gelang (maks 16 char)...',
+                      hintStyle: TextStyle(
+                        fontSize: 12,
+                        color: bodyColor.withValues(alpha: 0.5),
+                      ),
+                      isDense: true,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        borderSide: BorderSide(
+                          color: isDark
+                              ? AppColors.darkCardBorder
+                              : const Color(0xFFCBD5E1),
+                        ),
+                      ),
+                      counterText: '',
+                    ),
+                    style: const TextStyle(fontSize: 13),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    final text = _textController.text.trim();
+                    if (text.isNotEmpty) {
+                      _sendPreset(text);
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF14B8A6),
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size(70, 40),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 10,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.button),
+                    ),
+                  ),
+                  icon: const Icon(Icons.send_rounded, size: 16),
+                  label: const Text(
+                    'Kirim',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12.5,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+    });
+  }
+
+  Widget _buildPresetChip(
+    String label,
+    VoidCallback onTap, {
+    bool isAlert = false,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(AppRadius.chip),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        decoration: BoxDecoration(
+          color: isAlert
+              ? const Color(0xFFDC2626).withValues(alpha: 0.15)
+              : const Color(0xFF14B8A6).withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(AppRadius.chip),
+          border: Border.all(
+            color: isAlert
+                ? const Color(0xFFDC2626).withValues(alpha: 0.4)
+                : const Color(0xFF14B8A6).withValues(alpha: 0.3),
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.bold,
+            color: isAlert ? const Color(0xFFDC2626) : const Color(0xFF0F766E),
+          ),
+        ),
+      ),
+    );
   }
 }

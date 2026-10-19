@@ -2010,6 +2010,11 @@ const Map<String, String> enTranslations = {
   'smartband.fallAlertTitle': 'WARNING: Fall Detected!',
   'smartband.fallAlertDesc':
       'MPU6050 sensor detected an impact spike and sudden orientation change.',
+  'smartband.sosAlertTitle': 'WARNING: SOS Button Pressed!',
+  'smartband.sosAlertDesc':
+      'Smartband emergency button pressed. Signal forwarded to companion device.',
+  'smartband.sosTransmitted': 'SOS Sent to Companion',
+  'smartband.testSosButton': 'Test Smartband SOS Button',
   'smartband.cancelAlert': 'I am Safe / Cancel',
   'smartband.autoSosIn': 'Auto SOS will send in {seconds} seconds',
   'smartband.heroHeartRate': 'Heart Rate',
