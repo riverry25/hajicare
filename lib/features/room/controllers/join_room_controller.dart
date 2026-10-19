@@ -11,6 +11,7 @@ import '../../../core/utils/input_sanitizer.dart';
 import '../../../core/utils/user_feedback_message.dart';
 import '../services/room_service.dart';
 import '../widgets/room_qr_dialog.dart';
+import '../../map/controllers/map_controller.dart';
 
 class JoinRoomController extends GetxController {
   final RoomService _roomService = RoomService();
@@ -90,6 +91,12 @@ class JoinRoomController extends GetxController {
     final targetRoute = isP
         ? AppRoutes.dashboardPendamping
         : AppRoutes.dashboardJamaah;
+
+    // Proactively clean up any previous MapController instance before navigating
+    // so the new dashboard starts with a fresh, clean map state for the joined room.
+    if (Get.isRegistered<MapController>()) {
+      Get.delete<MapController>(force: true);
+    }
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (isClosed) return;

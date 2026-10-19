@@ -86,7 +86,7 @@ class _NavigationMapViewState extends State<NavigationMapView> {
 
     return RepaintBoundary(
       child: fmap.FlutterMap(
-        mapController: widget.mapCtrl.flutterMapController,
+        mapController: widget.mapCtrl.ensureFreshMapController(),
         options: fmap.MapOptions(
           initialCenter: userLoc,
           initialZoom: 18.0,

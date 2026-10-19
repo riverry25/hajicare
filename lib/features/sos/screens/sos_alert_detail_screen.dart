@@ -233,9 +233,7 @@ class _SosAlertDetailScreenState extends State<SosAlertDetailScreen> {
     }
 
     // 2. Prepare MapController and select the jamaah member
-    final mapCtrl = Get.isRegistered<MapController>()
-        ? Get.find<MapController>()
-        : Get.put(MapController());
+    final mapCtrl = MapController.to;
 
     final member = RoomMemberModel(
       uid: userId,

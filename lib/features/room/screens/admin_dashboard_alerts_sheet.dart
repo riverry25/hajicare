@@ -1237,9 +1237,7 @@ extension _AdminDashboardAlertsSheet on _AdminDashboardHome {
     }
 
     // 3. Obtain MapController & configure selection
-    final mapCtrl = Get.isRegistered<MapController>()
-        ? Get.find<MapController>()
-        : Get.put(MapController());
+    final mapCtrl = MapController.to;
 
     final member = RoomMemberModel(
       uid: userId ?? '',

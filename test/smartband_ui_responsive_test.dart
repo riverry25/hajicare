@@ -224,5 +224,54 @@ void main() {
         ctrl.onClose();
       },
     );
+
+    testWidgets(
+      'Smartband Dialog renders stored data without overflow on small screen (reproduces 0.881 px bug)',
+      (tester) async {
+        tester.view.physicalSize = const Size(360 * 2.0, 780 * 2.0);
+        tester.view.devicePixelRatio = 2.0;
+        addTearDown(() => tester.view.resetPhysicalSize());
+
+        final ctrl = Get.put(SmartbandLdrController());
+        ctrl.toggleSimulation(false);
+        ctrl.hasRestoredData.value = true;
+        ctrl.heartRate.value = 64;
+        ctrl.mcpTemperature.value = 33.0;
+        ctrl.stepCount.value = 4;
+        ctrl.lastDataReceivedAt.value = DateTime.now().subtract(
+          const Duration(hours: 14),
+        );
+
+        await tester.pumpWidget(
+          buildTestApp(
+            child: Scaffold(
+              body: Builder(
+                builder: (context) => ElevatedButton(
+                  onPressed: () =>
+                      DashboardJamaahScreen.showSmartbandDialog(context),
+                  child: const Text('Open Dialog'),
+                ),
+              ),
+            ),
+          ),
+        );
+
+        await tester.tap(find.text('Open Dialog'));
+        await tester.pumpAndSettle();
+
+        expect(find.byType(Dialog), findsOneWidget);
+        expect(find.text('Detak Jantung'), findsOneWidget);
+        expect(find.text('Terakhir'), findsOneWidget);
+        expect(find.text('64'), findsOneWidget);
+        expect(find.text('BPM'), findsOneWidget);
+        expect(find.text('33.0°'), findsOneWidget);
+        expect(find.text('Total Langkah'), findsOneWidget);
+        expect(find.text('Tersimpan'), findsOneWidget);
+
+        expect(tester.takeException(), isNull);
+
+        ctrl.onClose();
+      },
+    );
   });
 }

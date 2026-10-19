@@ -2042,7 +2042,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
     showDialog(
       context: context,
       builder: (ctx) => HajiTransparentDialog(
-        insetPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+        insetPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
         child: ConstrainedBox(
           constraints: BoxConstraints(
             maxWidth: 420,
@@ -2057,8 +2057,8 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                 margin: const EdgeInsets.only(
                   top: 28,
                   bottom: 12,
-                  right: 10,
-                  left: 10,
+                  right: 6,
+                  left: 6,
                 ),
                 padding: const EdgeInsets.fromLTRB(16, 68, 16, 18),
                 decoration: BoxDecoration(
@@ -2372,16 +2372,22 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                                       children: [
                                         Row(
                                           children: [
-                                            Text(
-                                              context.tr('dashboard.heartRate'),
-                                              style: TextStyle(
-                                                color: headingColor,
-                                                fontSize: 13,
-                                                fontWeight: FontWeight.w700,
+                                            Flexible(
+                                              child: Text(
+                                                context.tr(
+                                                  'dashboard.heartRate',
+                                                ),
+                                                style: TextStyle(
+                                                  color: headingColor,
+                                                  fontSize: 13,
+                                                  fontWeight: FontWeight.w700,
+                                                ),
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
                                               ),
                                             ),
                                             if (isStored) ...[
-                                              const SizedBox(width: 6),
+                                              const SizedBox(width: 5),
                                               Container(
                                                 padding:
                                                     const EdgeInsets.symmetric(
@@ -2454,7 +2460,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                                       Text(
                                         hasHr ? '$hr' : '—',
                                         style: TextStyle(
-                                          fontSize: 26,
+                                          fontSize: 24,
                                           fontWeight: FontWeight.w800,
                                           color: hasHr
                                               ? (isConnected
@@ -2532,12 +2538,18 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                                                   ),
                                                 ),
                                                 const SizedBox(width: 4),
-                                                Text(
-                                                  'SpO₂',
-                                                  style: TextStyle(
-                                                    fontSize: 11,
-                                                    fontWeight: FontWeight.w700,
-                                                    color: headingColor,
+                                                Flexible(
+                                                  child: Text(
+                                                    'SpO₂',
+                                                    style: TextStyle(
+                                                      fontSize: 11,
+                                                      fontWeight:
+                                                          FontWeight.w700,
+                                                      color: headingColor,
+                                                    ),
+                                                    maxLines: 1,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
                                                   ),
                                                 ),
                                                 if (isStored && hasSpo2) ...[
@@ -2638,12 +2650,18 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                                                   ),
                                                 ),
                                                 const SizedBox(width: 4),
-                                                Text(
-                                                  'Suhu',
-                                                  style: TextStyle(
-                                                    fontSize: 11,
-                                                    fontWeight: FontWeight.w700,
-                                                    color: headingColor,
+                                                Flexible(
+                                                  child: Text(
+                                                    'Suhu',
+                                                    style: TextStyle(
+                                                      fontSize: 11,
+                                                      fontWeight:
+                                                          FontWeight.w700,
+                                                      color: headingColor,
+                                                    ),
+                                                    maxLines: 1,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
                                                   ),
                                                 ),
                                                 if (isStored && hasTemp) ...[
@@ -2760,17 +2778,23 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                                           children: [
                                             Row(
                                               children: [
-                                                Text(
-                                                  'Total Langkah',
-                                                  style: TextStyle(
-                                                    fontSize: 12,
-                                                    fontWeight: FontWeight.w700,
-                                                    color: headingColor,
+                                                Flexible(
+                                                  child: Text(
+                                                    'Total Langkah',
+                                                    style: TextStyle(
+                                                      fontSize: 12,
+                                                      fontWeight:
+                                                          FontWeight.w700,
+                                                      color: headingColor,
+                                                    ),
+                                                    maxLines: 1,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
                                                   ),
                                                 ),
                                                 if (!isConnected &&
                                                     hasSteps) ...[
-                                                  const SizedBox(width: 6),
+                                                  const SizedBox(width: 5),
                                                   Container(
                                                     padding:
                                                         const EdgeInsets.symmetric(

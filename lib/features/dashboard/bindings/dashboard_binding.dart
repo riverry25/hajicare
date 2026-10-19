@@ -34,9 +34,16 @@ class DashboardBinding extends Bindings {
       );
     }
     if (!Get.isRegistered<PrayerTimesController>()) {
-      Get.lazyPut<PrayerTimesController>(() => PrayerTimesController());
+      Get.lazyPut<PrayerTimesController>(
+        () => PrayerTimesController(),
+        fenix: true,
+      );
     }
-    Get.lazyPut<MapController>(() => MapController());
+    if (Get.isRegistered<MapController>() &&
+        Get.find<MapController>().isClosed) {
+      Get.delete<MapController>(force: true);
+    }
+    Get.lazyPut<MapController>(() => MapController(), fenix: true);
     Get.lazyPut<ProfileController>(() => ProfileController());
     Get.lazyPut<SmartbandLdrController>(() => SmartbandLdrController());
     Get.lazyPut<CommunicationController>(() => CommunicationController());

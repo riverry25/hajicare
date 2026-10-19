@@ -68,7 +68,7 @@ class DashboardPendampingScreen extends StatelessWidget {
         }),
         bottomNavigationBar: Obx(() {
           if (Get.isRegistered<MapController>()) {
-            final mapCtrl = Get.find<MapController>();
+            final mapCtrl = MapController.to;
             if (dashboardCtrl.currentIndex.value == 1 && mapCtrl.isNavigating) {
               return const SizedBox.shrink();
             }
@@ -91,7 +91,7 @@ class DashboardPendampingScreen extends StatelessWidget {
     dashboardCtrl.changeTab(1);
 
     if (Get.isRegistered<MapController>()) {
-      final mapCtrl = Get.find<MapController>();
+      final mapCtrl = MapController.to;
       mapCtrl.focusOnJamaah(jamaah, autoRoute: autoRoute);
     }
 
@@ -655,9 +655,7 @@ class DashboardPendampingScreen extends StatelessWidget {
                     subtitle: 'Bantuan jamaah rombongan membutuhkan penanganan',
                     actionText: 'Lihat Peta',
                     onAction: () {
-                      final mapCtrl = Get.isRegistered<MapController>()
-                          ? Get.find<MapController>()
-                          : Get.put(MapController());
+                      final mapCtrl = MapController.to;
                       mapCtrl.focusOnAssistanceRequest(
                         activeReq,
                         autoRoute: false,

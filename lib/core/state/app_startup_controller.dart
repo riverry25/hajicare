@@ -8,6 +8,7 @@ import '../routes/app_routes.dart';
 import '../services/secure_storage_service.dart';
 import '../utils/app_logger.dart';
 import 'hajicare_controller.dart';
+import '../../features/map/controllers/map_controller.dart';
 
 enum StartupState { checking, authenticated, unauthenticated }
 
@@ -142,6 +143,9 @@ class AppStartupController extends GetxController {
         tag: 'AppStartupController',
       );
     } finally {
+      if (Get.isRegistered<MapController>()) {
+        Get.delete<MapController>(force: true);
+      }
       startupState.value = StartupState.unauthenticated;
       Get.offAllNamed(AppRoutes.login);
     }

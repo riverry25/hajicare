@@ -1,7 +1,9 @@
+import 'package:flutter_map/flutter_map.dart' as fmap;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 import 'package:hajicare/features/room/controllers/join_room_controller.dart';
 import 'package:hajicare/features/room/bindings/join_room_binding.dart';
+import 'package:hajicare/features/map/controllers/map_controller.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
@@ -63,5 +65,25 @@ void main() {
       expect(controller.isSyncing.value, isFalse);
       expect(controller.syncStatus.value, isEmpty);
     });
+
+    test('MapController.to evicts closed controller and returns active instance', () {
+      final c1 = Get.put(MapController());
+      c1.onClose();
+      expect(c1.isClosedSafe, isTrue);
+
+      final c2 = MapController.to;
+      expect(c2.isClosedSafe, isFalse);
+      expect(identical(c1, c2), isFalse);
+    });
+
+    test('ensureFreshMapController provides active MapController even after dispose', () {
+      final mapCtrl = Get.put(MapController());
+      mapCtrl.flutterMapController.dispose();
+
+      final fresh = mapCtrl.ensureFreshMapController();
+      expect(fresh, isNotNull);
+      expect(identical(fresh, mapCtrl.flutterMapController), isTrue);
+    });
   });
 }
+

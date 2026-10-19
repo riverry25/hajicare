@@ -285,9 +285,7 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
                       ),
                       onTap: () async {
                         HapticFeedback.selectionClick();
-                        final mapCtrl = Get.isRegistered<MapController>()
-                            ? Get.find<MapController>()
-                            : Get.put(MapController());
+                        final mapCtrl = MapController.to;
 
                         final companion = await mapCtrl.focusOnCompanion();
                         if (companion == null) {

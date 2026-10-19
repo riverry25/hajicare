@@ -94,9 +94,8 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
     super.initState();
     _searchCtrl = TextEditingController();
     _searchCtrl.addListener(_onSearchTextUpdated);
-    _mapController = Get.isRegistered<MapController>()
-        ? Get.find<MapController>()
-        : Get.put(MapController());
+    _mapController = MapController.to;
+    _mapController.ensureFreshMapController();
     _pulseController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 2000),
@@ -659,7 +658,7 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
 
   Widget _buildInteractiveMap(HajiCareController state, MapController mapCtrl) {
     return fmap.FlutterMap(
-      mapController: mapCtrl.flutterMapController,
+      mapController: mapCtrl.ensureFreshMapController(),
       options: fmap.MapOptions(
         initialCenter:
             mapCtrl.pendingFocusCoordinate ??

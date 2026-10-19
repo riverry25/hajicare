@@ -393,9 +393,7 @@ class PendampingAssistanceCard extends StatelessWidget {
       return;
     }
 
-    final mapCtrl = Get.isRegistered<MapController>()
-        ? Get.find<MapController>()
-        : Get.put(MapController());
+    final mapCtrl = MapController.to;
 
     mapCtrl.focusOnAssistanceRequest(req, autoRoute: autoRoute);
 

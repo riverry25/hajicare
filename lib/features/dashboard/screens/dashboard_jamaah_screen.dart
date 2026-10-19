@@ -54,7 +54,9 @@ class DashboardJamaahScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final dashboardCtrl = Get.find<DashboardController>();
     final state = Get.find<HajiCareController>();
-    final prayerCtrl = Get.find<PrayerTimesController>();
+    final prayerCtrl = Get.isRegistered<PrayerTimesController>()
+        ? Get.find<PrayerTimesController>()
+        : Get.put(PrayerTimesController());
     final settings = Get.isRegistered<AppSettingsController>()
         ? Get.find<AppSettingsController>()
         : null;
@@ -87,7 +89,7 @@ class DashboardJamaahScreen extends StatelessWidget {
         }),
         bottomNavigationBar: Obx(() {
           if (Get.isRegistered<MapController>()) {
-            final mapCtrl = Get.find<MapController>();
+            final mapCtrl = MapController.to;
             if (dashboardCtrl.currentIndex.value == 1 && mapCtrl.isNavigating) {
               return const SizedBox.shrink();
             }

@@ -39,7 +39,48 @@ enum MapSearchState { idle, loading, results, empty, error, history }
 /// Controller managing reactive interactive map state, camera,
 /// real geolocation with live streaming, dynamic POIs, and Room Member markers.
 class MapController extends GetxController with GetTickerProviderStateMixin {
-  final fmap.MapController flutterMapController = fmap.MapController();
+  fmap.MapController _flutterMapController = fmap.MapController();
+  fmap.MapController get flutterMapController => _flutterMapController;
+
+  /// Ensures [flutterMapController] is active and attached or ready to attach.
+  /// If it was previously disposed or detached from an unmounted view,
+  /// this resets it to a clean [fmap.MapController] instance.
+  fmap.MapController ensureFreshMapController() {
+    if (!isMapAttached) {
+      _flutterMapController = fmap.MapController();
+    }
+    return _flutterMapController;
+  }
+
+  /// Explicitly resets or recreates [flutterMapController] with a fresh instance.
+  void resetFlutterMapController() {
+    try {
+      _flutterMapController.dispose();
+    } catch (_) {}
+    _flutterMapController = fmap.MapController();
+  }
+
+  bool _isManuallyClosed = false;
+
+  /// True if controller was closed either by GetX lifecycle or via onClose().
+  bool get isClosedSafe => isClosed || _isManuallyClosed;
+
+  /// Safely resolves or initializes the active [MapController].
+  /// If an existing instance in GetX is closed, disposed, or in an invalid state,
+  /// it is evicted and a fresh controller is instantiated and registered.
+  static MapController get to {
+    if (Get.isRegistered<MapController>()) {
+      try {
+        final existing = Get.find<MapController>();
+        if (!existing.isClosedSafe) {
+          return existing;
+        }
+      } catch (_) {}
+      Get.delete<MapController>(force: true);
+    }
+    return Get.put<MapController>(MapController());
+  }
+
   final RoomService? _injectedRoomService;
   final Stream<CompassEvent>? _injectedCompassStream;
   RoomService? _lazyRoomService;
@@ -711,8 +752,10 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
         latitude: firstPosition.latitude,
         longitude: firstPosition.longitude,
         accuracyMeters: firstPosition.accuracy,
-        durationSeconds:
-            (gpsStopwatch.elapsedMilliseconds / 1000.0).clamp(0.05, 10.0),
+        durationSeconds: (gpsStopwatch.elapsedMilliseconds / 1000.0).clamp(
+          0.05,
+          10.0,
+        ),
         isSuccess: true,
       );
 
@@ -1984,8 +2027,10 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
       pos ??= await Geolocator.getLastKnownPosition();
       gpsStopwatch.stop();
 
-      final lat = pos?.latitude ?? currentUserLocation.value?.latitude ?? -6.1379933;
-      final lng = pos?.longitude ?? currentUserLocation.value?.longitude ?? 106.2875067;
+      final lat =
+          pos?.latitude ?? currentUserLocation.value?.latitude ?? -6.1379933;
+      final lng =
+          pos?.longitude ?? currentUserLocation.value?.longitude ?? 106.2875067;
       final acc = pos?.accuracy ?? gpsAccuracy.value;
 
       if (pos != null) {
@@ -1994,7 +2039,10 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
       animatedMove(LatLng(lat, lng), 17.0);
       isLocationLoading.value = false;
 
-      final elapsed = (gpsStopwatch.elapsedMilliseconds / 1000.0).clamp(0.08, 3.5);
+      final elapsed = (gpsStopwatch.elapsedMilliseconds / 1000.0).clamp(
+        0.08,
+        3.5,
+      );
       await MapValidationTrackerService.instance.logTrial(
         latitude: lat,
         longitude: lng,
@@ -2015,7 +2063,10 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
       isLocationLoading.value = false;
       final lat = currentUserLocation.value?.latitude ?? -6.1379933;
       final lng = currentUserLocation.value?.longitude ?? 106.2875067;
-      final elapsed = (gpsStopwatch.elapsedMilliseconds / 1000.0).clamp(0.08, 3.5);
+      final elapsed = (gpsStopwatch.elapsedMilliseconds / 1000.0).clamp(
+        0.08,
+        3.5,
+      );
       await MapValidationTrackerService.instance.logTrial(
         latitude: lat,
         longitude: lng,
@@ -2408,6 +2459,7 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
 
   @override
   void onClose() {
+    _isManuallyClosed = true;
     voiceService.reset();
     _lifecycleGeneration++;
     _searchDebounceTimer?.cancel();
@@ -2421,7 +2473,9 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     _poiRequestId++;
     _poiRepository.dispose();
     _poiService.dispose();
-    flutterMapController.dispose();
+    try {
+      _flutterMapController.dispose();
+    } catch (_) {}
     super.onClose();
   }
 }
