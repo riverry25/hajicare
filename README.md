@@ -8,6 +8,8 @@
 
 [![Flutter](https://img.shields.io/badge/Flutter-3.x-02569B?logo=flutter&logoColor=white)](https://flutter.dev)
 [![Dart](https://img.shields.io/badge/Dart-3.x-0175C2?logo=dart&logoColor=white)](https://dart.dev)
+[![Competition](https://img.shields.io/badge/Competition-OASE%20III-8A2BE2?logo=trophy&logoColor=white)](#)
+[![Institution](https://img.shields.io/badge/Institution-UIN%20SMH%20Banten-006400)](#)
 [![Firebase](https://img.shields.io/badge/Backend-Firebase%20Cloud-FFCA28?logo=firebase&logoColor=black)](https://firebase.google.com)
 [![TensorFlow Lite](https://img.shields.io/badge/AI%2FML-TensorFlow%20Lite-FF6F00?logo=tensorflow&logoColor=white)](https://www.tensorflow.org/lite)
 [![Hardware](https://img.shields.io/badge/IoT-ESP32--S3%20BLE%205.0-E7352C?logo=espressif&logoColor=white)](https://www.espressif.com)
@@ -40,9 +42,12 @@ Tantangan di lapangan meliputi:
 
 ### 1. ⌚ Smart IoT Wearable (Gelang Pintar ESP32-S3)
 Gelang pintar nirkabel berdaya rendah (*Bluetooth Low Energy / BLE 5.0*) yang dikenakan oleh jamaah di pergelangan tangan:
+- **Pelacak Lokasi Mandiri (Modul GPS ATGM336H)**: Modul positioning dual-mode (BDS + GPS) sensitivitas tinggi untuk melacak koordinat geospasial jamaah secara akurat bahkan saat terpisah dari smartphone.
 - **Detak Jantung & SpO2 (Sensor MAX30102)**: Memantau denyut nadi dan saturasi oksigen secara berkala untuk deteksi dini aritmia dan hipoksia.
 - **Suhu Tubuh Inframerah (Sensor MLX90614)**: Mengukur suhu tubuh akurat tanpa kontak langsung guna mendeteksi gejala *heat exhaustion* sebelum terjadi *heatstroke*.
 - **Deteksi Jatuh & Akselerometer (Sensor MPU6050)**: Mendeteksi benturan atau kondisi jatuh tiba-tiba pada jamaah lansia secara otomatis.
+- **Layar Tampilan Informasi (Layar OLED / LCD 0.96")**: Menampilkan visualisasi data vital secara langsung di pergelangan tangan (detak jantung BPM, suhu tubuh, status baterai, koneksi GPS, dan jam) tanpa perlu membuka HP.
+- **Umpan Balik Haptik (Mobile Vibration Motor)**: Memberikan getaran peringatan darurat instan saat jamaah keluar dari batas radius aman (*safe radius*), notifikasi waktu ibadah, dan konfirmasi penekanan SOS.
 - **Tombol Darurat Fisik (Hardware SOS Button)**: Tombol taktil yang dapat ditekan jamaah saat darurat tanpa perlu membuka smartphone.
 
 ### 2. 🤖 Edge AI & Aksesibilitas Disabilitas (Bekerja 100% Offline)
@@ -74,10 +79,13 @@ Berikut adalah alur komunikasi data antara perangkat fisik jamaah, smartphone, c
 ```mermaid
 graph TD
     subgraph IoT_Wearable [Smartband ESP32-S3]
-        S1[Sensor MAX30102 - Detak Jantung/SpO2]
-        S2[Sensor MLX90614 - Suhu Tubuh]
-        S3[Sensor MPU6050 - Deteksi Jatuh]
-        S4[Tombol SOS Fisik]
+        S1[Sensor MAX30102 - Detak Jantung / SpO2]
+        S2[Sensor MLX90614 - Suhu Tubuh Inframerah]
+        S3[Sensor MPU6050 - Akselerometer & Deteksi Jatuh]
+        S4[Modul GPS ATGM336H - Posisi Geospasial Mandiri]
+        S5[Layar LCD 0.96 inch - Telemetri Visual Jamaah]
+        S6[Mobile Vibration Motor - Haptic Feedback Peringatan]
+        S7[Tombol Darurat Fisik SOS]
     end
 
     subgraph Mobile_Client [HajiCare Mobile App - Flutter]
@@ -117,6 +125,8 @@ graph TD
 | :--- | :--- | :--- |
 | **Framework Utama** | Flutter 3.x & Dart 3.x | Multiplatform dengan rendering performa tinggi 60 FPS |
 | **Manajemen State** | GetX (Reactive Architecture) | Arsitektur reaktif bersih memisahkan UI, logika bisnis, dan data |
+| **Hardware IoT Smartband** | ESP32-S3 Microcontroller | Dual-core Xtensa LX7, BLE 5.0 nirkabel hemat daya |
+| **Sensor & Modul Fisik** | ATGM336H GPS, MAX30102, MLX90614, MPU6050, LCD 0.96", Mobile Motor | Telemetri kesehatan lengkap, pelacakan posisi mandiri, dan notifikasi getar |
 | **Edge Machine Learning** | TensorFlow Lite (`tflite_flutter`) | Model GRU terkuantisasi (float16) untuk efisiensi memori & daya |
 | **Penglihatan Komputer** | MediaPipe Holistic Landmarks | Ekstraksi 543 koordinat gerak tangan, tubuh, dan wajah |
 | **IoT & Komunikasi Nirkabel** | `flutter_blue_plus` (BLE 5.0) | Protokol transmisi biner karakteristik kustom GATT ESP32 |
@@ -244,13 +254,20 @@ HajiCare dirancang dengan prinsip **Inklusivitas Penuh (Accessibility by Design)
 
 ---
 
-## 👥 Tim Pengembang & Inovator
+## 👥 Tim Pengembang & Inovator (OASE III)
 
-Proyek ini dikembangkan dengan dedikasi untuk memajukan pelayanan jamaah haji dan umrah Indonesia:
+Karya inovasi ini dikembangkan untuk keikutsertaan dalam ajang **OASE III (Olimpiade Agama, Sains, dan Riset)** dengan dedikasi memajukan keselamatan dan kualitas pelayanan ibadah jamaah haji serta umrah Indonesia:
 
-- **Ketua Tim / Lead Developer**: Fadli & Tim Pengembang HajiCare
-- **Institusi**: Indonesia
+- **Ajang Kompetisi**: OASE III (Olimpiade Agama, Sains, dan Riset)
+- **Perguruan Tinggi / Institusi**: Universitas Islam Negeri Sultan Maulana Hasanuddin Banten (UIN SMH Banten)
 - **Tahun Pengembangan**: 2026
+
+### 🏅 Susunan Anggota Tim:
+1. **Fadli Hifziansyah** (*Ketua Tim / Lead Developer*)
+2. **Ferdi Ahyana Yusri** (*Anggota Tim*)
+3. **Muhammad Abdurahman Hafishudin** (*Anggota Tim*)
+4. **Muhamad Jihad Ardiansyah** (*Anggota Tim*)
+5. **Humaida Athifah** (*Anggota Tim*)
 
 ---
 
