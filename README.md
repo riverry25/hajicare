@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![HajiCare Hero Banner](assets/images/banner.jpg)
+![HajiCare Hero Banner](assets/images/haji.webp)
 
 ### *Inovasi Terpadu Berbasis IoT Smartband, Edge AI Aksesibilitas, dan Pemantauan Geospasial Real-Time untuk Jamaah Haji dan Lansia*
 
@@ -35,8 +35,6 @@ Tantangan di lapangan meliputi:
 ## 🌟 4 Pilar Solusi Inovatif
 
 <div align="center">
-
-![HajiCare IoT & Mobile Ecosystem](assets/images/iot_showcase.jpg)
 
 </div>
 
