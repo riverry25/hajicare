@@ -14,11 +14,11 @@ import '../widgets/onboarding_slide_language.dart';
 import '../widgets/onboarding_slide_safety.dart';
 
 /// Main Onboarding flow for HajiCare.
-/// Implements a refined, WanderWise-inspired layout:
-/// - Symmetrical top header with centered brand logo and minimal "Lewati" action
-/// - Story-style 3-segment progress indicator dynamically tracking drag gestures
-/// - Immersive, centered visual showcase per slide
-/// - Centered, comfortable primary pill action button at the bottom
+/// Implements a refined, WanderWise-inspired layout
+/// Symmetrical top header with centered brand logo and minimal "Lewati" action
+/// Story-style 3-segment progress indicator dynamically tracking drag gestures
+/// Immersive, centered visual showcase per slide
+/// Centered, comfortable primary pill action button at the bottom
 class OnboardingScreen extends StatelessWidget {
   const OnboardingScreen({super.key});
 
@@ -57,7 +57,7 @@ class OnboardingScreen extends StatelessWidget {
               constraints: const BoxConstraints(maxWidth: 580),
               child: Column(
                 children: [
-                  // ── 1. Top Brand Bar & Minimalist "Lewati" (WanderWise style) ──
+                  // 1. Top Brand Bar & Minimalist "Lewati" (WanderWise style
                   Padding(
                     padding: const EdgeInsets.fromLTRB(
                       AppSpacing.screenEdgeGutter,
@@ -145,7 +145,7 @@ class OnboardingScreen extends StatelessWidget {
                     ),
                   ),
 
-                  // ── 2. Dynamic 3-Segment Progress Indicator (Scroll Tracking) ──
+                  // 2. Dynamic 3-Segment Progress Indicator (Scroll Tracking
                   AnimatedBuilder(
                     animation: ctrl.pageController,
                     builder: (context, _) {
@@ -166,7 +166,7 @@ class OnboardingScreen extends StatelessWidget {
                         ),
                         child: Row(
                           children: List.generate(_totalPages, (index) {
-                            // Calculate dynamic fill fraction for segment (0.0 to 1.0)
+                            // Calculate dynamic fill fraction for segment (0.0 to 1.0
                             final double fill;
                             if (index == 0) {
                               fill = 1.0;
@@ -207,7 +207,7 @@ class OnboardingScreen extends StatelessWidget {
                     },
                   ),
 
-                  // ── 3. Page Slider (PageView with Visual Showcase) ────
+                  // 3. Page Slider (PageView with Visual Showcase
                   Expanded(
                     child: PageView(
                       controller: ctrl.pageController,
@@ -227,7 +227,7 @@ class OnboardingScreen extends StatelessWidget {
                     ),
                   ),
 
-                  // ── 4. Bottom Controls: Single Centered Primary CTA Button ──
+                  // 4. Bottom Controls: Single Centered Primary CTA Button
                   Obx(() {
                     final _ = settings.rxLocale.value;
                     final page = ctrl.currentPage.value;
@@ -244,7 +244,7 @@ class OnboardingScreen extends StatelessWidget {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          // Centered Primary Action Button (Compact & Elegant like WanderWise)
+                          // Centered Primary Action Button (Compact & Elegant like WanderWise
                           Center(
                             child: ConstrainedBox(
                               constraints: const BoxConstraints(

@@ -7,9 +7,8 @@ import '../models/bisindo_prediction.dart';
 import '../models/sign_language_model.dart';
 
 /// Production TFLite classifier service for MotionGRU float16 models (SIBI & BISINDO).
-///
 /// Input: [1, 48, 706] float32
-/// Output: [1, num_classes] float32 (softmax probabilities)
+/// Output: [1, num_classes] float32 (softmax probabilities
 class BisindoClassifierService {
   static const double kDefaultConfidenceThreshold = 0.70;
   static const int kExpectedSequenceLen = 48;

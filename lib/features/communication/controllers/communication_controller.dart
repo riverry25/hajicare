@@ -49,7 +49,7 @@ class CommunicationController extends GetxController {
   final searchQuery = ''.obs;
 
   final List<PhraseItem> phrases = const [
-    // ── Darurat & Kesehatan ─────────────────────────────
+    // Darurat & Kesehatan
     PhraseItem(
       indonesian: 'Tolong, saya butuh dokter',
       transliteration: "Musa'adah, ahtaju tabiban",
@@ -83,7 +83,7 @@ class CommunicationController extends GetxController {
       translationKey: 'quickComm.phrase.wheelchair',
     ),
 
-    // ── Arah & Lokasi ───────────────────────────────────
+    // Arah & Lokasi
     PhraseItem(
       indonesian: 'Saya tersesat',
       transliteration: "Ana dae'e",
@@ -125,7 +125,7 @@ class CommunicationController extends GetxController {
       translationKey: 'quickComm.phrase.police',
     ),
 
-    // ── Umum ───────────────────────────────────────────
+    // Umum
     PhraseItem(
       indonesian: 'Boleh minta air?',
       transliteration: "Mumaakin maa'?",

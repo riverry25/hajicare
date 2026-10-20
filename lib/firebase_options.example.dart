@@ -5,7 +5,7 @@ import 'package:flutter/foundation.dart'
     show defaultTargetPlatform, kIsWeb, TargetPlatform;
 
 /// Default [FirebaseOptions] template for use with your Firebase apps.
-/// Copy this file to `lib/firebase_options.dart` and fill in your actual credentials,
+/// Copy this file to `lib/firebase_options.dart` and fill in your actual credentials
 /// or run `flutterfire configure`.
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {

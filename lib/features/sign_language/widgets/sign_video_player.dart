@@ -21,17 +21,17 @@ class SignVideoPlayerWidget extends StatelessWidget {
     return Obx(() {
       final entry = controller.currentEntry.value;
 
-      // ── 1. KONDISI BELUM ADA VIDEO DIPILIH ─────────────────────────────────
+      // 1. KONDISI BELUM ADA VIDEO DIPILIH
       if (entry == null) {
         return _buildEmptyPlaceholder(context);
       }
 
-      // ── 2. KONDISI VIDEO REMOTE PERLU DIUNDUH ──────────────────────────────
+      // 2. KONDISI VIDEO REMOTE PERLU DIUNDUH
       if (entry.source == SignVideoSource.remote) {
         return _buildRemoteDownloadCard(context, entry);
       }
 
-      // ── 2.1 JIKA LOCAL CACHED TAPI FILE TIDAK ADA DI DISK (MISAL DIHAPUS DARI CACHE) ──
+      // 2.1 JIKA LOCAL CACHED TAPI FILE TIDAK ADA DI DISK (MISAL DIHAPUS DARI CACHE
       if (entry.source == SignVideoSource.localCached) {
         final cachedPath = entry.cachedFilePath;
         if (cachedPath == null || !File(cachedPath).existsSync()) {
@@ -48,17 +48,23 @@ class SignVideoPlayerWidget extends StatelessWidget {
         }
       }
 
-      // ── 3. KONDISI VIDEO SEDANG MEMUAT / INITIALIZING ──────────────────────
+      // 2.2 KONDISI TERJADI ERROR SAAT MEMUAT VIDEO
+      if (controller.errorMessage.value != null &&
+          !controller.isVideoInitialized.value) {
+        return _buildErrorCard(context, entry);
+      }
+
+      // 3. KONDISI VIDEO SEDANG MEMUAT / INITIALIZING
       if (!controller.isVideoInitialized.value) {
         return _buildLoadingCard(context, entry);
       }
 
-      // ── 4. KONDISI PEMUTAR AKTIF (ASSET / LOCAL CACHED) ────────────────────
+      // 4. KONDISI PEMUTAR AKTIF (ASSET / LOCAL CACHED
       return _buildActivePlayerCard(context, entry);
     });
   }
 
-  // ── EMPTY STATE ────────────────────────────────────────────────────────────
+  // EMPTY STATE
 
   Widget _buildEmptyPlaceholder(BuildContext context) {
     final colors = context.hc;
@@ -111,7 +117,7 @@ class SignVideoPlayerWidget extends StatelessWidget {
     );
   }
 
-  // ── REMOTE DOWNLOAD REQUIRED CARD ──────────────────────────────────────────
+  // REMOTE DOWNLOAD REQUIRED CARD
 
   Widget _buildRemoteDownloadCard(BuildContext context, SignVideoEntry entry) {
     final colors = context.hc;
@@ -233,7 +239,75 @@ class SignVideoPlayerWidget extends StatelessWidget {
     );
   }
 
-  // ── LOADING CARD ───────────────────────────────────────────────────────────
+  // ERROR CARD
+
+  Widget _buildErrorCard(BuildContext context, SignVideoEntry entry) {
+    final colors = context.hc;
+    final textTheme = context.text;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.lg,
+        vertical: AppSpacing.xl,
+      ),
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(color: colors.border),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: colors.danger.withValues(alpha: 0.15),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.error_outline_rounded,
+              color: colors.danger,
+              size: 32,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Text(
+            context.tr('sign.emptyPlayerTitle'),
+            style: textTheme.titleSmall.copyWith(
+              color: colors.textPrimary,
+              fontWeight: FontWeight.bold,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            controller.errorMessage.value ?? '',
+            style: textTheme.bodySmall.copyWith(color: colors.textSecondary),
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: AppSpacing.md),
+          ElevatedButton.icon(
+            onPressed: () => controller.playEntry(entry, force: true),
+            icon: const Icon(Icons.refresh_rounded, size: 18),
+            label: Text(context.tr('sign.retry')),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: colors.primary,
+              foregroundColor: colors.onPrimary,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppRadius.pill),
+              ),
+              elevation: 0,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // LOADING CARD
 
   Widget _buildLoadingCard(BuildContext context, SignVideoEntry entry) {
     final colors = context.hc;
@@ -263,7 +337,7 @@ class SignVideoPlayerWidget extends StatelessWidget {
     );
   }
 
-  // ── ACTIVE PLAYER CARD ─────────────────────────────────────────────────────
+  // ACTIVE PLAYER CARD
 
   Widget _buildActivePlayerCard(BuildContext context, SignVideoEntry entry) {
     final player = controller.playerController;
@@ -294,7 +368,7 @@ class SignVideoPlayerWidget extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Video Canvas with Tap-to-Play ──────────────────────────────────
+          // Video Canvas with Tap-to-Play
           GestureDetector(
             onTap: controller.togglePlayPause,
             child: Stack(
@@ -312,7 +386,7 @@ class SignVideoPlayerWidget extends StatelessWidget {
                   ),
                 ),
 
-                // Center Play/Pause button overlay (fades or visible when paused)
+                // Center Play/Pause button overlay (fades or visible when paused
                 if (!isPlaying)
                   Container(
                     width: 56,
@@ -328,7 +402,7 @@ class SignVideoPlayerWidget extends StatelessWidget {
                     ),
                   ),
 
-                // Floating Speed Indicator Overlay (Top Right of video)
+                // Floating Speed Indicator Overlay (Top Right of video
                 Positioned(
                   top: AppSpacing.sm,
                   right: AppSpacing.sm,
@@ -399,7 +473,7 @@ class SignVideoPlayerWidget extends StatelessWidget {
             ),
           ),
 
-          // ── Scrubber & Bottom Controls ─────────────────────────────────────
+          // Scrubber & Bottom Controls
           Padding(
             padding: const EdgeInsets.symmetric(
               horizontal: AppSpacing.md,
@@ -435,7 +509,7 @@ class SignVideoPlayerWidget extends StatelessWidget {
                   ),
                 ),
 
-                // Action controls row (Play, Replay, Speed Capsule, Duration)
+                // Action controls row (Play, Replay, Speed Capsule, Duration
                 Row(
                   children: [
                     IconButton(
@@ -469,12 +543,12 @@ class SignVideoPlayerWidget extends StatelessWidget {
 
                     const Spacer(),
 
-                    // Speed Controller Capsule (Slow Down, Speed, Speed Up)
+                    // Speed Controller Capsule (Slow Down, Speed, Speed Up
                     _buildSpeedCapsule(context),
 
                     const Spacer(),
 
-                    // Duration display (e.g. 00:02 / 00:05)
+                    // Duration display (e.g. 00:02 / 00:05
                     Text(
                       '${_formatDuration(position)} / ${_formatDuration(duration)}',
                       style: textTheme.labelSmall.copyWith(
@@ -490,7 +564,7 @@ class SignVideoPlayerWidget extends StatelessWidget {
 
           Divider(height: 1, color: colors.border),
 
-          // ── Video Meta & Offline Status Footer ─────────────────────────────
+          // Video Meta & Offline Status Footer
           Padding(
             padding: const EdgeInsets.all(AppSpacing.md),
             child: Row(
@@ -532,7 +606,7 @@ class SignVideoPlayerWidget extends StatelessWidget {
     );
   }
 
-  // ── BADGE STATUS ───────────────────────────────────────────────────────────
+  // BADGE STATUS
 
   Widget _buildSourceBadge(BuildContext context, SignVideoSource source) {
     final colors = context.hc;
@@ -604,7 +678,7 @@ class SignVideoPlayerWidget extends StatelessWidget {
     return '$minutes:$seconds';
   }
 
-  // ── SPEED CONTROLS ─────────────────────────────────────────────────────────
+  // SPEED CONTROLS
 
   Widget _buildSpeedCapsule(BuildContext context) {
     final colors = context.hc;
@@ -636,7 +710,7 @@ class SignVideoPlayerWidget extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Slow down button (-)
+            // Slow down button
             Material(
               color: Colors.transparent,
               child: InkWell(
@@ -666,7 +740,7 @@ class SignVideoPlayerWidget extends StatelessWidget {
               ),
             ),
 
-            // Speed Display & Sheet Trigger (e.g. ⚡ 1.0x)
+            // Speed Display & Sheet Trigger (e.g. ⚡ 1.0x
             Material(
               color: Colors.transparent,
               child: InkWell(
@@ -710,7 +784,7 @@ class SignVideoPlayerWidget extends StatelessWidget {
               ),
             ),
 
-            // Speed up button (+)
+            // Speed up button (+
             Material(
               color: Colors.transparent,
               child: InkWell(
@@ -809,7 +883,6 @@ class SignVideoPlayerWidget extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Drag handle
                 Center(
                   child: Container(
                     width: 40,
@@ -822,7 +895,6 @@ class SignVideoPlayerWidget extends StatelessWidget {
                 ),
                 const SizedBox(height: AppSpacing.md),
 
-                // Header
                 Row(
                   children: [
                     Container(

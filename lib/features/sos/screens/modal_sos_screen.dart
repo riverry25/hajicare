@@ -195,7 +195,7 @@ class _ModalSosScreenState extends State<ModalSosScreen>
 
   /// Resolves the list of active SOS events.
   /// Firestore `sos_events` stream (`state.activeSosEvents`) is the SOLE canonical
-  /// source of truth. When `sos_events` has no active documents in Firestore,
+  /// source of truth. When `sos_events` has no active documents in Firestore
   /// this returns an empty list, allowing the UI to reactively render the safe
   /// condition empty state with zero ghost cards.
   List<Map<String, dynamic>> _resolveActiveSosList() {
@@ -214,7 +214,7 @@ class _ModalSosScreenState extends State<ModalSosScreen>
     final seenEventIds = <String>{};
     final seenUserIds = <String>{};
 
-    // 1. From Firestore sos_events stream in state (canonical / single source of truth)
+    // 1. From Firestore sos_events stream in state (canonical / single source of truth
     for (final event in state.activeSosEvents) {
       final eventId = event['id']?.toString();
       if (_isItemDismissed(eventId)) continue;
@@ -227,9 +227,7 @@ class _ModalSosScreenState extends State<ModalSosScreen>
       }
     }
 
-    // 2. Offline / isolated unit test fallback ONLY:
-    // If state.currentUid == null (e.g. running in widget test harness without Firebase),
-    // allow mock `jamaahList` entries marked with `sosActive == true` to be tested.
+    // Fallback data lokal jika sesi pengguna belum tersedia
     if (state.currentUid == null && list.isEmpty) {
       for (final j in state.jamaahList) {
         if (_isItemDismissed(j.id)) continue;
@@ -265,13 +263,13 @@ class _ModalSosScreenState extends State<ModalSosScreen>
       final isOfficer =
           state.role == UserRole.pendamping || state.role == UserRole.admin;
 
-      // ── Khusus Pendamping: Tampilan baru bergradien mewah mengikuti Gambar 2 ─
+      // Khusus Pendamping: Tampilan baru bergradien mewah mengikuti
       if (isOfficer) {
         final activeSosList = _resolveActiveSosList();
         return _buildResponderView(context, activeSosList, colors.isDark);
       }
 
-      // ── Jamaah: Tampilan Emergency Trigger Panel ────────────────────────────
+      // Jamaah: Tampilan Emergency Trigger Panel
       final scaffoldBg = colors.canvas;
       final cardBg = colors.surface;
       final headingColor = colors.textPrimary;
@@ -332,9 +330,7 @@ class _ModalSosScreenState extends State<ModalSosScreen>
     });
   }
 
-  // ===========================================================================
-  // RESPONDER / OFFICER VIEW (REFERENSI GAMBAR 2: HERO GRADIENT & FLOATING ISLAND)
-  // ===========================================================================
+  // RESPONDER / OFFICER VIEW (REFERENSI
 
   Widget _buildResponderView(
     BuildContext context,
@@ -352,7 +348,7 @@ class _ModalSosScreenState extends State<ModalSosScreen>
       backgroundColor: colors.canvas,
       body: Stack(
         children: [
-          // ── 1. Top Hero Gradient Background (Merah Crimson & Kaaba Espresso)
+          // 1. Top Hero Gradient Background (Merah Crimson & Kaaba Espresso
           Positioned(
             top: 0,
             left: 0,
@@ -374,7 +370,6 @@ class _ModalSosScreenState extends State<ModalSosScreen>
               ),
               child: Stack(
                 children: [
-                  // Subtle decorative watermark circles
                   Positioned(
                     top: -40,
                     right: -30,
@@ -404,7 +399,7 @@ class _ModalSosScreenState extends State<ModalSosScreen>
             ),
           ),
 
-          // ── 2. Scrollable Content Layer ──────────────────────────────────
+          // 2. Scrollable Content Layer
           SafeArea(
             bottom: false,
             child: ResponsiveCenter(
@@ -412,13 +407,12 @@ class _ModalSosScreenState extends State<ModalSosScreen>
               child: CustomScrollView(
                 physics: const BouncingScrollPhysics(),
                 slivers: [
-                  // Top Custom Navigation Bar (Frosted back & title)
+                  // Top Custom Navigation Bar (Frosted back & title
                   SliverToBoxAdapter(
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
                       child: Row(
                         children: [
-                          // Frosted circular back button
                           Material(
                             color: Colors.transparent,
                             child: InkWell(
@@ -444,7 +438,6 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                             ),
                           ),
                           const SizedBox(width: 12),
-                          // Title & Subtitle
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -470,7 +463,6 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                               ],
                             ),
                           ),
-                          // Active Badge Pill
                           if (hasActiveSos)
                             Container(
                               padding: const EdgeInsets.symmetric(
@@ -521,7 +513,6 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                     ),
                   ),
 
-                  // Top Command Card (Meniru Floating Box pada Gambar 2)
                   SliverToBoxAdapter(
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(16, 4, 16, 18),
@@ -534,7 +525,7 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                     ),
                   ),
 
-                  // The Curved Bottom Sheet (White/Cream Island)
+                  // The Curved Bottom Sheet (White/Cream Island
                   SliverToBoxAdapter(
                     child: Container(
                       decoration: BoxDecoration(
@@ -556,7 +547,6 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Drag handle
                           Center(
                             child: Container(
                               width: 38,
@@ -640,7 +630,6 @@ class _ModalSosScreenState extends State<ModalSosScreen>
     );
   }
 
-  // ── Top Command Card (Meniru Visual Box "From / To" pada Gambar 2) ─────────
 
   Widget _buildTopCommandCard(
     BuildContext context,
@@ -681,7 +670,6 @@ class _ModalSosScreenState extends State<ModalSosScreen>
       ),
       child: Column(
         children: [
-          // Row 1: Posko Pendamping (Green point)
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -741,7 +729,6 @@ class _ModalSosScreenState extends State<ModalSosScreen>
             ],
           ),
 
-          // Vertical connector line
           Padding(
             padding: const EdgeInsets.only(left: 7.5, top: 2, bottom: 2),
             child: Row(
@@ -751,7 +738,6 @@ class _ModalSosScreenState extends State<ModalSosScreen>
             ),
           ),
 
-          // Row 2: Status Panggilan Darurat (Red pulsing point)
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -815,7 +801,7 @@ class _ModalSosScreenState extends State<ModalSosScreen>
     );
   }
 
-  // ── SOS Card Mengikuti Desain Referensi Gambar 2 ───────────────────────────
+  // SOS Card Mengikuti Desain Referensi
 
   Widget _buildReferenceSosCard(
     BuildContext context,
@@ -864,7 +850,6 @@ class _ModalSosScreenState extends State<ModalSosScreen>
         borderRadius: BorderRadius.circular(22),
         child: Stack(
           children: [
-            // Bookmark Ribbon in Top Right Corner (Meniru Ribbon "AC" di Gambar 2)
             Positioned(
               top: 0,
               right: 18,
@@ -905,13 +890,12 @@ class _ModalSosScreenState extends State<ModalSosScreen>
               ),
             ),
 
-            // Card Main Content
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Top Left: Large wait time typography (matching reference "10 min")
+                  // Top Left: Large wait time typography
                   Row(
                     children: [
                       Column(
@@ -950,7 +934,6 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                                 ),
                               ),
                               const SizedBox(width: 10),
-                              // GPS Badge
                               Container(
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 7,
@@ -997,7 +980,6 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                     ],
                   ),
 
-                  // Route/Timeline Steps (2 Points: Jamaah & Lokasi)
                   Container(
                     margin: const EdgeInsets.only(top: 14, bottom: 16),
                     padding: const EdgeInsets.all(12),
@@ -1008,7 +990,6 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                     ),
                     child: Row(
                       children: [
-                        // Dots & Line
                         Column(
                           children: [
                             Container(
@@ -1044,7 +1025,6 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                           ],
                         ),
                         const SizedBox(width: 12),
-                        // Details
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1093,7 +1073,7 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                     ),
                   ),
 
-                  // Action Buttons (Text Scale Responsive)
+                  // Action Buttons (Text Scale Responsive
                   LayoutBuilder(
                     builder: (context, btnConstraints) {
                       final textScale = MediaQuery.textScalerOf(
@@ -1215,7 +1195,6 @@ class _ModalSosScreenState extends State<ModalSosScreen>
     );
   }
 
-  // ── Safe Empty State ───────────────────────────────────────────────────────
 
   Widget _buildSafeEmptyState(BuildContext context, bool isDark) {
     final colors = context.hc;
@@ -1269,7 +1248,6 @@ class _ModalSosScreenState extends State<ModalSosScreen>
     );
   }
 
-  // ── Hotline Darurat Card ───────────────────────────────────────────────────
 
   Widget _buildHotlineCard(BuildContext context, bool isDark) {
     final colors = context.hc;
@@ -1328,7 +1306,7 @@ class _ModalSosScreenState extends State<ModalSosScreen>
     );
   }
 
-  // ── Handler Selesaikan SOS ─────────────────────────────────────────────────
+  // Handler Selesaikan SOS
 
   void _handleCompleteSos(
     BuildContext context,
@@ -1398,9 +1376,7 @@ class _ModalSosScreenState extends State<ModalSosScreen>
     );
   }
 
-  // ===========================================================================
-  // JAMAAH SENDER VIEW (EMERGENCY TRIGGER WITH LIVE FIREBASE SYNC)
-  // ===========================================================================
+  // JAMAAH SENDER VIEW (EMERGENCY TRIGGER WITH LIVE FIREBASE SYNC
 
   Widget _buildJamaahSenderView(
     BuildContext context,
@@ -1506,7 +1482,6 @@ class _ModalSosScreenState extends State<ModalSosScreen>
         children: [
           const Spacer(),
 
-          // ── Pulsing SOS Radar ─────────────────────────────────────────────
           Stack(
             alignment: Alignment.center,
             children: [
@@ -1581,7 +1556,6 @@ class _ModalSosScreenState extends State<ModalSosScreen>
           ),
           const SizedBox(height: AppSpacing.xxl),
 
-          // ── Status Title & Subtitle ────────────────────────────────────────
           Text(
             isSosAlreadyActive
                 ? context.tr('sosSignalActiveNow')
@@ -1609,7 +1583,6 @@ class _ModalSosScreenState extends State<ModalSosScreen>
           ),
           const SizedBox(height: AppSpacing.xl),
 
-          // ── Action Buttons ────────────────────────────────────────────────
           if (_isCountingDown) ...[
             SizedBox(
               width: double.infinity,
@@ -1722,7 +1695,6 @@ class _ModalSosScreenState extends State<ModalSosScreen>
 
           const Spacer(),
 
-          // ── GPS Telemetry Strip ───────────────────────────────────────────
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
@@ -1757,7 +1729,7 @@ class _ModalSosScreenState extends State<ModalSosScreen>
   }
 }
 
-/// Custom swallowtail ribbon clipper matching the bookmark badge from reference design.
+/// Custom swallowtail ribbon clipper matching the bookmark badge fromdesign.
 class _RibbonClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {

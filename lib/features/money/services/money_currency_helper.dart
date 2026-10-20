@@ -327,7 +327,7 @@ class MoneySpeechFormatter {
     return wholeWords;
   }
 
-  /// Connects items with commas and "dan" (ID) or "and" (EN):
+  /// Connects items with commas and "dan" (ID) or "and" (EN
   /// e.g. ["A", "B", "C"] -> "A, B, dan C" or "A, B, and C"
   static String joinNaturalSpoken(List<String> items, {String? languageCode}) {
     if (items.isEmpty) return '';

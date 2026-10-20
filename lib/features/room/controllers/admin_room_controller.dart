@@ -33,7 +33,7 @@ class AdminRoomController extends GetxController {
   final activities = <ActivityModel>[].obs;
   final roomBreakdowns = <String, Map<String, int>>{}.obs;
 
-  // Paginated Activity State (10 records per batch)
+  // Paginated Activity State (10 records per batch
   final paginatedActivities = <ActivityModel>[].obs;
   final isActivitiesPageLoading = false.obs;
   final isActivitiesPageLoadingMore = false.obs;
@@ -100,7 +100,7 @@ class AdminRoomController extends GetxController {
       },
     );
 
-    // 4. Resolved SOS Events Stream (for history)
+    // 4. Resolved SOS Events Stream (for history
     _resolvedSosSub?.cancel();
     _resolvedSosSub = _roomService.getResolvedSosEventsStream().listen(
       (resList) {
@@ -111,7 +111,7 @@ class AdminRoomController extends GetxController {
       },
     );
 
-    // 5. All Users Stream (realtime jamaah & pendamping data)
+    // 5. All Users Stream (realtime jamaah & pendamping data
     _usersSub?.cancel();
     _usersSub = _roomService.getAllUsersStream().listen(
       (userList) {
@@ -123,7 +123,7 @@ class AdminRoomController extends GetxController {
             .where((u) => (u['role'] as String?)?.toLowerCase() == 'pendamping')
             .length;
 
-        // Auto-heal ghost SOS: if user has sosActive == true but has no activeRoomId,
+        // Auto-heal ghost SOS: if user has sosActive == true but has no activeRoomId
         // clear sosActive on user doc and cancel lingering sos_events in Firestore
         for (final u in userList) {
           final rId = (u['activeRoomId'] as String?)?.trim();
@@ -169,7 +169,7 @@ class AdminRoomController extends GetxController {
       },
     );
 
-    // 6. Global Member Counts Stream (fallback)
+    // 6. Global Member Counts Stream (fallback
     _countsSub?.cancel();
     _countsSub = _roomService.getGlobalMemberCountsStream().listen(
       (counts) {
@@ -209,7 +209,7 @@ class AdminRoomController extends GetxController {
         );
   }
 
-  // ── Computed Getters ────────────────────────────────────────────────────────
+  // Computed Getters
   int get activeRoomsCount => rooms.where((r) => r.isActive).length;
   int get inactiveRoomsCount => rooms.where((r) => !r.isActive).length;
 
@@ -381,7 +381,7 @@ class AdminRoomController extends GetxController {
     return list;
   }
 
-  // ── Cursor-based Activity Pagination (10 per page) ──────────────────────────
+  // Cursor-based Activity Pagination (10 per page
 
   Future<void> loadInitialActivities({String filter = 'Semua'}) async {
     _currentActivityFilter = filter;
@@ -463,7 +463,7 @@ class AdminRoomController extends GetxController {
     }).toList();
   }
 
-  // ── Room CRUD Actions with AppAlert ─────────────────────────────────────────
+  // Room CRUD Actions with AppAlert
 
   Future<void> createRoom(BuildContext context, String name) async {
     final trimmed = name.trim();

@@ -5,7 +5,7 @@ import '../theme/app_spacing.dart';
 class AppConstants {
   AppConstants._();
 
-  // Spacing (from tokens)
+  // Spacing (from tokens
   static const double space2xs = AppSpacing.sm2;
   static const double spaceXs = AppSpacing.sm;
   static const double spaceSm = AppSpacing.md;
@@ -30,17 +30,17 @@ class AppConstants {
   static const double radiusSheet = AppRadius.xl;
   static const double radiusPill = AppRadius.pill;
 
-  // ── App Version ────────────────────────────────────────────────────────────
+  // App Version
   // Keep this aligned with the public version in pubspec.yaml.
   static const String appVersion = '0.1.0';
 
-  // ── Support Contact Placeholders ───────────────────────────────────────────
+  // Support Contact Placeholders
 
   static const String supportEmail = 'support@hajicare.id';
   static const String supportWhatsApp = '+62000000000';
   static const String supportWhatsAppUrl = 'https://wa.me/62000000000';
 
-  // ── CARTO Configuration ───────────────────────────────────────────────────
+  // CARTO Configuration
   // Override at build time with: --dart-define=CARTO_API_KEY=your_key
   static const String cartoApiKey = String.fromEnvironment(
     'CARTO_API_KEY',

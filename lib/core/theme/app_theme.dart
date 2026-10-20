@@ -7,19 +7,19 @@ import 'app_typography.dart';
 import 'haji_colors.dart';
 
 /// Centralized Material 3 Theme Configuration for HajiCare.
-/// Integrates the "White Sand" aesthetic:
-/// - 60% warm-white canvas (#FBF9F6) and pure white cards (#FFFFFF)
-/// - 30% refined desert sand and subtle tonal surfaces
-/// - 10% rich espresso (#3B2A1F) and desert gold (#B08A57) primary actions
+/// Integrates the "White Sand" aesthetic
+/// 60% warm-white canvas (#FBF9F6) and pure white cards (#FFFFFF
+/// 30% refined desert sand and subtle tonal surfaces
+/// 10% rich espresso (#3B2A1F) and desert gold (#B08A57) primary actions
 /// with high accessibility, large readable typography, and tactile touch targets.
 class AppTheme {
   AppTheme._();
 
-  /// Light Theme (Warm White, Sand & Rich Espresso)
+  /// Light Theme (Warm White, Sand & Rich Espresso
   static ThemeData get lightTheme =>
       _buildTheme(HajiColors.light, Brightness.light);
 
-  /// Dark Theme (Warm Charcoal-Espresso & Desert Amber)
+  /// Dark Theme (Warm Charcoal-Espresso & Desert Amber
   static ThemeData get darkTheme =>
       _buildTheme(HajiColors.dark, Brightness.dark);
 

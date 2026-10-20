@@ -19,9 +19,8 @@ class RoomCommandException implements Exception {
 }
 
 /// Mutations for the room domain.
-///
 /// Membership, invitation, room administration, and SOS changes attempt
-/// callable Functions first. If backend functions are unreachable or not deployed,
+/// callable Functions first. If backend functions are unreachable or not deployed
 /// operations fall back gracefully to direct authenticated Firestore transactions.
 class RoomCommandService {
   final FirebaseFirestore? _providedFirestore;
@@ -123,7 +122,7 @@ class RoomCommandService {
       throw const RoomCommandException('Nama rombongan tidak boleh kosong.');
     }
 
-    // Generate unique 6-character room code (without confusing chars 0, 1, I, O)
+    // Generate unique 6-character room code (without confusing chars 0, 1, I, O
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
     final random = math.Random();
     String code = '';
@@ -479,7 +478,7 @@ class RoomCommandService {
       throw const RoomCommandException('Pengguna belum masuk.');
     }
 
-    // Step 1: Resolve roomId from roomCodes collection or rooms query
+    // Cari roomId berdasarkan kode room
     String? targetRoomId;
     try {
       final codeDoc = await _firestore
@@ -509,7 +508,7 @@ class RoomCommandService {
       );
     }
 
-    // Step 2: Fetch and validate Room
+    // Ambil dan validasi data room
     final roomDoc = await _firestore
         .collection('rooms')
         .doc(targetRoomId)
@@ -522,7 +521,7 @@ class RoomCommandService {
       throw const RoomCommandException('Rombongan ini sudah tidak aktif.');
     }
 
-    // Step 3: Get user profile details
+    // Ambil detail profil pengguna
     String memberName = user.displayName?.trim().isNotEmpty == true
         ? user.displayName!.trim()
         : (user.email?.trim().isNotEmpty == true
@@ -545,7 +544,7 @@ class RoomCommandService {
       }
     } catch (_) {}
 
-    // Step 4: Write membership, increment room memberCount, and update user activeRoomId
+    // Daftarkan anggota baru dan perbarui data room
     final batch = _firestore.batch();
     final memberRef = _firestore
         .collection('rooms')

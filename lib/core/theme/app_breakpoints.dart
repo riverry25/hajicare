@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-/// Screen window classification based on official Flutter responsive guidelines:
-/// - [compact]: Phone in portrait (< 600dp)
-/// - [medium]: Foldables and tablets in portrait (600..839dp)
-/// - [expanded]: Large tablets in landscape, desktops (>= 840dp)
+/// Screen window classification based on official Flutter responsive guidelines
+/// [compact]: Phone in portrait (< 600dp
+/// [medium]: Foldables and tablets in portrait (600..839dp
+/// [expanded]: Large tablets in landscape, desktops (>= 840dp
 enum WindowSize { compact, medium, expanded }
 
 /// Breakpoints and responsive constraints for HajiCare.

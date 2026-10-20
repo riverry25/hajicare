@@ -8,7 +8,7 @@ import 'currency_rate_service.dart';
 import 'money_aggregator.dart';
 import 'money_currency_helper.dart';
 
-/// Service responsible for managing multi-language Text-to-Speech (TTS)
+/// Service responsible for managing multi-language Text-to-Speech (TTS
 /// for multi-currency money detection with debounce, stabilization, and accessibility.
 class MoneyTtsService {
   final FlutterTts _tts = FlutterTts();
@@ -103,9 +103,7 @@ class MoneyTtsService {
     final conv = conversionService ?? CurrencyRateService.instance;
     final isMixed = MoneyAggregator.hasMixedCurrencies(detections);
 
-    // -------------------------------------------------------------------------
     // SINGLE CURRENCY SCENARIOS
-    // -------------------------------------------------------------------------
     if (!isMixed) {
       final currency = detections.first.currency;
       final totalAmount = totalsByCurrency[currency] ?? 0.0;
@@ -175,9 +173,7 @@ class MoneyTtsService {
           : 'Terdeteksi $countWords uang. $itemsSpoken. Total $totalSpoken.$conversionSentence';
     }
 
-    // -------------------------------------------------------------------------
     // MIXED CURRENCY SCENARIOS
-    // -------------------------------------------------------------------------
     final countWords = MoneySpeechFormatter.numberToWords(
       detections.length,
       languageCode: lang,

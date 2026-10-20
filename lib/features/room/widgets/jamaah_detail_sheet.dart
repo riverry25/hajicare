@@ -19,7 +19,7 @@ import '../../dashboard/controllers/dashboard_controller.dart';
 import '../../map/controllers/map_controller.dart';
 import '../services/room_service.dart';
 
-/// Modal bottom sheet displaying Jamaah details matching the reference
+/// Modal bottom sheet displaying Jamaah details
 /// style of HajiCare with complete Pilgrim Medical Data & History integration.
 class JamaahDetailSheet extends StatefulWidget {
   final JamaahData jamaah;
@@ -132,7 +132,7 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
     } catch (_) {}
   }
 
-  // ── Resolved Data Getters ──────────────────────────────────────────────────
+  // Resolved Data Getters
 
   String get _resolvedName =>
       (_userFirestoreData?['name'] as String?)?.trim() ??
@@ -201,7 +201,6 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
     return widget.jamaah.locationUpdatedAt;
   }
 
-  // ── Actions & Helpers ──────────────────────────────────────────────────────
 
   String _formatDate(DateTime? dt) {
     if (dt == null) return context.tr('room.unknown');
@@ -445,7 +444,6 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
   }
 
   /// Opens the dedicated "Pilgrim Medical Data & History" bottom sheet
-  /// matching reference Image 2.
   void _showFullMedicalBottomSheet(BuildContext context) {
     final hc = context.hc;
     final headingColor = hc.textPrimary;
@@ -481,7 +479,6 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Drag Handle
                   Center(
                     child: Container(
                       width: 44,
@@ -536,7 +533,7 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
                   ),
                   const SizedBox(height: 18),
 
-                  // Data Container (Cream box matching Image 2)
+                  // Data Container (Cream box
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 16,
@@ -852,7 +849,7 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
     );
   }
 
-  // ── Row Helper for JamaahDetailSheet Main View ─────────────────────────────
+  // Row Helper for JamaahDetailSheet Main View
 
   Widget _buildDetailHorizontalRow({
     required String label,
@@ -934,7 +931,6 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
     );
   }
 
-  // ── Section Container Helper ───────────────────────────────────────────────
 
   Widget _buildSectionCard({
     required BuildContext context,
@@ -982,7 +978,7 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
     );
   }
 
-  // ── Main Build ─────────────────────────────────────────────────────────────
+  // Main Build
 
   @override
   Widget build(BuildContext context) {
@@ -1043,7 +1039,7 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
           child: Stack(
             clipBehavior: Clip.none,
             children: [
-              // ── Main Card Container ──
+              // Main Card Container
               Container(
                 margin: const EdgeInsets.only(top: 36),
                 decoration: BoxDecoration(
@@ -1069,7 +1065,7 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
                       // Space for overlapping floating avatar
                       const SizedBox(height: 48),
 
-                      // SOS Emergency Banner (if active)
+                      // SOS Emergency Banner (if active
                       if (isSos) ...[
                         Container(
                           margin: const EdgeInsets.fromLTRB(20, 0, 20, 10),
@@ -1153,7 +1149,7 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
                             ),
                           ),
 
-                          // Kloter & Maktab Pill (if available)
+                          // Kloter & Maktab Pill (if available
                           if (_resolvedKloter != null ||
                               _resolvedMaktab != null) ...[
                             Container(
@@ -1197,7 +1193,7 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
                             ),
                           ],
 
-                          // Blood Type Badge (if available)
+                          // Blood Type Badge (if available
                           if (_resolvedBloodType != null &&
                               _resolvedBloodType!.isNotEmpty) ...[
                             Container(
@@ -1236,7 +1232,6 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
                       ),
                       const SizedBox(height: 18),
 
-                      // ── SECTION 1: Status & Lokasi (Image 1 Style) ──
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 20),
                         child: _buildSectionCard(
@@ -1318,7 +1313,6 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
                       ),
                       const SizedBox(height: 12),
 
-                      // ── SECTION 2: Data Medis & Darurat (PPIH) ──
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 20),
                         child: _buildSectionCard(
@@ -1413,7 +1407,6 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
                       ),
                       const SizedBox(height: 12),
 
-                      // ── SECTION 3: Dokumen & Identitas Haji ──
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 20),
                         child: _buildSectionCard(
@@ -1469,7 +1462,6 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
                                   : null,
                             ),
 
-                            // Email
                             if (_resolvedEmail != null &&
                                 _resolvedEmail!.isNotEmpty) ...[
                               Divider(height: 16, color: dividerColor),
@@ -1489,7 +1481,7 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
                       ),
                       const SizedBox(height: 20),
 
-                      // ── BOTTOM ACTION BUTTONS ──
+                      // BOTTOM ACTION BUTTONS
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 20),
                         child: Column(
@@ -1525,7 +1517,7 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
                                 ),
                               ),
 
-                            // 2. Call Emergency Contact (if available)
+                            // 2. Call Emergency Contact (if available
                             if (hasEmergencyContact) ...[
                               if (hasLocation) const SizedBox(height: 10),
                               SizedBox(
@@ -1566,7 +1558,7 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
                               ),
                             ],
 
-                            // 3. Remove Member (Admin / Pendamping)
+                            // 3. Remove Member (Admin / Pendamping
                             if (canManage) ...[
                               const SizedBox(height: 10),
                               SizedBox(
@@ -1622,7 +1614,7 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
                 ),
               ),
 
-              // ── Overlapping Circular Avatar (top center) ──
+              // Overlapping Circular Avatar (top center
               Positioned(
                 top: 0,
                 left: 0,

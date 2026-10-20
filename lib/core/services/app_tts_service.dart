@@ -3,9 +3,9 @@ import 'package:flutter_tts/flutter_tts.dart';
 import 'package:get/get.dart';
 import '../state/app_settings_controller.dart';
 
-/// Centralized coordinator for Text-to-Speech (TTS) language resolution,
+/// Centralized coordinator for Text-to-Speech (TTS) language resolution
 /// engine configuration, and bilingual phrase mapping across HajiCare features
-/// (Turn-by-turn Navigation, BISINDO Sign Language, and Money Recognition).
+/// Turn-by-turn Navigation, BISINDO Sign Language, and Money Recognition).
 class AppTtsService {
   AppTtsService._();
 
@@ -73,7 +73,7 @@ class AppTtsService {
     }
   }
 
-  // ── BISINDO Sign Language Indonesian to English Mapping ─────────────────────
+  // BISINDO Sign Language Indonesian to English Mapping
   static const Map<String, String> _bisindoToEnglish = {
     'aku': 'i',
     'saya': 'i',

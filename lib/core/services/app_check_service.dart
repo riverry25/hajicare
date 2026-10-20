@@ -1,21 +1,20 @@
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:flutter/foundation.dart';
 
-/// Service untuk inisialisasi Firebase App Check sesuai standar OWASP MASVS V4 (Network Security)
+/// Service untuk inisialisasi Firebase App Check sesuai standar OWASP  V4 (Network Security
 /// dan pedoman keamanan Firebase AI Logic.
-///
-/// Memastikan bahwa seluruh permintaan API ke backend (Firestore, Storage, Cloud Functions, AI Logic)
+/// Memastikan bahwa seluruh permintaan API ke backend (Firestore, Storage, Cloud Functions, AI Logic
 /// diverifikasi keasliannya dan hanya diizinkan jika berasal dari build aplikasi resmi (Play Integrity).
 class AppCheckService {
   AppCheckService._();
 
   static bool _isInitialized = false;
 
-  /// Menginisialisasi Firebase App Check provider:
-  /// - Di mode rilis (Production): Menggunakan [AndroidProvider.playIntegrity] pada Android dan
-  ///   [AppleProvider.deviceCheck] pada iOS.
-  /// - Di mode pengujian lokal (Debug): Menggunakan [AndroidProvider.debug] dan [AppleProvider.debug]
-  ///   tanpa menyimpan hardcoded token dalam kode sumber.
+  /// Menginisialisasi Firebase App Check provider
+  /// Di mode rilis (Production): Menggunakan [AndroidProvider.playIntegrity] pada Android dan
+  /// [AppleProvider.deviceCheck] pada iOS.
+  /// Di mode pengujian lokal (Debug): Menggunakan [AndroidProvider.debug] dan [AppleProvider.debug]
+  /// tanpa menyimpan hardcoded token dalam kode sumber.
   static Future<void> initialize() async {
     if (_isInitialized) return;
 

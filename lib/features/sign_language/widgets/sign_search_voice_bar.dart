@@ -22,7 +22,7 @@ class SignSearchVoiceBar extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        // ── Input Field Container ──────────────────────────────────────────
+        // Input Field Container
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
           decoration: BoxDecoration(
@@ -83,7 +83,7 @@ class SignSearchVoiceBar extends StatelessWidget {
                 }),
               ),
 
-              // Action Buttons Row (Clear, Mic, Search)
+              // Action Buttons Row (Clear, Mic, Search
               Obx(() {
                 final isListening = controller.isListening.value;
                 final isSearching = controller.isSearching.value;
@@ -178,7 +178,7 @@ class SignSearchVoiceBar extends StatelessWidget {
           ),
         ),
 
-        // ── Autocomplete Suggestions Popover ───────────────────────────────
+        // Autocomplete Suggestions Popover
         _buildAutocompleteDropdown(context),
       ],
     );

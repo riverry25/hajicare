@@ -12,10 +12,10 @@ import '../../features/map/controllers/map_controller.dart';
 
 enum StartupState { checking, authenticated, unauthenticated }
 
-/// Centralized controller & Single Source of Truth (SSOT) for:
-/// - App startup bootstrap & single-destination routing
-/// - Persistent onboarding status (one-time onboarding)
-/// - Persistent "Remember Me" preference and session lifecycle
+/// Centralized controller & Single Source of Truth (SSOT) for
+/// App startup bootstrap & single-destination routing
+/// Persistent onboarding status (one-time onboarding
+/// Persistent "Remember Me" pand session lifecycle
 class AppStartupController extends GetxController {
   AppStartupController({
     FirebaseAuth? firebaseAuth,
@@ -56,7 +56,7 @@ class AppStartupController extends GetxController {
     }
   }
 
-  // ── Onboarding Persistence ──────────────────────────────────────────────────
+  // Onboarding Persistence
 
   /// Checks if user has already completed or skipped onboarding.
   Future<bool> isOnboardingDone() async {
@@ -80,10 +80,10 @@ class AppStartupController extends GetxController {
     }
   }
 
-  // ── Remember Me Persistence (Secure Encrypted Storage) ──────────────────────
+  // Remember Me Persistence (Secure Encrypted Storage
 
   /// Reads whether the user chose "Remember Me" on their last login.
-  /// Defaults to true, using encrypted storage (OWASP MASVS V1).
+  /// Defaults to true, using encrypted storage (OWASP  V1).
   Future<bool> isRememberMe() async {
     try {
       return await SecureStorageService.instance.isRememberMe();
@@ -93,7 +93,7 @@ class AppStartupController extends GetxController {
     }
   }
 
-  /// Saves the user's "Remember Me" preference to hardware-backed secure storage.
+  /// Saves the user's "Remember Me" pto hardware-backed secure storage.
   Future<void> setRememberMe(bool value) async {
     try {
       await SecureStorageService.instance.setRememberMe(value);
@@ -110,7 +110,7 @@ class AppStartupController extends GetxController {
     startupState.value = StartupState.authenticated;
   }
 
-  // ── Sign Out ────────────────────────────────────────────────────────────────
+  // Sign Out
 
   /// Signs out the user from Firebase Auth and navigates to the Login page.
   /// Purges encrypted session tokens & cached role from SecureStorageService.
@@ -151,14 +151,14 @@ class AppStartupController extends GetxController {
     }
   }
 
-  // ── Bootstrap & Initial Route Determination ─────────────────────────────────
+  // Bootstrap & Initial Route Determination
 
-  /// Determines exactly ONE destination route at app launch:
+  /// Determines exactly ONE destination route at app launch
   /// 1. If onboarding not completed -> [AppRoutes.onboarding]
-  /// 2. If onboarding done:
-  ///    - If rememberMe was false -> signs out existing session -> [AppRoutes.login]
-  ///    - If current Firebase user exists -> [AppRoutes.dashboardJamaah] or [AppRoutes.dashboardPendamping]
-  ///    - If current user is null -> [AppRoutes.login]
+  /// 2. If onboarding done
+  /// If rememberMe was false -> signs out existing session -> [AppRoutes.login]
+  /// If current Firebase user exists -> [AppRoutes.dashboardJamaah] or [AppRoutes.dashboardPendamping]
+  /// If current user is null -> [AppRoutes.login]
   Future<String> determineInitialRoute() async {
     startupState.value = StartupState.checking;
 
@@ -170,7 +170,7 @@ class AppStartupController extends GetxController {
         return AppRoutes.onboarding;
       }
 
-      // 2. Check Remember Me preference
+      // 2. Check Remember Me p
       final rememberMe = await isRememberMe();
       if (!rememberMe) {
         // If user logged in without Remember Me, terminate persistent session on restart
@@ -218,7 +218,7 @@ class AppStartupController extends GetxController {
         final data = doc.data();
 
         // 2. If custom claim is absent, fall back to the Firestore `role` field.
-        //    Custom claim takes precedence when present.
+        // Custom claim takes precedence when present.
         final rawFirestoreRole = (data?['role'] as String?)
             ?.trim()
             .toLowerCase();

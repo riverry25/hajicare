@@ -264,7 +264,7 @@ class CommunicationScreen extends StatelessWidget {
                     ),
                   ],
 
-                  // Arabic Text (Large, crisp, readable for elderly)
+                  // Arabic Text (Large, crisp, readable for elderly
                   Text(
                     phrase.arabic,
                     style: context.textX.arabic.copyWith(
@@ -300,7 +300,7 @@ class CommunicationScreen extends StatelessWidget {
             ),
             const SizedBox(width: AppSpacing.md),
 
-            // Wide Audio Playback Button (50x50 touch target)
+            // Wide Audio Playback Button (50x50 touch target
             Material(
               color: Colors.transparent,
               child: InkWell(

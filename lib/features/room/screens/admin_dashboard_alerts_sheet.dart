@@ -41,7 +41,6 @@ extension _AdminDashboardAlertsSheet on _AdminDashboardHome {
                 child: Column(
                   children: [
                     const SizedBox(height: AppSpacing.md),
-                    // Drag handle
                     Center(
                       child: Container(
                         width: 38,
@@ -193,7 +192,6 @@ extension _AdminDashboardAlertsSheet on _AdminDashboardHome {
                     ),
                     const SizedBox(height: AppSpacing.md),
 
-                    // Content
                     Expanded(
                       child: ListView(
                         controller: scrollController,
@@ -263,7 +261,7 @@ extension _AdminDashboardAlertsSheet on _AdminDashboardHome {
                             const SizedBox(height: AppSpacing.lg),
                           ],
 
-                          // 1. PRIORITAS TINGGI (SOS)
+                          // 1. PRIORITAS TINGGI (SOS
                           if (activeSosList.isNotEmpty) ...[
                             Row(
                               children: [
@@ -603,7 +601,7 @@ extension _AdminDashboardAlertsSheet on _AdminDashboardHome {
                             const SizedBox(height: AppSpacing.sm),
                           ],
 
-                          // 2. PERLU PERHATIAN (Stale location / GPS inactive)
+                          // 2. PERLU PERHATIAN (Stale location / GPS inactive
                           if (attentionList.isNotEmpty) ...[
                             Row(
                               children: [
@@ -935,7 +933,7 @@ extension _AdminDashboardAlertsSheet on _AdminDashboardHome {
                             const SizedBox(height: AppSpacing.sm),
                           ],
 
-                          // 3. Riwayat Terakhir (jika tersedia)
+                          // 3. Riwayat Terakhir (jika tersedia
                           if (resolvedList.isNotEmpty) ...[
                             const SizedBox(height: AppSpacing.xs),
                             Row(

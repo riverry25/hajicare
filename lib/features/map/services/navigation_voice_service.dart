@@ -4,7 +4,7 @@ import 'package:flutter_tts/flutter_tts.dart';
 import '../../../core/services/app_tts_service.dart';
 
 /// Service responsible for turn-by-turn voice guidance in navigation mode.
-/// Dynamically adjusts language between Indonesian ('id-ID') and English ('en-US')
+/// Dynamically adjusts language between Indonesian ('id-ID') and English ('en-US'
 /// with debouncing and cooldowns to provide natural, non-repetitive audio cues.
 class NavigationVoiceService {
   static final NavigationVoiceService _instance =
@@ -61,7 +61,7 @@ class NavigationVoiceService {
     final targetEngineLocale = AppTtsService.resolveEngineLocale(targetLang);
 
     // Translate common navigation phrases if speech text was passed in Indonesian
-    // while the app/explicit language is English:
+    // while the app/explicit language is English
     if (targetLang == 'en') {
       final lower = clean.toLowerCase();
       if (lower.startsWith('memulai navigasi menuju')) {
@@ -75,7 +75,7 @@ class NavigationVoiceService {
 
     final now = DateTime.now();
 
-    // Prevent repeating the exact same cue within 8 seconds unless forced (e.g. arrival)
+    // Prevent repeating the exact same cue within 8 seconds unless forced (e.g. arrival
     if (!force && _lastSpokenPrompt == clean && _lastSpokenTime != null) {
       if (now.difference(_lastSpokenTime!).inSeconds < 8) {
         return;
@@ -172,7 +172,7 @@ class NavigationVoiceService {
       return;
     }
 
-    // 4. Time-based advance cue (e.g., ~3 minutes or > 150m away)
+    // 4. Time-based advance cue (e.g., ~3 minutes or > 150m away
     if (durationSeconds != null &&
         durationSeconds >= 160 &&
         durationSeconds <= 210) {

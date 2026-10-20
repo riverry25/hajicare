@@ -36,14 +36,14 @@ enum MapMode { normal, navigationStarting, navigating, arrived }
 /// State of the location search workflow.
 enum MapSearchState { idle, loading, results, empty, error, history }
 
-/// Controller managing reactive interactive map state, camera,
+/// Controller managing reactive interactive map state, camera
 /// real geolocation with live streaming, dynamic POIs, and Room Member markers.
 class MapController extends GetxController with GetTickerProviderStateMixin {
   fmap.MapController _flutterMapController = fmap.MapController();
   fmap.MapController get flutterMapController => _flutterMapController;
 
   /// Ensures [flutterMapController] is active and attached or ready to attach.
-  /// If it was previously disposed or detached from an unmounted view,
+  /// If it was previously disposed or detached from an unmounted view
   /// this resets it to a clean [fmap.MapController] instance.
   fmap.MapController ensureFreshMapController() {
     if (!isMapAttached) {
@@ -66,7 +66,7 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
   bool get isClosedSafe => isClosed || _isManuallyClosed;
 
   /// Safely resolves or initializes the active [MapController].
-  /// If an existing instance in GetX is closed, disposed, or in an invalid state,
+  /// If an existing instance in GetX is closed, disposed, or in an invalid state
   /// it is evicted and a fresh controller is instantiated and registered.
   static MapController get to {
     if (Get.isRegistered<MapController>()) {
@@ -133,7 +133,7 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
   final currentIndex = 1.obs;
   final compassRotation = 0.0.obs;
 
-  // ── DYNAMIC GPS USER PUCK HEADING & MOVEMENT STATE ─────────────────────────
+  // DYNAMIC GPS USER PUCK HEADING & MOVEMENT STATE
   final userHeading = 0.0.obs;
   final isUserMoving = false.obs;
   final hasCompassSensor = true.obs;
@@ -150,7 +150,7 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
   final routeDistanceMeters = Rxn<double>();
   final routeDurationSeconds = Rxn<int>();
 
-  // ── NAVIGATION MODE STATE ──────────────────────────────────────────────────
+  // NAVIGATION MODE STATE
   final mapMode = MapMode.normal.obs;
   final isFollowingUser = true.obs;
   final navigationBearing = 0.0.obs;
@@ -247,7 +247,7 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
   AnimationController? _moveAnimCtrl;
   int _lifecycleGeneration = 0;
 
-  // Realtime location throttle trackers (Foreground-only, dual-gate)
+  // Realtime location throttle trackers (Foreground-only, dual-gate
   DateTime? _lastFirestoreWriteTime;
   Position? _lastWrittenPosition;
 
@@ -271,7 +271,6 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
   final activeTileUrl = AppConstants.cartoVoyagerUrl.obs;
   final isBottomSheetOpen = true.obs;
 
-  // ── SEARCH LOCATION STATE ──────────────────────────────────────────────────
   static const String _searchHistoryPrefsKey = 'hajicare_map_search_history';
   static const int _maxSearchHistory = 10;
   final searchState = MapSearchState.idle.obs;
@@ -331,7 +330,7 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
             return;
           }
 
-          // Normalize heading to [0, 360)
+          // Normalize heading to [0, 360
           final heading = (rawHeading % 360.0 + 360.0) % 360.0;
 
           // When user is stationary, device orientation dictates the puck's facing direction.
@@ -468,7 +467,6 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     return 2500;
   }
 
-  // ── ROOM MEMBER LISTENERS ──────────────────────────────────────────────────
 
   void _initRoomListener() {
     if (Get.isRegistered<HajiCareController>()) {
@@ -543,7 +541,6 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     }
   }
 
-  // ── COMPUTED ROOM GETTERS ──────────────────────────────────────────────────
 
   String? get currentUserId {
     if (Get.isRegistered<HajiCareController>()) {
@@ -640,7 +637,6 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     return formatDistance(dist);
   }
 
-  // ── GPS AUTO-START & FOREGROUND STREAMING ──────────────────────────────────
 
   Future<void> _autoStartGps() async {
     final generation = _lifecycleGeneration;
@@ -827,7 +823,7 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     currentUserLocation.value = newCoord;
     gpsAccuracy.value = position.accuracy;
 
-    // Movement detection: walking threshold is ~ 0.8 m/s (approx 2.9 km/h)
+    // Movement detection: walking threshold is ~ 0.8 m/s (approx 2.9 km/h
     final moving = position.speed > 0.8;
     isUserMoving.value = moving;
 
@@ -990,7 +986,6 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     }
   }
 
-  // ── FILTERING & SELECTION ──────────────────────────────────────────────────
 
   void selectFilter(int index) {
     selectedFilter.value = index;
@@ -1082,7 +1077,7 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
         list = pois.toList();
     }
 
-    // Dynamic zoom-based POI density (Rule 7 & 8)
+    // Dynamic zoom-based POI density (Rule 7 & 8
     final currentZoom = mapZoom.value;
     final int maxCount;
     if (currentZoom < 14.0) {
@@ -1183,7 +1178,7 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
       }
     }
 
-    // 2. Try to find from HajiCareController (activeSosEvents or jamaahList)
+    // 2. Try to find from HajiCareController (activeSosEvents or jamaahList
     if (Get.isRegistered<HajiCareController>()) {
       final hajiCtrl = Get.find<HajiCareController>();
       final sos = hajiCtrl.activeSosEvents.firstWhereOrNull(
@@ -1341,7 +1336,7 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
       }
     }
 
-    // 2. Try to find companion from roomMembers (prefer one with real GPS location)
+    // 2. Try to find companion from roomMembers (prefer one with real GPS location
     companion ??=
         pendampingMembers.firstWhereOrNull((m) => m.hasLocation) ??
         pendampingMembers.firstOrNull;
@@ -1488,7 +1483,6 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     clearRoute();
   }
 
-  // ── ROUTE & DISTANCE ───────────────────────────────────────────────────────
 
   Future<void> _updateRouteTo(
     LatLng destination, {
@@ -1519,7 +1513,7 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
       routeDurationSeconds.value = null;
     }
 
-    // Protection when destination is too far for walking / pedestrian network (> 100km)
+    // Protection when destination is too far for walking / pedestrian network (> 100km
     final straightDistance = calculateDistanceMeters(start, destination);
     if (straightDistance > 100000) {
       if (requestId == _routeRequestId) {
@@ -1655,7 +1649,6 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     }
   }
 
-  // ── NAVIGATION CONTROLS & BEHAVIOR ─────────────────────────────────────────
 
   /// Starts full NAVIGATION MODE.
   /// 1. Verifies destination & GPS.
@@ -1731,7 +1724,7 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     }
   }
 
-  /// Exits navigation mode, restores camera to North-up flat view,
+  /// Exits navigation mode, restores camera to North-up flat view
   /// and restores the previous place sheet without losing selection.
   void exitNavigation() {
     voiceService.reset();
@@ -1818,7 +1811,7 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
 
   /// Real-time navigation progress handler on each GPS tick.
   void _updateNavigationProgress(LatLng userPos, Position position) {
-    // 1. Arrival threshold check (< 20 meters)
+    // 1. Arrival threshold check (< 20 meters
     final dest = currentDestinationCoord;
     if (dest != null) {
       final distToDest = calculateDistanceMeters(userPos, dest);
@@ -1911,7 +1904,7 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     }
 
     remainingNavDistance.value = remDist;
-    // Average walking speed ~ 1.1 m/s (approx 4.0 km/h)
+    // Average walking speed ~ 1.1 m/s (approx 4.0 km/h
     remainingNavDuration.value = (remDist / 1.1).round();
   }
 
@@ -2007,7 +2000,6 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     );
   }
 
-  // ── CAMERA ACTIONS & FOCUS ─────────────────────────────────────────────────
 
   Future<void> moveToCurrentLocation({bool forceRefresh = false}) async {
     final gpsStopwatch = Stopwatch()..start();
@@ -2255,7 +2247,6 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     }
   }
 
-  // ── SEARCH ACTIONS ─────────────────────────────────────────────────────────
 
   /// Handles user input in search bar with 350ms debounce and race-condition safety.
   void onSearchQueryChanged(String query) {
@@ -2410,7 +2401,7 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     }
   }
 
-  /// Selects a location result, saves to search history, dismisses dropdown,
+  /// Selects a location result, saves to search history, dismisses dropdown
   /// updates search marker, and animates camera to the target coordinates.
   void selectSearchResult(MapSearchResult result) {
     addSearchHistory(result);

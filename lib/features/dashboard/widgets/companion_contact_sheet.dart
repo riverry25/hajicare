@@ -22,7 +22,7 @@ import 'assistance_tracking_sheet.dart';
 enum CompanionContactKind { message, info }
 
 /// Re-designed, elder-friendly Request Assistance System for HajiCare.
-/// Focuses on: "Saya tidak tahu jalan pulang", "Terpisah rombongan",
+/// Focuses on: "Saya tidak tahu jalan pulang", "Terpisah rombongan"
 /// "Penjemputan", and general assistance with human-readable location awareness.
 class CompanionContactSheet extends StatefulWidget {
   const CompanionContactSheet({
@@ -240,7 +240,7 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
                   _buildHeader(context, headingColor, bodyColor),
                   const SizedBox(height: 22),
 
-                  // ── 1. "Apa yang terjadi?" (Pilihan Bantuan yang Jelas) ──
+                  // 1. "Apa yang terjadi?" (Pilihan Bantuan yang Jelas
                   _buildSectionTitle(
                     context.tr('assistanceWhatHappened'),
                     headingColor,
@@ -249,7 +249,7 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
                   _buildAssistanceTypeCards(isDark, headingColor, bodyColor),
                   const SizedBox(height: 24),
 
-                  // ── 2. "Lokasi Anda" (Inti, Bukan Opsional) ───────────────
+                  // 2. "Lokasi Anda" (Inti, Bukan Opsional
                   _buildLocationSection(
                     context,
                     isDark,
@@ -258,7 +258,7 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
                   ),
                   const SizedBox(height: 24),
 
-                  // ── 3. "Tujuan Anda" (Hotel/Maktab Jamaah) ────────────────
+                  // 3. "Tujuan Anda" (Hotel/Maktab Jamaah
                   _buildTargetDestinationSection(
                     context,
                     isDark,
@@ -267,7 +267,7 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
                   ),
                   const SizedBox(height: 24),
 
-                  // ── 4. Quick Messages & Pesan Tambahan ─────────────────────
+                  // 4. Quick Messages & Pesan Tambahan
                   _buildMessageSection(
                     context,
                     isDark,
@@ -276,7 +276,7 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
                   ),
                   const SizedBox(height: 24),
 
-                  // ── 5. Pilih Penerima ─────────────────────────────────────
+                  // 5. Pilih Penerima
                   _buildRecipientSection(
                     context,
                     isDark,
@@ -285,7 +285,7 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
                   ),
                   const SizedBox(height: 26),
 
-                  // ── 6. CTA Utama Dinamis ──────────────────────────────────
+                  // 6. CTA Utama Dinamis
                   _buildPrimaryCtaButton(context, isDark),
                   const SizedBox(height: 8),
 
@@ -386,7 +386,7 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
   ) {
     return Column(
       children: [
-        // A. "Saya tidak tahu jalan pulang" (CORE USE CASE - Highlighted)
+        // A. "Saya tidak tahu jalan pulang" (CORE USE CASE - Highlighted
         _assistanceCard(
           type: AssistanceType.lostWay,
           isHighlight: true,

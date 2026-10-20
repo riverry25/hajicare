@@ -36,10 +36,9 @@ void adhanBackgroundNotificationResponse(NotificationResponse response) {
 }
 
 /// Service responsible for posting, scheduling, and dismissing Adhan notifications & alarms.
-///
-/// Features:
+/// Features
 /// 1. Plays authentic adhan audio even when the app is completely closed or device is locked
-///    via system-level exact alarm notifications with custom raw resource audio.
+/// via system-level exact alarm notifications with custom raw resource audio.
 /// 2. Integrates dedicated Subuh & Regular notification channels with Alarm priority.
 /// 3. Schedules prayer times up to 7 days in advance.
 /// 4. Direct 'Matikan Adzan' action button to immediately silence and dismiss the alarm.
@@ -70,14 +69,14 @@ class AdhanNotificationService {
 
   static const String actionStopAdhan = 'action_stop_adhan';
 
-  // Sound resource names (must exist in android/app/src/main/res/raw/)
+  // Sound resource names (must exist in android/app/src/main/res/raw/
   static const String soundAdzanRegular = 'adzan_regular';
   static const String soundAdzanSubuh = 'adzan_subuh';
 
   /// Global callback for stopping adhan from any isolate
   static VoidCallback? globalStopAdhanCallback;
 
-  /// Global reference to active notification plugin instance
+  /// Globalto active notification plugin instance
   static FlutterLocalNotificationsPlugin? activePlugin;
 
   final FlutterLocalNotificationsPlugin _notificationsPlugin;
@@ -147,10 +146,10 @@ class AdhanNotificationService {
             >();
 
         if (androidImpl != null) {
-          // Request POST_NOTIFICATIONS (Android 13+)
+          // Request POST_NOTIFICATIONS (Android 13+
           await androidImpl.requestNotificationsPermission();
 
-          // Request exact alarms permission (Android 12+)
+          // Request exact alarms permission (Android 12+
           await androidImpl.requestExactAlarmsPermission();
 
           // Channel for Subuh
@@ -193,7 +192,7 @@ class AdhanNotificationService {
             ),
           );
 
-          // Approaching prayer reminder channel (10 mins before adzan)
+          // Approaching prayer reminder channel (10 mins before adzan
           await androidImpl.createNotificationChannel(
             const AndroidNotificationChannel(
               channelIdReminder,
@@ -216,7 +215,7 @@ class AdhanNotificationService {
   }
 
   /// Show active adhan notification with a direct 'Matikan Adzan' action button
-  /// (used for in-app or foreground playback)
+  /// used for in-app or foreground playback
   Future<void> showAdhanNotification({
     required String prayerName,
     VoidCallback? onStopAdhan,
@@ -348,9 +347,7 @@ class AdhanNotificationService {
         iOS: darwinDetails,
       );
 
-      // Unified Single-Pipeline Adhan Scheduling:
-      // On Android, use the native AlarmManager foreground service (AdhanPlaybackService)
-      // which guarantees reliable audio + 1 persistent notification tray item with "Matikan Adzan".
+      // Jadwalkan adzan menggunakan foreground service pada Android
       bool nativeScheduled = false;
       if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
         // Clear any lingering local notification for this prayer ID to prevent duplicate tray entries
@@ -370,7 +367,7 @@ class AdhanNotificationService {
         }
       }
 
-      // If native scheduling is not supported or failed (e.g. iOS or fallback),
+      // If native scheduling is not supported or failed (e.g. iOS or fallback
       // schedule via flutter_local_notifications zonedSchedule.
       if (!nativeScheduled) {
         try {
@@ -551,7 +548,7 @@ class AdhanNotificationService {
           }
 
           if (item.time.isAfter(now)) {
-            // 1. Approaching prayer reminder (10 minutes before)
+            // 1. Approaching prayer reminder (10 minutes before
             await schedulePrayerReminder(
               id: reminderId,
               prayerName: item.name,
@@ -577,7 +574,7 @@ class AdhanNotificationService {
     }
   }
 
-  /// Schedules upcoming prayers using coordinates and preferences stored in SharedPreferences.
+  /// Schedules upcoming prayers using coordinates and ps stored in SharedPs.
   /// Ideal for calling upon app startup even before the user opens the Prayer screen.
   Future<void> scheduleFromPreferences() async {
     try {

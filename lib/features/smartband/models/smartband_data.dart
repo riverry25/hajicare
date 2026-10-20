@@ -1,12 +1,12 @@
 import 'dart:convert';
 
 /// Model representasi data telemetri dari ESP32-S3 Smartband
-/// Dilengkapi 5 modul/sensor spesifik:
-/// 1. MAX30102: Detak Jantung (BPM) & Saturasi Oksigen Darah (SpO2 %)
-/// 2. MCP9808: Suhu Tubuh Presisi Tinggi (°C)
-/// 3. MPU6050: Akselerometer & Giroskop -> Deteksi Aktivitas Langkah (stepCount), Keseimbangan (roll, pitch, accelG), & Deteksi Jatuh (fallDetected)
-/// 4. GPS NEO-6M: Lokasi Koordinat Satelit (latitude, longitude, satellites, isValidLocation)
-/// 5. LCD 16x2 + I2C Backpack: Tampilan Status Kesehatan (BPM, Suhu) & Pesan Darurat di Pergelangan Tangan (lcdLine1, lcdLine2, emergencyMessage)
+/// Dilengkapi 5 modul/sensor spesifik
+/// 1. MAX30102: Detak Jantung (BPM) & Saturasi Oksigen Darah (SpO2 %
+/// 2. MCP9808: Suhu Tubuh Presisi Tinggi (°C
+/// 3. MPU6050: Akselerometer & Giroskop -> Deteksi Aktivitas Langkah (stepCount), Keseimbangan (roll, pitch, accelG), & Deteksi Jatuh (fallDetected
+/// 4. GPS NEO-6M: Lokasi Koordinat Satelit (latitude, longitude, satellites, isValidLocation
+/// 5. LCD 16x2 + I2C Backpack: Tampilan Status Kesehatan (BPM, Suhu) & Pesan Darurat di Pergelangan Tangan (lcdLine1, lcdLine2, emergencyMessage
 class SmartbandData {
   final String braceletId;
   final double? latitude;
@@ -31,7 +31,7 @@ class SmartbandData {
   final String rawJson;
   final bool isValidLocation;
 
-  /// Default koordinat GPS referensi Smartband (Pelataran Masjidil Haram, Makkah)
+  /// Default koordinat GPS referensi Smartband (Pelataran Masjidil Haram, Makkah
   static const double staticDefaultLatitude = 21.422487;
   static const double staticDefaultLongitude = 39.826206;
 
@@ -84,17 +84,17 @@ class SmartbandData {
   double? get gyroRoll => roll;
   double? get gyroPitch => pitch;
 
-  /// Validasi rentang fisiologis SpO2 (70% - 100%)
+  /// Validasi rentang fisiologis SpO2 (70% - 100%
   bool get isValidSpo2 => spo2 != null && spo2! >= 70 && spo2! <= 100;
 
-  /// Validasi rentang fisiologis suhu tubuh jemaah (30°C - 45°C)
+  /// Validasi rentang fisiologis suhu tubuh jemaah (30°C - 45°C
   bool get isValidTemperature =>
       temperature != null && temperature! >= 30.0 && temperature! <= 45.0;
 
   /// Indikator apakah data tanda-tanda vital valid
   bool get hasValidVitals => heartRate > 0 && isValidSpo2;
 
-  /// Teks LCD 16x2 Baris 1 (Format 16 Karakter Pas)
+  /// Teks LCD 16x2 Baris 1 (Format 16 Karakter Pas
   String get displayLcdLine1 {
     if (lcdLine1 != null && lcdLine1!.trim().isNotEmpty) {
       final s = lcdLine1!.trim();
@@ -107,7 +107,7 @@ class SmartbandData {
     return line.length > 16 ? line.substring(0, 16) : line.padRight(16);
   }
 
-  /// Teks LCD 16x2 Baris 2 (Format 16 Karakter Pas)
+  /// Teks LCD 16x2 Baris 2 (Format 16 Karakter Pas
   String get displayLcdLine2 {
     if (lcdLine2 != null && lcdLine2!.trim().isNotEmpty) {
       final s = lcdLine2!.trim();
@@ -225,7 +225,7 @@ class SmartbandData {
       json['spo2'] ?? json['oxygen'] ?? json['ox'] ?? json['o2'],
     );
 
-    // 2. MCP9808: Suhu Tubuh (°C)
+    // 2. MCP9808: Suhu Tubuh (°C
     final double? temp = parseDouble(
       json['temperature'] ??
           json['temperatureC'] ??
@@ -296,8 +296,8 @@ class SmartbandData {
         json['msg']?.toString() ??
         (isSos ? 'TOMBOL SOS AKTIF!' : null);
 
-    // Validasi lokasi geografis:
-    // Koordinat (0.0, 0.0) atau koordinat di luar batas bumi dianggap belum valid (misal GPS fix belum dapat)
+    // Validasi lokasi geografis
+    // Koordinat (0.0, 0.0) atau koordinat di luar batas bumi dianggap belum valid (misal GPS fix belum dapat
     final bool validLoc =
         lat != null &&
         lng != null &&

@@ -30,11 +30,9 @@ class BisindoRecognitionConfig {
 }
 
 /// Owns the single shared "Transkripsi AI" used by both SIBI and BISINDO.
-///
-/// Responsibilities: hold-to-confirm stability gate (SIBI frame stream),
+/// Responsibilities: hold-to-confirm stability gate (SIBI frame stream
 /// anti-duplicate cooldown, token composition, persistence, and a serialized
 /// Indonesian Text-to-Speech queue.
-///
 /// The transcript is only cleared by [resetTranscript]; model switches and
 /// camera stops must use [resetRecognitionState].
 class BisindoRecognitionController extends GetxController {
@@ -284,7 +282,7 @@ class BisindoRecognitionController extends GetxController {
     return token;
   }
 
-  /// Commits an externally recognized label (e.g. BISINDO segment classifier)
+  /// Commits an externally recognized label (e.g. BISINDO segment classifier
   /// directly to the shared transcript. Words are spoken immediately when
   /// [speak] is true; letters are spoken as a whole word later.
   bool commitWord(String label, {bool speak = false, DateTime? now}) {
@@ -379,9 +377,7 @@ class BisindoRecognitionController extends GetxController {
     await _enqueueSpeech(text);
   }
 
-  // ---------------------------------------------------------------------------
   // Speech helpers
-  // ---------------------------------------------------------------------------
 
   /// Serializes TTS so consecutive words never cut each other off.
   Future<void> _enqueueSpeech(String text) {
@@ -437,7 +433,6 @@ class BisindoRecognitionController extends GetxController {
     _speakPendingLetters();
   }
 
-  // ---------------------------------------------------------------------------
 
   void _resetRecognition({required bool clearAll}) {
     _consecutivePredictions.clear();

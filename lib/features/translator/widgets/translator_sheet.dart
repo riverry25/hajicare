@@ -591,7 +591,6 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // ── Drag Handle ───────────────────────────────────────────────
               Center(
                 child: Container(
                   width: 40,
@@ -604,7 +603,6 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
                 ),
               ),
 
-              // ── Header Bar ────────────────────────────────────────────────
               Row(
                 children: [
                   Container(
@@ -649,11 +647,11 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
               ),
               const SizedBox(height: AppSpacing.md),
 
-              // ── Unified Top Language Switcher Bar ─────────────────────────
+              // Unified Top Language Switcher Bar
               _buildTopLanguageBar(isDark, primaryColor, headingColor),
               const SizedBox(height: AppSpacing.md),
 
-              // ── Source Input Card ─────────────────────────────────────────
+              // Source Input Card
               _buildInputCard(
                 isDark: isDark,
                 headingColor: headingColor,
@@ -663,7 +661,7 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
               ),
               const SizedBox(height: AppSpacing.sm),
 
-              // ── Hero Central Microphone Voice Action (Large & Adaptive) ──
+              // Hero Central Microphone Voice Action (Large & Adaptive
               _buildCenterMicHeroSection(
                 context: context,
                 isDark: isDark,
@@ -674,7 +672,7 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
               ),
               const SizedBox(height: AppSpacing.sm),
 
-              // ── Target Output Card ────────────────────────────────────────
+              // Target Output Card
               _buildOutputCard(
                 isDark: isDark,
                 headingColor: headingColor,
@@ -683,7 +681,7 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
               ),
               const SizedBox(height: AppSpacing.md),
 
-              // ── Quick Pilgrimage Phrases ──────────────────────────────────
+              // Quick Pilgrimage Phrases
               _buildQuickPhrasesSection(
                 isDark,
                 headingColor,
@@ -1034,7 +1032,7 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
                     ),
                   ),
 
-                  // Secondary Ripple Ring (when recording)
+                  // Secondary Ripple Ring (when recording
                   if (isListening)
                     Container(
                       width: ringSize - 14,
@@ -1047,7 +1045,7 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
                       ),
                     ),
 
-                  // Tactile Hero Circle Button (Large 70x70, NO box shadow)
+                  // Tactile Hero Circle Button (Large 70x70, NO box shadow
                   Material(
                     color: Colors.transparent,
                     shape: const CircleBorder(),
@@ -1131,7 +1129,7 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
             ),
           ),
 
-          // Speech Status or Error Notice (if any)
+          // Speech Status or Error Notice (if any
           if (_speechMessage != null && !isListening) ...[
             const SizedBox(height: 8),
             Container(
@@ -1266,7 +1264,7 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
           ),
           const SizedBox(height: AppSpacing.xs),
 
-          // Bottom Action Toolbar for Result (Copy & Audio Pronunciation)
+          // Bottom Action Toolbar for Result (Copy & Audio Pronunciation
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [

@@ -58,7 +58,7 @@ class PendampingGreetingHeader extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Top Badges Row: Role Badge + Kloter/Maktab Tag ──
+            // Top Badges Row: Role Badge + Kloter/Maktab Tag
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -136,7 +136,7 @@ class PendampingGreetingHeader extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 12),
-            // ── Greeting Title ──
+            // Greeting Title
             Text(
               '${context.tr('pendampingGreeting')}, $shortName',
               style: DashboardTypography.headlineLarge.copyWith(
@@ -150,7 +150,7 @@ class PendampingGreetingHeader extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
             ),
             const SizedBox(height: 5),
-            // ── Subtitle Description ──
+            // Subtitle Description
             Text(
               context.tr('pendampingSubtitleDesc'),
               style: DashboardTypography.bodySmall.copyWith(

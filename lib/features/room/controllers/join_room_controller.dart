@@ -22,7 +22,7 @@ class JoinRoomController extends GetxController {
   // Gabung Room Fields
   final roomCodeController = TextEditingController();
 
-  // Buat Room Fields (Pendamping)
+  // Buat Room Fields (Pendamping
   final createRoomNameController = TextEditingController();
   final createMaktabController = TextEditingController();
   final createKloterController = TextEditingController();
@@ -44,7 +44,7 @@ class JoinRoomController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    // Default mode for jamaah is always Gabung Room (mode 1)
+    // Default mode for jamaah is always Gabung Room (mode 1
     if (!isPendamping) {
       selectedMode.value = 1;
     }

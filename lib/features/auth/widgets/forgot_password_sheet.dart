@@ -83,7 +83,6 @@ class _ForgotPasswordSheetState extends State<ForgotPasswordSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Drag handle
           Center(
             child: Container(
               width: 44,
@@ -96,7 +95,6 @@ class _ForgotPasswordSheetState extends State<ForgotPasswordSheet> {
           ),
           const SizedBox(height: AppSpacing.lg),
 
-          // Icon header
           Center(
             child: Container(
               width: 56,
@@ -118,7 +116,6 @@ class _ForgotPasswordSheetState extends State<ForgotPasswordSheet> {
           ),
           const SizedBox(height: AppSpacing.md),
 
-          // Title
           Text(
             context.tr('auth.forgotPasswordTitle'),
             textAlign: TextAlign.center,
@@ -129,7 +126,6 @@ class _ForgotPasswordSheetState extends State<ForgotPasswordSheet> {
           ),
           const SizedBox(height: 6),
 
-          // Subtitle
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
             child: Text(

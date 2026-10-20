@@ -3,7 +3,7 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Model Log Pengujian Komponen Aktual Smart Band (Tabel 6.1)
+/// Model Log Pengujian Komponen Aktual Smart Band (Tabel 6.1
 class SmartbandComponentLog {
   final String id;
   final DateTime timestamp;
@@ -54,7 +54,7 @@ class SmartbandComponentLog {
       );
 }
 
-/// Model Log Pengujian Akurasi Fisiologis vs Alat Referensi (Tabel 6.2)
+/// Model Log Pengujian Akurasi Fisiologis vs Alat Referensi (Tabel 6.2
 class SmartbandPhysiologicalLog {
   final String id;
   final DateTime timestamp;
@@ -96,7 +96,7 @@ class SmartbandPhysiologicalLog {
       );
 }
 
-/// Model Log Validasi Modul GPS Smart Band (Tabel 7)
+/// Model Log Validasi Modul GPS Smart Band (Tabel 7
 class SmartbandGpsLog {
   final String id;
   final DateTime timestamp;
@@ -162,7 +162,7 @@ class SmartbandValidationTrackerService {
 
   bool _isInitialized = false;
 
-  /// Inisialisasi dan load dari local cache SharedPreferences
+  /// Inisialisasi dan load dari local cache SharedPs
   Future<void> init() async {
     if (_isInitialized) return;
     try {
@@ -205,9 +205,9 @@ class SmartbandValidationTrackerService {
     _isInitialized = true;
   }
 
-  // ── Logging Methods ────────────────────────────────────────────────────────
+  // Logging Methods
 
-  /// Catat pengujian komponen sensor (Tabel 6.1)
+  /// Catat pengujian komponen sensor (Tabel 6.1
   Future<void> logComponentTest({
     required String component,
     required String parameter,
@@ -237,7 +237,7 @@ class SmartbandValidationTrackerService {
     await _persistComponents();
   }
 
-  /// Catat perbandingan akurasi fisiologis (Tabel 6.2)
+  /// Catat perbandingan akurasi fisiologis (Tabel 6.2
   Future<void> logPhysiologicalTest({
     required String measurementType,
     required double referenceValue,
@@ -263,7 +263,7 @@ class SmartbandValidationTrackerService {
     await _persistPhysio();
   }
 
-  /// Catat pengujian modul GPS Smart Band (Tabel 7)
+  /// Catat pengujian modul GPS Smart Band (Tabel 7
   Future<void> logGpsTest({
     required double latitude,
     required double longitude,
@@ -290,7 +290,7 @@ class SmartbandValidationTrackerService {
     await _persistGps();
   }
 
-  // ── Persistence Helpers ────────────────────────────────────────────────────
+  // Persistence Helpers
 
   Future<void> _persistComponents() async {
     try {
@@ -324,9 +324,9 @@ class SmartbandValidationTrackerService {
     }
   }
 
-  // ── Aggregation & Summaries ────────────────────────────────────────────────
+  // Aggregation & Summaries
 
-  /// Ringkasan untuk setiap komponen (Tabel 6.1)
+  /// Ringkasan untuk setiap komponen (Tabel 6.1
   Map<String, dynamic> getComponentSummary(String componentName) {
     final matching = componentLogsNotifier.value
         .where((l) => l.component.toLowerCase() == componentName.toLowerCase())
@@ -358,7 +358,7 @@ class SmartbandValidationTrackerService {
     };
   }
 
-  /// Ringkasan untuk pengukuran fisiologis (Tabel 6.2)
+  /// Ringkasan untuk pengukuran fisiologis (Tabel 6.2
   Map<String, dynamic> getPhysiologicalSummary(String measurementType) {
     final matching = physioLogsNotifier.value
         .where(
@@ -403,7 +403,7 @@ class SmartbandValidationTrackerService {
     };
   }
 
-  /// Ringkasan untuk modul GPS Smartband (Tabel 7)
+  /// Ringkasan untuk modul GPS Smartband (Tabel 7
   Map<String, dynamic> getGpsSummary() {
     final logs = gpsLogsNotifier.value;
     final total = logs.length;

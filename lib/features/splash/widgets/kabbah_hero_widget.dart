@@ -4,9 +4,8 @@ import 'package:lottie/lottie.dart';
 import '../../../core/theme/theme_context.dart';
 
 /// Animated Ka'bah hero for the splash screen.
-///
 /// Renders the vector Lottie composition `assets/lotties/kabbah-animation.json`
-/// (888×674, 30 fps, seamless 6 s loop). The composition carries its own
+/// 888×674, 30 fps, seamless 6 s loop). The composition carries its own
 /// animation, so no extra Flutter-side transforms, shaders or glows are used.
 class KabbahHeroWidget extends StatelessWidget {
   static const String assetPath = 'assets/lotties/kabbah-animation.json';

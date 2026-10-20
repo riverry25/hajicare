@@ -11,7 +11,7 @@ import '../../../core/widgets/haji_dialog_ribbon_button.dart';
 import '../../../core/widgets/haji_transparent_dialog.dart';
 
 /// Modal dialog for modifying pilgrim safe radius threshold.
-/// Designed to precisely match the visual language of [CreateRoomDialog],
+/// Designed to precisely match the visual language of [CreateRoomDialog]
 /// featuring a floating hero card header, minimalist underline input with
 /// suggestion pills, and a protruding ribbon action button.
 class AdjustSafeRadiusDialog extends StatefulWidget {
@@ -131,7 +131,7 @@ class _AdjustSafeRadiusDialogState extends State<AdjustSafeRadiusDialog> {
           clipBehavior: Clip.none,
           alignment: Alignment.topCenter,
           children: [
-            // ── 1. Main Card Body ─────────────────────────────────────────
+            // 1. Main Card Body
             Container(
               margin: const EdgeInsets.only(
                 top: 28,
@@ -160,7 +160,6 @@ class _AdjustSafeRadiusDialogState extends State<AdjustSafeRadiusDialog> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // Title
                     Text(
                       context.tr('dashboard.safeRadiusTitle'),
                       style: context.text.titleMedium.copyWith(
@@ -275,7 +274,6 @@ class _AdjustSafeRadiusDialogState extends State<AdjustSafeRadiusDialog> {
                     ),
                     const SizedBox(height: 12),
 
-                    // Quick suggestion chips (Presets) with high WCAG contrast in Light and Dark mode
                     SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
                       child: Row(
@@ -369,7 +367,7 @@ class _AdjustSafeRadiusDialogState extends State<AdjustSafeRadiusDialog> {
               ),
             ),
 
-            // ── 2. Floating Hero Card (Compact header) ───────────────────
+            // 2. Floating Hero Card (Compact header
             const Positioned(
               top: 0,
               left: 22,
@@ -380,7 +378,7 @@ class _AdjustSafeRadiusDialogState extends State<AdjustSafeRadiusDialog> {
               ),
             ),
 
-            // ── 3. Protruding Ribbon Submit Button ─────────────────────────
+            // 3. Protruding Ribbon Submit Button
             Positioned(
               bottom: 0,
               right: 0,

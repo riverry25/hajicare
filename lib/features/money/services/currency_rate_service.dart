@@ -44,7 +44,7 @@ class ExchangeRateSnapshot {
 }
 
 /// Service managing multi-currency exchange rates (SAR, IDR, USD) with
-/// automatic caching, in-flight request guarding, cross-rate calculation,
+/// automatic caching, in-flight request guarding, cross-rate calculation
 /// background staleness refresh, and graceful offline fallback.
 class CurrencyRateService implements CurrencyConversionService {
   CurrencyRateService._();
@@ -60,7 +60,7 @@ class CurrencyRateService implements CurrencyConversionService {
 
   /// Default benchmark exchange rate snapshot (Base USD).
   /// 1 USD = 3.75 SAR
-  /// 1 USD = 17,812.5 IDR (=> 1 SAR = 4,750 IDR)
+  /// 1 USD = 17,812.5 IDR (=> 1 SAR = 4,750 IDR
   static final ExchangeRateSnapshot defaultSnapshot = ExchangeRateSnapshot(
     base: CurrencyCode.usd,
     rates: const {
@@ -97,7 +97,7 @@ class CurrencyRateService implements CurrencyConversionService {
   /// Notifier triggered whenever active rates update.
   final ValueNotifier<double> rateNotifier = ValueNotifier<double>(defaultRate);
 
-  /// Initializes exchange rates from persistent SharedPreferences storage,
+  /// Initializes exchange rates from persistent SharedPs storage
   /// falling back to defaults, and triggers background refresh if stale.
   Future<void> init() async {
     if (_isInitialized) {
@@ -197,7 +197,7 @@ class CurrencyRateService implements CurrencyConversionService {
     return convert(amount: riyal, from: CurrencyCode.sar, to: CurrencyCode.idr);
   }
 
-  /// Sets and persists custom rates, updating SharedPreferences.
+  /// Sets and persists custom rates, updating SharedPs.
   Future<void> setCustomRates(
     Map<CurrencyCode, double> newRates, {
     String? utcTimeString,

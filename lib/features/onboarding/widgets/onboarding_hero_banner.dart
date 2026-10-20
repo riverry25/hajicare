@@ -4,7 +4,7 @@ import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/theme_context.dart';
 
 /// An elegant, atmospheric visual frame for HajiCare onboarding slides.
-/// Inspired by the warm desert aesthetic (WanderWise / Family App reference),
+/// Inspired by the warm desert aesthetic
 /// providing a soft ambient glow, subtle border, and high-contrast tokens.
 class OnboardingHeroBanner extends StatelessWidget {
   final String badgeText;
@@ -63,7 +63,7 @@ class OnboardingHeroBanner extends StatelessWidget {
               ),
             ),
 
-            // Decorative celestial sparkles (Family App reference aesthetic)
+            // Decorative celestial sparkles (Family Appaesthetic
             Positioned(
               top: 14,
               right: 18,
@@ -106,7 +106,7 @@ class OnboardingHeroBanner extends StatelessWidget {
       );
     }
 
-    // Default Fallback Banner (for backward compatibility)
+    // Default Fallback Banner (for backward compatibility
     final gradientColors = isDark
         ? const [Color(0xFF2C1B11), Color(0xFF1E120A), Color(0xFF140C07)]
         : const [Color(0xFF382315), Color(0xFF26160C), Color(0xFF1A0E08)];

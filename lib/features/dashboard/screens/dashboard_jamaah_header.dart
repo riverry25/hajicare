@@ -23,7 +23,7 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
         ? displayName[0].toUpperCase()
         : 'J';
 
-    // Distance formatting (Promoted to Hero Display)
+    // Distance formatting (Promoted to Hero Display
     final hasRoom =
         (state.activeRoomId.value != null &&
             state.activeRoomId.value!.trim().isNotEmpty) ||
@@ -59,10 +59,10 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Header Bar: User Greeting & Notification / SOS ───────
+          // Header Bar: User Greeting & Notification / SOS
           Row(
             children: [
-              // User Avatar (Glassmorphic)
+              // User Avatar (Glassmorphic
               Container(
                 width: 46,
                 height: 46,
@@ -148,7 +148,7 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
 
           const SizedBox(height: 26),
 
-          // ── Big Hero Identification (Jarak Petugas) ──────────────
+          // Big Hero Identification (Jarak Petugas
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
@@ -199,7 +199,7 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
                 ),
               ),
 
-              // Distance-reactive sparkline wave (replaces static sync button)
+              // Distance-reactive sparkline wave (replaces static sync button
               DistanceSparklineWidget(
                 distance: hasRoom ? realDistance : 0.0,
                 tooltip: hasRoom
@@ -225,12 +225,12 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
 
           const SizedBox(height: 18),
 
-          // ── Subtle Dotted / Dashed Divider ───────────────────────
+          // Subtle Dotted / Dashed Divider
           _buildDashedLine(heroFg.withValues(alpha: 0.22)),
 
           const SizedBox(height: 16),
 
-          // ── 3 Key Metrics Columns ────────────────────────────────
+          // 3 Key Metrics Columns
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
@@ -251,7 +251,7 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
 
           const SizedBox(height: 22),
 
-          // ── Segmented Dual-Action Pill Button (Frosted Glassmorphism) ──
+          // Segmented Dual-Action Pill Button (Frosted Glassmorphism
           Container(
             height: 52,
             decoration: BoxDecoration(
@@ -275,7 +275,7 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
             ),
             child: Row(
               children: [
-                // Left Pill: Lacak Pendamping (Map)
+                // Left Pill: Lacak Pendamping (Map
                 Expanded(
                   child: Material(
                     color: Colors.transparent,
@@ -344,7 +344,7 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
                 // Dashed vertical separator
                 Container(width: 1, height: 24, color: context.hc.border),
 
-                // Right Pill: Bantuan Darurat (SOS)
+                // Right Pill: Bantuan Darurat (SOS
                 Expanded(
                   child: Obx(() {
                     final hasRoom =
@@ -442,7 +442,7 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
     );
   }
 
-  // ── Notification Button with Badge Indicator ──────────────────────────────
+  // Notification Button with Badge Indicator
   Widget _buildNotificationButton(
     BuildContext context,
     HajiCareController state,
@@ -531,7 +531,7 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
     );
   }
 
-  // ── Money Recognition Metric (Scanner Icon Shortcut) ────────────────────
+  // Money Recognition Metric (Scanner Icon Shortcut
   Widget _buildMoneyRecognitionMetric(BuildContext context) {
     final colors = context.hc;
     return Expanded(
@@ -550,7 +550,7 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // Circular scan icon button (moved from next to notification bell)
+              // Circular scan icon button (moved from next to notification bell
               Container(
                 width: 34,
                 height: 34,
@@ -598,7 +598,7 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
     );
   }
 
-  // ── Metric Item Column Helper ─────────────────────────────────────────────
+  // Metric Item Column Helper
   Widget _buildMetricColumn({
     required BuildContext context,
     required String value,
@@ -640,5 +640,5 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
     );
   }
 
-  // ── Curved White/Cream Canvas Sheet ───────────────────────────────────────
+  // Curved White/Cream Canvas Sheet
 }

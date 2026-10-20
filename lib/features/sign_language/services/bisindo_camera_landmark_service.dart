@@ -192,7 +192,7 @@ class BisindoCameraLandmarkService {
     final rawLandmarks = event['landmarks'];
     if (rawLandmarks is! List) return;
 
-    // Accept either 42 hand landmarks (new high-perf) or 543 holistic landmarks (legacy/tests)
+    // Accept either 42 hand landmarks (new high-perf) or 543 holistic landmarks (legacy/tests
     if (rawLandmarks.length != 42 && rawLandmarks.length != 543) {
       debugPrint(
         '[BISINDO_CAMERA] Invalid landmark count: ${rawLandmarks.length} (expected 42 or 543)',

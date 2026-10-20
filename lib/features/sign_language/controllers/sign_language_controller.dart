@@ -14,11 +14,9 @@ import '../services/bisindo_segmenter.dart';
 import '../services/bisindo_sequence_buffer.dart';
 
 /// Lifecycle of the BISINDO recognizer.
-///
-/// Continuous mode (default):
+/// Continuous mode (default
 /// `stopped → listening ⇄ signing → classifying → recognized/rejected → listening`
-///
-/// Manual fallback (temporary):
+/// Manual fallback (temporary
 /// `manualCountdown → manualCapturing → classifying → recognized/rejected`
 enum BisindoLiveState {
   initializing,
@@ -36,8 +34,7 @@ enum BisindoLiveState {
 /// Continuous BISINDO recognition: frames are auto-segmented into single
 /// gestures ([BisindoSegmenter]) and each segment is classified with the
 /// MotionGRU model using the exact training preprocessing
-/// (base features → resample to 48 → motion delta → [1, 48, 706]).
-///
+/// base features → resample to 48 → motion delta → [1, 48, 706]).
 /// Accepted results are forwarded via [onPredictionAccepted]; the shared
 /// transcript and TTS live in `BisindoRecognitionController`.
 class SignLanguageController extends GetxController {
@@ -197,9 +194,7 @@ class SignLanguageController extends GetxController {
     }
   }
 
-  // ---------------------------------------------------------------------------
   // Continuous mode
-  // ---------------------------------------------------------------------------
 
   /// Starts hands-free detection. Safe to call repeatedly.
   void startContinuous() {
@@ -325,9 +320,7 @@ class SignLanguageController extends GetxController {
     }
   }
 
-  // ---------------------------------------------------------------------------
-  // Streaming Preview Inference (Live Suggestions & Hold-to-Confirm)
-  // ---------------------------------------------------------------------------
+  // Streaming Preview Inference (Live Suggestions & Hold-to-Confirm
 
   void _maybeRunStreamingPreview() {
     if (_isDisposed ||
@@ -339,7 +332,7 @@ class SignLanguageController extends GetxController {
     }
 
     final activeFrames = segmenter.activeFrames;
-    // Lower threshold from 8 to 5 so low-spec (15-20 FPS) phones respond immediately (~250-300ms)
+    // Lower threshold from 8 to 5 so low-spec (15-20 FPS) phones respond immediately (~250-300ms
     if (activeFrames.length < 5) return;
 
     final now = DateTime.now();
@@ -387,7 +380,7 @@ class SignLanguageController extends GetxController {
         final newCandidate = prediction.label;
         final newConfidence = prediction.confidence;
 
-        // Anti-jitter hysteresis & candidate stabilization for low-spec camera noise:
+        // Anti-jitter hysteresis & candidate stabilization for low-spec camera noise
         if (_lastCandidateLabel.isEmpty) {
           _lastCandidateLabel = newCandidate;
           _lastCandidateConfidence = newConfidence;
@@ -429,7 +422,7 @@ class SignLanguageController extends GetxController {
 
         streamingCandidate.value = _lastCandidateLabel;
 
-        // Smooth FPS-independent progress:
+        // Smooth FPS-independent progress
         final elapsedMs = _segmentStartDateTime != null
             ? DateTime.now().difference(_segmentStartDateTime!).inMilliseconds
             : (frames.length * 50);
@@ -448,7 +441,7 @@ class SignLanguageController extends GetxController {
           _confirmAndCommitCandidate(prediction);
         }
       } else {
-        // Soft decay on low-confidence frames (e.g. slight motion blur on low-spec camera)
+        // Soft decay on low-confidence frames (e.g. slight motion blur on low-spec camera
         if (_candidateStreak > 0) {
           _candidateStreak = math.max(0, _candidateStreak - 1);
           suggestionProgress.value = (_candidateStreak / 4.0).clamp(0.0, 1.0);
@@ -499,9 +492,7 @@ class SignLanguageController extends GetxController {
     _segmentStartDateTime = null;
   }
 
-  // ---------------------------------------------------------------------------
   // Manual fallback (temporary): 3s countdown → 2.8s capture → classify
-  // ---------------------------------------------------------------------------
 
   void startCaptureSession({bool skipCountdown = false}) {
     if (_isDisposed ||
@@ -588,9 +579,7 @@ class SignLanguageController extends GetxController {
     }
   }
 
-  // ---------------------------------------------------------------------------
   // Shared classification
-  // ---------------------------------------------------------------------------
 
   Future<void> _classifyFrames(
     List<LandmarkFrame> frames, {

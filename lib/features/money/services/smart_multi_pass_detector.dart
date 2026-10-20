@@ -68,7 +68,7 @@ class MultiPassDetectionResult {
   double get totalAmount => totalFor(CurrencyCode.sar);
 }
 
-/// Engine that performs smart multi-pass detection, enhancement,
+/// Engine that performs smart multi-pass detection, enhancement
 /// adaptive tiling, and cross-pass deduplication across multiple currencies.
 class SmartMultiPassDetector {
   final YOLO yolo;
@@ -80,7 +80,6 @@ class SmartMultiPassDetector {
   });
 
   /// Executes the Smart Multi-Pass pipeline on [originalImageBytes].
-  ///
   /// [onStatusUpdate] provides user-friendly status updates for the UI.
   Future<MultiPassDetectionResult> processImage(
     Uint8List originalImageBytes, {
@@ -89,9 +88,7 @@ class SmartMultiPassDetector {
     final overallStopwatch = Stopwatch()..start();
     final List<PassResult> passResults = [];
 
-    // -------------------------------------------------------------------------
     // PASS 1: Baseline inference on original image
-    // -------------------------------------------------------------------------
     onStatusUpdate?.call('Memeriksa foto...');
     final pass1Stopwatch = Stopwatch()..start();
     final pass1Detections = await _runInference(
@@ -113,18 +110,14 @@ class SmartMultiPassDetector {
       '[MoneyAI] Pass 1 (Original): ${pass1Detections.length} candidate detections (${pass1Stopwatch.elapsedMilliseconds}ms)',
     );
 
-    // -------------------------------------------------------------------------
     // ADAPTIVE EVALUATION: Decide whether additional passes are required
-    // -------------------------------------------------------------------------
     final bool shouldRunEnhancedPass = _shouldRunEnhancedPass(pass1Detections);
     final bool shouldRunTiledPass = _shouldRunTiledPass(
       pass1Detections,
       originalImageBytes,
     );
 
-    // -------------------------------------------------------------------------
-    // PASS 2: Enhanced image inference (if adaptive condition met)
-    // -------------------------------------------------------------------------
+    // PASS 2: Enhanced image inference (if adaptive condition met
     if (shouldRunEnhancedPass && config.maxAdditionalPasses >= 1) {
       onStatusUpdate?.call('Meningkatkan kejernihan foto...');
       final pass2Stopwatch = Stopwatch()..start();
@@ -156,9 +149,7 @@ class SmartMultiPassDetector {
       );
     }
 
-    // -------------------------------------------------------------------------
-    // PASS 3: Tiled / Cropped inference (if adaptive condition met)
-    // -------------------------------------------------------------------------
+    // PASS 3: Tiled / Cropped inference (if adaptive condition met
     if (shouldRunTiledPass && config.maxAdditionalPasses >= 2) {
       onStatusUpdate?.call('Mencari semua lembar uang...');
       final pass3Stopwatch = Stopwatch()..start();
@@ -187,9 +178,7 @@ class SmartMultiPassDetector {
       );
     }
 
-    // -------------------------------------------------------------------------
     // MERGE & CROSS-PASS DEDUPLICATION
-    // -------------------------------------------------------------------------
     onStatusUpdate?.call('Memastikan hasil deteksi...');
     final List<MoneyDetection> finalDetections = mergeCrossPassDetections(
       passResults.map((p) => p.detections).toList(),
@@ -216,9 +205,7 @@ class SmartMultiPassDetector {
     );
   }
 
-  // ---------------------------------------------------------------------------
   // INFERENCE RUNNER
-  // ---------------------------------------------------------------------------
 
   Future<List<MoneyDetection>> _runInference({
     required Uint8List imageBytes,
@@ -258,16 +245,14 @@ class SmartMultiPassDetector {
     return list;
   }
 
-  // ---------------------------------------------------------------------------
   // ADAPTIVE LOGIC
-  // ---------------------------------------------------------------------------
 
   /// Determines whether the enhanced image pass should be executed.
   bool _shouldRunEnhancedPass(List<MoneyDetection> pass1Detections) {
-    // Condition 1: No detections found in Pass 1 (possible poor lighting/contrast)
+    // Condition 1: No detections found in Pass 1 (possible poor lighting/contrast
     if (pass1Detections.isEmpty) return true;
 
-    // Condition 2: Any detection has borderline confidence (< 0.80)
+    // Condition 2: Any detection has borderline confidence (< 0.80
     final hasBorderlineConfidence = pass1Detections.any(
       (d) => d.confidence < 0.80,
     );
@@ -288,7 +273,7 @@ class SmartMultiPassDetector {
     List<MoneyDetection> pass1Detections,
     Uint8List imageBytes,
   ) {
-    // If Pass 1 found a single large banknote with high confidence (>= 0.90),
+    // If Pass 1 found a single large banknote with high confidence (>= 0.90
     // tiling is completely unnecessary and would waste processing time.
     if (pass1Detections.length == 1 &&
         pass1Detections.first.confidence >= 0.90 &&
@@ -297,10 +282,10 @@ class SmartMultiPassDetector {
       return false;
     }
 
-    // Condition 1: Multi-money scene with 3+ objects (likely crowded)
+    // Condition 1: Multi-money scene with 3+ objects (likely crowded
     if (pass1Detections.length >= 3) return true;
 
-    // Condition 2: Any detected object is small relative to frame (< 0.25 normalized size)
+    // Condition 2: Any detected object is small relative to frame (< 0.25 normalized size
     final hasSmallObjects = pass1Detections.any(
       (d) => d.normalizedBox.width < 0.25 && d.normalizedBox.height < 0.25,
     );
@@ -312,9 +297,7 @@ class SmartMultiPassDetector {
     return false;
   }
 
-  // ---------------------------------------------------------------------------
-  // IMAGE ENHANCEMENT (PASS 2)
-  // ---------------------------------------------------------------------------
+  // IMAGE ENHANCEMENT (PASS 2
 
   /// Performs light contrast enhancement and normalization in pure Dart.
   Future<Uint8List?> _enhanceImage(Uint8List imageBytes) async {
@@ -326,7 +309,7 @@ class SmartMultiPassDetector {
       final img.Image? decoded = img.decodeImage(imageBytes);
       if (decoded == null) return null;
 
-      // 1. Moderate contrast enhancement (contrast: 1.20)
+      // 1. Moderate contrast enhancement (contrast: 1.20
       final enhanced = img.contrast(decoded, contrast: 120);
 
       // 2. Encode to high-quality JPEG
@@ -337,9 +320,7 @@ class SmartMultiPassDetector {
     }
   }
 
-  // ---------------------------------------------------------------------------
-  // TILED / CROP INFERENCE (PASS 3)
-  // ---------------------------------------------------------------------------
+  // TILED / CROP INFERENCE (PASS 3
 
   /// Runs inference on 4 overlapping quadrants and maps detection coordinates
   /// back into the original image normalized coordinate space.
@@ -480,18 +461,16 @@ class SmartMultiPassDetector {
     }
   }
 
-  // ---------------------------------------------------------------------------
   // MERGE & CROSS-PASS DEDUPLICATION
-  // ---------------------------------------------------------------------------
 
-  /// Merges detections from multiple passes:
-  /// - Identifies detections of the SAME physical object (same currency + same class + IoU >= [iouThreshold]).
-  /// - Preserves the best confidence score and box for that physical object.
-  /// - Real physical duplicate objects (e.g. two separate 5 Riyal bills at different positions)
-  ///   have IoU < [iouThreshold] and are NEVER merged.
-  /// - Candidates with confidence >= [finalThreshold] are included directly.
-  /// - Intermediate candidates with confidence >= [candidateThreshold] that were confirmed
-  ///   by at least 2 independent passes receive a confidence boost.
+  /// Merges detections from multiple passes
+  /// Identifies detections of the SAME physical object (same currency + same class + IoU >= [iouThreshold]).
+  /// Preserves the best confidence score and box for that physical object.
+  /// Real physical duplicate objects (e.g. two separate 5 Riyal bills at different positions
+  /// have IoU < [iouThreshold] and are NEVER merged.
+  /// Candidates with confidence >= [finalThreshold] are included directly.
+  /// Intermediate candidates with confidence >= [candidateThreshold] that were confirmed
+  /// by at least 2 independent passes receive a confidence boost.
   static List<MoneyDetection> mergeCrossPassDetections(
     List<List<MoneyDetection>> passResults, {
     double finalThreshold = 0.65,

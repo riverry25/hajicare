@@ -2,13 +2,12 @@ import 'package:flutter/foundation.dart';
 
 /// Centralized lightweight logger for HajiCare.
 /// Best-practice replacement for scattered debugPrint and print statements.
-///
-/// - In release mode, non-critical logging is completely stripped/bypassed.
-/// - In debug mode:
-///   - [AppLogger.error]: Logs critical errors with optional stack traces.
-///   - [AppLogger.warn]: Logs warning conditions.
-///   - [AppLogger.info]: Logs milestone lifecycle events (auth state, room connection).
-///   - [AppLogger.debug]: High-frequency / granular traces (suppressed by default to prevent console spam).
+/// In release mode, non-critical logging is completely stripped/bypassed.
+/// In debug mode
+/// [AppLogger.error]: Logs critical errors with optional stack traces.
+/// [AppLogger.warn]: Logs warning conditions.
+/// [AppLogger.info]: Logs milestone lifecycle events (auth state, room connection).
+/// [AppLogger.debug]: High-frequency / granular traces (suppressed by default to prevent console spam).
 class AppLogger {
   AppLogger._();
 

@@ -144,7 +144,7 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
       resizeToAvoidBottomInset: false,
       body: Stack(
         children: [
-          // 1. Core Map Layer (Normal 2D flutter_map OR 3D Perspective NavigationMapView)
+          // 1. Core Map Layer (Normal 2D flutter_map OR 3D Perspective NavigationMapView
           Obx(() {
             if (mapCtrl.isNavigatingRx.value) {
               return RepaintBoundary(
@@ -159,7 +159,7 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
             if (mapCtrl.isNavigatingRx.value) return const SizedBox.shrink();
 
             final bottomPadding = MediaQuery.of(context).padding.bottom;
-            // When hosted inside dashboard Scaffold (with extendBody: true),
+            // When hosted inside dashboard Scaffold (with extendBody: true
             // Scaffold._BodyBuilder sets MediaQuery bottom padding to include
             // the full HajiCareBottomNavBar layout height (approx. 88-120px).
             // When standalone (showBottomNav: true) or when bottom padding is only
@@ -428,9 +428,7 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
   }
 }
 
-// ---------------------------------------------------------------------------
-// COMPACT FLOATING MEMBER PILL (TAP / SWIPE UP TO OPEN FULL PANEL)
-// ---------------------------------------------------------------------------
+// COMPACT FLOATING MEMBER PILL (TAP / SWIPE UP TO OPEN FULL PANEL
 
 class _CompactMemberPill extends StatelessWidget {
   final MapController mapCtrl;
@@ -652,9 +650,7 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
     );
   }
 
-  // ---------------------------------------------------------------------------
   // INTERACTIVE FLUTTER_MAP CANVAS
-  // ---------------------------------------------------------------------------
 
   Widget _buildInteractiveMap(HajiCareController state, MapController mapCtrl) {
     return fmap.FlutterMap(
@@ -736,7 +732,7 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
           );
         }),
 
-        // 3. Safe Radius Circle Layer — changes on GPS update (only if real GPS is available)
+        // 3. Safe Radius Circle Layer — changes on GPS update (only if real GPS is available
         Obx(() {
           final userLocation = mapCtrl.currentUserLocation.value;
           if (userLocation == null) {
@@ -785,11 +781,11 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
                   child: RepaintBoundary(child: _buildCompanionMarker(mapCtrl)),
                 ),
 
-              // Active Assistance Request Pin Marker (Prominent Jemputan / Bantuan Pin)
+              // Active Assistance Request Pin Marker (Prominent Jemputan / Bantuan Pin
               if (hasAssistanceMarker)
                 _buildAssistanceMarker(assistanceReq, mapCtrl),
 
-              // Room Member Markers (filtered, single marker per person, turns RED on SOS)
+              // Room Member Markers (filtered, single marker per person, turns RED on SOS
               if (mapCtrl.roomMembers.isNotEmpty)
                 ..._buildRoomMemberMarkers(
                   state,
@@ -810,7 +806,7 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
               // Filtered POI Markers
               ..._buildPoiMarkers(mapCtrl),
 
-              // Dedicated Search Location Marker (isolated logic)
+              // Dedicated Search Location Marker (isolated logic
               if (searchResult != null &&
                   mapCtrl.selectedPoi.value?.id != 'search_${searchResult.id}')
                 _buildSearchMarker(searchResult),
@@ -827,9 +823,7 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
     );
   }
 
-  // ---------------------------------------------------------------------------
   // MARKER BUILDERS
-  // ---------------------------------------------------------------------------
 
   fmap.Marker _buildSearchMarker(MapSearchResult result) {
     final hc = context.hc;
@@ -1157,7 +1151,7 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
     final seenCoords = <LatLng>[];
 
     for (final member in members) {
-      // Never render current user twice (already rendered as "Anda")
+      // Never render current user twice (already rendered as "Anda"
       if (currentUid != null && member.uid == currentUid) {
         continue;
       }
@@ -1193,7 +1187,7 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
       });
       final isEmergency = member.sosActive || matchingSos != null;
 
-      // Extract coordinates (prefer member coordinates, fallback to SOS coordinates)
+      // Extract coordinates (prefer member coordinates, fallback to SOS coordinates
       double? lat = member.latitude;
       double? lng = member.longitude;
       if ((lat == null || lng == null) && matchingSos != null) {
@@ -1332,7 +1326,7 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
                   ),
                   const SizedBox(height: 3),
 
-                  // Avatar Icon Pin (with pulsing red halo if SOS active)
+                  // Avatar Icon Pin (with pulsing red halo if SOS active
                   Stack(
                     alignment: Alignment.center,
                     children: [
@@ -1474,7 +1468,7 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
     final selfName = state.self.name.trim().toLowerCase();
 
     for (final jamaah in source) {
-      // Skip current user (rendered as "Anda")
+      // Skip current user (rendered as "Anda"
       if (currentUid != null && jamaah.id == currentUid) {
         continue;
       }
@@ -1726,7 +1720,7 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // ── GOOGLE MAPS FLOATING PIN WITH POINTER ──
+                // GOOGLE MAPS FLOATING PIN WITH POINTER
                 Stack(
                   alignment: Alignment.center,
                   clipBehavior: Clip.none,
@@ -1749,7 +1743,7 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
                         },
                       ),
 
-                    // Pin Marker Shape (Circle + Pointer)
+                    // Pin Marker Shape (Circle + Pointer
                     Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -1814,7 +1808,7 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
 
                 if (showLabel) const SizedBox(height: 2),
 
-                // ── FLOATING CALLOUT LABEL PILL ──
+                // FLOATING CALLOUT LABEL PILL
                 if (showLabel)
                   Container(
                     padding: const EdgeInsets.symmetric(

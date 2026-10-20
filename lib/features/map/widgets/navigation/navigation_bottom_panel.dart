@@ -10,7 +10,7 @@ import '../../../../core/utils/distance_formatter.dart';
 import '../../controllers/map_controller.dart';
 
 /// Modern Navigation Bottom Panel refactored to match high-end delivery/tracking
-/// card interface (Photo 2 reference) with live milestone stepper, adaptive typography,
+/// card interface  with live milestone stepper, adaptive typography
 /// dark mode support, and resilient text scaling.
 class NavigationBottomPanel extends StatelessWidget {
   final MapController mapCtrl;
@@ -136,12 +136,12 @@ class NavigationBottomPanel extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // ── 1. TOP ROW: Status Badge Pill & Arrival Clock ──
+                    // 1. TOP ROW: Status Badge Pill & Arrival Clock
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        // Status Pill (Photo 2 style: Circular icon inside pill)
+                        // Status Pill (Photo 2 style: Circular icon inside pill
                         Flexible(
                           child: Container(
                             padding: const EdgeInsets.symmetric(
@@ -197,7 +197,7 @@ class NavigationBottomPanel extends StatelessWidget {
                         ),
                         const SizedBox(width: 12),
 
-                        // Arrival Time: ~20:48 (Photo 2 style: High emphasis bold clock)
+                        // Arrival Time: ~20:48 (Photo 2 style: High emphasis bold clock
                         Text(
                           '~$arrivalClock',
                           style: AppTypography.heading(
@@ -211,11 +211,11 @@ class NavigationBottomPanel extends StatelessWidget {
                     ),
                     const SizedBox(height: 18),
 
-                    // ── 2. LIVE MILESTONE STEPPER (Photo 2 reference) ──
+                    // 2. LIVE MILESTONE STEPPER
                     _buildMilestoneStepper(context, activeStep),
                     const SizedBox(height: 18),
 
-                    // ── 3. DESTINATION METADATA & ITEM CARD (Photo 2 reference) ──
+                    // 3. DESTINATION METADATA & ITEM CARD
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 14,
@@ -294,7 +294,7 @@ class NavigationBottomPanel extends StatelessWidget {
                           ),
                           const SizedBox(width: 10),
 
-                          // Right Distance Badge (Photo 2 item metric style)
+                          // Right Distance Badge (Photo 2 item metric style
                           Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 10,
@@ -328,10 +328,10 @@ class NavigationBottomPanel extends StatelessWidget {
                     ),
                     const SizedBox(height: 14),
 
-                    // ── 4. ACTION BUTTONS ROW (Photo 2 Contact Support style) ──
+                    // 4. ACTION BUTTONS ROW (Photo 2 Contact Support style
                     Row(
                       children: [
-                        // Primary Action: Keluar Navigasi (Prominent Pill)
+                        // Primary Action: Keluar Navigasi (Prominent Pill
                         Expanded(
                           child: ConstrainedBox(
                             constraints: const BoxConstraints(minHeight: 48),
@@ -416,7 +416,7 @@ class NavigationBottomPanel extends StatelessWidget {
     );
   }
 
-  /// 4-Stage Horizontal Milestone Stepper matching Photo 2 reference
+  /// 4-Stage Horizontal Milestone Stepper matching
   Widget _buildMilestoneStepper(BuildContext context, int activeStep) {
     final steps = [
       {'title': context.tr('maps.stepStart'), 'icon': Icons.flag_rounded},

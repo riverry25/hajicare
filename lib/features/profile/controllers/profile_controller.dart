@@ -7,11 +7,11 @@ import '../../../core/utils/input_sanitizer.dart';
 class ProfileController extends GetxController {
   int _lifecycleGeneration = 0;
 
-  // ── Reactive state ─────────────────────────────────────────────────────────
+  // Reactive state
   final displayName = ''.obs;
   final isSavingName = false.obs;
 
-  // ── Medical & Emergency & Identification Data ─────────────────────────────
+  // Medical & Emergency & Identification Data
   final bloodType = ''.obs;
   final allergies = ''.obs;
   final conditions = ''.obs;
@@ -30,7 +30,7 @@ class ProfileController extends GetxController {
       emergencyContact.value.trim().isNotEmpty ||
       passportNumber.value.trim().isNotEmpty;
 
-  // ── Lifecycle ──────────────────────────────────────────────────────────────
+  // Lifecycle
   @override
   void onInit() {
     super.onInit();
@@ -90,9 +90,8 @@ class ProfileController extends GetxController {
     }
   }
 
-  // ── Helpers ────────────────────────────────────────────────────────────────
 
-  /// Returns the safe email string (never null/empty displayed)
+  /// Returns the safe email string (never null/empty displayed
   String get safeEmail {
     try {
       final email = FirebaseAuth.instance.currentUser?.email;
@@ -114,7 +113,7 @@ class ProfileController extends GetxController {
     return (parts[0][0] + parts[1][0]).toUpperCase();
   }
 
-  // ── Update display name ────────────────────────────────────────────────────
+  // Update display name
   Future<void> updateDisplayName(String newName) async {
     final generation = _lifecycleGeneration;
     final trimmed = InputSanitizer.sanitizeDisplayName(newName);
@@ -130,7 +129,7 @@ class ProfileController extends GetxController {
       await user.reload();
       if (generation != _lifecycleGeneration) return;
 
-      // 2. Update Firestore with merge (safe even if doc doesn't exist)
+      // 2. Update Firestore with merge (safe even if doc doesn't exist
       await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
         'displayName': trimmed,
       }, SetOptions(merge: true));
@@ -150,7 +149,7 @@ class ProfileController extends GetxController {
     }
   }
 
-  // ── Update medical & identity data ─────────────────────────────────────────
+  // Update medical & identity data
   Future<void> updateMedicalData({
     required String bloodTypeVal,
     required String allergiesVal,

@@ -171,7 +171,7 @@ class MoneyValidationTrackerService {
     buffer.writeln('KESELURUHAN,Seluruh kelas yang diuji,$totalSamples,$totalCorrect,${totalSamples - totalCorrect},${overallAcc.toStringAsFixed(1)}%');
     buffer.writeln('');
 
-    // TABEL RINCIAN LOG PERCOBAAN DENGAN WAKTU DETEKSI (DETIK)
+    // TABEL RINCIAN LOG PERCOBAAN DENGAN WAKTU DETEKSI (DETIK
     buffer.writeln('TABEL 3: LOG RINCIAN PERCOBAAN (AUDIT TRAIL DENGAN WAKTU RESPON)');
     buffer.writeln('No,Timestamp,Mata Uang,Nominal Sebenarnya,Hasil Deteksi,Waktu Deteksi (Detik),Confidence Score,Status');
     for (int i = 0; i < logs.length; i++) {

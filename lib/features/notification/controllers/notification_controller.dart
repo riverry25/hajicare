@@ -31,7 +31,7 @@ class NotificationController extends GetxController {
   FirebaseAuth get _firebaseAuth =>
       _providedFirebaseAuth ?? FirebaseAuth.instance;
 
-  // ── Reactive State ──────────────────────────────────────────────────────────
+  // Reactive State
   final notifications = <AppNotificationModel>[].obs;
   final pendingInvitations = <RoomInvitationModel>[].obs;
   final isLoading = false.obs;
@@ -284,7 +284,7 @@ class NotificationController extends GetxController {
     });
   }
 
-  // ── Notification Actions ───────────────────────────────────────────────────
+  // Notification Actions
 
   /// Marks a specific notification as read.
   Future<void> markNotificationRead(String notificationId) async {
@@ -352,7 +352,7 @@ class NotificationController extends GetxController {
     await _notificationService.markAllAsRead(uid);
   }
 
-  // ── Invitation Actions ─────────────────────────────────────────────────────
+  // Invitation Actions
 
   /// Accepts a pending room invitation.
   Future<void> acceptInvitation({
@@ -484,7 +484,6 @@ class NotificationController extends GetxController {
   }
 
   /// Soft-deletes ALL notifications for the current user.
-  ///
   /// Best-practice pattern: each Firestore document gets the current user's
   /// uid appended to its `deletedBy` array field. The realtime stream already
   /// filters those documents out, so other users who have not cleared their

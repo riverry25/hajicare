@@ -15,7 +15,7 @@ import '../../../core/widgets/hajicare_header.dart';
 import '../controllers/smartband_ldr_controller.dart';
 
 /// Halaman Utama Pemantauan Smartband HajiCare ESP32-S3
-/// Mengintegrasikan telemetri kesehatan & keselamatan jemaah haji:
+/// Mengintegrasikan telemetri kesehatan & keselamatan jemaah haji
 /// 1. Detak Jantung
 /// 2. Suhu Tubuh
 /// 3. Deteksi Jatuh & Stabilitas Gerak
@@ -61,37 +61,37 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // ── 0A. BANNER PERINGATAN DARURAT JATUH (MPU6050) ──────────────
+              // 0A. BANNER PERINGATAN DARURAT JATUH (MPU6050
               _buildEmergencyFallBanner(context, ctrl),
 
-              // ── 0B. BANNER PERINGATAN DARURAT TOMBOL SOS SMARTBAND ─────────
+              // 0B. BANNER PERINGATAN DARURAT TOMBOL SOS SMARTBAND
               _buildEmergencySosBanner(context, ctrl),
 
-              // ── 1. STATUS GELANG & TOGGLE SIMULASI MODE ───────────────────
+              // 1. STATUS GELANG & TOGGLE SIMULASI MODE
               _buildTopStatusBar(context, ctrl),
               const SizedBox(height: AppSpacing.gapCards),
 
-              // ── 2. HERO METRIC ARC GAUGE (Fokus Sensor Terpilih) ───────────
+              // 2. HERO METRIC ARC GAUGE (Fokus Sensor Terpilih
               _buildHeroMetricArcCard(context, ctrl),
               const SizedBox(height: AppSpacing.gapCards),
 
-              // ── 3. RINGKASAN SENSOR KESEHATAN (Interactive Vitals Grid) ────
+              // 3. RINGKASAN SENSOR KESEHATAN (Interactive Vitals Grid
               _buildVitalsSummaryCard(context, ctrl),
               const SizedBox(height: AppSpacing.gapCards),
 
-              // ── 4. LAYAR LCD 16x2 + I2C BACKPACK (Pergelangan Tangan) ──────
+              // 4. LAYAR LCD 16x2 + I2C BACKPACK (Pergelangan Tangan
               _buildLcdScreenCard(context, ctrl),
               const SizedBox(height: AppSpacing.gapCards),
 
-              // ── 5. GRAFIK TREN SENSOR BEZIER SPLINE ───────────────────────
+              // 5. GRAFIK TREN SENSOR BEZIER SPLINE
               _buildTrendSectionCard(context, ctrl),
               const SizedBox(height: AppSpacing.gapCards),
 
-              // ── 5. DETEKSI JATUH & KEAMANAN JAMAAH ────────────────────────
+              // 5. DETEKSI JATUH & KEAMANAN JAMAAH
               _buildFallDetectionCard(context, ctrl),
               const SizedBox(height: AppSpacing.gapCards),
 
-              // ── 6. LOKASI TERKINI JAMAAH (PREVIEW MAP CARTO) ──────────────
+              // 6. LOKASI TERKINI JAMAAH (PREVIEW MAP CARTO
               _buildGpsSatelliteCard(context, ctrl),
               const SizedBox(height: 24),
             ],
@@ -101,7 +101,7 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
     );
   }
 
-  // ── 0. BANNER PERINGATAN DARURAT JATUH ─────────────────────────────────────
+  // 0. BANNER PERINGATAN DARURAT JATUH
   Widget _buildEmergencyFallBanner(
     BuildContext context,
     SmartbandLdrController ctrl,
@@ -217,7 +217,7 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
     });
   }
 
-  // ── 0B. BANNER PERINGATAN DARURAT TOMBOL SOS SMARTBAND ────────────────────
+  // 0B. BANNER PERINGATAN DARURAT TOMBOL SOS SMARTBAND
   Widget _buildEmergencySosBanner(
     BuildContext context,
     SmartbandLdrController ctrl,
@@ -350,7 +350,7 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
     });
   }
 
-  // ── 1. STATUS GELANG & TOGGLE SIMULASI MODE ───────────────────────────────
+  // 1. STATUS GELANG & TOGGLE SIMULASI MODE
   Widget _buildTopStatusBar(BuildContext context, SmartbandLdrController ctrl) {
     final isDark = AppColors.isDark(context);
     final headingColor = AppColors.textHeadingColor(context);
@@ -450,7 +450,7 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
     });
   }
 
-  // ── 2. HERO METRIC ARC GAUGE (Fokus Sensor Terpilih) ──────────────────────
+  // 2. HERO METRIC ARC GAUGE (Fokus Sensor Terpilih
   Widget _buildHeroMetricArcCard(
     BuildContext context,
     SmartbandLdrController ctrl,
@@ -581,7 +581,7 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
             ),
             const SizedBox(height: 12),
 
-            // Semi-circular Arc Gauge Visualizer (Proporsional & Rapi)
+            // Semi-circular Arc Gauge Visualizer (Proporsional & Rapi
             SizedBox(
               width: 190,
               height: 145,
@@ -656,7 +656,7 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
     });
   }
 
-  // ── 3. RINGKASAN SENSOR KESEHATAN (Interactive Vitals Grid) ───────────────
+  // 3. RINGKASAN SENSOR KESEHATAN (Interactive Vitals Grid
   Widget _buildVitalsSummaryCard(
     BuildContext context,
     SmartbandLdrController ctrl,
@@ -1008,7 +1008,7 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
     );
   }
 
-  // ── 4. LAYAR LCD 16x2 + I2C BACKPACK (Pergelangan Tangan) ───────────────────
+  // 4. LAYAR LCD 16x2 + I2C BACKPACK (Pergelangan Tangan
   Widget _buildLcdScreenCard(
     BuildContext context,
     SmartbandLdrController ctrl,
@@ -1016,7 +1016,7 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
     return _SmartbandLcd16x2Card(ctrl: ctrl);
   }
 
-  // ── 5. GRAFIK TREN SENSOR BEZIER CURVE ─────────────────────────────────────
+  // 5. GRAFIK TREN SENSOR BEZIER CURVE
   Widget _buildTrendSectionCard(
     BuildContext context,
     SmartbandLdrController ctrl,
@@ -1062,7 +1062,7 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
             ),
             const SizedBox(height: 12),
 
-            // Tab Selector Periode (Hari Ini / Minggu / Bulan)
+            // Tab Selector Periode (Hari Ini / Minggu / Bulan
             Container(
               decoration: BoxDecoration(
                 color: isDark
@@ -1096,7 +1096,7 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
             ),
             const SizedBox(height: 18),
 
-            // Cubic Bezier Spline Chart (Emerald & Soft Gradient)
+            // Cubic Bezier Spline Chart (Emerald & Soft Gradient
             SizedBox(
               height: 150,
               child: CustomPaint(
@@ -1113,7 +1113,7 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
             ),
             const SizedBox(height: 8),
 
-            // Sumbu X (Hari)
+            // Sumbu X (Hari
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -1128,7 +1128,7 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
             ),
             const SizedBox(height: 16),
 
-            // 3 Kartu Mini Ringkasan (Rata-rata, MAX, MIN)
+            // 3 Kartu Mini Ringkasan (Rata-rata, MAX, MIN
             Row(
               children: [
                 Expanded(
@@ -1309,7 +1309,7 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
     );
   }
 
-  // ── 5. DETEKSI JATUH & KEAMANAN JAMAAH ─────────────────────────────────────
+  // 5. DETEKSI JATUH & KEAMANAN JAMAAH
   Widget _buildFallDetectionCard(
     BuildContext context,
     SmartbandLdrController ctrl,
@@ -1598,7 +1598,7 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
     });
   }
 
-  // ── 7. LOKASI TERKINI JAMAAH (GPS NEO-6M CARTO MAP) ───────────────────────
+  // 7. LOKASI TERKINI JAMAAH (GPS NEO-6M CARTO MAP
   Widget _buildGpsSatelliteCard(
     BuildContext context,
     SmartbandLdrController ctrl,
@@ -1874,9 +1874,7 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 // CUSTOM PAINTERS: ARC GAUGE, PROGRESS RING & TREND CHART
-// ─────────────────────────────────────────────────────────────────────────────
 
 /// Painter untuk Semi-circular Arc Gauge di Kartu Hero
 class MetricArcGaugePainter extends CustomPainter {

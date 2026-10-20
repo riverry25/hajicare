@@ -53,10 +53,10 @@ class PrayerTimesScreen extends StatelessWidget {
               ),
               child: Column(
                 children: [
-                  // ── Custom Page Header (replaces AppBar) ──────────────────────
+                  // Custom Page Header (replaces AppBar
                   _buildPageHeader(context, headingColor, isDark),
 
-                  // ── Active Adhan Playing Banner ──────────────────────────────────
+                  // Active Adhan Playing Banner
                   Obx(() {
                     if (!controller.isAdhanPlaying.value) {
                       return const SizedBox.shrink();
@@ -200,7 +200,7 @@ class PrayerTimesScreen extends StatelessWidget {
                     );
                   }),
 
-                  // ── Dynamic Location & Hijri Date Card (Pilgrim Card Design) ───
+                  // Dynamic Location & Hijri Date Card (Pilgrim Card Design
                   _buildLocationPilgrimCard(
                     context: context,
                     controller: controller,
@@ -208,15 +208,15 @@ class PrayerTimesScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: AppSpacing.md),
 
-                  // ── Realtime Next Prayer Hero (Modern Islamic Luxury) ───────────
+                  // Realtime Next Prayer Hero (Modern Islamic Luxury
                   NextPrayerLuxuryHero(controller: controller),
                   const SizedBox(height: AppSpacing.md),
 
-                  // ── Dynamic Qibla Compass (Modern Astrolabe Instrument) ─────────
+                  // Dynamic Qibla Compass (Modern Astrolabe Instrument
                   QiblaAstrolabeCompass(controller: controller),
                   const SizedBox(height: AppSpacing.md),
 
-                  // ── Full Day Dynamic Schedule ──────────────────────────────────
+                  // Full Day Dynamic Schedule
                   AppCard(
                     padding: EdgeInsets.zero,
                     child: Column(
@@ -424,7 +424,7 @@ class PrayerTimesScreen extends StatelessWidget {
     });
   }
 
-  // ── Custom Page Header: title+subtitle centered like Profile Page ─────────
+  // Custom Page Header: title+subtitle centered like Profile Page
   Widget _buildPageHeader(
     BuildContext context,
     Color headingColor,
@@ -485,7 +485,7 @@ class PrayerTimesScreen extends StatelessWidget {
     );
   }
 
-  // ── Dynamic Location & Hijri Date Card (Pilgrim Card Design) ───────────────
+  // Dynamic Location & Hijri Date Card (Pilgrim Card Design
   Widget _buildLocationPilgrimCard({
     required BuildContext context,
     required PrayerTimesController controller,
@@ -807,7 +807,7 @@ class PrayerTimesScreen extends StatelessWidget {
                       ),
                       const SizedBox(width: 10),
 
-                      // Top-Right Glassmorphic Badge (Hijri Date & Status)
+                      // Top-Right Glassmorphic Badge (Hijri Date & Status
                       Flexible(
                         flex: 0,
                         child: Container(
@@ -1090,7 +1090,7 @@ class PrayerTimesScreen extends StatelessWidget {
         clipBehavior: Clip.none,
         alignment: Alignment.topCenter,
         children: [
-          // ── 1. Main Card Container ──────────────────────────────────
+          // 1. Main Card Container
           Container(
             width: double.infinity,
             padding: EdgeInsets.fromLTRB(
@@ -1116,7 +1116,6 @@ class PrayerTimesScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Subtitle
                 Text(
                   context.tr('prayerBgSubtitle'),
                   style: context.text.bodySmall.copyWith(
@@ -1244,7 +1243,7 @@ class PrayerTimesScreen extends StatelessWidget {
             ),
           ),
 
-          // ── 2. Elevated Floating Top Banner ────────────────────────
+          // 2. Elevated Floating Top Banner
           Positioned(
             top: -bannerProtrude,
             left: 12,
@@ -1413,7 +1412,6 @@ class PrayerTimesScreen extends StatelessWidget {
                         ),
                         const SizedBox(width: 12),
 
-                        // Title & Subtitle
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,

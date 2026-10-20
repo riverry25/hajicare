@@ -11,15 +11,15 @@ import '../../../../core/theme/theme_context.dart';
 import 'onboarding_hero_banner.dart';
 
 /// Second slide of the onboarding flow: Safety, Radar Rombongan & Connected Pilgrims.
-/// Implements an arched globe world map showcase aligned with AppColors:
-/// - Arched/curved hemispherical dotted world map spanning edge-to-edge
-/// - High accuracy landmass dot projection (Americas, Europe, Africa, Middle East, Asia, Nusantara, Australia)
-/// - 3 floating Islamic vector art cards matching AppColors:
-///   * Center: Ka'bah (Deep Espresso & Kiswah Gold) with Gold-Emerald gradient border & pilgrim avatar
-///   * Left: Masjid Nabawi (Sacred Emerald & Desert Sand Dawn)
-///   * Right: Tenda Mina & Jabal Rahmah (Warm Desert Sand, Camel Tan & Clean White)
-/// - Floating live status pill and Ka'bah location pin badge
-/// - High contrast WCAG AA/AAA compliant typography for Light & Dark mode
+/// Implements an arched globe world map showcase aligned with AppColors
+/// Arched/curved hemispherical dotted world map spanning edge-to-edge
+/// High accuracy landmass dot projection (Americas, Europe, Africa, Middle East, Asia, Nusantara, Australia
+/// 3 floating Islamic vector art cards matching AppColors
+/// Center: Ka'bah (Deep Espresso & Kiswah Gold) with Gold-Emerald gradient border & pilgrim avatar
+/// Left: Masjid Nabawi (Sacred Emerald & Desert Sand Dawn
+/// Right: Tenda Mina & Jabal Rahmah (Warm Desert Sand, Camel Tan & Clean White
+/// Floating live status pill and Ka'bah location pin badge
+/// High contrast  AA/AAA compliant typography for Light & Dark mode
 class OnboardingSlideSafety extends StatelessWidget {
   final int activeIndex;
 
@@ -56,7 +56,7 @@ class OnboardingSlideSafety extends StatelessWidget {
                 children: [
                   const SizedBox(height: AppSpacing.xs),
 
-                  // ── 1. Visual Showcase: Full-Width Arched Dotted Globe Map ──
+                  // 1. Visual Showcase: Full-Width Arched Dotted Globe Map
                   OnboardingHeroBanner(
                     badgeText: context.tr('onboarding.safetySystemBadge'),
                     stageText: context.tr('onboardingStage2'),
@@ -74,20 +74,20 @@ class OnboardingSlideSafety extends StatelessWidget {
                           ),
                         ),
 
-                        // 1.2 Three Floating Modern Islamic Art Cards (Arched Fan)
+                        // 1.2 Three Floating Modern Islamic Art Cards (Arched Fan
                         Positioned(
                           top: isShortScreen ? 6 : 10,
                           child: _buildArchedCardsShowcase(context, isDark),
                         ),
 
-                        // 1.3 Floating Location Pill Badge (Right)
+                        // 1.3 Floating Location Pill Badge (Right
                         Positioned(
                           bottom: isShortScreen ? 18 : 24,
                           right: 14,
                           child: _buildLocationPill(context, isDark),
                         ),
 
-                        // 1.4 Floating Ka'bah Pin Badge (Left)
+                        // 1.4 Floating Ka'bah Pin Badge (Left
                         Positioned(
                           bottom: isShortScreen ? 24 : 30,
                           left: 18,
@@ -99,7 +99,7 @@ class OnboardingSlideSafety extends StatelessWidget {
 
                   const SizedBox(height: AppSpacing.md),
 
-                  // ── 2. Editorial Headline & Narrative Description ───────────
+                  // 2. Editorial Headline & Narrative Description
                   Padding(
                     padding: const EdgeInsets.symmetric(
                       horizontal: AppSpacing.screenEdgeGutter,
@@ -158,12 +158,12 @@ class OnboardingSlideSafety extends StatelessWidget {
         clipBehavior: Clip.none,
         alignment: Alignment.center,
         children: [
-          // ── Left Card: Masjid Nabawi / Madinah (tilted counter-clockwise) ──
+          // Left Card: Masjid Nabawi / Madinah (tilted counter-clockwise
           Positioned(
             left: 18,
             top: 14,
             child: Transform.rotate(
-              angle: -0.13, // ~-7.5 degrees
+              angle: -0.13, // 7.5 degrees
               child: _buildSideArtCard(
                 width: 78,
                 height: 112,
@@ -176,12 +176,12 @@ class OnboardingSlideSafety extends StatelessWidget {
             ),
           ),
 
-          // ── Right Card: Tenda Mina & Arafat (tilted clockwise) ───────────
+          // Right Card: Tenda Mina & Arafat (tilted clockwise
           Positioned(
             right: 18,
             top: 14,
             child: Transform.rotate(
-              angle: 0.13, // ~+7.5 degrees
+              angle: 0.13, // +7.5 degrees
               child: _buildSideArtCard(
                 width: 78,
                 height: 112,
@@ -194,7 +194,7 @@ class OnboardingSlideSafety extends StatelessWidget {
             ),
           ),
 
-          // ── Center Card: Ka'bah & Masjidil Haram (straight, elevated) ─────
+          // Center Card: Ka'bah & Masjidil Haram (straight, elevated
           Positioned(top: 0, child: _buildCenterKaabaCard(isDark)),
         ],
       ),
@@ -208,7 +208,7 @@ class OnboardingSlideSafety extends StatelessWidget {
       clipBehavior: Clip.none,
       alignment: Alignment.bottomCenter,
       children: [
-        // AppColors multi-tone gradient border wrapper (Desert Gold to Sacred Emerald)
+        // AppColors multi-tone gradient border wrapper (Desert Gold to Sacred Emerald
         Container(
           width: 96,
           height: 136,
@@ -521,7 +521,7 @@ class OnboardingSlideSafety extends StatelessWidget {
 enum _CardArtType { nabawi, mina }
 
 /// Custom painter rendering a beautiful minimalist vector illustration of the
-/// Holy Ka'bah with crescent moon, starry twilight, and golden Kiswah details,
+/// Holy Ka'bah with crescent moon, starry twilight, and golden Kiswah details
 /// calibrated to AppColors.espressoDark and AppColors.goldPrimary.
 class _KaabaVectorArtPainter extends CustomPainter {
   final bool isDark;
@@ -530,7 +530,7 @@ class _KaabaVectorArtPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    // 1. Celestial background gradient (Deep Espresso Night)
+    // 1. Celestial background gradient (Deep Espresso Night
     final bgRect = Offset.zero & size;
     final bgPaint = Paint()
       ..shader = const LinearGradient(
@@ -615,7 +615,7 @@ class _KaabaVectorArtPainter extends CustomPainter {
       floorAura,
     );
 
-    // Ka'bah body (Deepest rich charcoal black)
+    // Ka'bah body (Deepest rich charcoal black
     final kaabaPaint = Paint()..color = const Color(0xFF140E0A);
     final kaabaRect = RRect.fromRectAndRadius(
       Rect.fromLTWH(kaabaLeft, kaabaTop, kaabaWidth, kaabaHeight),
@@ -623,7 +623,7 @@ class _KaabaVectorArtPainter extends CustomPainter {
     );
     canvas.drawRRect(kaabaRect, kaabaPaint);
 
-    // Golden Kiswah Upper Band (AppColors.goldPrimary)
+    // Golden Kiswah Upper Band (AppColors.goldPrimary
     final kiswahBandPaint = Paint()..color = AppColors.goldPrimary;
     canvas.drawRRect(
       RRect.fromRectAndRadius(
@@ -782,21 +782,20 @@ class _LandscapeVectorArtPainter extends CustomPainter {
 
 /// Pure native architectural vector painter rendering a full-width, full-height
 /// precision mathematical World Dot Matrix Map inspired by luxury travel interfaces (WanderWise).
-///
-/// Features:
-/// - 50x22 uniform cartographic dot matrix spanning the entire banner canvas
-/// - Rich western continents (Americas, West Africa, Europe) so the left is NEVER empty
-/// - Gold Holy Land cluster (`G`) around Makkah & Madinah with glowing ripple halos
-/// - Emerald Kloter cluster (`E`) across Indonesia (Jakarta, Surabaya, Makassar)
-/// - Warm accent cluster (`A`) directly beneath the lower-left Ka'bah pin badge
-/// - Smooth flowing dashed connecting journey curve with miniature aircraft
+/// Features
+/// 50x22 uniform cartographic dot matrix spanning the entire banner canvas
+/// Rich western continents (Americas, West Africa, Europe) so the left is NEVER empty
+/// Gold Holy Land cluster (`G`) around Makkah & Madinah with glowing ripple halos
+/// Emerald Kloter cluster (`E`) across Indonesia (Jakarta, Surabaya, Makassar
+/// Warm accent cluster (`A`) directly beneath the lower-left Ka'bah pin badge
+/// Smooth flowing dashed connecting journey curve with miniature aircraft
 class _WorldDotMatrixMapPainter extends CustomPainter {
   final bool isDark;
 
   const _WorldDotMatrixMapPainter({required this.isDark});
 
   // 50 columns x 22 rows cartographic world matrix
-  // '.' = standard continent dot, 'G' = Gold Makkah/Madinah cluster,
+  // '.' = standard continent dot, 'G' = Gold Makkah/Madinah cluster
   // 'E' = Emerald Indonesia cluster, 'A' = Left Pin Area cluster, ' ' = ocean
   static const List<String> worldGrid = [
     // 0: Northern Canada / Scandinavia / Russia
@@ -880,7 +879,7 @@ class _WorldDotMatrixMapPainter extends CustomPainter {
           .withValues(alpha: isDark ? 0.85 : 0.90)
       ..style = PaintingStyle.fill;
 
-    // ── 1. Draw Full Architectural Dot Matrix ──
+    // 1. Draw Full Architectural Dot Matrix
     for (int r = 0; r < numRows; r++) {
       final row = worldGrid[r].padRight(numCols);
       final y = marginY + r * stepY;
@@ -908,18 +907,18 @@ class _WorldDotMatrixMapPainter extends CustomPainter {
       }
     }
 
-    // ── 2. Strategic Landmark Hub Nodes ──
-    // Left Pin Anchor Node (South America / Patagonia cluster)
+    // 2. Strategic Landmark Hub Nodes
+    // Left Pin Anchor Node (South America / Patagonia cluster
     final leftPinNode = Offset(marginX + 5.0 * stepX, marginY + 16.5 * stepY);
-    // Makkah Holy Beacon Node (Saudi Arabia)
+    // Makkah Holy Beacon Node (Saudi Arabia
     final makkahNode = Offset(marginX + 26.5 * stepX, marginY + 7.5 * stepY);
-    // Right Pill Anchor Node (Indonesia / Australia)
+    // Right Pill Anchor Node (Indonesia / Australia
     final rightPillNode = Offset(
       marginX + 41.5 * stepX,
       marginY + 15.5 * stepY,
     );
 
-    // ── 3. Smooth Connecting Journey Curve ──
+    // 3. Smooth Connecting Journey Curve
     final journeyPath = Path()
       ..moveTo(leftPinNode.dx, leftPinNode.dy)
       ..cubicTo(
@@ -962,7 +961,7 @@ class _WorldDotMatrixMapPainter extends CustomPainter {
       if (tangent != null) {
         canvas.save();
         canvas.translate(tangent.position.dx, tangent.position.dy);
-        // Plane heading in reverse direction (towards Makkah / northwest)
+        // Plane heading in reverse direction (towards Makkah / northwest
         canvas.rotate(tangent.angle + 3.14159);
 
         final planePaint = Paint()
@@ -984,8 +983,8 @@ class _WorldDotMatrixMapPainter extends CustomPainter {
       }
     }
 
-    // ── 4. Pulsing Beacons & Holy Halos ──
-    // Left Pin Anchor Beacon (Golden Halo)
+    // 4. Pulsing Beacons & Holy Halos
+    // Left Pin Anchor Beacon (Golden Halo
     final leftHalo = Paint()
       ..color = AppColors.goldPrimary.withValues(alpha: isDark ? 0.35 : 0.45)
       ..style = PaintingStyle.stroke
@@ -993,7 +992,7 @@ class _WorldDotMatrixMapPainter extends CustomPainter {
     canvas.drawCircle(leftPinNode, 8.0, leftHalo);
     canvas.drawCircle(leftPinNode, 3.0, goldDotPaint);
 
-    // Makkah Sacred Beacon (Expanding Golden & Emerald Halos)
+    // Makkah Sacred Beacon (Expanding Golden & Emerald Halos
     final makkahHalo1 = Paint()
       ..color = (isDark ? AppColors.darkPrimary : AppColors.goldPrimary)
           .withValues(alpha: isDark ? 0.25 : 0.35)
@@ -1009,7 +1008,7 @@ class _WorldDotMatrixMapPainter extends CustomPainter {
 
     canvas.drawCircle(makkahNode, 3.8, goldDotPaint);
 
-    // Right Pill Beacon (Emerald Halo)
+    // Right Pill Beacon (Emerald Halo
     final rightHalo = Paint()
       ..color = AppColors.statusPositive.withValues(alpha: isDark ? 0.30 : 0.40)
       ..style = PaintingStyle.stroke

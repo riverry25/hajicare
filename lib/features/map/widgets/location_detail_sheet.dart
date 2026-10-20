@@ -285,7 +285,6 @@ class _LocationDetailSheetState extends State<LocationDetailSheet>
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Drag Handle
                       Center(
                         child: GestureDetector(
                           behavior: HitTestBehavior.opaque,
@@ -314,7 +313,7 @@ class _LocationDetailSheetState extends State<LocationDetailSheet>
                         ),
                       ),
 
-                      // ── CATEGORY BADGE & STATUS ROW ──
+                      // CATEGORY BADGE & STATUS ROW
                       Wrap(
                         alignment: WrapAlignment.spaceBetween,
                         crossAxisAlignment: WrapCrossAlignment.center,
@@ -501,7 +500,6 @@ class _LocationDetailSheetState extends State<LocationDetailSheet>
                             ),
                           ),
 
-                          // Close button
                           if (onClose != null)
                             IconButton(
                               icon: const Icon(Icons.close_rounded, size: 20),
@@ -514,7 +512,7 @@ class _LocationDetailSheetState extends State<LocationDetailSheet>
                         ],
                       ),
 
-                      // Tags chips (e.g. Ramah Lansia, Air Dingin, Bebas Biaya)
+                      // Tags chips (e.g. Ramah Lansia, Air Dingin, Bebas Biaya
                       if (poi.tags.isNotEmpty) ...[
                         const SizedBox(height: 12),
                         Wrap(
@@ -657,7 +655,7 @@ class _LocationDetailSheetState extends State<LocationDetailSheet>
 
                       const SizedBox(height: 20),
 
-                      // Actions Row: Rute (Primary) & Bagikan (Secondary)
+                      // Actions Row: Rute (Primary) & Bagikan (Secondary
                       Row(
                         children: [
                           Expanded(

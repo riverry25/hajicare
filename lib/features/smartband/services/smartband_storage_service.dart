@@ -3,18 +3,17 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/smartband_data.dart';
 
 /// Service untuk menyimpan dan memuat data telemetri Smartband ke/dari
-/// SharedPreferences (local storage perangkat).
-///
-/// Data yang dipersisten:
-/// - Detak jantung (BPM) terakhir
-/// - SpO2 terakhir
-/// - Suhu tubuh terakhir
-/// - Total langkah (step count)
-/// - Data GPS (lat/lng terakhir yang valid)
-/// - Baterai
-/// - Waktu data terakhir diterima
-/// - LCD baris 1 & 2
-/// - Status deteksi jatuh (reset ke false saat load)
+/// SharedPs (local storage perangkat).
+/// Data yang dipersisten
+/// Detak jantung (BPM) terakhir
+/// SpO2 terakhir
+/// Suhu tubuh terakhir
+/// Total langkah (step count
+/// Data GPS (lat/lng terakhir yang valid
+/// Baterai
+/// Waktu data terakhir diterima
+/// LCD baris 1 & 2
+/// Status deteksi jatuh (reset ke false saat load
 class SmartbandStorageService {
   static const String _keyPrefix = 'hajicare_smartband_';
   static const String _keyHeartRate = '${_keyPrefix}heart_rate';
@@ -47,7 +46,7 @@ class SmartbandStorageService {
 
   static SmartbandStorageService get instance => _instance;
 
-  /// Inisialisasi SharedPreferences. Harus dipanggil sebelum operasi lainnya.
+  /// Inisialisasi SharedPs. Harus dipanggil sebelum operasi lainnya.
   Future<void> init() async {
     try {
       _prefs = await SharedPreferences.getInstance();
@@ -56,7 +55,7 @@ class SmartbandStorageService {
     }
   }
 
-  // ── Simpan Data ──────────────────────────────────────────────────────────
+  // Simpan Data
 
   /// Simpan seluruh data telemetri dari [SmartbandData] ke local storage.
   Future<void> saveSmartbandData(SmartbandData data) async {
@@ -95,7 +94,7 @@ class SmartbandStorageService {
     }
   }
 
-  /// Simpan step count secara terpisah (dipakai saat simulation update per-tick)
+  /// Simpan step count secara terpisah (dipakai saat simulation update per-tick
   Future<void> saveStepCount(int steps) async {
     try {
       await _prefs?.setInt(_keyStepCount, steps);
@@ -113,7 +112,7 @@ class SmartbandStorageService {
     }
   }
 
-  // ── Muat Data ────────────────────────────────────────────────────────────
+  // Muat Data
 
   /// Muat semua data tersimpan dari local storage.
   /// Mengembalikan [SmartbandStoredSnapshot] berisi semua field yang berhasil dimuat.
@@ -154,7 +153,7 @@ class SmartbandStorageService {
     }
   }
 
-  /// Hapus semua data tersimpan (untuk logout atau reset)
+  /// Hapus semua data tersimpan (untuk logout atau reset
   Future<void> clearAll() async {
     try {
       final p = _prefs;

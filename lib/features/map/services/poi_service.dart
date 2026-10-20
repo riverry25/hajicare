@@ -23,7 +23,6 @@ class _PoiCacheEntry {
 }
 
 /// Loads real places around a coordinate from OpenStreetMap's Overpass API.
-///
 /// This service deliberately has no built-in POI list. An empty provider
 /// response therefore stays empty instead of being replaced with demo pins.
 class PoiService {

@@ -11,8 +11,7 @@ import '../../../core/widgets/app_card.dart';
 import '../controllers/prayer_times_controller.dart';
 
 /// Modern Astrolabe Qibla Compass Widget.
-///
-/// Features:
+/// Features
 /// 1. Precision Astrolabe Dial with fine 360-degree ticks and 8-point Islamic Star (Khatam) rosette.
 /// 2. Smoothly rotating Kaaba needle with detailed pointer and counterweight.
 /// 3. Dynamic Turn Guidance (e.g. "Putar 28° ke kanan ➔" vs "⬅ Putar 15° ke kiri").
@@ -50,7 +49,7 @@ class QiblaAstrolabeCompass extends StatelessWidget {
         padding: const EdgeInsets.all(AppSpacing.cardPadding),
         child: Column(
           children: [
-            // ── Header: Title & Bearing Badge ───────────────────────────────
+            // Header: Title & Bearing Badge
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -143,7 +142,7 @@ class QiblaAstrolabeCompass extends StatelessWidget {
             if (!hasSensor)
               _buildNoSensorView(context, colors)
             else ...[
-              // ── Astrolabe Compass Dial ─────────────────────────────────────
+              // Astrolabe Compass Dial
               Center(
                 child: SizedBox(
                   width: 230,
@@ -164,7 +163,7 @@ class QiblaAstrolabeCompass extends StatelessWidget {
                         ),
                       ),
 
-                      // Cardinal Labels (U, S, B, T)
+                      // Cardinal Labels (U, S, B, T
                       Positioned(
                         top: 14,
                         child: Text(
@@ -325,7 +324,7 @@ class QiblaAstrolabeCompass extends StatelessWidget {
 
               const SizedBox(height: AppSpacing.lg),
 
-              // ── Dynamic Turn Guidance Status Banner ─────────────────────────
+              // Dynamic Turn Guidance Status Banner
               _buildTurnGuidanceBanner(
                 context,
                 isAligned: isAligned,
@@ -526,7 +525,7 @@ class _QiblaCompassDialPainter extends CustomPainter {
       canvas.drawLine(p1, p2, isMajor ? majorTickPaint : tickPaint);
     }
 
-    // 5. Khatam Sulayman (8-point Islamic Star Rosette)
+    // 5. Khatam Sulayman (8-point Islamic Star Rosette
     final starPaint = Paint()
       ..color = isDark
           ? accentColor.withValues(alpha: 0.08)

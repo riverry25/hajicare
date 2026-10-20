@@ -73,7 +73,6 @@ class NavigationArrivalCard extends StatelessWidget {
               ),
               const SizedBox(height: 18),
 
-              // Title
               Text(
                 context.tr('maps.alhamdulillah'),
                 style: context.text.titleLarge.copyWith(

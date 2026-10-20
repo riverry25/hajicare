@@ -12,7 +12,7 @@ import '../../../core/services/app_alert_service.dart';
 import '../../../core/utils/user_feedback_message.dart';
 
 /// Simple full-screen edit room form.
-/// Uses normal screen navigation (Get.toNamed) instead of dialogs/modals,
+/// Uses normal screen navigation (Get.toNamed) instead of dialogs/modals
 /// completely avoiding MediaQuery/layout conflicts.
 class EditRoomScreen extends StatefulWidget {
   const EditRoomScreen({super.key});

@@ -8,7 +8,7 @@ import '../../../../core/utils/distance_formatter.dart';
 import '../../controllers/map_controller.dart';
 
 /// Accessible, high-contrast Top Direction Instruction Card for Navigation Mode.
-/// Specially optimized for elderly pilgrims with large typography, bold icons,
+/// Specially optimized for elderly pilgrims with large typography, bold icons
 /// and clear visual contrast.
 class NavigationTopCard extends StatelessWidget {
   final MapController mapCtrl;
@@ -51,7 +51,7 @@ class NavigationTopCard extends StatelessWidget {
               child: Container(
                 clipBehavior: Clip.antiAlias,
                 decoration: BoxDecoration(
-                  // Gradient exactly matches prayer time header card (luxury espresso / royal primary)
+                  // Gradient exactly matches prayer time header card (luxury espresso / royal primary
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
@@ -81,7 +81,7 @@ class NavigationTopCard extends StatelessWidget {
                 ),
                 child: Stack(
                   children: [
-                    // 3D Concentric Geometric Rings (Top-Right Prayer Time signature motif)
+                    // 3D Concentric Geometric Rings (Top-Right Prayer Time signature motif
                     Positioned(
                       top: -35,
                       right: -35,

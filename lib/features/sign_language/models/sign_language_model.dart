@@ -34,7 +34,7 @@ enum SignLanguageModel {
 }
 
 /// Konfigurasi terpusat untuk setiap model bahasa isyarat.
-/// Menjadi Single Source of Truth untuk model path, label, input tensor,
+/// Menjadi Single Source of Truth untuk model path, label, input tensor
 /// buffer requirement, dan threshold.
 class SignLanguageModelConfig {
   final SignLanguageModel model;
@@ -61,7 +61,7 @@ class SignLanguageModelConfig {
     required this.expectedInputFeatures,
   });
 
-  /// SIBI Model: MotionGRU model (48 frames x 706 features: 353 base + 353 motion)
+  /// SIBI Model: MotionGRU model (48 frames x 706 features: 353 base + 353 motion
   /// Output: 72 kelas kosakata & alfabet SIBI.
   static const SignLanguageModelConfig sibi = SignLanguageModelConfig(
     model: SignLanguageModel.sibi,
@@ -76,7 +76,7 @@ class SignLanguageModelConfig {
     expectedInputFeatures: 706,
   );
 
-  /// BISINDO Model: MotionGRU model (48 frames x 706 features: 353 base + 353 motion)
+  /// BISINDO Model: MotionGRU model (48 frames x 706 features: 353 base + 353 motion
   /// Output: 47 kelas kosakata BISINDO.
   static const SignLanguageModelConfig bisindo = SignLanguageModelConfig(
     model: SignLanguageModel.bisindo,

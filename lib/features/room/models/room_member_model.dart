@@ -97,7 +97,7 @@ class RoomMemberModel {
       locationUpdatedAt = rawLocTime;
     }
 
-    // Parse currentLocation (GeoPoint or backward-compatible Map)
+    // Parse currentLocation (GeoPoint or backward-compatible Map
     GeoPoint? currentLocation;
     final rawLoc = data['currentLocation'];
     if (rawLoc is GeoPoint) {

@@ -22,7 +22,6 @@ import '../../map/controllers/map_controller.dart';
 import '../../notification/controllers/notification_controller.dart';
 
 /// Full SOS Alert Detail screen for pendamping / admin.
-///
 /// Receives a [sosData] map (from Firestore sos_events) and, if [sosEventId]
 /// is provided, subscribes to live Firestore updates so the mini-map marker
 /// moves in real time as the jamaah's location is updated.
@@ -145,7 +144,6 @@ class _SosAlertDetailScreenState extends State<SosAlertDetailScreen> {
     super.dispose();
   }
 
-  // ── HELPERS ────────────────────────────────────────────────────────────────
 
   String _formatTime(dynamic ts) {
     if (ts == null) return 'Tidak diketahui';
@@ -200,7 +198,6 @@ class _SosAlertDetailScreenState extends State<SosAlertDetailScreen> {
     return LatLng(loc.latitude, loc.longitude);
   }
 
-  // ── ACTIONS ────────────────────────────────────────────────────────────────
 
   Future<void> _openRoute() async {
     final target = _targetLatLng;
@@ -423,7 +420,6 @@ class _SosAlertDetailScreenState extends State<SosAlertDetailScreen> {
     );
   }
 
-  // ── BUILD ──────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
@@ -513,7 +509,7 @@ class _SosAlertDetailScreenState extends State<SosAlertDetailScreen> {
         padding: const EdgeInsets.all(AppSpacing.screenEdgeGutter),
         physics: const BouncingScrollPhysics(),
         children: [
-          // ── 0. Floating Hero Header Card (same pattern as RoomDetailScreen) ──
+          // 0. Floating Hero Header Card (same pattern as RoomDetailScreen
           Stack(
             clipBehavior: Clip.none,
             children: [
@@ -598,7 +594,7 @@ class _SosAlertDetailScreenState extends State<SosAlertDetailScreen> {
                 ),
               ),
 
-              // Floating hero header (protrudes above card)
+              // Floating hero header (protrudes above card
               Positioned(
                 top: 0,
                 left: 14,
@@ -651,7 +647,6 @@ class _SosAlertDetailScreenState extends State<SosAlertDetailScreen> {
                           ),
                         ),
                       ),
-                      // Content
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         child: Row(
@@ -718,7 +713,7 @@ class _SosAlertDetailScreenState extends State<SosAlertDetailScreen> {
           ),
           const SizedBox(height: AppSpacing.md),
 
-          // ── 2. Location Status Card ───────────────────────────────────────
+          // 2. Location Status Card
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
@@ -825,11 +820,11 @@ class _SosAlertDetailScreenState extends State<SosAlertDetailScreen> {
           ),
           const SizedBox(height: AppSpacing.md),
 
-          // ── 3. Mini Map ───────────────────────────────────────────────────
+          // 3. Mini Map
           _buildMiniMap(context),
           const SizedBox(height: AppSpacing.md),
 
-          // ── 4. Action Buttons ─────────────────────────────────────────────
+          // 4. Action Buttons
           if (!_isSosResolved) ...[
             ConstrainedBox(
               constraints: const BoxConstraints(
@@ -1182,7 +1177,6 @@ class _SosAlertDetailScreenState extends State<SosAlertDetailScreen> {
   }
 }
 
-// ── Sub-widgets ───────────────────────────────────────────────────────────────
 
 class _StatusBadge extends StatelessWidget {
   final String status;

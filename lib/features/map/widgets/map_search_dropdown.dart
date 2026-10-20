@@ -297,7 +297,7 @@ class MapSearchDropdown extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── SEARCH HISTORY SECTION (IF AVAILABLE) ────────────────────────
+          // SEARCH HISTORY SECTION (IF AVAILABLE
           if (history.isNotEmpty) ...[
             Padding(
               padding: const EdgeInsets.fromLTRB(14, 10, 10, 6),
@@ -423,7 +423,7 @@ class MapSearchDropdown extends StatelessWidget {
             }),
           ],
 
-          // ── NEARBY PLACES / REKOMENDASI TERDEKAT (ATURAN 13) ──────────────
+          // NEARBY PLACES / REKOMENDASI TERDEKAT (ATURAN 13
           if (topNearbyPois.isNotEmpty) ...[
             if (history.isNotEmpty)
               Divider(height: 1, thickness: 0.8, color: context.hc.border),

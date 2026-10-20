@@ -4,14 +4,13 @@ import '../theme/app_spacing.dart';
 import '../theme/theme_context.dart';
 
 /// Reusable, accessible, and premium header component for HajiCare screens.
-///
 /// Implements [PreferredSizeWidget] so it can be used directly as [Scaffold.appBar].
-/// Designed to follow the HajiCare design system with:
-/// - Consistent branded icon presentation (circular emblem with gold/espresso tint)
-/// - Clear typography hierarchy (Title + optional Subtitle)
-/// - Flexible leading (hamburger menu, back button, or none)
-/// - Flexible actions with comfortable tap targets (minimum 48dp)
-/// - Automatic theme adaptability for Light and Dark modes
+/// Designed to follow the HajiCare design system with
+/// Consistent branded icon presentation (circular emblem with gold/espresso tint
+/// Clear typography hierarchy (Title + optional Subtitle
+/// Flexible leading (hamburger menu, back button, or none
+/// Flexible actions with comfortable tap targets (minimum 48dp
+/// Automatic theme adaptability for Light and Dark modes
 class HajiCareHeader extends StatelessWidget implements PreferredSizeWidget {
   /// Primary title text of the page.
   final String title;

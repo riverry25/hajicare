@@ -104,7 +104,7 @@ class _MapFloatingControlsState extends State<MapFloatingControls>
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                // ── Hamburger Toggle Button ───────────────────────────────────────
+                // Hamburger Toggle Button
                 Tooltip(
                   message: _isExpanded
                       ? context.tr('maps.closeMapControls')
@@ -171,7 +171,7 @@ class _MapFloatingControlsState extends State<MapFloatingControls>
                   ),
                 ),
 
-                // ── Collapsible Floating Controls Group ───────────────────────────
+                // Collapsible Floating Controls Group
                 SizeTransition(
                   sizeFactor: _expandAnimation,
                   alignment: Alignment.topCenter,
@@ -256,7 +256,7 @@ class _MapFloatingControlsState extends State<MapFloatingControls>
                           ),
                           const SizedBox(height: AppSpacing.sm),
 
-                          // 3. Zoom Controls Group (In / Out)
+                          // 3. Zoom Controls Group (In / Out
                           if (widget.onZoomInTap != null ||
                               widget.onZoomOutTap != null) ...[
                             Container(
@@ -318,7 +318,7 @@ class _MapFloatingControlsState extends State<MapFloatingControls>
                           ),
                           const SizedBox(height: AppSpacing.sm),
 
-                          // 5. Map Tile Layer Switch (Voyager / OSM)
+                          // 5. Map Tile Layer Switch (Voyager / OSM
                           _buildControlButton(
                             context: context,
                             icon: Icons.layers_rounded,

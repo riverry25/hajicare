@@ -39,7 +39,7 @@ class SignSearchResult {
 }
 
 /// Repository terpusat untuk Text-to-Sign Language (SIBI & BISINDO).
-/// Mengimplementasikan arsitektur HYBRID:
+/// Mengimplementasikan arsitektur HYBRID
 /// Bundled Offline Assets ──► Local Persistent Cache ──► Remote Firebase Hosting
 class SignLanguageRepository {
   static SignLanguageRepository? _instance;
@@ -63,13 +63,11 @@ class SignLanguageRepository {
   SignLanguageCatalog? _cachedCatalogInMemory;
   DateTime? _lastCatalogFetchTime;
 
-  // ---------------------------------------------------------------------------
-  // 1. CATALOG MANAGEMENT (HYBRID: Remote -> Persistent Local Storage)
-  // ---------------------------------------------------------------------------
+  // 1. CATALOG MANAGEMENT (HYBRID: Remote -> Persistent Local Storage
 
-  /// Mengambil katalog video dengan strategi:
+  /// Mengambil katalog video dengan strategi
   /// 1. Gunakan cache in-memory jika belum kadaluarsa (< 5 menit) kecuali [forceRefresh]
-  /// 2. Coba GET remote catalog dari Firebase Hosting (`index.json`)
+  /// 2. Coba GET remote catalog dari Firebase Hosting (`index.json`
   /// 3. Simpan salinan ke persistent local storage jika berhasil
   /// 4. Jika offline/gagal, baca dari persistent local storage `catalog.json`
   /// 5. Selalu integrasikan dengan bundled offline assets
@@ -132,7 +130,7 @@ class SignLanguageRepository {
   Future<SignLanguageCatalog?> getOrFetchCatalog({
     bool forceRefresh = false,
   }) async {
-    // 1. In-memory cache check (berlaku 5 menit)
+    // 1. In-memory cache check (berlaku 5 menit
     if (!forceRefresh &&
         _cachedCatalogInMemory != null &&
         _lastCatalogFetchTime != null &&
@@ -639,9 +637,7 @@ class SignLanguageRepository {
     ],
   );
 
-  // ---------------------------------------------------------------------------
-  // 2. SOURCE RESOLUTION (asset -> localCached -> remote)
-  // ---------------------------------------------------------------------------
+  // 2. SOURCE RESOLUTION (asset -> localCached -> remote
 
   /// Menyelesaikan status aktual video source untuk satu entry.
   Future<SignVideoEntry> resolveVideoSource(SignVideoEntry entry) async {
@@ -664,11 +660,9 @@ class SignLanguageRepository {
     return entry.copyWith(source: SignVideoSource.remote, cachedFilePath: null);
   }
 
-  // ---------------------------------------------------------------------------
   // 3. TEXT-TO-SIGN SEARCH ENGINE
-  // ---------------------------------------------------------------------------
 
-  /// Mencari video berdasarkan query teks dengan tahapan:
+  /// Mencari video berdasarkan query teks dengan tahapan
   /// 1. Exact phrase match
   /// 2. Phrase alias match
   /// 3. Exact word match
@@ -757,11 +751,9 @@ class SignLanguageRepository {
         .trim();
   }
 
-  // ---------------------------------------------------------------------------
-  // 4. REMOTE DOWNLOAD FLOW WITH DIO (Atomic & Persistent)
-  // ---------------------------------------------------------------------------
+  // 4. REMOTE DOWNLOAD FLOW WITH DIO (Atomic & Persistent
 
-  /// Mengunduh file video remote ke persistent local storage:
+  /// Mengunduh file video remote ke persistent local storage
   /// `ApplicationSupportDirectory/sign_language/videos/${language}/${id}_v${version}.mp4`
   Future<SignVideoEntry> downloadVideo(
     SignVideoEntry entry, {
@@ -833,9 +825,7 @@ class SignLanguageRepository {
     }
   }
 
-  // ---------------------------------------------------------------------------
   // 5. PACKAGE DOWNLOAD BY CATEGORY
-  // ---------------------------------------------------------------------------
 
   /// Mengunduh seluruh video dalam satu kategori untuk bahasa tertentu.
   /// Contoh kategori: 'health', 'hajj', 'emergency', 'alphabet'.
@@ -892,9 +882,7 @@ class SignLanguageRepository {
     onProgress?.call(completed, total, 1.0);
   }
 
-  // ---------------------------------------------------------------------------
   // 6. CACHE MANAGEMENT
-  // ---------------------------------------------------------------------------
 
   Future<bool> deleteDownloadedVideo(SignVideoEntry entry) async {
     return await _cacheService.deleteCachedVideo(entry);

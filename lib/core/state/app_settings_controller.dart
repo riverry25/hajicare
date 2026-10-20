@@ -18,10 +18,10 @@ enum AppTextScale {
   String localizedLabel(BuildContext context) => context.tr(labelKey);
 }
 
-/// Centralized GetX controller for persistent user preferences:
-/// - Locale (language)
-/// - ThemeMode (light / dark / system)
-/// - Text scale factor (0.9 / 1.0 / 1.15 / 1.20)
+/// Centralized GetX controller for persistent user ps
+/// Locale (language
+/// ThemeMode (light / dark / system
+/// Text scale factor (0.9 / 1.0 / 1.15 / 1.20
 class AppSettingsController extends GetxController {
   static const _kLocaleKey = 'hajicare_locale';
   static const _kThemeKey = 'hajicare_theme';
@@ -32,7 +32,7 @@ class AppSettingsController extends GetxController {
   final _textScale = AppTextScale.normal.obs;
   Future<void>? _settingsLoad;
 
-  // ── Getters ─────────────────────────────────────────────────────────────────
+  // Getters
   Locale get currentLocale => _locale.value;
   ThemeMode get currentThemeMode => _themeMode.value;
   AppTextScale get currentTextScale => _textScale.value;
@@ -48,7 +48,7 @@ class AppSettingsController extends GetxController {
     loadSettings();
   }
 
-  // ── Load from SharedPreferences ─────────────────────────────────────────────
+  // Load from SharedPs
   Future<void> loadSettings() async {
     await (_settingsLoad ??= _loadSettings());
   }
@@ -70,7 +70,7 @@ class AppSettingsController extends GetxController {
     _textScale.value = _textScaleFromFactor(savedScale);
   }
 
-  // ── Setters ─────────────────────────────────────────────────────────────────
+  // Setters
   Future<void> setLocale(Locale newLocale) async {
     if (_locale.value == newLocale && Get.locale == newLocale) return;
     _locale.value = newLocale;
@@ -102,7 +102,7 @@ class AppSettingsController extends GetxController {
     await prefs.setDouble(_kTextScaleKey, scale.factor);
   }
 
-  // ── Convenience helpers ──────────────────────────────────────────────────────
+  // Convenience helpers
   bool get isIdLocale => _locale.value.languageCode == 'id';
   bool get isJvLocale => _locale.value.languageCode == 'jv';
   bool get isSuLocale => _locale.value.languageCode == 'su';
@@ -143,7 +143,7 @@ class AppSettingsController extends GetxController {
     }
   }
 
-  // ── Private helpers ──────────────────────────────────────────────────────────
+  // Private helpers
   static String _stringFromTheme(ThemeMode mode) {
     switch (mode) {
       case ThemeMode.light:

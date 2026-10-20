@@ -390,7 +390,6 @@ class NotificationService {
 
   /// Bounded realtime window. Older history is intentionally not loaded until
   /// the product exposes an explicit pagination affordance.
-  ///
   /// Documents soft-deleted by this user (uid appears in the `deletedBy`
   /// array field) are excluded from the stream so that other users who have
   /// not deleted the notification still see it.
@@ -471,7 +470,6 @@ class NotificationService {
 
   /// Soft-deletes all notifications visible to [uid] by appending [uid] to
   /// the `deletedBy` array of every matching Firestore document.
-  ///
   /// This is the correct multi-user pattern: the document remains intact for
   /// any other recipient who has not yet dismissed it. The stream listener
   /// already filters out docs whose `deletedBy` list contains the current uid.

@@ -54,7 +54,7 @@ class RouteService {
     }
 
     // 2. If no ORS API key, fallback to OpenStreetMap OSRM foot routing
-    // (Free public router, follows real road network geometry, requires no API key)
+    // Free public router, follows real road network geometry, requires no API key
     return _getOsrmWalkingRoute(origin: origin, destination: destination);
   }
 

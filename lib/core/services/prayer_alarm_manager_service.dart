@@ -6,7 +6,7 @@ import 'adhan_native_bridge.dart';
 import 'adhan_notification_service.dart';
 import 'prayer_calculation_service.dart';
 
-/// Top-level callback executed by Android AlarmManager when a scheduled prayer alarm fires,
+/// Top-level callback executed by Android AlarmManager when a scheduled prayer alarm fires
 /// even when the HajiCare application process has been terminated.
 @pragma('vm:entry-point')
 void prayerAlarmCallback(int id, Map<String, dynamic> params) async {
@@ -19,7 +19,7 @@ void prayerAlarmCallback(int id, Map<String, dynamic> params) async {
       scheduledTimestampMs,
     );
     final now = DateTime.now();
-    // Drop if alarm fired more than 2 minutes late (stale alarm triggered on device boot or app startup)
+    // Drop if alarm fired more than 2 minutes late (stale alarm triggered on device boot or app startup
     if (now.difference(scheduledTime).inSeconds.abs() > 120) {
       debugPrint(
         '🕌 [PRAYER-ALARM] Skipping stale alarm. Scheduled: $scheduledTime, Now: $now',
@@ -145,7 +145,7 @@ String _resolvePrayerNameFromId(int id) {
   }
 }
 
-/// Android-specific prayer scheduler utilizing AndroidAlarmManager.alarmClock()
+/// Android-specific prayer scheduler utilizing AndroidAlarmManager.alarmClock
 /// to ensure reliable execution when the app is completely closed.
 class PrayerAlarmManagerService {
   static const int testAlarmId = 79999;

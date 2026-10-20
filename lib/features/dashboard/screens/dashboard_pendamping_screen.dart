@@ -106,9 +106,7 @@ class DashboardPendampingScreen extends StatelessWidget {
     }
   }
 
-  // ═══════════════════════════════════════════════════════════════════════════
   // HOME TAB
-  // ═══════════════════════════════════════════════════════════════════════════
   Widget _buildHome(
     BuildContext context,
     HajiCareController state,
@@ -140,9 +138,7 @@ class DashboardPendampingScreen extends StatelessWidget {
     );
   }
 
-  // ═══════════════════════════════════════════════════════════════════════════
   // HERO SECTION
-  // ═══════════════════════════════════════════════════════════════════════════
   Widget _hero(
     BuildContext context,
     HajiCareController state,
@@ -186,10 +182,10 @@ class DashboardPendampingScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Header row ───────────────────────────────────────────
+          // Header row
           Row(
             children: [
-              // Avatar (Glassmorphic)
+              // Avatar (Glassmorphic
               Container(
                 width: 46,
                 height: 46,
@@ -271,7 +267,7 @@ class DashboardPendampingScreen extends StatelessWidget {
 
           const SizedBox(height: 26),
 
-          // ── Big hero number ───────────────────────────────────────
+          // Big hero number
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
@@ -347,7 +343,7 @@ class DashboardPendampingScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 6),
-              // Sparkline statistics wave (transparent & gold, enlarged, synced with room)
+              // Sparkline statistics wave (transparent & gold, enlarged, synced with room
               MiniSparklineButton(
                 width: 175,
                 height: 84,
@@ -379,7 +375,7 @@ class DashboardPendampingScreen extends StatelessWidget {
           _dashedLine(heroFg.withValues(alpha: 0.22)),
           const SizedBox(height: 16),
 
-          // ── 3 mini metrics ────────────────────────────────────────
+          // 3 mini metrics
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
@@ -400,7 +396,7 @@ class DashboardPendampingScreen extends StatelessWidget {
 
           const SizedBox(height: 22),
 
-          // ── Dual-action pill (Frosted Glassmorphism) ───────────────
+          // Dual-action pill (Frosted Glassmorphism
           Container(
             height: 52,
             decoration: BoxDecoration(
@@ -541,9 +537,7 @@ class DashboardPendampingScreen extends StatelessWidget {
     );
   }
 
-  // ═══════════════════════════════════════════════════════════════════════════
   // CURVED BODY
-  // ═══════════════════════════════════════════════════════════════════════════
   Widget _body(
     BuildContext context,
     HajiCareController state,
@@ -640,7 +634,7 @@ class DashboardPendampingScreen extends StatelessWidget {
 
             const SizedBox(height: 20),
 
-            // Permintaan Bantuan Jamaah (Request Assistance Lifecycle)
+            // Permintaan Bantuan Jamaah (Request Assistance Lifecycle
             Obx(() {
               final activeReq =
                   AssistanceRequestService.instance.activeRequest.value;
@@ -806,9 +800,7 @@ class DashboardPendampingScreen extends StatelessWidget {
     );
   }
 
-  // ═══════════════════════════════════════════════════════════════════════════
   // HELPER WIDGETS
-  // ═══════════════════════════════════════════════════════════════════════════
 
   Widget _notifButton(BuildContext context, HajiCareController state) {
     final isDark = context.hc.isDark;
@@ -1409,9 +1401,7 @@ class DashboardPendampingScreen extends StatelessWidget {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// PILGRIMS PILLS SECTION  (carousel + search)
-// ═══════════════════════════════════════════════════════════════════════════
+// PILGRIMS PILLS SECTION  (carousel + search
 class _PilgrimsPillsSection extends StatefulWidget {
   const _PilgrimsPillsSection({
     required this.state,
@@ -1481,7 +1471,6 @@ class _PilgrimsPillsSectionState extends State<_PilgrimsPillsSection>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // ── Section header ────────────────────────────────────────
         Padding(
           padding: const EdgeInsets.only(top: 8, bottom: 6),
           child: Row(
@@ -1641,7 +1630,7 @@ class _PilgrimsPillsSectionState extends State<_PilgrimsPillsSection>
 
         const SizedBox(height: 12),
 
-        // ── Horizontal carousel ────────────────────────────────────
+        // Horizontal carousel
         Obx(() {
           final all = state.jamaahList;
           if (all.isEmpty) {
@@ -1720,7 +1709,7 @@ class _PilgrimsPillsSectionState extends State<_PilgrimsPillsSection>
   }
 }
 
-// ─── Single pill widget (stateless, reactive via Obx wrapper above) ─────────
+// Single pill widget (stateless, reactive via Obx wrapper above
 class _PillItem extends StatelessWidget {
   const _PillItem({
     required this.originalIndex,

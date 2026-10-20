@@ -1,10 +1,10 @@
 import 'package:flutter/foundation.dart';
 
 /// Single-frame container for MediaPipe landmarks & blendshapes.
-/// - [leftHand]: 21 3D points [x, y, z] normalized [0, 1]
-/// - [rightHand]: 21 3D points [x, y, z] normalized [0, 1]
-/// - [pose]: 33 (or >=25) 3D points [x, y, z] normalized [0, 1]
-/// - [faceBlendshapes]: Map of blendshape category name to score [0, 1]
+/// [leftHand]: 21 3D points [x, y, z] normalized [0, 1]
+/// [rightHand]: 21 3D points [x, y, z] normalized [0, 1]
+/// [pose]: 33 (or >=25) 3D points [x, y, z] normalized [0, 1]
+/// [faceBlendshapes]: Map of blendshape category name to score [0, 1]
 @immutable
 class LandmarkFrame {
   final List<List<double>>? leftHand;
@@ -29,7 +29,7 @@ class LandmarkFrame {
       faceBlendshapes != null && faceBlendshapes!.isNotEmpty;
 
   /// Parses landmarks from native Android EventChannel event payload.
-  /// Supports:
+  /// Supports
   /// 1. New structured dictionary: { 'left_hand': ..., 'right_hand': ..., 'pose': ..., 'face_blendshapes': ... }
   /// 2. 42 hand landmarks list: 0..20 left hand, 21..41 right hand
   /// 3. 543 holistic landmarks list: 0..32 pose, 33..499 face, 500..520 left, 521..541 right
@@ -89,10 +89,10 @@ class LandmarkFrame {
           rightHand: hasRight ? right : null,
         );
       } else if (points.length >= 542) {
-        // Legacy 543 layout:
-        // 0..32: Pose (33 points)
-        // 468/500..: Left hand (21 points)
-        // Right hand (21 points)
+        // Legacy 543 layout
+        // 0..32: Pose (33 points
+        // 468/500..: Left hand (21 points
+        // Right hand (21 points
         final pose = points.sublist(0, 33);
         final left = points.length >= 522 ? points.sublist(501, 522) : null;
         final right = points.length >= 543 ? points.sublist(522, 543) : null;

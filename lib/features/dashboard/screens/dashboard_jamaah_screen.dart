@@ -45,7 +45,7 @@ part 'dashboard_jamaah_sections.dart';
 class DashboardJamaahScreen extends StatelessWidget {
   const DashboardJamaahScreen({super.key});
 
-  /// Menampilkan dialog pemantauan smartband (ramah lansia, tanpa lat/lng teknis)
+  /// Menampilkan dialog pemantauan smartband (ramah lansia, tanpa lat/lng teknis
   static void showSmartbandDialog(BuildContext context) {
     const DashboardJamaahScreen()._showSmartBandDialog(context);
   }
@@ -126,7 +126,7 @@ class DashboardJamaahScreen extends StatelessWidget {
               maxWidth: AppBreakpoints.maxTabletContentWidth,
               child: Column(
                 children: [
-                  // ── Top Hero Card (Seamless Gradient Canvas) ─────────────
+                  // Top Hero Card (Seamless Gradient Canvas
                   _buildHeroSection(
                     context: context,
                     jamaah: jamaah,
@@ -136,7 +136,7 @@ class DashboardJamaahScreen extends StatelessWidget {
                     isDark: isDark,
                   ),
 
-                  // ── Curved White/Cream Canvas Sheet ──────────────────────
+                  // Curved White/Cream Canvas Sheet
                   _buildCurvedBody(
                     context: context,
                     jamaah: jamaah,
@@ -154,7 +154,7 @@ class DashboardJamaahScreen extends StatelessWidget {
     );
   }
 
-  // ── Hero Section (Top Card with Glowing Details) ───────────────────────────
+  // Hero Section (Top Card with Glowing Details
 }
 
 /// Circular gauge painter creating a modern arc progress ring with an end-handle dot

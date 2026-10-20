@@ -90,7 +90,7 @@ class PendampingSosBanner extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Header: Icon + Title + Room Tag ────────────────────────────
+          // Header: Icon + Title + Room Tag
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
@@ -166,7 +166,7 @@ class PendampingSosBanner extends StatelessWidget {
 
           const SizedBox(height: 8),
 
-          // ── Subtitle: Victim description ────────────────────────────────
+          // Subtitle: Victim description
           Padding(
             padding: const EdgeInsets.only(left: 2),
             child: Text(
@@ -184,7 +184,7 @@ class PendampingSosBanner extends StatelessWidget {
 
           const SizedBox(height: AppSpacing.md),
 
-          // ── Action Buttons Row ──────────────────────────────────────────
+          // Action Buttons Row
           Row(
             children: [
               // Primary Action: Review Emergency

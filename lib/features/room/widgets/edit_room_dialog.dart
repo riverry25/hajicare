@@ -299,7 +299,7 @@ class _EditRoomDialogState extends State<EditRoomDialog> {
           clipBehavior: Clip.none,
           alignment: Alignment.topCenter,
           children: [
-            // ── 1. Main Card Body ──
+            // 1. Main Card Body
             Container(
               margin: const EdgeInsets.only(
                 top: 28,
@@ -512,7 +512,7 @@ class _EditRoomDialogState extends State<EditRoomDialog> {
               ),
             ),
 
-            // ── 2. Floating Hero Card ──
+            // 2. Floating Hero Card
             Positioned(
               top: 0,
               left: 22,
@@ -523,7 +523,7 @@ class _EditRoomDialogState extends State<EditRoomDialog> {
               ),
             ),
 
-            // ── 3. Protruding Ribbon Submit Button ──
+            // 3. Protruding Ribbon Submit Button
             Positioned(
               bottom: 0,
               right: 0,

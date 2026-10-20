@@ -7,12 +7,10 @@ import '../../../core/theme/theme_context.dart';
 enum CornerPosition { topLeft, bottomRight }
 
 /// Diagonal capsule stripes that decorate the splash screen corners.
-///
-/// * Entrance: each capsule (staggered) grows from 20% → 100% length while
-///   fading 35% → 100% opacity and sliding in from the screen edge.
-/// * Loop: a soft "loading sweep" — capsules brighten one after another
-///   (opacity only, no scale, no glow).
-///
+/// Entrance: each capsule (staggered) grows from 20% → 100% length while
+/// fading 35% → 100% opacity and sliding in from the screen edge.
+/// Loop: a soft "loading sweep" — capsules brighten one after another
+/// opacity only, no scale, no glow).
 /// Everything is drawn by a single [CustomPainter] that repaints directly from
 /// the animations (`repaint:`), so no widgets are rebuilt per frame.
 class CornerCapsulesLoader extends StatelessWidget {

@@ -132,7 +132,7 @@ class RoomQrDialog extends StatelessWidget {
     final bodyColor = hc.textSecondary;
     final primaryColor = hc.brand;
 
-    // ── Bottom Sheet Mode ──────────────────────────────────────────────────
+    // Bottom Sheet Mode
     if (isSheetMode) {
       return Column(
         mainAxisSize: MainAxisSize.min,
@@ -374,7 +374,7 @@ class RoomQrDialog extends StatelessWidget {
       );
     }
 
-    // ── Dialog Mode (Adaptive Floating Design matching Reference Image) ────
+    // Dialog Mode (Adaptive Floating Design
     return HajiTransparentDialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
       child: ConstrainedBox(
@@ -383,7 +383,7 @@ class RoomQrDialog extends StatelessWidget {
           clipBehavior: Clip.none,
           alignment: Alignment.topCenter,
           children: [
-            // ── 1. Main Card Body ──
+            // 1. Main Card Body
             Container(
               margin: const EdgeInsets.only(
                 top: 28,
@@ -410,7 +410,7 @@ class RoomQrDialog extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Room Name (Left-aligned, matching reference design)
+                    // Room Name (Left-aligned
                     Text(
                       effectiveRoomName,
                       style: context.text.titleMedium.copyWith(
@@ -423,7 +423,7 @@ class RoomQrDialog extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 3),
-                    // Room subtitle instruction (Left-aligned, matching reference design)
+                    // Room subtitle instruction (Left-aligned
                     Text(
                       context.tr('room.scanQrOrShareDesc'),
                       style: context.text.captionSmall.copyWith(
@@ -434,7 +434,7 @@ class RoomQrDialog extends StatelessWidget {
                     ),
                     const SizedBox(height: 14),
 
-                    // QR Code Frame (Centered)
+                    // QR Code Frame (Centered
                     Center(
                       child: Container(
                         padding: const EdgeInsets.all(10),
@@ -468,7 +468,7 @@ class RoomQrDialog extends StatelessWidget {
                     ),
                     const SizedBox(height: 12),
 
-                    // Room Code Tap-to-Copy Pill (Centered)
+                    // Room Code Tap-to-Copy Pill (Centered
                     Center(
                       child: InkWell(
                         onTap: () => _copyCode(context),
@@ -558,7 +558,7 @@ class RoomQrDialog extends StatelessWidget {
               ),
             ),
 
-            // ── 2. Floating Hero Card (Compact header) ──
+            // 2. Floating Hero Card (Compact header
             Positioned(
               top: 0,
               left: 22,
@@ -569,7 +569,7 @@ class RoomQrDialog extends StatelessWidget {
               ),
             ),
 
-            // ── 3. Protruding Ribbon Action Button ──
+            // 3. Protruding Ribbon Action Button
             Positioned(
               bottom: 0,
               right: 0,

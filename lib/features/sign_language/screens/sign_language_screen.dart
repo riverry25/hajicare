@@ -18,11 +18,11 @@ import '../services/bisindo_camera_landmark_service.dart';
 enum LensFacing { front, back }
 
 /// Realtime Sign Language (SIBI & BISINDO) Recognition Screen.
-/// Unified state-of-the-art MotionGRU pipeline:
-/// - MediaPipe Holistic landmarks (543 landmarks per frame).
-/// - Resampling to 48 temporal frames x 706 features (353 base + 353 velocity).
-/// - MotionGRU Float16 model in-memory hot-swapping between SIBI and BISINDO.
-/// - Persistent, zero-flicker native camera preview during model transitions.
+/// Unified state-of-the-art MotionGRU pipeline
+/// MediaPipe Holistic landmarks (543 landmarks per frame).
+/// Resampling to 48 temporal frames x 706 features (353 base + 353 velocity).
+/// MotionGRU Float16 model in-memory hot-swapping between SIBI and BISINDO.
+/// Persistent, zero-flicker native camera preview during model transitions.
 /// Both models write into one shared, persisted "Transkripsi AI".
 class SignLanguageScreen extends StatefulWidget {
   final SignLanguageModel initialModel;
@@ -130,7 +130,7 @@ class _SignLanguageScreenState extends State<SignLanguageScreen> {
   }
 
   /// Switches SIBI ⇄ BISINDO completely smoothly in memory.
-  /// The camera stream and preview surface are kept alive without unmounting,
+  /// The camera stream and preview surface are kept alive without unmounting
   /// preserving 60 FPS fluidity with zero black-screen flicker.
   Future<void> _switchModel(SignLanguageModel targetModel) async {
     if (_isSwitchingModel || _currentModel == targetModel) return;
@@ -605,7 +605,7 @@ class _SignLanguageScreenState extends State<SignLanguageScreen> {
                   ),
                 ),
 
-              // 5. Model Switching Indicator (Sleek floating pill, leaves camera feed alive)
+              // 5. Model Switching Indicator (Sleek floating pill, leaves camera feed alive
               if (_isSwitchingModel)
                 Positioned(
                   top: 50,
@@ -652,7 +652,7 @@ class _SignLanguageScreenState extends State<SignLanguageScreen> {
                   ),
                 ),
 
-              // 6. Unified Live Overlays (SIBI & BISINDO)
+              // 6. Unified Live Overlays (SIBI & BISINDO
               Obx(() {
                 final liveState = _isolatedController.state.value;
                 switch (liveState) {
@@ -875,7 +875,7 @@ class _SignLanguageScreenState extends State<SignLanguageScreen> {
     );
   }
 
-  /// AI Transcription Card ("TRANSKRIPSI AI")
+  /// AI Transcription Card ("TRANSKRIPSI AI"
   Widget _buildUnifiedResultCard() {
     return Obx(() {
       final isDark = AppColors.isDark(context);
@@ -1485,7 +1485,7 @@ class _SignLanguageScreenState extends State<SignLanguageScreen> {
   }
 }
 
-/// Candidate gesture badge with clockwise smooth progress ring (Hajicare Gold & Espresso palette)
+/// Candidate gesture badge with clockwise smooth progress ring (Hajicare Gold & Espresso palette
 class GestureCandidateLoader extends StatelessWidget {
   final String label;
   final double progress;

@@ -65,7 +65,7 @@ class RegisterController extends GetxController {
 
     User? newUser;
     try {
-      // ── Step 1: Create Firebase Auth user ───────────────────────────────
+      // Buat akun Firebase Authentication
       final credential = await FirebaseAuth.instance
           .createUserWithEmailAndPassword(email: email, password: password);
       newUser = credential.user;
@@ -84,9 +84,7 @@ class RegisterController extends GetxController {
         await newUser.updateDisplayName(name);
       } catch (_) {}
 
-      // ── Step 2: Direct Firestore write ──────────────────────────────────
-      // Write profile directly to Firestore so the user document is immediately
-      // created and never left in an orphaned Auth-only state.
+      // Simpan data profil pengguna ke Firestore
       await FirebaseFirestore.instance.collection('users').doc(uid).set({
         'uid': uid,
         'name': name,
@@ -103,9 +101,7 @@ class RegisterController extends GetxController {
         '=== Direct Firestore write succeeded for uid: $uid, role: $effectiveRole',
       );
 
-      // ── Step 3: Server synchronization via Cloud Functions ──────────────
-      // Non-fatal: if functions are not deployed or cold-starting, the Firestore
-      // write in Step 2 already guarantees the account works.
+      // Sinkronisasi data pengguna ke server
       try {
         await TrustedBackendService().call('ensureUserProfile', {
           'name': name,
@@ -119,7 +115,7 @@ class RegisterController extends GetxController {
         );
       }
 
-      // ── Step 4: Persist session & sync state ────────────────────────────
+      // Simpan sesi login dan sinkronisasi state
       final startup = Get.find<AppStartupController>();
       await startup.handleSuccessfulLogin(rememberMe: true);
 
@@ -132,7 +128,7 @@ class RegisterController extends GetxController {
         );
       }
 
-      // ── Step 5: Navigate directly to respective role dashboard ──────────
+      // Navigasi ke dashboard sesuai role pengguna
       if (effectiveRole == 'pendamping') {
         Get.offAllNamed(AppRoutes.dashboardPendamping);
       } else {

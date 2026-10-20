@@ -159,7 +159,6 @@ class AppDialog {
                       ),
                       const SizedBox(height: AppSpacing.md),
 
-                      // Title
                       Text(
                         title,
                         textAlign: TextAlign.center,
@@ -315,7 +314,7 @@ class AppDialog {
     );
   }
 
-  // ── Public APIs ───────────────────────────────────────────────────────────
+  // Public APIs
 
   /// Shows a success modal feedback dialog.
   static Future<void> success({

@@ -14,7 +14,7 @@ class BleException implements Exception {
   String toString() => message;
 }
 
-/// Service handling BLE scanning, connection, service/characteristic discovery,
+/// Service handling BLE scanning, connection, service/characteristic discovery
 /// initial characteristic read, and realtime notification listening for HajiCare Watch
 /// using the DHT11 Environmental Sensor.
 class BleService {
@@ -71,7 +71,7 @@ class BleService {
     }
   }
 
-  /// Request to turn on Bluetooth (Android only, no-op on iOS)
+  /// Request to turn on Bluetooth (Android only, no-op on iOS
   Future<void> turnOnBluetooth() async {
     try {
       await FlutterBluePlus.turnOn();
@@ -164,7 +164,7 @@ class BleService {
     }
   }
 
-  /// Connect to the specified device, discover services, find the 3 characteristics,
+  /// Connect to the specified device, discover services, find the 3 characteristics
   /// read initial values, and subscribe to notifications.
   Future<void> connectToDevice(BluetoothDevice device) async {
     if (_isDisposed) {
@@ -186,9 +186,7 @@ class BleService {
 
       _connectedDevice = device;
 
-      // ==========================================
       // 1. CONNECTION STATE LISTENER
-      // ==========================================
 
       await _connectionSubscription?.cancel();
       _connectionSubscription = device.connectionState.listen((state) {
@@ -201,9 +199,7 @@ class BleService {
         }
       });
 
-      // ==========================================
       // 2. DISCOVER BLE SERVICES
-      // ==========================================
 
       onStatusLog?.call('Mencari service sensor...');
 
@@ -227,9 +223,7 @@ class BleService {
         );
       }
 
-      // ==========================================
       // 3. DISCOVER 3 SENSOR CHARACTERISTICS
-      // ==========================================
 
       BluetoothCharacteristic? tempChar;
       BluetoothCharacteristic? humChar;
@@ -262,9 +256,7 @@ class BleService {
       _humCharacteristic = humChar;
       _hiCharacteristic = hiChar;
 
-      // ==========================================
-      // 4. READ INITIAL VALUES (PROPERTY_READ)
-      // ==========================================
+      // 4. READ INITIAL VALUES (PROPERTY_READ
 
       onStatusLog?.call('Membaca data awal sensor...');
 
@@ -289,9 +281,7 @@ class BleService {
         debugPrint('Error reading initial heat index: $e');
       }
 
-      // ==========================================
-      // 5. SUBSCRIBE NOTIFICATIONS (PROPERTY_NOTIFY)
-      // ==========================================
+      // 5. SUBSCRIBE NOTIFICATIONS (PROPERTY_NOTIFY
 
       onStatusLog?.call('Mengaktifkan notifikasi realtime...');
 
@@ -322,9 +312,7 @@ class BleService {
       await hiChar.setNotifyValue(true);
       _ensureActive(generation);
 
-      // ==========================================
       // 6. SUCCESS
-      // ==========================================
 
       onConnectionChanged?.call(true);
       onStatusLog?.call('HajiCare Watch terhubung');

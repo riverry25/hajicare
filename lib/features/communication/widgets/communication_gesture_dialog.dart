@@ -9,7 +9,7 @@ import '../../../core/theme/theme_context.dart';
 import '../controllers/communication_controller.dart';
 
 /// Modern gesture-driven modal sheet for quick Arabic-Indonesian communication.
-/// Fully responsive under large accessibility text scales, dynamic multi-language,
+/// Fully responsive under large accessibility text scales, dynamic multi-language
 /// search-capable, with full-screen zoom mode and robust audio playback.
 class CommunicationGestureDialog extends StatefulWidget {
   const CommunicationGestureDialog({super.key});
@@ -374,7 +374,6 @@ class _CommunicationGestureDialogState
               ),
               const SizedBox(height: 16),
 
-              // Header
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -618,7 +617,7 @@ class _CommunicationGestureDialogState
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // ── Gesture Drag Indicator ────────────────────────────────────
+            // Gesture Drag Indicator
             GestureDetector(
               behavior: HitTestBehavior.opaque,
               onTap: () => Navigator.of(context).pop(),
@@ -638,7 +637,7 @@ class _CommunicationGestureDialogState
               ),
             ),
 
-            // ── Header Row ────────────────────────────────────────────────
+            // Header Row
             Padding(
               padding: const EdgeInsets.symmetric(
                 horizontal: AppSpacing.screenEdgeGutter,
@@ -721,7 +720,7 @@ class _CommunicationGestureDialogState
               ),
             ),
 
-            // ── Tip Guidance Banner ───────────────────────────────────────
+            // Tip Guidance Banner
             Padding(
               padding: const EdgeInsets.symmetric(
                 horizontal: AppSpacing.screenEdgeGutter,
@@ -765,7 +764,7 @@ class _CommunicationGestureDialogState
               ),
             ),
 
-            // ── Arabic Voice Download Prompt Banner (If Missing) ──────────
+            // Arabic Voice Download Prompt Banner (If Missing
             Obx(() {
               if (controller.isArabicVoiceAvailable.value ||
                   !controller.isTtsInitialized.value) {
@@ -839,7 +838,7 @@ class _CommunicationGestureDialogState
               );
             }),
 
-            // ── Search Bar ────────────────────────────────────────────────
+            // Search Bar
             Padding(
               padding: const EdgeInsets.symmetric(
                 horizontal: AppSpacing.screenEdgeGutter,
@@ -887,7 +886,7 @@ class _CommunicationGestureDialogState
               ),
             ),
 
-            // ── Filter Chips Row ──────────────────────────────────────────
+            // Filter Chips Row
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               physics: const BouncingScrollPhysics(),
@@ -923,7 +922,7 @@ class _CommunicationGestureDialogState
             const SizedBox(height: 6),
             Divider(height: 1, color: colors.border),
 
-            // ── TTS Error Helper Banner (If Active) ───────────────────────
+            // TTS Error Helper Banner (If Active
             Obx(() {
               if (!controller.hasTtsError.value) return const SizedBox.shrink();
 
@@ -1003,7 +1002,7 @@ class _CommunicationGestureDialogState
               );
             }),
 
-            // ── Scrollable Phrase List ────────────────────────────────────
+            // Scrollable Phrase List
             Expanded(
               child: Builder(
                 builder: (context) {
@@ -1169,7 +1168,7 @@ class _CommunicationGestureDialogState
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Top Row: Urgent badge (if any) and Action Buttons (Zoom & Copy)
+            // Top Row: Urgent badge (if any) and Action Buttons (Zoom & Copy
             SizedBox(
               width: double.infinity,
               child: Wrap(
@@ -1260,7 +1259,7 @@ class _CommunicationGestureDialogState
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Arabic Text (Right-aligned, large, crisp RTL)
+                      // Arabic Text (Right-aligned, large, crisp RTL
                       Align(
                         alignment: Alignment.centerRight,
                         child: FittedBox(

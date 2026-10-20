@@ -1,7 +1,7 @@
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 
-/// Manages temporal collection, uniform linear interpolation resampling (to 48 timesteps),
+/// Manages temporal collection, uniform linear interpolation resampling (to 48 timesteps
 /// first-order motion velocity calculation, and final [1, 48, 706] model input tensor construction.
 class BisindoSequenceBuffer {
   static const int kSequenceLength = 48;
@@ -27,7 +27,7 @@ class BisindoSequenceBuffer {
     _capturedBaseFeatures.clear();
   }
 
-  /// Uniformly resamples the captured sequence of N frames (N >= 2)
+  /// Uniformly resamples the captured sequence of N frames (N >= 2
   /// to exactly 48 timesteps using 1D linear interpolation across each of the 353 dimensions.
   static List<Float32List> resampleBaseSequence(
     List<Float32List> originalSequence, {
@@ -74,9 +74,9 @@ class BisindoSequenceBuffer {
     return resampled;
   }
 
-  /// Computes first-order velocity delta for each timestep:
-  /// - delta[0] = zero (353 zeros)
-  /// - delta[t] = base[t] - base[t-1], clipped to [-4.0, 4.0]
+  /// Computes first-order velocity delta for each timestep
+  /// delta[0] = zero (353 zeros
+  /// delta[t] = base[t] - base[t-1], clipped to [-4.0, 4.0]
   static List<Float32List> computeMotionDelta(List<Float32List> baseSequence) {
     final int seqLen = baseSequence.length;
     final List<Float32List> deltas = [];
@@ -97,7 +97,7 @@ class BisindoSequenceBuffer {
     return deltas;
   }
 
-  /// Concatenates base features + motion deltas along feature dimension:
+  /// Concatenates base features + motion deltas along feature dimension
   /// modelInput[t] = [ base[t] (353), delta[t] (353) ] -> 706 floats.
   /// Result: [48, 706].
   static List<Float32List> concatenateBaseAndDelta({
@@ -127,7 +127,7 @@ class BisindoSequenceBuffer {
     return combined;
   }
 
-  /// Processes the captured session base features into final model input tensor:
+  /// Processes the captured session base features into final model input tensor
   /// Returns a nested List representing shape [1, 48, 706] for TFLite inference.
   List<List<List<double>>> prepareModelInput() {
     if (_capturedBaseFeatures.length < 2) {

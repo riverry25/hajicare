@@ -383,7 +383,7 @@ class _MapBottomSheetState extends State<MapBottomSheet>
     );
   }
 
-  // ── 1. SELECTED MEMBER DETAIL CARD (Reference Photo UI & UX) ───────────────
+  // 1. SELECTED MEMBER DETAIL CARD Photo UI & UX
 
   Widget _buildSelectedMemberDetail(
     BuildContext context,
@@ -442,10 +442,10 @@ class _MapBottomSheetState extends State<MapBottomSheet>
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // ── Clearance for overlapping floating avatar ──────────────────
+              // Clearance for overlapping floating avatar
               const SizedBox(height: 40),
 
-              // ── Member Name (Centered bold title) ──────────────────────────
+              // Member Name (Centered bold title
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 46),
                 child: Text(
@@ -464,7 +464,7 @@ class _MapBottomSheetState extends State<MapBottomSheet>
 
               const SizedBox(height: 3),
 
-              // ── Waktu Terakhir Update Lokasi ──────────────────────────────
+              // Waktu Terakhir Update Lokasi
               Center(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -500,7 +500,7 @@ class _MapBottomSheetState extends State<MapBottomSheet>
 
               const SizedBox(height: 12),
 
-              // ── 3-Column Metric Box (Kondisi, Jarak, GPS) ───────────────────
+              // 3-Column Metric Box (Kondisi, Jarak, GPS
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: _buildThreeColumnStatsBox(
@@ -513,7 +513,7 @@ class _MapBottomSheetState extends State<MapBottomSheet>
 
               const SizedBox(height: 10),
 
-              // ── Primary Pill Button ─────────────────────────────────────────
+              // Primary Pill Button
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: SizedBox(
@@ -522,7 +522,7 @@ class _MapBottomSheetState extends State<MapBottomSheet>
                 ),
               ),
 
-              // ── Dismiss Action (Tutup text button) ─────────────────────────
+              // Dismiss Action (Tutup text button
               if (member.hasLocation)
                 Center(
                   child: Padding(
@@ -554,7 +554,7 @@ class _MapBottomSheetState extends State<MapBottomSheet>
     );
   }
 
-  // ── Overlapping Circular Avatar (Centered & Proportional) ───────────────────
+  // Overlapping Circular Avatar (Centered & Proportional
 
   Widget _buildOverlappingAvatar(BuildContext context, RoomMemberModel member) {
     final hc = context.hc;
@@ -607,7 +607,7 @@ class _MapBottomSheetState extends State<MapBottomSheet>
           child: Stack(
             alignment: Alignment.center,
             children: [
-              // Character Avatar Graphic (Centered cleanly)
+              // Character Avatar Graphic (Centered cleanly
               Center(
                 child: Icon(
                   Icons.person_rounded,
@@ -663,7 +663,7 @@ class _MapBottomSheetState extends State<MapBottomSheet>
     );
   }
 
-  // ── 3-Column Metric Box (Kondisi, Jarak, GPS) ───────────────────────────────
+  // 3-Column Metric Box (Kondisi, Jarak, GPS
 
   Widget _buildThreeColumnStatsBox(
     BuildContext context,
@@ -676,7 +676,7 @@ class _MapBottomSheetState extends State<MapBottomSheet>
     final borderColor = hc.border;
     final isPendamping = member.isPendamping;
 
-    // Stat 1: Status Kondisi Jamaah (Kesehatan / Keselamatan - Pengganti Bintang)
+    // Stat 1: Status Kondisi Jamaah (Kesehatan / Keselamatan - Pengganti Bintang
     final stat1Value = member.sosActive
         ? 'SOS'
         : context.tr('maps.conditionSafe');
@@ -715,7 +715,7 @@ class _MapBottomSheetState extends State<MapBottomSheet>
       ),
       child: Row(
         children: [
-          // Column 1: Kondisi Jamaah (Aman / SOS)
+          // Column 1: Kondisi Jamaah (Aman / SOS
           Expanded(
             child: _buildStatColumn(
               context: context,
@@ -800,7 +800,7 @@ class _MapBottomSheetState extends State<MapBottomSheet>
     );
   }
 
-  // ── Primary Pill Button (Vibrant green pill button matching reference) ─────
+  // Primary Pill Button (Vibrant green pill button
 
   Widget _buildPrimaryPillButton(
     BuildContext context,
@@ -908,7 +908,7 @@ class _MapBottomSheetState extends State<MapBottomSheet>
       );
     }
 
-    // Default & Loaded route states: Vibrant Green Pill Button matching reference
+    // Default & Loaded route states: Vibrant Green Pill Button
     final buttonLabel = hasRoute
         ? context.tr('maps.startNavigation')
         : context.tr('maps.routeToName', {
@@ -1034,7 +1034,7 @@ class _MapBottomSheetState extends State<MapBottomSheet>
     return context.hc.textMuted;
   }
 
-  // ── 2. ROOM MEMBERS LIST PANEL (Gambar 2 Fusion & Compact Design) ──────────
+  // 2. ROOM MEMBERS LIST PANEL
 
   Widget _buildCircularHeaderButton({
     required BuildContext context,
@@ -1107,7 +1107,7 @@ class _MapBottomSheetState extends State<MapBottomSheet>
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          // ── Header: Title on Left, 2 Circular Action Buttons on Right ──
+          // Header: Title on Left, 2 Circular Action Buttons on Right
           GestureDetector(
             behavior: HitTestBehavior.translucent,
             onVerticalDragUpdate: _onVerticalDragUpdate,
@@ -1191,7 +1191,7 @@ class _MapBottomSheetState extends State<MapBottomSheet>
             ),
           ),
 
-          // ── Search Bar: Unified styling (no color clash / belang) ──
+          // Search Bar: Unified styling (no color clash / belang
           if (_isSearchOpen) ...[
             const SizedBox(height: 8),
             Container(
@@ -1380,7 +1380,7 @@ class _MapBottomSheetState extends State<MapBottomSheet>
                 ? m.name.trim()[0].toUpperCase()
                 : (isPendamping ? 'P' : 'J');
 
-            // ── Unified Color Configuration (Same clean card for all members) ──
+            // Unified Color Configuration (Same clean card for all members
             final cardBg = hc.surface;
             final cardBorder = hc.border;
             final cardTextColor = hc.textPrimary;
@@ -1436,7 +1436,7 @@ class _MapBottomSheetState extends State<MapBottomSheet>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      // ── Top Row: Avatar on Left, Member Name on Right ──
+                      // Top Row: Avatar on Left, Member Name on Right
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
@@ -1513,7 +1513,7 @@ class _MapBottomSheetState extends State<MapBottomSheet>
                           ),
                           const SizedBox(width: 8),
 
-                          // Member Name (bold, 2 lines max, legible)
+                          // Member Name (bold, 2 lines max, legible
                           Expanded(
                             child: Text(
                               m.name,
@@ -1530,7 +1530,7 @@ class _MapBottomSheetState extends State<MapBottomSheet>
                         ],
                       ),
 
-                      // ── Middle: Role Badge Pill ──
+                      // Middle: Role Badge Pill
                       Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 6,
@@ -1556,11 +1556,11 @@ class _MapBottomSheetState extends State<MapBottomSheet>
                         ),
                       ),
 
-                      // ── Bottom Row: Distance & Status on Left, Diagonal Arrow on Right (Gambar 2 Fusion) ──
+                      // Bottom Row: Distance & Status on Left, Diagonal Arrow on Right
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          // Left side: Distance & Location Status on 2 separate lines (Never truncated!)
+                          // Left side: Distance & Location Status on 2 separate lines (Never truncated!
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1624,7 +1624,7 @@ class _MapBottomSheetState extends State<MapBottomSheet>
                           ),
                           const SizedBox(width: 6),
 
-                          // Right side: Circular Diagonal Arrow Button (matching Gambar 2 bottom-right)
+                          // Right side: Circular Diagonal Arrow Button
                           Material(
                             color: Colors.transparent,
                             child: InkWell(
@@ -1666,7 +1666,7 @@ class _MapBottomSheetState extends State<MapBottomSheet>
     );
   }
 
-  // ── 3. LEGACY JAMAAH CARD FALLBACK ─────────────────────────────────────────
+  // 3. LEGACY JAMAAH CARD FALLBACK
 
   Widget _buildLegacyJamaahCard(BuildContext context) {
     final hc = context.hc;

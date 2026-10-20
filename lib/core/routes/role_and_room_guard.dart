@@ -4,9 +4,9 @@ import 'package:get/get.dart';
 import '../state/hajicare_controller.dart';
 import 'app_routes.dart';
 
-/// GetMiddleware enforcing:
+/// GetMiddleware enforcing
 /// 1. Authentication requirement
-/// 2. Role-based route protection ('admin', 'pendamping', 'jamaah')
+/// 2. Role-based route protection ('admin', 'pendamping', 'jamaah'
 /// 3. Mandatory activeRoomId verification before dashboard access
 class RoleAndRoomGuard extends GetMiddleware {
   final List<String>? allowedRoles;
@@ -74,12 +74,12 @@ class RoleAndRoomGuard extends GetMiddleware {
       }
     }
 
-    // 4. Mandatory active room check (only enforced if explicitly requested by room-only sub-pages)
+    // 4. Mandatory active room check (only enforced if explicitly requested by room-only sub-pages
     if (requiresActiveRoom && !hasActiveRoom) {
       return const RouteSettings(name: AppRoutes.joinRoom);
     }
 
-    // 5. If user already has an active room and navigates to Join Room, send to dashboard (1-room-per-user constraint)
+    // 5. If user already has an active room and navigates to Join Room, send to dashboard (1-room-per-user constraint
     if (redirectIfHasRoom && hasActiveRoom) {
       if (state.role == UserRole.pendamping) {
         return const RouteSettings(name: AppRoutes.dashboardPendamping);

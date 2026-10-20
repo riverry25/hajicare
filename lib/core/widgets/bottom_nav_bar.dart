@@ -120,7 +120,7 @@ class HajiCareBottomNavBar extends StatelessWidget {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
-                          // Tab 0: Beranda (Home)
+                          // Tab 0: Beranda (Home
                           Expanded(
                             child: _buildNavItem(
                               context: context,
@@ -130,7 +130,7 @@ class HajiCareBottomNavBar extends StatelessWidget {
                             ),
                           ),
 
-                          // Tab 1: Peta (Map)
+                          // Tab 1: Peta (Map
                           Expanded(
                             child: _buildNavItem(
                               context: context,
@@ -143,7 +143,7 @@ class HajiCareBottomNavBar extends StatelessWidget {
                           // Center Slot: Reserved generous gap for wide scooped cradle and mic button
                           const SizedBox(width: 96),
 
-                          // Tab 2: Jadwal Salat (Prayer)
+                          // Tab 2: Jadwal Salat (Prayer
                           Expanded(
                             child: _buildNavItem(
                               context: context,
@@ -153,7 +153,7 @@ class HajiCareBottomNavBar extends StatelessWidget {
                             ),
                           ),
 
-                          // Tab 3: Profil (Profile)
+                          // Tab 3: Profil (Profile
                           Expanded(
                             child: _buildNavItem(
                               context: context,
@@ -341,7 +341,7 @@ class _ScoopedNavBarPainter extends CustomPainter {
     final shoulderX = cradleRadius + shoulderWidth;
 
     final path = Path();
-    // Top-left start (after corner curve)
+    // Top-left start (after corner curve
     path.moveTo(r, 0);
 
     // Flat line towards center notch left shoulder
@@ -357,7 +357,7 @@ class _ScoopedNavBarPainter extends CustomPainter {
       buttonCenterY,
     );
 
-    // Left cradle quadrant: true circular arc (radius = cradleRadius)
+    // Left cradle quadrant: true circular arc (radius = cradleRadius
     path.cubicTo(
       centerX - cradleRadius,
       buttonCenterY + k,
@@ -367,7 +367,7 @@ class _ScoopedNavBarPainter extends CustomPainter {
       cradleBottom,
     );
 
-    // Right cradle quadrant: true circular arc (radius = cradleRadius)
+    // Right cradle quadrant: true circular arc (radius = cradleRadius
     path.cubicTo(
       centerX + k,
       cradleBottom,

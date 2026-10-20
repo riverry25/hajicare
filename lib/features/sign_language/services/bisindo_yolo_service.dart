@@ -6,10 +6,9 @@ import '../../../core/utils/app_logger.dart';
 import '../models/bisindo_prediction.dart';
 
 /// Dedicated service for YOLO SIBI & BISINDO Alphabet recognition.
-///
 /// Wraps detections from `assets/models/sibi/sibi.tflite` and labels from
-/// `assets/models/sibi/labels_sibi.txt` into standard [BisindoPrediction] objects,
-/// ensuring full compatibility with HajiCare's stabilization, holding,
+/// `assets/models/sibi/labels_sibi.txt` into standard [BisindoPrediction] objects
+/// ensuring full compatibility with HajiCare's stabilization, holding
 /// confirmation, HUD overlay, and Indonesian TTS pipelines.
 class BisindoYoloService {
   static const String kSibiModelPath = 'assets/models/sibi/sibi.tflite';

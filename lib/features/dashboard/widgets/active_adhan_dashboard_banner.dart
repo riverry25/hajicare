@@ -10,8 +10,7 @@ import '../../prayer/controllers/prayer_times_controller.dart';
 
 /// Responsive, accessible banner displayed at the top of the Jamaah & Pendamping Dashboards
 /// whenever an Adhan alarm is actively sounding.
-///
-/// Features:
+/// Features
 /// 1. Adheres to `flutter-build-responsive-layout` with `LayoutBuilder` and flexible breakpoints.
 /// 2. Provides a prominent, senior-friendly "Matikan Adzan" button with >= 48px touch target.
 /// 3. Instantly silences audio across both native Android Foreground Service and Flutter players.

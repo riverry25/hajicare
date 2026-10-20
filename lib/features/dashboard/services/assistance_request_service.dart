@@ -258,7 +258,7 @@ class AssistanceRequestService extends GetxService {
 
   /// Estimasi jarak kasar jika koordinat referensi diketahui.
   double? estimateDistanceToHotel(Position position) {
-    // Estimasi jarak realistis untuk area Masjidil Haram / Nabawi (~350m - 1.2km)
+    // Estimasi jarak realistis untuk area Masjidil Haram / Nabawi (~350m - 1.2km
     // Berdasarkan jarak koordinat ke landmark tengah
     const double refLat = 24.4672;
     const double refLng = 39.6109;

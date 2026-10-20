@@ -104,7 +104,7 @@ class TimezoneService {
       return 'JST';
     }
 
-    // If raw abbreviation is already a well-known alphabetic acronym (e.g. BST, GMT, EST, EDT, CST, CDT, PST, PDT)
+    // If raw abbreviation is already a well-known alphabetic acronym (e.g. BST, GMT, EST, EDT, CST, CDT, PST, PDT
     if (rawAbbr.isNotEmpty && RegExp(r'^[A-Z]{2,5}$').hasMatch(rawAbbr)) {
       return rawAbbr;
     }

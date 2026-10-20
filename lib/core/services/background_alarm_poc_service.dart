@@ -166,13 +166,13 @@ class BackgroundAlarmPocService {
   }
 
   /// Requirement 13: Schedules "Test Background Adzan 30 Detik"
-  /// Flow:
-  /// - alarm dijadwalkan 30 detik via AndroidAlarmManager.alarmClock()
-  /// - user menutup HajiCare / swipe recent apps
-  /// - user mengunci layar
-  /// - alarm terpanggil
-  /// - foreground service dimulai
-  /// - audio adzan diputar.
+  /// Flow
+  /// alarm dijadwalkan 30 detik via AndroidAlarmManager.alarmClock
+  /// user menutup HajiCare / swipe recent apps
+  /// user mengunci layar
+  /// alarm terpanggil
+  /// foreground service dimulai
+  /// audio adzan diputar.
   static Future<bool> scheduleBackgroundAdhanTest({
     int delaySeconds = 30,
   }) async {

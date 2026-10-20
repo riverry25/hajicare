@@ -53,7 +53,7 @@ android {
     }
 
     androidResources {
-        noCompress += listOf("tflite", "task")
+        noCompress += listOf("tflite", "task", "mp4", "webm")
     }
 
     signingConfigs {

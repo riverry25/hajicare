@@ -1,7 +1,6 @@
 import 'package:cloud_functions/cloud_functions.dart';
 
 /// The only client entry point for privileged domain mutations.
-///
 /// Identity, role, membership and lifecycle checks are deliberately performed
 /// by Cloud Functions. Callers only submit intent and non-authoritative input.
 class TrustedBackendService {

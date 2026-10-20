@@ -285,7 +285,7 @@ class _SignSpeechCardState extends State<SignSpeechCard>
               ),
             ),
 
-            // Action Buttons when Listening (Finish)
+            // Action Buttons when Listening (Finish
             if (isListening) ...[
               const SizedBox(height: AppSpacing.md),
               SizedBox(

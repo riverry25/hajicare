@@ -56,7 +56,7 @@ class ProfileScreen extends StatelessWidget {
                 bottom: 100,
               ),
               children: [
-                // ── Custom Page Header (replaces AppBar) ──────────────────────
+                // Custom Page Header (replaces AppBar
                 _buildPageHeader(context, headingColor, isDark),
 
                 // 1. Profile Identity Header Card
@@ -218,7 +218,7 @@ class ProfileScreen extends StatelessWidget {
     });
   }
 
-  // ── Dialogs & Bottom Sheets ───────────────────────────────────────────────
+  // Dialogs & Bottom Sheets
 }
 
-// ── Profile Header ────────────────────────────────────────────────────────────
+// Profile Header

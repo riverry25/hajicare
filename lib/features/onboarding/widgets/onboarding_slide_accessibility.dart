@@ -11,11 +11,11 @@ import '../../../../core/theme/theme_context.dart';
 import 'onboarding_hero_banner.dart';
 
 /// Third slide of the onboarding flow: Accessibility, Sign Language & AI Currency Scanner.
-/// Designed according to UI/UX Pro Max and Architecture Best Practices:
-/// - 60-30-10 palette using authentic HajiCare design tokens (desert gold & espresso sand)
-/// - Overlapping WanderWise-style showcase cards (AI Currency Scanner & BISINDO Sign Language)
-/// - Vector Islamic and accessibility icons (zero raw emoji inconsistencies)
-/// - WCAG AAA high-contrast readability calibrated for elderly pilgrims (lansia)
+/// Designed according to UI/UX Pro Max and Architecture Best Practices
+/// 60-30-10 palette using authentic HajiCare design tokens (desert gold & espresso sand
+/// Overlapping WanderWise-style showcase cards (AI Currency Scanner & BISINDO Sign Language
+/// Vector Islamic and accessibility icons (zero raw emoji inconsistencies
+/// AAA high-contrast readability calibrated for elderly pilgrims (lansia
 class OnboardingSlideAccessibility extends StatelessWidget {
   final int activeIndex;
 
@@ -52,7 +52,7 @@ class OnboardingSlideAccessibility extends StatelessWidget {
                 children: [
                   const SizedBox(height: AppSpacing.xs),
 
-                  // ── 1. Visual Showcase: Overlapping Accessibility Cards ──
+                  // 1. Visual Showcase: Overlapping Accessibility Cards
                   OnboardingHeroBanner(
                     badgeText: _trOr(
                       context,
@@ -106,7 +106,7 @@ class OnboardingSlideAccessibility extends StatelessWidget {
                             ),
 
                             // 1.2 Floating Decorative Vector Accent Nodes
-                            // Top-right: Voice / Audio assistance badge (for lansia)
+                            // Top-right: Voice / Audio assistance badge (for lansia
                             Positioned(
                               top: 8,
                               right: (card2Right + 12).clamp(12.0, w - 46),
@@ -156,7 +156,7 @@ class OnboardingSlideAccessibility extends StatelessWidget {
 
                   const SizedBox(height: AppSpacing.md),
 
-                  // ── 2. Editorial Headline & Narrative Description ──────
+                  // 2. Editorial Headline & Narrative Description
                   Text(
                     _trOr(
                       context,
@@ -203,7 +203,7 @@ class OnboardingSlideAccessibility extends StatelessWidget {
     });
   }
 
-  // ── Frosted Glassmorphism Card Container Helper ────────────────────────────
+  // Frosted Glassmorphism Card Container Helper
   Widget _buildGlassCard({
     required bool isDark,
     required Widget child,
@@ -272,7 +272,7 @@ class OnboardingSlideAccessibility extends StatelessWidget {
     return (val == key || val.isEmpty) ? fallback : val;
   }
 
-  // ── Card 1: BISINDO Sign Language Recognition ──────────────────────────────
+  // Card 1: BISINDO Sign Language Recognition
   Widget _buildSignLanguageCard({
     required BuildContext context,
     required bool isDark,
@@ -378,7 +378,7 @@ class OnboardingSlideAccessibility extends StatelessWidget {
           ),
           const SizedBox(height: 6),
 
-          // 3 Dynamic Localized Phrases (Terima Kasih, Bantuan Medis, Arah Kiblat)
+          // 3 Dynamic Localized Phrases (Terima Kasih, Bantuan Medis, Arah Kiblat
           _buildPhraseItem(
             icon: Icons.volunteer_activism_rounded,
             iconColor: AppColors.emeraldIslamic,
@@ -439,7 +439,7 @@ class OnboardingSlideAccessibility extends StatelessWidget {
     );
   }
 
-  // ── Card 2: AI Saudi Riyal Banknote Scanner ───────────────────────────────
+  // Card 2: AI Saudi Riyal Banknote Scanner
   Widget _buildCurrencyScannerCard({
     required BuildContext context,
     required bool isDark,
@@ -454,7 +454,7 @@ class OnboardingSlideAccessibility extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Top Row: Vector Banknote & AI SCANNER Badge (Required by test expectations)
+          // Top Row: Vector Banknote & AI SCANNER Badge (Required by test expectations
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -472,7 +472,7 @@ class OnboardingSlideAccessibility extends StatelessWidget {
               ),
               const SizedBox(width: 4),
 
-              // AI SCANNER Badge (Unit test expectation preserved)
+              // AI SCANNER Badge (Unit test expectation preserved
               Flexible(
                 child: Container(
                   padding: const EdgeInsets.symmetric(
@@ -510,7 +510,7 @@ class OnboardingSlideAccessibility extends StatelessWidget {
 
           const SizedBox(height: 7),
 
-          // Title & Precision subtitle (Dynamic localized with ellipsis & fallback)
+          // Title & Precision subtitle (Dynamic localized with ellipsis & fallback
           Text(
             _trOr(context, 'onboarding.currencyName', '100 Riyal (SAR)'),
             maxLines: 1,
@@ -560,7 +560,7 @@ class OnboardingSlideAccessibility extends StatelessWidget {
           ),
           const SizedBox(height: 5),
 
-          // Bottom Conversion Row (Padded container with high contrast)
+          // Bottom Conversion Row (Padded container with high contrast
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
             decoration: BoxDecoration(
@@ -674,7 +674,7 @@ class OnboardingSlideAccessibility extends StatelessWidget {
     );
   }
 
-  // ── Floating Decorative Accents (Clean Vector Motifs) ──────────────────────
+  // Floating Decorative Accents (Clean Vector Motifs
   Widget _buildAudioAssistanceNode({required bool isDark}) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
@@ -761,7 +761,7 @@ class OnboardingSlideAccessibility extends StatelessWidget {
   }
 }
 
-// ── Native Vector Painter: Saudi Riyal 100 SAR Banknote ──────────────────────
+// Native Vector Painter: Saudi Riyal 100 SAR Banknote
 class _SaudiRiyalBanknotePainter extends CustomPainter {
   final bool isDark;
   final Color primaryGreen;
@@ -847,7 +847,7 @@ class _SaudiRiyalBanknotePainter extends CustomPainter {
       Offset(size.width - 20.0, size.height * 0.5 - 3.8),
     );
 
-    // 5. Four AI Camera Viewfinder Reticle Corners (Gold L-brackets)
+    // 5. Four AI Camera Viewfinder Reticle Corners (Gold L-brackets
     final reticlePaint = Paint()
       ..color = goldAccent
       ..style = PaintingStyle.stroke
@@ -908,7 +908,7 @@ class _SaudiRiyalBanknotePainter extends CustomPainter {
       oldDelegate.goldAccent != goldAccent;
 }
 
-// ── Native Vector Painter: Looping Dashed Journey Path ───────────────────────
+// Native Vector Painter: Looping Dashed Journey Path
 class _DashedWanderCurvePainter extends CustomPainter {
   final bool isDark;
   final Color pathColor;

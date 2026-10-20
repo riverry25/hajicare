@@ -23,9 +23,7 @@ class MoneyClassParser {
   MoneyClassParser._();
 
   static const Map<String, MoneyDenominationInfo> _labelMap = {
-    // -------------------------------------------------------------------------
-    // UNITED STATES DOLLAR (USD)
-    // -------------------------------------------------------------------------
+    // UNITED STATES DOLLAR (USD
     'one dollar': MoneyDenominationInfo(
       currency: CurrencyCode.usd,
       amount: 1.0,
@@ -76,9 +74,7 @@ class MoneyClassParser {
       isCoin: false,
     ),
 
-    // -------------------------------------------------------------------------
     // SAUDI RIYAL (SAR) — COINS
-    // -------------------------------------------------------------------------
     'one halalas': MoneyDenominationInfo(
       currency: CurrencyCode.sar,
       amount: 0.01,
@@ -115,9 +111,7 @@ class MoneyClassParser {
       isCoin: true,
     ),
 
-    // -------------------------------------------------------------------------
     // SAUDI RIYAL (SAR) — BANKNOTES
-    // -------------------------------------------------------------------------
     'one riyal': MoneyDenominationInfo(
       currency: CurrencyCode.sar,
       amount: 1.0,
@@ -182,9 +176,7 @@ class MoneyClassParser {
       isCoin: false,
     ),
 
-    // -------------------------------------------------------------------------
     // INDONESIAN RUPIAH (IDR) — COINS
-    // -------------------------------------------------------------------------
     'one hundred coin rupiah': MoneyDenominationInfo(
       currency: CurrencyCode.idr,
       amount: 100.0,
@@ -207,9 +199,7 @@ class MoneyClassParser {
       isCoin: true,
     ),
 
-    // -------------------------------------------------------------------------
     // INDONESIAN RUPIAH (IDR) — BANKNOTES
-    // -------------------------------------------------------------------------
     'one thousand rupiah': MoneyDenominationInfo(
       currency: CurrencyCode.idr,
       amount: 1000.0,

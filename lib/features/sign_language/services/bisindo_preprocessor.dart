@@ -1,53 +1,51 @@
 import 'dart:math' as math;
 import 'dart:typed_data';
 
-/// Preprocessing pipeline for BISINDO models:
-/// 1. Word Model (`bisindo_wl_model.tflite`):
-///    - Shape: [1, 30, 300]
-///    - 30 temporal frames.
-///    - 100 position features per frame (50 keypoints: 8 upper-body pose + 21 left hand + 21 right hand).
-///    - Normalization: nose-centered + per-sequence std.
-///    - Temporal features: 100 positions + 100 velocities (dt) + 100 accelerations (d2t) = 300 features.
-///
-/// 2. Alphabet Model (`bisindo_alphabet_model_f32.tflite`):
-///    - Shape: [1, 86]
-///    - Single frame.
-///    - 42 coordinates for Left Hand (21 points x 2 [x, y], wrist-centered).
-///    - 42 coordinates for Right Hand (21 points x 2 [x, y], wrist-centered).
-///    - 2 hand presence indicators [hasLeftHand, hasRightHand].
-///    - Absence of hands produces 86 zeros, leading the model to predict "NOTHING" (index 14).
+/// Preprocessing pipeline for BISINDO models
+/// 1. Word Model (`bisindo_wl_model.tflite`
+/// Shape: [1, 30, 300]
+/// 30 temporal frames.
+/// 100 position features per frame (50 keypoints: 8 upper-body pose + 21 left hand + 21 right hand).
+/// Normalization: nose-centered + per-sequence std.
+/// Temporal features: 100 positions + 100 velocities (dt) + 100 accelerations (d2t) = 300 features.
+/// 2. Alphabet Model (`bisindo_alphabet_model_f32.tflite`
+/// Shape: [1, 86]
+/// Single frame.
+/// 42 coordinates for Left Hand (21 points x 2 [x, y], wrist-centered).
+/// 42 coordinates for Right Hand (21 points x 2 [x, y], wrist-centered).
+/// 2 hand presence indicators [hasLeftHand, hasRightHand].
+/// Absence of hands produces 86 zeros, leading the model to predict "NOTHING" (index 14).
 class BisindoPreprocessor {
   // Sequence and feature dimension constants for Word Model
   static const int kWordSequenceLen = 30;
   static const int kWordKeypointsCount =
       50; // 8 pose + 21 left hand + 21 right hand
-  static const int kWordFeatureDim = 100; // 50 keypoints * 2 (x, y)
+  static const int kWordFeatureDim = 100; // 50 keypoints * 2 (x, y
   static const int kWordTemporalDim = 300; // 100 pos + 100 vel + 100 acc
 
   // Alphabet Model constant
   static const int kAlphabetFeatureDim = 86; // 42 left + 42 right + 2 presence
 
-  // GRU Final Model constants (hajicare_bisindo_gru_float32.tflite)
+  // GRU Final Model constants (hajicare_bisindo_gru_float32.tflite
   static const int kGruSequenceLen = 48;
   static const int kGruFeatureDim = 135;
   static const List<int> kMcpIndices = [5, 9, 13, 17];
 
-  /// Extracts the exact 135-D feature vector according to the training specification:
-  /// - 0..62: Left hand local XYZ (21 landmarks * 3)
-  /// - 63..125: Right hand local XYZ (21 landmarks * 3)
-  /// - 126: Left hand presence (1.0 if detected, else 0.0)
-  /// - 127: Right hand presence (1.0 if detected, else 0.0)
-  /// - 128..129: Left wrist XY (leftRaw[0].x - 0.5, leftRaw[0].y - 0.5)
-  /// - 130..131: Right wrist XY (rightRaw[0].x - 0.5, rightRaw[0].y - 0.5)
-  /// - 132..134: Inter-hand wrist XYZ (rightWrist - leftWrist if both detected, else 0.0)
-  ///
-  /// Hand normalization:
-  /// - wrist = landmark[0]
-  /// - centered[i] = coords[i] - wrist
-  /// - palmScale = mean(euclideanDistance2D(centered[MCP].x, centered[MCP].y)) for MCP in [5, 9, 13, 17]
-  /// - if palmScale < 1e-4, use 1.0
-  /// - normalized = centered / palmScale
-  /// - clamp to [-5.0, 5.0]
+  /// Extracts the exact 135-D feature vector according to the training specification
+  /// 0..62: Left hand local XYZ (21 landmarks * 3
+  /// 63..125: Right hand local XYZ (21 landmarks * 3
+  /// 126: Left hand presence (1.0 if detected, else 0.0
+  /// 127: Right hand presence (1.0 if detected, else 0.0
+  /// 128..129: Left wrist XY (leftRaw[0].x - 0.5, leftRaw[0].y - 0.5
+  /// 130..131: Right wrist XY (rightRaw[0].x - 0.5, rightRaw[0].y - 0.5
+  /// 132..134: Inter-hand wrist XYZ (rightWrist - leftWrist if both detected, else 0.0
+  /// Hand normalization
+  /// wrist = landmark[0]
+  /// centered[i] = coords[i] - wrist
+  /// palmScale = mean(euclideanDistance2D(centered[MCP].x, centered[MCP].y)) for MCP in [5, 9, 13, 17]
+  /// if palmScale < 1e-4, use 1.0
+  /// normalized = centered / palmScale
+  /// clamp to [-5.0, 5.0]
   static Float32List extract135Features({
     List<List<double>>? leftHand,
     List<List<double>>? rightHand,
@@ -57,7 +55,7 @@ class BisindoPreprocessor {
     final bool hasLeft = leftHand != null && leftHand.length >= 21;
     final bool hasRight = rightHand != null && rightHand.length >= 21;
 
-    // 1. Left Hand local XYZ (0..62)
+    // 1. Left Hand local XYZ (0..62
     if (hasLeft) {
       _normalizeHandToSlot(hand: leftHand, features: features, startOffset: 0);
       features[126] = 1.0;
@@ -69,7 +67,7 @@ class BisindoPreprocessor {
       features[129] = 0.0;
     }
 
-    // 2. Right Hand local XYZ (63..125)
+    // 2. Right Hand local XYZ (63..125
     if (hasRight) {
       _normalizeHandToSlot(
         hand: rightHand,
@@ -85,7 +83,7 @@ class BisindoPreprocessor {
       features[131] = 0.0;
     }
 
-    // 3. Inter-hand wrist XYZ (132..134)
+    // 3. Inter-hand wrist XYZ (132..134
     if (hasLeft && hasRight) {
       features[132] = (rightHand[0][0] - leftHand[0][0]).toDouble();
       features[133] = (rightHand[0][1] - leftHand[0][1]).toDouble();
@@ -99,10 +97,10 @@ class BisindoPreprocessor {
     return features;
   }
 
-  /// Normalizes 21 3D landmarks of a single hand:
-  /// - Centered at wrist (index 0)
-  /// - palmScale = mean(2D distance from wrist of MCP 5, 9, 13, 17)
-  /// - coords / palmScale, clamped to [-5.0, 5.0]
+  /// Normalizes 21 3D landmarks of a single hand
+  /// Centered at wrist (index 0
+  /// palmScale = mean(2D distance from wrist of MCP 5, 9, 13, 17
+  /// coords / palmScale, clamped to [-5.0, 5.0]
   static void _normalizeHandToSlot({
     required List<List<double>> hand,
     required Float32List features,
@@ -117,7 +115,7 @@ class BisindoPreprocessor {
       return [hand[i][0] - wristX, hand[i][1] - wristY, hand[i][2] - wristZ];
     });
 
-    // Compute palmScale = mean 2D distance of MCP indices (5, 9, 13, 17)
+    // Compute palmScale = mean 2D distance of MCP indices (5, 9, 13, 17
     double mcpDistSum = 0.0;
     for (final mcp in kMcpIndices) {
       final dx = centered[mcp][0];
@@ -142,16 +140,16 @@ class BisindoPreprocessor {
     }
   }
 
-  /// 42 Hand landmark format constants:
-  /// 0..20 = Left Hand (21 points)
-  /// 21..41 = Right Hand (21 points)
+  /// 42 Hand landmark format constants
+  /// 0..20 = Left Hand (21 points
+  /// 21..41 = Right Hand (21 points
   static const int kNumHandLandmarks = 42;
   static const int kHandLeftStartIdx = 0;
   static const int kHandLeftEndIdx = 20;
   static const int kHandRightStartIdx = 21;
   static const int kHandRightEndIdx = 41;
 
-  /// Extracts 135 features directly from a 42-element hands-only frame:
+  /// Extracts 135 features directly from a 42-element hands-only frame
   /// 0..20 = Left Hand
   /// 21..41 = Right Hand
   static Float32List processRaw42Frame(List<List<double>> frame) {
@@ -194,7 +192,7 @@ class BisindoPreprocessor {
     return Float32List(kGruFeatureDim);
   }
 
-  /// Extracts 135 features directly from a 543-element holistic frame:
+  /// Extracts 135 features directly from a 543-element holistic frame
   /// 501..521 = Left Hand
   /// 522..542 = Right Hand
   static Float32List processRaw543Frame(List<List<double>> frame) {
@@ -249,8 +247,8 @@ class BisindoPreprocessor {
     54, 58, 59, 62, 63, 66, 67, 70, 71, 74, // Right hand
   ];
 
-  /// 8 Upper-body Pose landmark indices from MediaPipe Holistic (0..32):
-  /// 0: Nose (centering reference)
+  /// 8 Upper-body Pose landmark indices from MediaPipe Holistic (0..32
+  /// 0: Nose (centering
   /// 2: Left Eye
   /// 5: Right Eye
   /// 11: Left Shoulder
@@ -260,11 +258,11 @@ class BisindoPreprocessor {
   /// 15: Left Wrist
   static const List<int> kUpperBodyPoseIndices = [0, 2, 5, 11, 12, 13, 14, 15];
 
-  /// Left Hand landmarks in MediaPipe Holistic: 501..521 (21 points)
+  /// Left Hand landmarks in MediaPipe Holistic: 501..521 (21 points
   static const int kLeftHandStartIdx = 501;
   static const int kLeftHandEndIdx = 521;
 
-  /// Right Hand landmarks in MediaPipe Holistic: 522..542 (21 points)
+  /// Right Hand landmarks in MediaPipe Holistic: 522..542 (21 points
   static const int kRightHandStartIdx = 522;
   static const int kRightHandEndIdx = 542;
 
@@ -337,7 +335,7 @@ class BisindoPreprocessor {
       final frame = frames[t];
       final List<double> framePositions = [];
 
-      // Nose point for nose-centering (pose index 0)
+      // Nose point for nose-centering (pose index 0
       double noseX = 0.0;
       double noseY = 0.0;
       if (frame.isNotEmpty && frame[0].length >= 2) {
@@ -345,7 +343,7 @@ class BisindoPreprocessor {
         noseY = frame[0][1];
       }
 
-      // Add 8 pose points (nose-centered)
+      // Add 8 pose points (nose-centered
       for (final poseIdx in kUpperBodyPoseIndices) {
         if (poseIdx < frame.length && frame[poseIdx].length >= 2) {
           framePositions.add(frame[poseIdx][0] - noseX);
@@ -356,7 +354,7 @@ class BisindoPreprocessor {
         }
       }
 
-      // Add 21 left hand points (nose-centered)
+      // Add 21 left hand points (nose-centered
       for (int i = kLeftHandStartIdx; i <= kLeftHandEndIdx; i++) {
         if (i < frame.length && frame[i].length >= 2) {
           framePositions.add(frame[i][0] - noseX);
@@ -367,7 +365,7 @@ class BisindoPreprocessor {
         }
       }
 
-      // Add 21 right hand points (nose-centered)
+      // Add 21 right hand points (nose-centered
       for (int i = kRightHandStartIdx; i <= kRightHandEndIdx; i++) {
         if (i < frame.length && frame[i].length >= 2) {
           framePositions.add(frame[i][0] - noseX);
@@ -410,7 +408,7 @@ class BisindoPreprocessor {
       }
     }
 
-    // 4. Calculate Velocity (V) and Acceleration (A)
+    // 4. Calculate Velocity (V) and Acceleration (A
     final List<List<double>> velocities = List.generate(kWordSequenceLen, (t) {
       if (t == 0) {
         return List<double>.filled(kWordFeatureDim, 0.0);
@@ -502,7 +500,7 @@ class BisindoPreprocessor {
       offset += 42; // leave as 0.0
     }
 
-    // 3. Presence flags (2 floats)
+    // 3. Presence flags (2 floats
     result[offset++] = hasLeft ? 1.0 : 0.0;
     result[offset++] = hasRight ? 1.0 : 0.0;
 
@@ -511,7 +509,6 @@ class BisindoPreprocessor {
 
   /// Transforms a single frame (42 or 543 landmarks) into a `Float32List` of shape `[1, 42]`
   /// for SIBI Alphabet model (`sibi_alphabet_model_f32.tflite`).
-  ///
   /// Extracts 21 hand landmarks relative to the wrist (landmark 0).
   /// Prefers the right hand if detected, otherwise falls back to the left hand.
   /// If neither hand is detected, returns 42 zeros.
@@ -552,9 +549,7 @@ class BisindoPreprocessor {
     return result;
   }
 
-  // --------------------------------------------------------------------------
   // Legacy / Test Compatibility Methods
-  // --------------------------------------------------------------------------
 
   static Float32List processRawLandmarks(List<List<List<double>>> landmarks) {
     final int rawT = landmarks.length;

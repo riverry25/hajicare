@@ -62,7 +62,7 @@ class _RotatingSyncButtonState extends State<RotatingSyncButton>
       ]);
     } finally {
       if (mounted) {
-        // Smoothly finish the revolution to 1.0 (pointing upright)
+        // Smoothly finish the revolution to 1.0 (pointing upright
         _animController.stop();
         await _animController.animateTo(
           1.0,

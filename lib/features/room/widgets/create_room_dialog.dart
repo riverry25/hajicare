@@ -68,7 +68,7 @@ class _CreateRoomDialogState extends State<CreateRoomDialog> {
     }
     setState(() => _inputError = null);
 
-    // Call admin controller createRoom which handles Firestore write,
+    // Call admin controller createRoom which handles Firestore write
     // pops dialog upon success, and shows AppAlert feedback.
     await widget.controller.createRoom(context, input);
   }
@@ -88,7 +88,7 @@ class _CreateRoomDialogState extends State<CreateRoomDialog> {
           clipBehavior: Clip.none,
           alignment: Alignment.topCenter,
           children: [
-            // ── 1. Main Card Body ─────────────────────────────────────────
+            // 1. Main Card Body
             Container(
               margin: const EdgeInsets.only(
                 top: 28,
@@ -117,7 +117,6 @@ class _CreateRoomDialogState extends State<CreateRoomDialog> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // Title
                     Text(
                       'Buat Room Pantau Baru',
                       style: context.text.titleMedium.copyWith(
@@ -311,7 +310,7 @@ class _CreateRoomDialogState extends State<CreateRoomDialog> {
               ),
             ),
 
-            // ── 2. Floating Hero Card ────────────────────────────────────
+            // 2. Floating Hero Card
             const Positioned(
               top: 0,
               left: 22,
@@ -322,7 +321,7 @@ class _CreateRoomDialogState extends State<CreateRoomDialog> {
               ),
             ),
 
-            // ── 3. Protruding Ribbon Submit Button ─────────────────────────
+            // 3. Protruding Ribbon Submit Button
             Positioned(
               bottom: 0,
               right: 0,

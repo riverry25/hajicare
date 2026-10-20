@@ -9,7 +9,7 @@ import '../gps_user_puck.dart';
 
 /// High-performance, butter-smooth Navigation Map View.
 /// Preserves FlutterMap and CARTO basemap architecture per hajicare-map rules.
-/// Zero platform-view overhead, seamless 60/120 FPS gesture handling,
+/// Zero platform-view overhead, seamless 60/120 FPS gesture handling
 /// hardware-accelerated polyline rendering, and dynamic rotating GPS user puck.
 class NavigationMapView extends StatefulWidget {
   final MapController mapCtrl;

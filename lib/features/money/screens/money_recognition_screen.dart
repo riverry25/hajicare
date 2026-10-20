@@ -47,16 +47,14 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
   // Indonesian TTS Service
   final MoneyTtsService _ttsService = MoneyTtsService();
 
-  // Active SAR to IDR exchange rate (default 1 SAR ≈ Rp 4,750)
+  // Active SAR to IDR exchange rate (default 1 SAR ≈ Rp 4,750
   double _exchangeRate = CurrencyRateService.defaultRate;
 
-  // Multi-Currency Model Asset Configuration (SAR, IDR, USD)
+  // Multi-Currency Model Asset Configuration (SAR, IDR, USD
   static const String _modelAssetPath =
       'assets/models/money_recognition.tflite';
 
-  // ---------------------------------------------------------------------------
   // TUNABLE PIPELINE CONFIGURATION
-  // ---------------------------------------------------------------------------
   static const double _finalConfidenceThreshold = 0.65;
   static const double _candidateConfidenceThreshold = 0.50;
   static const double _crossPassIoUThreshold = 0.50;
@@ -187,9 +185,7 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
     super.dispose();
   }
 
-  // ---------------------------------------------------------------------------
   // PHOTO CAPTURE & SMART MULTI-PASS INFERENCE WORKFLOW
-  // ---------------------------------------------------------------------------
 
   /// Unified multi-pass image analysis for both camera shots and gallery photos.
   Future<void> _analyzeImageBytes(
@@ -242,7 +238,7 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
         _mode = RecognitionMode.result;
       });
 
-      // 4. Speak accessible result once (isolated try/catch so speech failure never breaks UI)
+      // 4. Speak accessible result once (isolated try/catch so speech failure never breaks UI
       try {
         final speech = _ttsService.buildSpeechSentence(
           detections: result.finalDetections,
@@ -469,9 +465,7 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
     });
   }
 
-  // ---------------------------------------------------------------------------
   // BUILD ROUTING
-  // ---------------------------------------------------------------------------
 
   @override
   Widget build(BuildContext context) {
@@ -497,9 +491,7 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
     );
   }
 
-  // ---------------------------------------------------------------------------
   // 1. CAMERA VIEW & CONTROLS
-  // ---------------------------------------------------------------------------
 
   Widget _buildCameraView() {
     return GestureDetector(
@@ -915,13 +907,13 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
                     buttonSize: sideControlSize,
                   ),
 
-                  // 2. DEFAULT: AMBIL DARI KAMERA LANGSUNG (SHUTTER BESAR)
+                  // 2. DEFAULT: AMBIL DARI KAMERA LANGSUNG (SHUTTER BESAR
                   _buildShutterButton(
                     size: shutterSize,
                     onTap: _captureAndAnalyze,
                   ),
 
-                  // 3. GANTI LENSA KAMERA (DEPAN/BELAKANG)
+                  // 3. GANTI LENSA KAMERA (DEPAN/BELAKANG
                   _buildBottomActionButton(
                     icon: Icons.cameraswitch_rounded,
                     label: context.tr('money.switchCamera'),
@@ -1052,9 +1044,7 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
     );
   }
 
-  // ---------------------------------------------------------------------------
   // 2. PROCESSING OVERLAY
-  // ---------------------------------------------------------------------------
 
   Widget _buildProcessingOverlay() {
     return Container(
@@ -1122,9 +1112,7 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
     );
   }
 
-  // ---------------------------------------------------------------------------
   // 3. RESULT VIEW
-  // ---------------------------------------------------------------------------
 
   Widget _buildResultView() {
     final topPadding = MediaQuery.of(context).padding.top;
@@ -1229,7 +1217,6 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
             ),
           ),
 
-          // Scrollable Content
           Expanded(
             child: SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
@@ -1484,12 +1471,12 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
                     const SizedBox(height: AppSpacing.md),
                   ],
 
-                  // TOTAL CARD (Multi-Currency Aware)
+                  // TOTAL CARD (Multi-Currency Aware
                   if (hasDetections) _buildSummaryTotalCard(),
 
                   const SizedBox(height: AppSpacing.md),
 
-                  // ACTION BUTTONS (Adaptive layout for accessibility & large text scale)
+                  // ACTION BUTTONS (Adaptive layout for accessibility & large text scale
                   LayoutBuilder(
                     builder: (context, constraints) {
                       final textScale = MediaQuery.textScalerOf(
@@ -2002,7 +1989,7 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
           ],
           const SizedBox(height: 10),
 
-          // Exchange rate reference & adjust button
+          // Exchange rate& adjust button
           GestureDetector(
             onTap: _showExchangeRateSheet,
             child: Container(
@@ -2057,9 +2044,7 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
     );
   }
 
-  // ---------------------------------------------------------------------------
   // 4. ERROR OVERLAY
-  // ---------------------------------------------------------------------------
 
   Widget _buildErrorOverlay() {
     return Container(
@@ -2136,9 +2121,7 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
     );
   }
 
-  // ---------------------------------------------------------------------------
   // 5. EXCHANGE RATE CUSTOMIZATION BOTTOM SHEET
-  // ---------------------------------------------------------------------------
 
   void _showExchangeRateSheet() {
     final TextEditingController rateController = TextEditingController(
@@ -2184,7 +2167,6 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // Drag handle
                       Center(
                         child: Container(
                           width: 42,
@@ -2197,7 +2179,6 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
                       ),
                       const SizedBox(height: AppSpacing.md),
 
-                      // Header
                       Row(
                         children: [
                           Container(
@@ -2509,9 +2490,7 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
   }
 }
 
-// =============================================================================
 // BOUNDING BOX PAINTER FOR RESULT PHOTO
-// =============================================================================
 
 class MoneyBoundingBoxPainter extends CustomPainter {
   final List<MoneyDetection> detections;
@@ -2677,27 +2656,27 @@ class MoneyBoundingBoxPainter extends CustomPainter {
       return const Color(0xFFF59E0B); // Amber / coin
     }
     if (amount >= 500) {
-      return const Color(0xFF9333EA); // Purple (500 SAR)
+      return const Color(0xFF9333EA); // Purple (500 SAR
     }
     if (amount >= 200) {
-      return const Color(0xFF8D6E63); // Brown (200 SAR)
+      return const Color(0xFF8D6E63); // Brown (200 SAR
     }
     if (amount >= 100) {
-      return const Color(0xFFE11D48); // Red (100 SAR)
+      return const Color(0xFFE11D48); // Red (100 SAR
     }
     if (amount >= 50) {
-      return const Color(0xFF16A34A); // Green (50 SAR)
+      return const Color(0xFF16A34A); // Green (50 SAR
     }
     if (amount >= 20) {
-      return const Color(0xFFEA580C); // Deep orange (20 SAR)
+      return const Color(0xFFEA580C); // Deep orange (20 SAR
     }
     if (amount >= 10) {
-      return const Color(0xFFD97706); // Amber (10 SAR)
+      return const Color(0xFFD97706); // Amber (10 SAR
     }
     if (amount >= 5) {
-      return const Color(0xFF0D9488); // Teal (5 SAR)
+      return const Color(0xFF0D9488); // Teal (5 SAR
     }
-    return const Color(0xFF78716C); // Stone (1 & 2 SAR)
+    return const Color(0xFF78716C); // Stone (1 & 2 SAR
   }
 
   @override

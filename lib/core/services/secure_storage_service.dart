@@ -2,8 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Service penyimpan kredensial dan sesi terenkripsi berbasis OWASP MASVS V1 (Storage & Privacy).
-/// Menggunakan Android Keystore (EncryptedSharedPreferences) dan iOS Keychain.
+/// Service penyimpan kredensial dan sesi terenkripsi berbasis OWASP  V1 (Storage & Privacy).
+/// Menggunakan Android Keystore (EncryptedSharedPs) dan iOS Keychain.
 class SecureStorageService {
   SecureStorageService._internal()
     : _storage = const FlutterSecureStorage(
@@ -25,7 +25,7 @@ class SecureStorageService {
 
   final FlutterSecureStorage _storage;
 
-  // ── Keys Kredensial & Sesi Sensitif ─────────────────────────────────────────
+  // Keys Kredensial & Sesi Sensitif
   static const String keyAuthToken = 'sec_auth_token';
   static const String keyRefreshToken = 'sec_refresh_token';
   static const String keyRememberMe = 'sec_remember_me';
@@ -33,12 +33,12 @@ class SecureStorageService {
   static const String keyUserRole = 'sec_user_role';
   static const String keyUserUid = 'sec_user_uid';
 
-  // Legacy SharedPreferences keys for automatic migration
+  // Legacy SharedPs keys for automatic migration
   static const String _legacyKeyRememberMe = 'hajicare_remember_me';
   static const String _legacyKeyActiveRoomId = 'activeRoomId';
   static const String _legacyKeyUserRole = 'userRole';
 
-  /// Menyimpan nilai terenkripsi (dengan fallback graceful jika channel tidak tersedia)
+  /// Menyimpan nilai terenkripsi (dengan fallback graceful jika channel tidak tersedia
   Future<void> write(String key, String value) async {
     try {
       await _storage.write(key: key, value: value);
@@ -51,7 +51,7 @@ class SecureStorageService {
     }
   }
 
-  /// Membaca nilai terenkripsi (dengan fallback graceful jika channel tidak tersedia)
+  /// Membaca nilai terenkripsi (dengan fallback graceful jika channel tidak tersedia
   Future<String?> read(String key) async {
     try {
       return await _storage.read(key: key);
@@ -89,7 +89,7 @@ class SecureStorageService {
     }
   }
 
-  /// Membersihkan seluruh data sesi terenkripsi (digunakan saat logout)
+  /// Membersihkan seluruh data sesi terenkripsi (digunakan saat logout
   Future<void> clearAll() async {
     try {
       await _storage.deleteAll();
@@ -98,21 +98,21 @@ class SecureStorageService {
     }
   }
 
-  // ── Helpers Spesifik Autentikasi & Sesi ─────────────────────────────────────
+  // Helpers Spesifik Autentikasi & Sesi
 
   /// Menyimpan preferensi 'Remember Me' secara aman
   Future<void> setRememberMe(bool value) async {
     await write(keyRememberMe, value ? 'true' : 'false');
   }
 
-  /// Membaca preferensi 'Remember Me' dengan fallback migrasi dari SharedPreferences
+  /// Membaca preferensi 'Remember Me' dengan fallback migrasi dari SharedPs
   Future<bool> isRememberMe() async {
     final val = await read(keyRememberMe);
     if (val != null) {
       return val == 'true';
     }
 
-    // Coba migrasi dari SharedPreferences lama jika ada
+    // Coba migrasi dari SharedPs lama jika ada
     try {
       final prefs = await SharedPreferences.getInstance();
       if (prefs.containsKey(_legacyKeyRememberMe)) {
@@ -135,7 +135,7 @@ class SecureStorageService {
     }
   }
 
-  /// Membaca room ID aktif dengan fallback migrasi dari SharedPreferences
+  /// Membaca room ID aktif dengan fallback migrasi dari SharedPs
   Future<String?> getActiveRoomId() async {
     final val = await read(keyActiveRoomId);
     if (val != null && val.trim().isNotEmpty) {
@@ -192,7 +192,7 @@ class SecureStorageService {
     await delete(keyUserRole);
     await delete(keyUserUid);
 
-    // Juga bersihkan residu SharedPreferences lama
+    // Juga bersihkan residu SharedPs lama
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(_legacyKeyActiveRoomId);

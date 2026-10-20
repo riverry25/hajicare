@@ -13,7 +13,7 @@ extension _AdminDashboardMetrics on _AdminDashboardHome {
               .round()
         : 100;
 
-    // Signature HajiCare Hero Gradient (matches dashboard_jamaah_screen)
+    // Signature HajiCare Hero Gradient (matches dashboard_jamaah_screen
     final heroGradient = LinearGradient(
       colors: isDark
           ? const [Color(0xFF1B120B), Color(0xFF281A11), Color(0xFF332115)]
@@ -120,7 +120,7 @@ extension _AdminDashboardMetrics on _AdminDashboardHome {
             ),
             const SizedBox(height: AppSpacing.md + 4),
 
-            // Middle: Left (Big % + Date Pill) & Right (Circular Arc Gauge)
+            // Middle: Left (Big % + Date Pill) & Right (Circular Arc Gauge
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.end,
@@ -234,7 +234,7 @@ extension _AdminDashboardMetrics on _AdminDashboardHome {
   // 2. Primary KPI metrics
 
   // 3. Operational status and metric breakdown
-  // ── 3. Operational Status Cards (Reference: 4-Card Staggered Bento Grid) ──
+  // 3. Operational Status Cards : 4-Card Staggered Bento Grid
   Widget _buildStatusBreakdownCard(
     BuildContext context,
     bool isDark,
@@ -254,7 +254,7 @@ extension _AdminDashboardMetrics on _AdminDashboardHome {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Top Header: Section Title + SOS Warning + Create Room Action (+)
+        // Top Header: Section Title + SOS Warning + Create Room Action (+
         _buildSubSectionHeader(
           icon: Icons.grid_view_rounded,
           title: context.tr('adminDashboard.statusCoordination'),
@@ -276,11 +276,11 @@ extension _AdminDashboardMetrics on _AdminDashboardHome {
         ),
         const SizedBox(height: AppSpacing.md),
 
-        // 4 Staggered Bento Cards matching reference layout
+        // 4 Staggered Bento Cards
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Left Column: Jamaah (Tall) & Room (Short)
+            // Left Column: Jamaah (Tall) & Room (Short
             Expanded(
               child: Column(
                 children: [
@@ -340,7 +340,7 @@ extension _AdminDashboardMetrics on _AdminDashboardHome {
             ),
             const SizedBox(width: 12),
 
-            // Right Column: Petugas (Short) & Pusat Alert / SOS (Tall)
+            // Right Column: Petugas (Short) & Pusat Alert / SOS (Tall
             Expanded(
               child: Column(
                 children: [
@@ -483,7 +483,7 @@ extension _AdminDashboardMetrics on _AdminDashboardHome {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // Circular Icon (Reference: circle icon badge)
+                // Circular Icon : circle icon badge
                 Container(
                   width: isTall ? 42 : 32,
                   height: isTall ? 42 : 32,

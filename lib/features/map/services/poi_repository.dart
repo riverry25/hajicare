@@ -6,7 +6,7 @@ import '../models/map_search_result.dart';
 import 'poi_service.dart';
 
 /// Abstraction for POI retrieval and location searching.
-/// Allows swapping underlying providers (Overpass, Photon, Nominatim, backend)
+/// Allows swapping underlying providers (Overpass, Photon, Nominatim, backend
 /// without modifying UI or MapController.
 abstract class PoiRepository {
   Future<List<MapPoi>> fetchNearbyPois({
@@ -69,7 +69,7 @@ class DefaultPoiRepository implements PoiRepository {
     // Anchor location priority: 1. user GPS, 2. map viewport center
     final anchor = userLocation ?? viewportCenter;
 
-    // 1. Fetch remote geocoding results (Photon / Nominatim)
+    // 1. Fetch remote geocoding results (Photon / Nominatim
     List<MapSearchResult> remoteResults = const [];
     dynamic remoteError;
     try {
@@ -213,7 +213,7 @@ class MapSearchRanker {
     return null;
   }
 
-  /// Deterministically ranks combined candidates using category matching, textual relevance,
+  /// Deterministically ranks combined candidates using category matching, textual relevance
   /// and proximity distance.
   static List<MapSearchResult> rankResults({
     required String query,
@@ -309,7 +309,7 @@ class MapSearchRanker {
             _matchesCategory(categoryIntent, itemName));
 
     if (categoryIntent != null) {
-      // ── GENERIC CATEGORY QUERY (e.g. "hotel", "restaurant", "pharmacy") ──
+      // GENERIC CATEGORY QUERY (e.g. "hotel", "restaurant", "pharmacy"
       // Proximity is the strongest factor!
       if (isCategoryCandidate) {
         score += 20000.0; // Huge base boost for category membership
@@ -322,7 +322,7 @@ class MapSearchRanker {
         score -= distanceMeters;
       }
     } else {
-      // ── SPECIFIC PLACE NAME QUERY (e.g. "Shashi Hotel", "Makkah Clock Tower") ──
+      // SPECIFIC PLACE NAME QUERY (e.g. "Shashi Hotel", "Makkah Clock Tower"
       // Textual relevance is the primary factor, distance breaks ties.
       if (itemName == query) {
         score += 30000.0; // Exact full match

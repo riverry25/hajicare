@@ -2,23 +2,22 @@ import 'package:flutter/material.dart';
 import 'haji_colors.dart';
 
 /// Centralized Typography Service for HajiCare.
-/// Uses locally bundled offline-ready font families:
-/// - [headingFontFamily] ('Poppins'): Headings, titles, app bars, buttons, and high-emphasis display.
-/// - [bodyFontFamily] ('Montserrat'): Body text, captions, subtitles, badges, and readouts.
-/// - [arabicFontFamily] ('NotoNaskhArabic'): Quranic verses, prayers, and Arabic calligraphy.
-///
-/// Provides predefined accessible text scales, Material 3 [buildTextTheme],
+/// Uses locally bundled offline-ready font families
+/// [headingFontFamily] ('Poppins'): Headings, titles, app bars, buttons, and high-emphasis display.
+/// [bodyFontFamily] ('Montserrat'): Body text, captions, subtitles, badges, and readouts.
+/// [arabicFontFamily] ('NotoNaskhArabic'): Quranic verses, prayers, and Arabic calligraphy.
+/// Provides predefined accessible text scales, Material 3 [buildTextTheme]
 /// and dynamic generator methods to allow any screen across the entire app
 /// to customize typography dynamically, safely, and consistently.
 class AppTypography {
   AppTypography._();
 
-  // ── Core Font Families ─────────────────────────────────────────────────────
+  // Core Font Families
   static const String headingFontFamily = 'Poppins';
   static const String bodyFontFamily = 'Montserrat';
   static const String arabicFontFamily = 'NotoNaskhArabic';
 
-  // ── Material 3 Dynamic TextTheme Builder ───────────────────────────────────
+  // Material 3 Dynamic TextTheme Builder
   /// Fills all 15 M3 typography slots with calibrated offline font families
   /// and dynamic contrast colors provided by [HajiColors].
   static TextTheme buildTextTheme(HajiColors c) {
@@ -138,7 +137,7 @@ class AppTypography {
     );
   }
 
-  // ── Dynamic Typography Service Generators ──────────────────────────────────
+  // Dynamic Typography Service Generators
   /// Creates a dynamic heading text style using [headingFontFamily] (Poppins).
   static TextStyle heading({
     double? fontSize,
@@ -201,7 +200,7 @@ class AppTypography {
     );
   }
 
-  // ── Primary Display & Hero Scales (Poppins) ────────────────────────────────
+  // Primary Display & Hero Scales (Poppins
   static TextStyle get heroNumberLarge => const TextStyle(
     fontFamily: headingFontFamily,
     fontSize: 52,
@@ -226,7 +225,7 @@ class AppTypography {
     letterSpacing: -0.01,
   );
 
-  // ── Titles & Section Headers (Poppins) ─────────────────────────────────────
+  // Titles & Section Headers (Poppins
   static TextStyle get titleLarge => const TextStyle(
     fontFamily: headingFontFamily,
     fontSize: 18,
@@ -242,7 +241,7 @@ class AppTypography {
     height: 1.45,
   );
 
-  // ── Body Texts (Montserrat) ────────────────────────────────────────────────
+  // Body Texts (Montserrat
   static TextStyle get bodyLarge => const TextStyle(
     fontFamily: bodyFontFamily,
     fontSize: 16,
@@ -264,7 +263,7 @@ class AppTypography {
     height: 1.45,
   );
 
-  // ── Labels, Badges, & Captions ─────────────────────────────────────────────
+  // Labels, Badges, & Captions
   static TextStyle get labelLarge => const TextStyle(
     fontFamily: headingFontFamily,
     fontSize: 13,
@@ -288,7 +287,7 @@ class AppTypography {
     letterSpacing: 0.3,
   );
 
-  // ── Arabic Scales (NotoNaskhArabic) ────────────────────────────────────────
+  // Arabic Scales (NotoNaskhArabic
   static TextStyle get arabicLarge => const TextStyle(
     fontFamily: arabicFontFamily,
     fontSize: 32,
@@ -317,7 +316,7 @@ class AppTypography {
     height: 1.6,
   );
 
-  // ── Legacy & Compatibility Aliases ─────────────────────────────────────────
+  // Legacy & Compatibility Aliases
   static TextStyle get displayHero => displayLarge;
   static TextStyle get headlineLg => displayMedium;
   static TextStyle get headlineMd => titleLarge;

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 /// Transparent Dialog wrapper for custom HajiCare stacked/floating card dialogs.
-///
 /// Completely strips default Material 3 dialog shapes, elevations, borders, and
 /// surface tints so that inner floating hero cards, translucent cutouts, and
 /// protruding ribbon buttons render seamlessly without any ghost outer borders.

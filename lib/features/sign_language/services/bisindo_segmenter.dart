@@ -3,7 +3,6 @@ import 'dart:math' as math;
 import '../models/landmark_frame.dart';
 
 /// Tunable thresholds for automatic BISINDO sign segmentation (sign spotting).
-///
 /// The MotionGRU model is trained on *isolated* gestures resampled to 48
 /// timesteps, so continuous recognition works by detecting where a single
 /// gesture starts and ends, then classifying exactly that segment.

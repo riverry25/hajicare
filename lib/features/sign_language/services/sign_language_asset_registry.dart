@@ -6,7 +6,7 @@ class SignLanguageAssetRegistry {
   SignLanguageAssetRegistry._();
 
   static const List<SignVideoEntry> bundledAssets = [
-    // ── BISINDO BUNDLED ASSETS (ALFABET & KOSAKATA OFFLINE) ─────────────────
+    // BISINDO BUNDLED ASSETS (ALFABET & KOSAKATA OFFLINE
     SignVideoEntry(
       id: 'bisindo_a',
       language: 'bisindo',
@@ -173,7 +173,7 @@ class SignLanguageAssetRegistry {
       source: SignVideoSource.asset,
     ),
 
-    // ── SIBI BUNDLED ASSETS (KOSAKATA OFFLINE) ──────────────────────────────
+    // SIBI BUNDLED ASSETS (KOSAKATA OFFLINE
     SignVideoEntry(
       id: 'sibi_aku',
       language: 'sibi',

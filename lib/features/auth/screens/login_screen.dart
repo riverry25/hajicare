@@ -84,10 +84,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // TOP HEADER: CURVED ARCH WITH HAJI PHOTO
                     _CurvedArchHeader(colors: colors),
 
-                    // WELCOME HEADLINE & SUBTITLE
                     Padding(
                       padding: const EdgeInsets.symmetric(
                         horizontal: AppSpacing.screenEdgeGutter,
@@ -125,10 +123,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                     const SizedBox(height: 30),
 
-                    // SHEET-STYLE FORM CONTAINER
-                    // Sizes dynamically to its active tab content (compact on Sign In,
-                    // expanding on Register), while minSheetHeight ensures it touches
-                    // the bottom of the screen gracefully on resting viewports.
+                    
                     ConstrainedBox(
                       constraints: BoxConstraints(minHeight: minSheetHeight),
                       child: Container(
@@ -158,7 +153,6 @@ class _LoginScreenState extends State<LoginScreen> {
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            // Tab Pill Switcher (Sign In vs Sign Up)
                             _TabPillSwitcher(
                               selectedIndex: _activeTabIndex,
                               onTabChanged: _switchTab,
@@ -167,7 +161,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
                             const SizedBox(height: 24),
 
-                            // Tab Form Views (Animated)
                             AnimatedCrossFade(
                               firstChild: _SignInForm(
                                 controller: loginController,
@@ -201,9 +194,6 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 }
 
-// =============================================================================
-// HEADER: SEMICIRCLE / CURVED ARCH CONTAINER WITH REAL HAJI PHOTO
-// =============================================================================
 class _CurvedArchHeader extends StatelessWidget {
   final HajiColors colors;
 
@@ -366,9 +356,6 @@ class _CurvedArchShadowPainter extends CustomPainter {
   bool shouldRepaint(covariant _CurvedArchShadowPainter oldDelegate) => false;
 }
 
-// =============================================================================
-// TAB PILL SWITCHER (Masuk vs Daftar)
-// =============================================================================
 class _TabPillSwitcher extends StatelessWidget {
   final int selectedIndex;
   final ValueChanged<int> onTabChanged;
@@ -465,9 +452,6 @@ class _TabButton extends StatelessWidget {
   }
 }
 
-// =============================================================================
-// TAB 1: FORM MASUK (SIGN IN)
-// =============================================================================
 class _SignInForm extends StatelessWidget {
   final LoginController controller;
   final VoidCallback onSwitchToRegister;
@@ -484,7 +468,6 @@ class _SignInForm extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Email
         Text(
           context.tr('auth.email'),
           style: context.text.labelLarge.copyWith(color: colors.textPrimary),
@@ -504,7 +487,6 @@ class _SignInForm extends StatelessWidget {
 
         const SizedBox(height: 14),
 
-        // Password
         Text(
           context.tr('auth.password'),
           style: context.text.labelLarge.copyWith(color: colors.textPrimary),
@@ -540,7 +522,6 @@ class _SignInForm extends StatelessWidget {
 
         const SizedBox(height: 10),
 
-        // Utility Row: Remember Me & Forgot Password
         Row(
           children: [
             Obx(
@@ -594,7 +575,6 @@ class _SignInForm extends StatelessWidget {
 
         const SizedBox(height: 16),
 
-        // Login Button
         Obx(
           () => SizedBox(
             height: 48,
@@ -612,17 +592,14 @@ class _SignInForm extends StatelessWidget {
 
         const SizedBox(height: 14),
 
-        // Centered Divider
         _DividerWithText(text: context.tr('auth.orDivider'), colors: colors),
 
         const SizedBox(height: 14),
 
-        // Google Sign-In Button
         _GoogleSignInButton(controller: controller, colors: colors),
 
         const SizedBox(height: 16),
 
-        // Switch to Register link
         Center(
           child: GestureDetector(
             onTap: onSwitchToRegister,
@@ -657,9 +634,6 @@ class _SignInForm extends StatelessWidget {
   }
 }
 
-// =============================================================================
-// TAB 2: FORM DAFTAR (SIGN UP)
-// =============================================================================
 class _SignUpForm extends StatelessWidget {
   final RegisterController controller;
   final LoginController loginController;
@@ -678,7 +652,6 @@ class _SignUpForm extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Role Selector (Compact)
         Text(
           context.tr('auth.registerAs'),
           style: context.text.labelLarge.copyWith(color: colors.textPrimary),
@@ -715,7 +688,6 @@ class _SignUpForm extends StatelessWidget {
 
         const SizedBox(height: 18),
 
-        // Full Name
         Text(
           context.tr('fullNameLabel'),
           style: context.text.labelLarge.copyWith(color: colors.textPrimary),
@@ -734,7 +706,7 @@ class _SignUpForm extends StatelessWidget {
 
         const SizedBox(height: 18),
 
-        // NIK (Nomor Induk Kependudukan - Optional)
+        // NIK (Nomor Induk Kependudukan - Optional
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -781,7 +753,6 @@ class _SignUpForm extends StatelessWidget {
 
         const SizedBox(height: 18),
 
-        // Active Email
         Text(
           context.tr('auth.activeEmail'),
           style: context.text.labelLarge.copyWith(color: colors.textPrimary),
@@ -801,7 +772,6 @@ class _SignUpForm extends StatelessWidget {
 
         const SizedBox(height: 18),
 
-        // Password
         Text(
           context.tr('auth.password'),
           style: context.text.labelLarge.copyWith(color: colors.textPrimary),
@@ -844,7 +814,6 @@ class _SignUpForm extends StatelessWidget {
 
         const SizedBox(height: 22),
 
-        // Register Button
         Obx(
           () => SizedBox(
             height: 52,
@@ -864,17 +833,14 @@ class _SignUpForm extends StatelessWidget {
 
         const SizedBox(height: 20),
 
-        // Centered Divider
         _DividerWithText(text: context.tr('auth.orDivider'), colors: colors),
 
         const SizedBox(height: 20),
 
-        // Google Sign-In Button
         _GoogleSignInButton(controller: loginController, colors: colors),
 
         const SizedBox(height: 22),
 
-        // Switch to Login link
         Center(
           child: GestureDetector(
             onTap: onSwitchToLogin,
@@ -909,9 +875,6 @@ class _SignUpForm extends StatelessWidget {
   }
 }
 
-// =============================================================================
-// ROLE SELECTION CARD
-// =============================================================================
 class _RoleChoiceCard extends StatelessWidget {
   final String title;
   final String subtitle;
@@ -996,9 +959,6 @@ class _RoleChoiceCard extends StatelessWidget {
   }
 }
 
-// =============================================================================
-// DIVIDER WITH TEXT (VERTICALLY & HORIZONTALLY CENTERED)
-// =============================================================================
 class _DividerWithText extends StatelessWidget {
   final String text;
   final HajiColors colors;
@@ -1035,9 +995,6 @@ class _DividerWithText extends StatelessWidget {
   }
 }
 
-// =============================================================================
-// GOOGLE SIGN-IN BUTTON
-// =============================================================================
 class _GoogleSignInButton extends StatelessWidget {
   final LoginController controller;
   final HajiColors colors;
@@ -1095,9 +1052,6 @@ class _GoogleSignInButton extends StatelessWidget {
   }
 }
 
-// =============================================================================
-// AUTHENTIC GOOGLE LOGO
-// =============================================================================
 class _GoogleLogo extends StatelessWidget {
   final double size;
 
@@ -1136,7 +1090,6 @@ class _GoogleLogoPainter extends CustomPainter {
     canvas.save();
     canvas.scale(size.width / 24.0, size.height / 24.0);
 
-    // Red (top segment)
     final redPath = Path()
       ..moveTo(12.0, 5.0)
       ..cubicTo(13.85, 5.0, 15.35, 5.68, 16.48, 6.64)
@@ -1148,7 +1101,6 @@ class _GoogleLogoPainter extends CustomPainter {
       ..close();
     canvas.drawPath(redPath, Paint()..color = const Color(0xFFEA4335));
 
-    // Blue (right segment & crossbar)
     final bluePath = Path()
       ..moveTo(23.6, 12.25)
       ..cubicTo(23.6, 11.45, 23.5, 10.65, 23.35, 9.9)
@@ -1161,7 +1113,6 @@ class _GoogleLogoPainter extends CustomPainter {
       ..close();
     canvas.drawPath(bluePath, Paint()..color = const Color(0xFF4285F4));
 
-    // Yellow (left segment)
     final yellowPath = Path()
       ..moveTo(1.5, 6.5)
       ..cubicTo(0.55, 8.4, 0.0, 10.5, 0.0, 12.0)
@@ -1173,7 +1124,6 @@ class _GoogleLogoPainter extends CustomPainter {
       ..close();
     canvas.drawPath(yellowPath, Paint()..color = const Color(0xFFFBBC05));
 
-    // Green (bottom segment)
     final greenPath = Path()
       ..moveTo(12.0, 24.0)
       ..cubicTo(15.2, 24.0, 17.9, 22.95, 19.9, 21.1)

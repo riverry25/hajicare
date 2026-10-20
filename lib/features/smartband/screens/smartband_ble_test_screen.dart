@@ -51,7 +51,7 @@ class SmartbandBleTestScreen extends GetView<SmartbandBleTestController> {
     );
   }
 
-  // ── 1. Status Koneksi & Perangkat ──────────────────────────────────────────
+  // 1. Status Koneksi & Perangkat
   Widget _buildStatusCard(BuildContext context) {
     final isDark = AppColors.isDark(context);
     final headingColor = AppColors.textHeadingColor(context);
@@ -215,7 +215,7 @@ class SmartbandBleTestScreen extends GetView<SmartbandBleTestController> {
     });
   }
 
-  // ── 2. Data Telemetri Realtime ─────────────────────────────────────────────
+  // 2. Data Telemetri Realtime
   Widget _buildDataCard(BuildContext context) {
     final headingColor = AppColors.textHeadingColor(context);
     final bodyColor = AppColors.textBodyColor(context);
@@ -287,7 +287,7 @@ class SmartbandBleTestScreen extends GetView<SmartbandBleTestController> {
             ),
             const SizedBox(height: AppSpacing.sm),
 
-            // 3. Sensor Suhu Tubuh (MLX90614 / MCP9808)
+            // 3. Sensor Suhu Tubuh (MLX90614 / MCP9808
             _buildTelemetryTile(
               context,
               icon: Icons.device_thermostat_rounded,
@@ -576,7 +576,7 @@ class SmartbandBleTestScreen extends GetView<SmartbandBleTestController> {
     );
   }
 
-  // ── 3. Tombol Aksi BLE ─────────────────────────────────────────────────────
+  // 3. Tombol Aksi BLE
   Widget _buildActionSection(BuildContext context) {
     return Obx(() {
       final status = controller.connectionStatus.value;
@@ -702,7 +702,7 @@ class SmartbandBleTestScreen extends GetView<SmartbandBleTestController> {
     });
   }
 
-  // ── 4. Terminal Log Realtime ────────────────────────────────────────────────
+  // 4. Terminal Log Realtime
   Widget _buildLogsCard(BuildContext context) {
     final bodyColor = AppColors.textBodyColor(context);
 

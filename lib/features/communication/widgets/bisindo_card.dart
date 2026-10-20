@@ -10,7 +10,7 @@ import '../../sign_language/services/bisindo_camera_landmark_service.dart';
 import '../../sign_language/services/bisindo_inference_service.dart';
 import '../../sign_language/services/landmark_stream_buffer.dart';
 
-/// Clean card displaying BISINDO ONNX inference status, live camera detection,
+/// Clean card displaying BISINDO ONNX inference status, live camera detection
 /// MediaPipe landmark stream, and self-test controls on the Communication screen.
 class BisindoCard extends StatefulWidget {
   const BisindoCard({super.key});
@@ -404,7 +404,7 @@ class _BisindoCardState extends State<BisindoCard> {
             const SizedBox(height: AppSpacing.md),
           ],
 
-          // Camera Control Button (Realtime Live Detection)
+          // Camera Control Button (Realtime Live Detection
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(

@@ -217,7 +217,7 @@ class _DuaCardState extends State<DuaCard> {
               ),
             ],
             const SizedBox(height: AppSpacing.lg),
-            // Action Buttons (Simpan & Salin)
+            // Action Buttons (Simpan & Salin
             Wrap(
               spacing: AppSpacing.sm,
               runSpacing: AppSpacing.xs,

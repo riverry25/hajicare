@@ -87,7 +87,7 @@ class SmartbandBleService {
         return false;
       }
 
-      // Tunggu hingga adapter state bernilai definitif (bukan unknown)
+      // Tunggu hingga adapter state bernilai definitif (bukan unknown
       BluetoothAdapterState state = FlutterBluePlus.adapterStateNow;
       if (state == BluetoothAdapterState.unknown) {
         state = await FlutterBluePlus.adapterState
@@ -322,7 +322,7 @@ class SmartbandBleService {
       _log('CONNECT SUCCESS');
       _log('CONNECTION STATE:\nCONNECTED');
 
-      // 2.5 Negosiasi MTU 247 (Diperlukan Android agar notifikasi JSON tidak terpotong)
+      // 2.5 Negosiasi MTU 247 (Diperlukan Android agar notifikasi JSON tidak terpotong
       if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
         try {
           _log('REQUEST MTU 247');
@@ -507,7 +507,7 @@ class SmartbandBleService {
     }
   }
 
-  /// 6. Tangani koneksi terputus dengan aman (Safe Disconnection)
+  /// 6. Tangani koneksi terputus dengan aman (Safe Disconnection
   void _handleSafeDisconnection(String reason) {
     if (_currentStatus == SmartbandBleStatus.disconnected) return;
 

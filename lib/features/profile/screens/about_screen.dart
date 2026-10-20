@@ -43,11 +43,11 @@ class AboutScreen extends StatelessWidget {
             child: ListView(
               padding: const EdgeInsets.all(AppSpacing.lg),
               children: [
-                // ── App Identity Header ─────────────────────────────────────────
+                // App Identity Header
                 _AppIdentitySection(colors: colors),
                 const SizedBox(height: AppSpacing.gapSection),
 
-                // ── About Description ───────────────────────────────────────────
+                // About Description
                 _ContentSection(
                   title: context.tr('aboutTitle'),
                   content: context.tr('aboutDescription'),
@@ -56,11 +56,11 @@ class AboutScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: AppSpacing.gapCards),
 
-                // ── Features ───────────────────────────────────────────────────
+                // Features
                 _FeaturesSection(colors: colors),
                 const SizedBox(height: AppSpacing.gapCards),
 
-                // ── Accessibility ───────────────────────────────────────────────
+                // Accessibility
                 _ContentSection(
                   title: context.tr('accessibilitySectionTitle'),
                   content: context.tr('accessibilitySectionDesc'),
@@ -69,7 +69,7 @@ class AboutScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: AppSpacing.gapCards),
 
-                // ── Privacy & Security ──────────────────────────────────────────
+                // Privacy & Security
                 _ContentSection(
                   title: context.tr('privacySectionTitle'),
                   content: context.tr('privacySectionDesc'),
@@ -78,7 +78,7 @@ class AboutScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: AppSpacing.gapCards),
 
-                // ── Legal ───────────────────────────────────────────────────────
+                // Legal
                 _LegalSection(colors: colors),
                 const SizedBox(height: AppSpacing.gapSection),
 
@@ -98,7 +98,6 @@ class AboutScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: AppSpacing.gapSection),
 
-                // ── Footer ──────────────────────────────────────────────────────
                 _FooterSection(colors: colors),
                 const SizedBox(height: AppSpacing.huge),
               ],
@@ -110,9 +109,7 @@ class AboutScreen extends StatelessWidget {
   }
 }
 
-// ────────────────────────────────────────────────────────────────────────────
 // App Identity Section
-// ────────────────────────────────────────────────────────────────────────────
 
 class _AppIdentitySection extends StatelessWidget {
   final HajiColors colors;
@@ -215,9 +212,7 @@ class _AppIdentitySection extends StatelessWidget {
   }
 }
 
-// ────────────────────────────────────────────────────────────────────────────
-// Generic content section (icon + title + body text)
-// ────────────────────────────────────────────────────────────────────────────
+// Generic content section (icon + title + body text
 
 class _ContentSection extends StatelessWidget {
   final String title;
@@ -280,9 +275,7 @@ class _ContentSection extends StatelessWidget {
   }
 }
 
-// ────────────────────────────────────────────────────────────────────────────
 // Features Section
-// ────────────────────────────────────────────────────────────────────────────
 
 class _FeaturesSection extends StatelessWidget {
   final HajiColors colors;
@@ -407,9 +400,7 @@ class _FeaturesSection extends StatelessWidget {
   }
 }
 
-// ────────────────────────────────────────────────────────────────────────────
 // Legal Section
-// ────────────────────────────────────────────────────────────────────────────
 
 class _LegalSection extends StatelessWidget {
   final HajiColors colors;
@@ -560,9 +551,6 @@ class _LegalSection extends StatelessWidget {
   }
 }
 
-// ────────────────────────────────────────────────────────────────────────────
-// Footer
-// ────────────────────────────────────────────────────────────────────────────
 
 class _FooterSection extends StatelessWidget {
   final HajiColors colors;

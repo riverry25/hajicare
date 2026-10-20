@@ -23,7 +23,7 @@ class PrayerLocationData {
     this.source = LocationSource.gps,
   });
 
-  /// Maximum age for cached location to be considered valid (7 days)
+  /// Maximum age for cached location to be considered valid (7 days
   static const int maxCacheAgeDays = 7;
 
   /// Whether this cache data is expired

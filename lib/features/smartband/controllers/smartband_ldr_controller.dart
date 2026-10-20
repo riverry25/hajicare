@@ -18,11 +18,11 @@ import '../services/smartband_storage_service.dart';
 enum SmartbandConnectionState { disconnected, scanning, connecting, connected }
 
 /// Controller GetX untuk Smartband HajiCare ESP32-S3
-/// Mengelola telemetri 5 sensor:
-/// 1. Detak Jantung (MAX30102)
-/// 2. Suhu Tubuh (MCP9808)
-/// 3. Deteksi Jatuh & Gerak Jamaah (MPU6050)
-/// 4. GPS Satelit (NEO-6M)
+/// Mengelola telemetri 5 sensor
+/// 1. Detak Jantung (MAX30102
+/// 2. Suhu Tubuh (MCP9808
+/// 3. Deteksi Jatuh & Gerak Jamaah (MPU6050
+/// 4. GPS Satelit (NEO-6M
 /// 5. Baterai LiPo 3.7V
 class SmartbandLdrController extends GetxController {
   final SmartbandBleService bleService;
@@ -34,7 +34,7 @@ class SmartbandLdrController extends GetxController {
               ? Get.find<SmartbandBleService>()
               : SmartbandBleService());
 
-  /// Koordinat GPS statis Smartband (Pelataran Masjidil Haram, Makkah)
+  /// Koordinat GPS statis Smartband (Pelataran Masjidil Haram, Makkah
   static const double staticGpsLatitude = 21.422487;
   static const double staticGpsLongitude = 39.826206;
 
@@ -44,7 +44,7 @@ class SmartbandLdrController extends GetxController {
   /// Flag bahwa data sudah dimuat dari storage
   final RxBool hasRestoredData = false.obs;
 
-  // ── Observable State - Smartband BLE (ESP32-S3) ───────────────────────────
+  // Observable State - Smartband BLE (ESP32-S3
   final Rx<SmartbandBleStatus> bleStatus = SmartbandBleStatus.disconnected.obs;
   final RxString braceletId = 'HCG-001'.obs;
   final Rxn<int> heartRate = Rxn<int>();
@@ -58,28 +58,28 @@ class SmartbandLdrController extends GetxController {
   final RxString heartRateStatus = 'Sensor belum tersedia'.obs;
   final RxString errorMessage = ''.obs;
 
-  // ── 5 Modul Hardware Spesifik Telemetri ─────────────────────────────────────
-  // 1. MAX30102 (Detak Jantung BPM & Kadar Oksigen SpO2)
+  // 5 Modul Hardware Spesifik Telemetri
+  // 1. MAX30102 (Detak Jantung BPM & Kadar Oksigen SpO2
   final Rxn<int> maxHeartRate = Rxn<int>();
   final Rxn<int> spo2 = Rxn<int>();
 
-  // 2. MCP9808 (Suhu Tubuh Presisi Tinggi °C)
+  // 2. MCP9808 (Suhu Tubuh Presisi Tinggi °C
   final Rxn<double> mcpTemperature = Rxn<double>();
 
-  // 3. MPU6050 (Akselerometer & Giroskop: Langkah & Deteksi Jatuh)
+  // 3. MPU6050 (Akselerometer & Giroskop: Langkah & Deteksi Jatuh
   final RxInt stepCount = 0.obs;
   final RxBool isFallDetected = false.obs;
   final RxInt fallCountdownSeconds = 15.obs;
-  final RxDouble gyroRoll = 0.0.obs; // Derajat kemiringan roll (-90 s/d +90)
-  final RxDouble gyroPitch = 0.0.obs; // Derajat kemiringan pitch (-90 s/d +90)
-  final RxDouble accelG = 1.0.obs; // G-force (1.0 = gravitasi normal)
-  final RxInt stabilityScore = 98.obs; // Skor stabilitas tubuh (0 - 100%)
+  final RxDouble gyroRoll = 0.0.obs; // Derajat kemiringan roll (-90 s/d +90
+  final RxDouble gyroPitch = 0.0.obs; // Derajat kemiringan pitch (-90 s/d +90
+  final RxDouble accelG = 1.0.obs; // G-force (1.0 = gravitasi normal
+  final RxInt stabilityScore = 98.obs; // Skor stabilitas tubuh (0 - 100%
   final RxString postureKey = 'smartband.postureUpright'.obs;
 
-  // 4. GPS NEO-6M (Satelit & Koordinat Presisi)
+  // 4. GPS NEO-6M (Satelit & Koordinat Presisi
   final RxInt gpsSatellites = 0.obs;
 
-  // 5. LCD 16x2 + I2C Backpack (Layar Pergelangan Tangan)
+  // 5. LCD 16x2 + I2C Backpack (Layar Pergelangan Tangan
   final RxString lcdLine1 = 'HR:--   SpO2:--%'.obs;
   final RxString lcdLine2 = 'STATUS: NORMAL  '.obs;
   final RxString emergencyMessage = ''.obs;
@@ -89,19 +89,19 @@ class SmartbandLdrController extends GetxController {
   final RxDouble batteryVoltage = 3.96.obs;
   final RxBool isCharging = false.obs;
 
-  // ── Tombol SOS Fisik Smartband (Interrupt Button) ─────────────────────────
+  // Tombol SOS Fisik Smartband (Interrupt Button
   final RxBool isSosButtonPressed = false.obs;
   final RxBool isSosTransmitted = false.obs;
   DateTime? _lastSosTriggerTime;
   Timer? _sosCountdownTimer;
 
-  // ── Mode Simulasi Hardware (Untuk alat yang baru setengah jadi) ─────────────
+  // Mode Simulasi Hardware (Untuk alat yang baru setengah jadi
   final RxBool isSimulationMode = false.obs;
   Timer? _simulationTimer;
   Timer? _fallCountdownTimer;
   double _simPhase = 0.0;
 
-  // ── UI Filter & Hero Selector ──────────────────────────────────────────────
+  // UI Filter & Hero Selector
   // 0: MAX30102, 1: MCP9808, 2: MPU6050, 3: NEO-6M, 4: LiPo
   final RxInt selectedSensorIndex = 0.obs;
   final RxString trendPeriod = 'today'.obs; // 'today', 'week', 'month'
@@ -115,7 +115,7 @@ class SmartbandLdrController extends GetxController {
     76.0,
   ].obs;
 
-  // ── Observable State - Legacy / Generic Connection ────────────────────────
+  // Observable State - Legacy / Generic Connection
   final isWatchConnected = false.obs;
   final connectionState = SmartbandConnectionState.disconnected.obs;
   final statusMessage = 'Gelang Belum Terhubung'.obs;
@@ -125,7 +125,7 @@ class SmartbandLdrController extends GetxController {
   final rawDataString = '-'.obs;
   final relativeTimeStr = ''.obs;
 
-  // ── Observable State - DHT11 (Preserved for backwards compatibility) ───────
+  // Observable State - DHT11 (Preserved for backwards compatibility
   final temperature = Rxn<double>();
   final humidity = Rxn<double>();
   final heatIndex = Rxn<double>();
@@ -525,7 +525,7 @@ class SmartbandLdrController extends GetxController {
     _storage.saveSmartbandData(data);
   }
 
-  // ── Mode Simulasi Telemetri (Realistis untuk Demo & Uji Coba) ───────────────
+  // Mode Simulasi Telemetri (Realistis untuk Demo & Uji Coba
   void toggleSimulation(bool enable) {
     isSimulationMode.value = enable;
     if (enable) {
@@ -645,7 +645,7 @@ class SmartbandLdrController extends GetxController {
     }
   }
 
-  // ── Simulasi & Deteksi Jatuh MPU6050 ────────────────────────────────────────
+  // Simulasi & Deteksi Jatuh MPU6050
   void triggerFallSimulation() {
     triggerFallAlert();
   }
@@ -687,7 +687,7 @@ class SmartbandLdrController extends GetxController {
     lcdLine2.value = 'T:$tempStr ST:NORMAL';
   }
 
-  // ── Tombol SOS Fisik Smartband (Physical SOS Button Interrupt) ─────────────
+  // Tombol SOS Fisik Smartband (Physical SOS Button Interrupt
   /// Dipicu saat tombol SOS pada hardware gelang ditekan
   void triggerSosButtonAlert({bool immediate = false}) {
     final now = DateTime.now();
@@ -710,7 +710,7 @@ class SmartbandLdrController extends GetxController {
     dispatchSosToCompanion(reason: 'Tombol SOS Smartband Ditekan');
   }
 
-  /// Simulasi penekanan tombol SOS fisik smartband (untuk pengujian & demo)
+  /// Simulasi penekanan tombol SOS fisik smartband (untuk pengujian & demo
   void triggerSosSimulation() {
     triggerSosButtonAlert(immediate: true);
   }
@@ -839,7 +839,7 @@ class SmartbandLdrController extends GetxController {
     }
   }
 
-  // ── Filter Periode Tren ────────────────────────────────────────────────────
+  // Filter Periode Tren
   void setTrendPeriod(String period) {
     trendPeriod.value = period;
     _updateTrendDataForPeriod(period);
@@ -980,7 +980,7 @@ class SmartbandLdrController extends GetxController {
     super.onClose();
   }
 
-  /// Hapus semua data tersimpan di local storage (misal: logout/reset gelang)
+  /// Hapus semua data tersimpan di local storage (misal: logout/reset gelang
   Future<void> clearStoredData() async {
     await _storage.clearAll();
     hasRestoredData.value = false;

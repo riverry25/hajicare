@@ -114,7 +114,7 @@ class AdhanAudioService extends GetxService with WidgetsBindingObserver {
       currentPrayerName.value = prayerName;
       isPlaying.value = true;
 
-      // On Android: Start native foreground service (plays audio + displays 1 single notification)
+      // On Android: Start native foreground service (plays audio + displays 1 single notification
       bool nativeStarted = false;
       if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
         nativeStarted = await AdhanNativeBridge.startAdhanService(

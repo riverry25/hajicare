@@ -6,7 +6,7 @@ import '../../../../core/theme/theme_context.dart';
 import '../../controllers/map_controller.dart';
 
 /// Floating "Pusatkan Kembali" (Re-center) button.
-/// Automatically appears when user pans or drags the map manually in navigation mode,
+/// Automatically appears when user pans or drags the map manually in navigation mode
 /// and re-engages follow mode when pressed.
 class NavigationRecenterButton extends StatelessWidget {
   final MapController mapCtrl;

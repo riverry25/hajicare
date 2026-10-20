@@ -51,7 +51,7 @@ class ActiveRoomCard extends StatelessWidget {
               : context.tr('dashboard.noRoomYet'));
       final roomCode = room?.code ?? '';
 
-      // ── Unconnected State (Belum Memiliki Room) ───────────────────────────
+      // Unconnected State (Belum Memiliki Room
       if (!hasRoom) {
         return Container(
           decoration: BoxDecoration(
@@ -205,12 +205,12 @@ class ActiveRoomCard extends StatelessWidget {
         );
       }
 
-      // ── Syncing / Skeleton State (Memiliki Room Tapi Data Sedang Dimuat) ───
+      // Syncing / Skeleton State (Memiliki Room Tapi Data Sedang Dimuat
       if (room == null) {
         return ActiveRoomSkeletonCard(isDark: isDark);
       }
 
-      // ── Connected State (Memiliki Room Aktif) ──────────────────────────────
+      // Connected State (Memiliki Room Aktif
       return Container(
         decoration: BoxDecoration(
           color: cardBg,
@@ -238,7 +238,7 @@ class ActiveRoomCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            // ── Top Section: Left 2 Stacked Metrics + Right Arc Gauge ──
+            // Top Section: Left 2 Stacked Metrics + Right Arc Gauge
             Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
@@ -410,7 +410,7 @@ class ActiveRoomCard extends StatelessWidget {
 
                 const SizedBox(width: 12),
 
-                // Right: Circular Arc Progress Ring Gauge (Member Count + QR trigger)
+                // Right: Circular Arc Progress Ring Gauge (Member Count + QR trigger
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -560,12 +560,12 @@ class ActiveRoomCard extends StatelessWidget {
 
             const SizedBox(height: 18),
 
-            // ── Horizontal Divider Line ─────────────────────────────
+            // Horizontal Divider Line
             Divider(height: 1, color: hc.border),
 
             const SizedBox(height: 16),
 
-            // ── Interactive Wavy Statistic: Radius Radar (Replaces Kode Room & linear bars) ──
+            // Interactive Wavy Statistic: Radius Radar (Replaces Kode Room & linear bars
             _RadarWaveStatisticWidget(
               radius: room.safeRadius,
               currentDistance: state.calculatedDistance.value,
@@ -575,7 +575,7 @@ class ActiveRoomCard extends StatelessWidget {
 
             const SizedBox(height: 18),
 
-            // ── Action Buttons Footer ───────────────────────────────
+            // Action Buttons Footer
             Builder(
               builder: (context) {
                 final textScaler = MediaQuery.textScalerOf(context);
@@ -1178,7 +1178,7 @@ class _RoomCapacityGaugePainter extends CustomPainter {
   }
 }
 
-// ── Interactive Wavy Statistic Widget for Radius Radar ───────────────────────
+// Interactive Wavy Statistic Widget for Radius Radar
 
 class _RadarWaveStatisticWidget extends StatefulWidget {
   final double radius;
@@ -1335,7 +1335,7 @@ class _RadarWaveStatisticWidgetState extends State<_RadarWaveStatisticWidget>
         ),
         const SizedBox(height: 10),
 
-        // Interactive Animated Wave Card (Transparent Background)
+        // Interactive Animated Wave Card (Transparent Background
         ClipRRect(
           borderRadius: BorderRadius.circular(14),
           child: Material(
@@ -1381,7 +1381,7 @@ class _RadarWaveStatisticWidgetState extends State<_RadarWaveStatisticWidget>
   }
 }
 
-// ── Custom Painter for the Animated Radar Wave ───────────────────────────────
+// Custom Painter for the Animated Radar Wave
 
 class _RadarWavePainter extends CustomPainter {
   final Color waveColor;

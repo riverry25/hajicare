@@ -29,7 +29,7 @@ enum SosScanningState {
   noCompanionAvailable,
 }
 
-/// Distance range filters inspired by modern radar UX (Image 2).
+/// Distance range filters inspired by modern radar UX .
 enum RadarDistanceFilter { closest, near50m, near200m, all }
 
 class SosCompanionScanningScreen extends StatefulWidget {
@@ -102,10 +102,10 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
     super.dispose();
   }
 
-  // ── REAL DATA DETECTION PIPELINE ───────────────────────────────────────────
+  // REAL DATA DETECTION PIPELINE
 
   Future<void> _startDetectionPipeline() async {
-    // ── STEP 1: "Mendeteksi lokasi Anda..." ──────────────────────────────────
+    // STEP 1: "Mendeteksi lokasi Anda..."
     if (!mounted) return;
     setState(() {
       _currentState = SosScanningState.detectingGps;
@@ -118,7 +118,7 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
       myPos = _state.myCurrentPosition.value;
     }
 
-    // ── STEP 2: "Memindai pendamping di sekitar..." ─────────────────────────
+    // STEP 2: "Memindai pendamping di sekitar..."
     if (!mounted) return;
     setState(() {
       _currentState = SosScanningState.scanningCompanions;
@@ -130,7 +130,7 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
     if (!mounted) return;
 
     if (foundCandidates.isEmpty) {
-      // ── STATE FALLBACK: "Pendamping tidak tersedia" ────────────────────────
+      // STATE FALLBACK: "Pendamping tidak tersedia"
       _sweepController.stop();
       setState(() {
         _currentState = SosScanningState.noCompanionAvailable;
@@ -139,7 +139,7 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
       return;
     }
 
-    // ── STEP 3: "Mencari pendamping terdekat..." ────────────────────────────
+    // STEP 3: "Mencari pendamping terdekat..."
     setState(() {
       _currentState = SosScanningState.searchingClosest;
       _candidates = foundCandidates;
@@ -161,7 +161,7 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
     // Fallback to first companion (e.g. room leader) if no GPS coordinates
     closest ??= foundCandidates.first;
 
-    // ── STEP 4: "Pendamping ditemukan" ──────────────────────────────────────
+    // STEP 4: "Pendamping ditemukan"
     HapticFeedback.mediumImpact();
     _lockOnController.forward(from: 0.0);
 
@@ -209,7 +209,7 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
       }
     }
 
-    // 2. From Firestore Users Collection (role in ['pendamping', 'petugas'])
+    // 2. From Firestore Users Collection (role in ['pendamping', 'petugas']
     try {
       final snap = await FirebaseFirestore.instance
           .collection('users')
@@ -291,7 +291,7 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
     }
 
     final list = results.values.toList();
-    // Sort closest first (candidates with distances first, then null distances)
+    // Sort closest first (candidates with distances first, then null distances
     list.sort((a, b) {
       if (a.distanceMeters == null && b.distanceMeters == null) return 0;
       if (a.distanceMeters == null) return 1;
@@ -302,7 +302,6 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
     return list;
   }
 
-  // ── ACTIONS ────────────────────────────────────────────────────────────────
 
   Future<void> _callCompanion(String? phone) async {
     if (phone == null || phone.trim().isEmpty) {
@@ -377,7 +376,7 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
     _lockOnController.forward(from: 0.0);
   }
 
-  // ── FILTER & RADAR SCALE COMPUTATION ───────────────────────────────────────
+  // FILTER & RADAR SCALE COMPUTATION
 
   double get _effectiveMaxRange {
     switch (_selectedFilter) {
@@ -464,7 +463,6 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
     }
   }
 
-  // ── BUILD ──────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
@@ -567,7 +565,7 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
     );
   }
 
-  // ── TOP BAR & STATUS PILL (Inspired by Image 2 Header) ─────────────────────
+  // TOP BAR & STATUS PILL
 
   Widget _buildTopBar(BuildContext context) {
     final colors = context.hc;
@@ -734,7 +732,7 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
     );
   }
 
-  // ── RADAR STACK (Organic Layered Disks + Center Beacon + Floating Avatars) ──
+  // RADAR STACK (Organic Layered Disks + Center Beacon + Floating Avatars
 
   Widget _buildRadarStack(BuildContext context, double size) {
     final colors = context.hc;
@@ -783,7 +781,7 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
               final angle = cand.getRadarAngleRadians();
 
               final blipDist = maxRadius * radiusRatio;
-              // 0 rad is North (-Y axis)
+              // 0 rad is North (-Y axis
               final dx = center.dx + blipDist * math.sin(angle);
               final dy = center.dy - blipDist * math.cos(angle);
 
@@ -847,7 +845,7 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
     );
   }
 
-  // ── DISTANCE FILTER ROW ────────────────────────────────────────────────────
+  // DISTANCE FILTER ROW
 
   Widget _buildDistanceFilterRow(BuildContext context) {
     final colors = context.hc;
@@ -969,7 +967,7 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
     );
   }
 
-  // ── BOTTOM PANEL (Companion Card or Scanning State) ────────────────────────
+  // BOTTOM PANEL (Companion Card or Scanning State
 
   Widget _buildBottomPanel(BuildContext context) {
     final colors = context.hc;
@@ -1113,7 +1111,6 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
             ),
             const SizedBox(height: AppSpacing.md),
 
-            // Action Buttons
             Row(
               children: [
                 if (comp.phone != null && comp.phone!.isNotEmpty) ...[
@@ -1283,7 +1280,7 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
   }
 }
 
-// ── FLOATING COMPANION AVATAR WIDGET ─────────────────────────────────────────
+// FLOATING COMPANION AVATAR WIDGET
 
 class _RadarCompanionAvatar extends StatelessWidget {
   final CandidateCompanion candidate;
@@ -1406,7 +1403,7 @@ class _RadarCompanionAvatar extends StatelessWidget {
   }
 }
 
-// ── ORGANIC LAYERED RADAR PAINTER ─────────────────────────────────────────────
+// ORGANIC LAYERED RADAR PAINTER
 
 class _WinkyOrganicRadarPainter extends CustomPainter {
   final double sweepProgress;

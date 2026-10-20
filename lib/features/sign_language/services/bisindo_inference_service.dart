@@ -14,14 +14,14 @@ abstract interface class BisindoPredictor {
   );
 }
 
-/// Service managing the deploy-ready Sign Language TFLite models (SIBI & BISINDO):
-/// - SIBI Model: `assets/models/sibi_alphabet_model_f32.tflite`
-///   Input shape: [1, 42] Float32 (single-frame 21 hand landmarks x 2)
-///   Output shape: [1, 24] Float32 (24 alphabet classes A..Y)
-/// - BISINDO Model: `assets/models/bisindo/hajicare_bisindo_gru_float32.tflite`
-///   Input shape: [1, 48, 135] Float32
-///   Output shape: [1, 23] Float32
-///   Labels: 23 classes loaded from `assets/models/bisindo/labels.json`
+/// Service managing the deploy-ready Sign Language TFLite models (SIBI & BISINDO
+/// SIBI Model: `assets/models/sibi_alphabet_model_f32.tflite`
+/// Input shape: [1, 42] Float32 (single-frame 21 hand landmarks x 2
+/// Output shape: [1, 24] Float32 (24 alphabet classes A..Y
+/// BISINDO Model: `assets/models/bisindo/hajicare_bisindo_gru_float32.tflite`
+/// Input shape: [1, 48, 135] Float32
+/// Output shape: [1, 23] Float32
+/// Labels: 23 classes loaded from `assets/models/bisindo/labels.json`
 class BisindoInferenceService implements BisindoPredictor {
   static const String kModelAssetPath =
       'assets/models/bisindo/hajicare_bisindo_gru_float32.tflite';
@@ -123,7 +123,7 @@ class BisindoInferenceService implements BisindoPredictor {
           }
         }
       } else {
-        // Plain text labels (one per line)
+        // Plain text labels (one per line
         _labels = labelsStr
             .split('\n')
             .map((l) => l.trim())

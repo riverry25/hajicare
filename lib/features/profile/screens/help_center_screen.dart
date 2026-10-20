@@ -116,7 +116,6 @@ class HelpCenterScreen extends StatelessWidget {
             ),
           ),
 
-          // Scrollable content
           Expanded(
             child: Center(
               child: ConstrainedBox(
@@ -166,9 +165,7 @@ class HelpCenterScreen extends StatelessWidget {
   }
 }
 
-// ────────────────────────────────────────────────────────────────────────────
 // Categories Section
-// ────────────────────────────────────────────────────────────────────────────
 
 class _CategoriesSection extends StatelessWidget {
   final HelpCenterController controller;
@@ -361,9 +358,7 @@ class _CategoryTile extends StatelessWidget {
   }
 }
 
-// ────────────────────────────────────────────────────────────────────────────
 // FAQ Section
-// ────────────────────────────────────────────────────────────────────────────
 
 class _FaqSection extends StatelessWidget {
   final HelpCenterController controller;
@@ -583,9 +578,7 @@ class _FaqItem extends StatelessWidget {
   }
 }
 
-// ────────────────────────────────────────────────────────────────────────────
 // Contact Support Section
-// ────────────────────────────────────────────────────────────────────────────
 
 class _ContactSupportSection extends StatelessWidget {
   final ProfileSupportService supportService;

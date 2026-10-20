@@ -158,7 +158,7 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
               parent: BouncingScrollPhysics(),
             ),
             slivers: [
-              // ── 1. KPI Overview Summary Card ─────────────────────────────────
+              // 1. KPI Overview Summary Card
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(
@@ -178,7 +178,7 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
                 ),
               ),
 
-              // ── 2. Search, Filter Chips & Sort Controls ──────────────────────
+              // 2. Search, Filter Chips & Sort Controls
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
@@ -209,7 +209,7 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
                 ),
               ),
 
-              // ── 3. Room List or Dedicated Empty State ────────────────────────
+              // 3. Room List or Dedicated Empty State
               SliverPadding(
                 padding: const EdgeInsets.fromLTRB(
                   AppSpacing.screenEdgeGutter,
@@ -301,7 +301,7 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
     );
   }
 
-  // ── 1. KPI Overview Summary Card ───────────────────────────────────────────
+  // 1. KPI Overview Summary Card
   Widget _buildOverviewHeader(
     BuildContext context,
     bool isDark,
@@ -523,7 +523,7 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
     );
   }
 
-  // ── 2. Search Bar ──────────────────────────────────────────────────────────
+  // 2. Search Bar
   Widget _buildSearchBar(
     BuildContext context,
     bool isDark,
@@ -588,7 +588,7 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
     );
   }
 
-  // ── 3. Filter Tabs & Sort Row ──────────────────────────────────────────────
+  // 3. Filter Tabs & Sort Row
   Widget _buildFilterAndSortRow(
     BuildContext context,
     bool isDark,
@@ -722,7 +722,7 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
     }
   }
 
-  // ── Sort Sheet ─────────────────────────────────────────────────────────────
+  // Sort Sheet
   void _showSortSheet(
     BuildContext context,
     bool isDark,
@@ -851,7 +851,7 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
     );
   }
 
-  // ── Empty State ────────────────────────────────────────────────────────────
+  // Empty State
   Widget _buildEmptyState(
     BuildContext context,
     bool isSearching,
@@ -969,7 +969,7 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
     );
   }
 
-  // ── Create Room Dialog ─────────────────────────────────────────────────────
+  // Create Room Dialog
   void _showCreateRoomSheet(
     BuildContext context,
     AdminRoomController controller,
@@ -977,7 +977,7 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
     CreateRoomDialog.show(context, controller);
   }
 
-  // ── Edit Name Sheet ────────────────────────────────────────────────────────
+  // Edit Name Sheet
   void _showEditNameSheet(
     BuildContext context,
     AdminRoomController controller,
@@ -1091,7 +1091,7 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
     ).whenComplete(textCtrl.dispose);
   }
 
-  // ── Room Actions Bottom Sheet ──────────────────────────────────────────────
+  // Room Actions Bottom Sheet
   void _showRoomActionSheet(
     BuildContext context,
     AdminRoomController controller,
@@ -1289,7 +1289,7 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
   }
 }
 
-// ── Action Item Tile ─────────────────────────────────────────────────────────
+// Action Item Tile
 class _ActionItemTile extends StatelessWidget {
   final IconData icon;
   final String title;
@@ -1342,7 +1342,7 @@ class _ActionItemTile extends StatelessWidget {
   }
 }
 
-// ── Filter Chip Item ─────────────────────────────────────────────────────────
+// Filter Chip Item
 class _FilterChipItem extends StatelessWidget {
   final String label;
   final bool isSelected;
@@ -1443,7 +1443,7 @@ class _FilterChipItem extends StatelessWidget {
   }
 }
 
-// ── Room Management Card ─────────────────────────────────────────────────────
+// Room Management Card
 class _RoomManagementCard extends StatelessWidget {
   final RoomModel room;
   final int jamaahCount;
@@ -1525,7 +1525,7 @@ class _RoomManagementCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ── Top Row: Emblem + Room Name + Status Badge + Actions Menu ──
+                // Top Row: Emblem + Room Name + Status Badge + Actions Menu
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
@@ -1686,7 +1686,7 @@ class _RoomManagementCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
 
-                // ── Middle: Room Code + One-Tap Copy Strip ──
+                // Middle: Room Code + One-Tap Copy Strip
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(
@@ -1824,7 +1824,7 @@ class _RoomManagementCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
 
-                // ── Bottom: Metric Badges & Enter Room CTA ──
+                // Bottom: Metric Badges & Enter Room CTA
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
@@ -1906,7 +1906,7 @@ class _RoomManagementCard extends StatelessWidget {
   }
 }
 
-// ── Metric Badge Pill ────────────────────────────────────────────────────────
+// Metric Badge Pill
 class _MetricBadgePill extends StatelessWidget {
   final IconData icon;
   final int count;

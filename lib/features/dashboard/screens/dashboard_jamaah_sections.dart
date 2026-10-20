@@ -27,7 +27,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const ActiveAdhanDashboardBanner(),
-          // ── Quick Service Categories (Row of 4 Horizontal Items) ─
+          // Quick Service Categories (Row of 4 Horizontal Items
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
             child: Row(
@@ -80,7 +80,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
 
           const SizedBox(height: 18),
 
-          // ── Active Assistance Banner (when request is in progress) ──
+          // Active Assistance Banner (when request is in progress
           Obx(() {
             final activeReq =
                 AssistanceRequestService.instance.activeRequest.value;
@@ -93,7 +93,6 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
             );
           }),
 
-          // ── Bento Grid: Layanan & Fitur Utama Jamaah ─────────────
           _buildJamaahBentoSection(
             context: context,
             state: state,
@@ -104,7 +103,6 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
 
           const SizedBox(height: 24),
 
-          // ── Section 1: "Status & Peringatan" ("Bot Alert") ────────
           // Hanya ditampilkan jika jamaah sudah tergabung dalam room pemantauan
           // atau terdapat alarm darurat SOS aktif. Jika belum memiliki room, section
           // ini disembunyikan agar tidak menampilkan status "Terkoneksi & Aman" semu.
@@ -138,7 +136,6 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
             );
           }),
 
-          // ── Section 2: "Kamar & Maktab" ───────────────────────────
           _buildSectionHeader(
             context: context,
             title: context.tr('dashboard.roomAndMaktab'),
@@ -162,7 +159,6 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
 
           const SizedBox(height: 26),
 
-          // ── Section 3: "Info & Pengumuman" (Dynamic Info Notifications from Companion & Admin)
           _buildSectionHeader(
             context: context,
             title: context.tr('dashboard.companionAndAdminInfo'),
@@ -179,7 +175,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
     );
   }
 
-  // ── Quick Category Item (Squircle Icon with Label) ────────────────────────
+  // Quick Category Item (Squircle Icon with Label
   Widget _buildCategoryItem({
     required BuildContext context,
     required String label,
@@ -243,7 +239,6 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
     );
   }
 
-  // ── Section Header (Title + Subtitle + Action) ─────────────────────────────
   Widget _buildSectionHeader({
     required BuildContext context,
     required String title,
@@ -307,7 +302,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
     );
   }
 
-  // ── Status Alert Card – fully dynamic: GPS state + safe radius tier ───────
+  // Status Alert Card – fully dynamic: GPS state + safe radius tier
   Widget _buildStatusAlertCard(
     BuildContext context,
     JamaahData jamaah,
@@ -315,16 +310,16 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
     DashboardController dashboardCtrl,
   ) {
     // Wrap with Obx so card re-renders whenever safeRadiusMeters changes
-    // (pendamping can update it at any time).
+    // pendamping can update it at any time).
     final hc = Get.isRegistered<HajiCareController>()
         ? Get.find<HajiCareController>()
         : null;
 
     return Obx(() {
-      // ── 1. Read live safe radius (reactive) ──────────────────────────────
+      // 1. Read live safe radius (reactive
       final safeRadius = hc?.safeRadiusMeters.value ?? 200.0;
 
-      // ── 2. Recompute tier against current safeRadius ──────────────────────
+      // 2. Recompute tier against current safeRadius
       // JamaahData.tier may be stale; we recompute inline.
       DistanceTier liveTier;
       if (jamaah.distance <= safeRadius * 0.5) {
@@ -344,7 +339,6 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
           jamaah.locationUpdatedAt != null &&
           DateTime.now().difference(jamaah.locationUpdatedAt!).inMinutes >= 5;
 
-      // ── Helpers ───────────────────────────────────────────────────────────
       Widget buildStatusIcon({
         required Color color,
         required IconData icon,
@@ -467,7 +461,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
         );
       }
 
-      // ── STATE SOS: Sinyal Darurat SOS Aktif ──────────────────────────────
+      // STATE SOS: Sinyal Darurat SOS Aktif
       if (hc?.anySosActive == true || jamaah.sosActive) {
         return buildStatusCard(
           borderColor: context.hc.danger,
@@ -505,7 +499,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
         );
       }
 
-      // ── STATE NO ROOM: Belum terhubung ke room ───────────────────────────
+      // STATE NO ROOM: Belum terhubung ke room
       final hasRoom =
           (hc?.activeRoomId.value != null &&
               hc!.activeRoomId.value!.trim().isNotEmpty) ||
@@ -527,7 +521,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
         );
       }
 
-      // ── STATE A: GPS mati ─────────────────────────────────────────────────
+      // STATE A: GPS mati
       if (!gpsOn) {
         return buildStatusCard(
           borderColor: context.hc.danger.withValues(alpha: isDark ? 0.55 : 0.4),
@@ -545,7 +539,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
         );
       }
 
-      // ── STATE B: GPS nyala tapi sinyal stale / lokasi tidak diperbarui ────
+      // STATE B: GPS nyala tapi sinyal stale / lokasi tidak diperbarui
       if (locationStale) {
         return buildStatusCard(
           borderColor: context.hc.warning.withValues(alpha: 0.55),
@@ -563,7 +557,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
         );
       }
 
-      // ── STATE C: GPS nyala, dalam safe radius (aman) ──────────────────────
+      // STATE C: GPS nyala, dalam safe radius (aman
       if (liveTier == DistanceTier.aman) {
         return buildStatusCard(
           borderColor: context.hc.success.withValues(
@@ -585,7 +579,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
         );
       }
 
-      // ── STATE D: GPS nyala, mendekati batas radius (waspada) ─────────────
+      // STATE D: GPS nyala, mendekati batas radius (waspada
       if (liveTier == DistanceTier.waspada) {
         return buildStatusCard(
           borderColor: context.hc.warning.withValues(alpha: 0.55),
@@ -621,7 +615,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
         );
       }
 
-      // ── STATE E: Keluar safe radius (terlalu jauh / separatedMode) ────────
+      // STATE E: Keluar safe radius (terlalu jauh / separatedMode
       return buildStatusCard(
         borderColor: context.hc.danger.withValues(alpha: 0.55),
         bgTint: context.hc.danger,
@@ -666,7 +660,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
     });
   }
 
-  // ── Dynamic Info Notifications Section (Up to 3 newest items from Companion & Admin) ──
+  // Dynamic Info Notifications Section (Up to 3 newest items from Companion & Admin
   Widget _buildDynamicInfoList(
     BuildContext context,
     bool isDark,
@@ -1058,7 +1052,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
     }
   }
 
-  // ── Dashed Line Painter Helper ────────────────────────────────────────────
+  // Dashed Line Painter Helper
   Widget _buildDashedLine(Color color) {
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -1080,7 +1074,6 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
     );
   }
 
-  // ── Bento Grid: Layanan & Fitur Utama Jamaah ──────────────────────────────
   Widget _buildJamaahBentoSection({
     required BuildContext context,
     required HajiCareController state,
@@ -1095,7 +1088,6 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Section Header (Matching Reference Aesthetic)
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -1130,11 +1122,11 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
         ),
         const SizedBox(height: AppSpacing.lg),
 
-        // 4 Staggered Bento Cards matching reference layout
+        // 4 Staggered Bento Cards
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Left Column: BISINDO (Tall: 162) & Panduan Doa (Short: 126)
+            // Left Column: BISINDO (Tall: 162) & Panduan Doa (Short: 126
             Expanded(
               child: Column(
                 children: [
@@ -1389,7 +1381,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
     );
   }
 
-  // ── Modal Sheet: Jadwal & Guide Ibadah Haji ────────────────────────────────
+  // Modal Sheet: Jadwal & Guide Ibadah Haji
   void _showHajiScheduleGuideSheet(BuildContext context) {
     Get.bottomSheet(
       const HajjScheduleGuideSheet(),
@@ -1398,7 +1390,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
     );
   }
 
-  // ── Hubungi Pendamping: informasi, pesan, dan berbagi lokasi ───────────────
+  // Hubungi Pendamping: informasi, pesan, dan berbagi lokasi
   Future<void> _showCompanionContactDialog(
     BuildContext context,
     HajiCareController state,
@@ -1456,7 +1448,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
     );
   }
 
-  // ── Modal Sheet: Fitur Jemput Saya (Kirim Notifikasi ke Pendamping) ─────────
+  // Modal Sheet: Fitur Jemput Saya (Kirim Notifikasi ke Pendamping
   // ignore: unused_element
   Future<void> _showPickupRequestDialog(
     BuildContext context,
@@ -1888,7 +1880,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
     ).whenComplete(noteController.dispose);
   }
 
-  // ── Modal Sheet: Pos Medis & Ambulans ─────────────────────────────────────
+  // Modal Sheet: Pos Medis & Ambulans
   void _showMedicalSheet(BuildContext context) {
     final isDark = AppColors.isDark(context);
     final headingColor = AppColors.textHeadingColor(context);
@@ -2031,7 +2023,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
     );
   }
 
-  // ── Smart Band Telemetry Dialog (Smartband ESP32-S3 + GPS NEO-6M + Heart Rate MAX30102) ──
+  // Smart Band Telemetry Dialog (Smartband ESP32-S3 + GPS NEO-6M + Heart Rate MAX30102
   void _showSmartBandDialog(BuildContext context) {
     final isDark = AppColors.isDark(context);
     final headingColor = AppColors.textHeadingColor(context);
@@ -2052,7 +2044,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
             clipBehavior: Clip.none,
             alignment: Alignment.topCenter,
             children: [
-              // ── 1. Main Card Body ──
+              // 1. Main Card Body
               Container(
                 margin: const EdgeInsets.only(
                   top: 28,
@@ -2083,7 +2075,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                   final lastLat = ldrCtrl.lastKnownLatitude.value;
                   final lastLng = ldrCtrl.lastKnownLongitude.value;
                   final relativeTime = ldrCtrl.relativeTimeText.value;
-                  // hasLocation: juga cek data storage (lastKnown bahkan tanpa timestamp fresh)
+                  // hasLocation: juga cek data storage (lastKnown bahkan tanpa timestamp fresh
                   final hasLocation =
                       (isConnected && lat != null && lng != null) ||
                       (lastLat != null && lastLng != null) ||
@@ -2099,7 +2091,6 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Title & Subtitle
                         Text(
                           context.tr('dashboard.smartbandMonitoring'),
                           style: DashboardTypography.titleMedium.copyWith(
@@ -2121,7 +2112,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                           ),
                         ),
 
-                        // ── BANNER DATA TERSIMPAN (muncul saat disconnected tapi ada data lama) ──
+                        // BANNER DATA TERSIMPAN (muncul saat disconnected tapi ada data lama
                         if (!isConnected &&
                             ldrCtrl.hasRestoredData.value &&
                             ldrCtrl.lastDataReceivedAt.value != null) ...[
@@ -2172,7 +2163,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
 
                         const SizedBox(height: 12),
 
-                        // ── STATUS GELANG CARD ──
+                        // STATUS GELANG CARD
                         Container(
                           width: double.infinity,
                           padding: const EdgeInsets.symmetric(
@@ -2315,8 +2306,8 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
 
                         const SizedBox(height: 12),
 
-                        // ── CARD 1: DETAK JANTUNG (MAX30102) ──
-                        // Tampilkan data dari storage jika tersedia (meski smartband mati)
+                        // CARD 1: DETAK JANTUNG (MAX30102
+                        // Tampilkan data dari storage jika tersedia (meski smartband mati
                         Builder(
                           builder: (_) {
                             final hasHr = hr != null && hr > 0;
@@ -2493,7 +2484,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
 
                         const SizedBox(height: 8),
 
-                        // ── ROW: SpO2 + LANGKAH (2 kolom) ──
+                        // ROW: SpO2 + LANGKAH (2 kolom
                         Builder(
                           builder: (_) {
                             final spo2Val = ldrCtrl.spo2.value;
@@ -2868,7 +2859,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
 
                         const SizedBox(height: 12),
 
-                        // ── CARD 2: LOKASI JAMAAH (PREVIEW MAP / FALLBACK) ──
+                        // CARD 2: LOKASI JAMAAH (PREVIEW MAP / FALLBACK
                         Container(
                           width: double.infinity,
                           padding: const EdgeInsets.all(12),
@@ -2961,7 +2952,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                               const SizedBox(height: 10),
 
                               if (activeTarget != null) ...[
-                                // ── LIVE MINI MAP PREVIEW ──
+                                // LIVE MINI MAP PREVIEW
                                 GestureDetector(
                                   onTap: () {
                                     Navigator.of(ctx).pop();
@@ -3193,7 +3184,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                                   ),
                                 ),
                               ] else ...[
-                                // ── FALLBACK KETIKA BELUM ADA LOKASI / BELUM UPDATE ──
+                                // FALLBACK KETIKA BELUM ADA LOKASI / BELUM UPDATE
                                 Container(
                                   width: double.infinity,
                                   padding: const EdgeInsets.symmetric(
@@ -3280,7 +3271,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
 
                         const SizedBox(height: 14),
 
-                        // ── Tombol Hubungkan / Putuskan Gelang (Primary Action) ──
+                        // Tombol Hubungkan / Putuskan Gelang (Primary Action
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton.icon(
@@ -3337,7 +3328,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
 
                         const SizedBox(height: 8),
 
-                        // ── Buka Halaman Penuh (Secondary Action) ──
+                        // Buka Halaman Penuh (Secondary Action
                         Center(
                           child: TextButton.icon(
                             style: TextButton.styleFrom(
@@ -3372,7 +3363,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                 }),
               ),
 
-              // ── 2. Floating Hero Card ──
+              // 2. Floating Hero Card
               Positioned(
                 top: 0,
                 left: 22,

@@ -36,8 +36,8 @@ class _SplashScreenState extends State<SplashScreen>
   void initState() {
     super.initState();
 
-    // 1. Entrance: corners grow in first (staggered inside the painter),
-    //    centre content fades in slightly later.
+    // 1. Entrance: corners grow in first (staggered inside the painter
+    // centre content fades in slightly later.
     _entranceController = AnimationController(
       duration: const Duration(milliseconds: 1600),
       vsync: this,
@@ -120,7 +120,7 @@ class _SplashScreenState extends State<SplashScreen>
               ),
             ),
 
-            // 3. Center Content (Ka'bah Hero + Brand Identity + Arabic Calligraphy)
+            // 3. Center Content (Ka'bah Hero + Brand Identity + Arabic Calligraphy
             SafeArea(
               child: Center(
                 child: SingleChildScrollView(
@@ -139,7 +139,7 @@ class _SplashScreenState extends State<SplashScreen>
 
                         const SizedBox(height: AppSpacing.lg),
 
-                        // App Brand Name (HajiCare)
+                        // App Brand Name (HajiCare
                         RichText(
                           textAlign: TextAlign.center,
                           text: TextSpan(

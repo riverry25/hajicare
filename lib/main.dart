@@ -23,11 +23,11 @@ import 'features/smartband/services/smartband_storage_service.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Register settings early so settings load can run in parallel with Firebase init
+  // Inisialisasi controller pengaturan awal
   final settings = Get.put(AppSettingsController(), permanent: true);
   final adhanNotifService = AdhanNotificationService();
 
-  // Parallelize independent startup tasks concurrently to eliminate cold startup waterfall
+  // Inisialisasi service utama secara paralel
   await Future.wait([
     Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform),
     settings.loadSettings(),
@@ -44,10 +44,10 @@ void main() async {
     }),
   ]);
 
-  // Activate Firebase App Check (Play Integrity on Android release, debug provider in debug)
+  // Inisialisasi Firebase App Check
   await AppCheckService.initialize();
 
-  // Register global permanent controllers after Firebase is ready
+  // Registrasi controller global
   Get.put(AppStartupController(), permanent: true);
   Get.put(HajiCareController(), permanent: true);
   Get.put(NotificationController(), permanent: true);
@@ -66,29 +66,16 @@ class HajiCareApp extends StatelessWidget {
   Widget build(BuildContext context) {
     final settings = Get.find<AppSettingsController>();
 
-    // ── Stable GetMaterialApp ────────────────────────────────────────────────
-    // GetMaterialApp must NOT be rebuilt from scratch on every Rx tick.
-    // Rebuilding it tears down all InheritedWidget descendants (including
-    // MediaQuery) while dependents still hold references → _dependents.isEmpty
-    // assertion failure.
-    //
-    // Instead:
-    //  • themeMode / locale are passed as Obx-observed values on the
-    //    GetMaterialApp itself — GetX updates those fields without a full
-    //    rebuild when they change.
-    //  • textScaleFactor is consumed inside `builder` via a narrow Obx that
-    //    only recreates the thin MediaQuery wrapper, leaving the navigator tree
-    //    untouched.
     return GetMaterialApp(
       title: 'HajiCare',
       debugShowCheckedModeBanner: false,
 
-      // Theming — Obx() reads rxThemeMode so GetX can patch themeMode reactively
+      // Konfigurasi tema
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: settings.rxThemeMode.value,
 
-      // Localization
+      // Konfigurasi bahasa
       locale: settings.rxLocale.value,
       fallbackLocale: AppTranslations.fallbackLocale,
       translations: AppTranslations(),
@@ -111,24 +98,16 @@ class HajiCareApp extends StatelessWidget {
         return AppTranslations.fallbackLocale;
       },
 
-      // GetX route management with bindings attached per-route
       initialRoute: AppRoutes.splash,
       getPages: AppRoutes.pages,
 
-      // Wrap child with a stable StatefulWidget — NEVER use Obx inside builder.
-      // Obx replaces the MediaQuery node on every Rx tick, which triggers
-      // _dependents.isEmpty when dialogs are being dismissed mid-frame.
       builder: (context, child) =>
           _TextScaleMediaQuery(settings: settings, child: child),
     );
   }
 }
 
-// ── Stable text-scale MediaQuery wrapper ─────────────────────────────────────
-// Uses GetX ever() to call setState when rxTextScale changes.
-// Because this is a StatefulWidget, the element is REUSED across rebuilds —
-// Flutter updates the MediaQuery data in-place (updateShouldNotify) instead
-// of deactivating the node, so dependents are never invalidated mid-frame.
+// Wrapper MediaQuery untuk menangani perubahan skala teks
 class _TextScaleMediaQuery extends StatefulWidget {
   final AppSettingsController settings;
   final Widget? child;
@@ -145,8 +124,6 @@ class _TextScaleMediaQueryState extends State<_TextScaleMediaQuery> {
   @override
   void initState() {
     super.initState();
-    // Listen to rxTextScale and trigger an in-place rebuild of this widget.
-    // ever() fires only when the value actually changes — no spurious frames.
     _worker = ever(widget.settings.rxTextScale, (_) {
       if (mounted) setState(() {});
     });

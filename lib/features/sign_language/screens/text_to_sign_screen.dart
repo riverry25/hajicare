@@ -156,19 +156,19 @@ class _TextToSignScreenState extends State<TextToSignScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── 1. SEGMENTED LANGUAGE SELECTOR (SIBI vs BISINDO) ─────────────
+            // 1. SEGMENTED LANGUAGE SELECTOR (SIBI vs BISINDO
             SignLanguageSegmentedControl(controller: controller),
             const SizedBox(height: AppSpacing.md),
 
-            // ── 2. TEXT SEARCH & VOICE INPUT BAR (DENGAN AUTOCOMPLETE) ───────
+            // 2. TEXT SEARCH & VOICE INPUT BAR (DENGAN AUTOCOMPLETE
             SignSearchVoiceBar(controller: controller),
             const SizedBox(height: AppSpacing.sm),
 
-            // ── 3. QUICK PHRASE CHIPS ────────────────────────────────────────
+            // 3. QUICK PHRASE CHIPS
             SignQuickPhraseChips(controller: controller),
             const SizedBox(height: AppSpacing.md),
 
-            // ── 4. ERROR BANNER (JIKA ADA KENDALA) ───────────────────────────
+            // 4. ERROR BANNER (JIKA ADA KENDALA
             Obx(() {
               final err = controller.errorMessage.value;
               if (err == null) return const SizedBox.shrink();
@@ -205,22 +205,22 @@ class _TextToSignScreenState extends State<TextToSignScreen> {
               );
             }),
 
-            // ── 5. PEMUTAR VIDEO BAHASA ISYARAT ──────────────────────────────
+            // 5. PEMUTAR VIDEO BAHASA ISYARAT
             SignVideoPlayerWidget(key: _videoPlayerKey, controller: controller),
 
-            // ── 5.1 MULTI-CANDIDATES SELECTOR (JIKA LEBIH DARI 1 KATA) ───────
+            // 5.1 MULTI-CANDIDATES SELECTOR (JIKA LEBIH DARI 1 KATA
             SignCandidatesBar(controller: controller),
             const SizedBox(height: AppSpacing.lg),
 
-            // ── 6. SPEECH TO SIGN HERO SECTION (VOICE RECOGNITION) ───────────
+            // 6. SPEECH TO SIGN HERO SECTION (VOICE RECOGNITION
             SignSpeechCard(controller: controller),
             const SizedBox(height: AppSpacing.xl),
 
-            // ── 7. PAKET UNDUHAN OFFLINE KATEGORI ────────────────────────────
+            // 7. PAKET UNDUHAN OFFLINE KATEGORI
             SignOfflinePackagesSection(controller: controller),
             const SizedBox(height: AppSpacing.xl),
 
-            // ── 8. DAFTAR KOSAKATA TERSEDIA & PAGINASI (5 ITEM / HAL) ────────
+            // 8. DAFTAR KOSAKATA TERSEDIA & PAGINASI (5 ITEM / HAL
             Container(
               key: _vocabSectionKey,
               child: SignVocabularySection(

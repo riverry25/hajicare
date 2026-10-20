@@ -241,7 +241,7 @@ class JamaahData {
     tier = newTier;
   }
 
-  /// Formatted distance string (e.g. "120 m", "1.5 km", "14040 km")
+  /// Formatted distance string (e.g. "120 m", "1.5 km", "14040 km"
   String get formattedDistance => DistanceFormatter.format(distance);
 
   /// Numeric string value for distance display
@@ -257,6 +257,6 @@ class JamaahData {
     }
   }
 
-  /// Unit string ('meter' or 'km')
+  /// Unit string ('meter' or 'km'
   String get distanceUnit => distance >= 1000 ? 'km' : 'meter';
 }

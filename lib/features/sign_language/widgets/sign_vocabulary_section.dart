@@ -8,7 +8,7 @@ import '../../../core/theme/theme_context.dart';
 import '../controllers/text_to_sign_controller.dart';
 import '../models/sign_video_entry.dart';
 
-/// Bagian daftar kosakata bahasa isyarat yang dipaginasikan (maks 5 video per halaman)
+/// Bagian daftar kosakata bahasa isyarat yang dipaginasikan (maks 5 video per halaman
 /// dengan kontrol navigasi halaman dan indikator sumber offline/cloud.
 class SignVocabularySection extends StatelessWidget {
   final TextToSignController controller;
@@ -30,7 +30,7 @@ class SignVocabularySection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // ── Header Bar: Judul + Badge Jumlah Video + Refresh Button ─────────
+        // Header Bar: Judul + Badge Jumlah Video + Refresh Button
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -92,7 +92,7 @@ class SignVocabularySection extends StatelessWidget {
         ),
         const SizedBox(height: AppSpacing.xs),
 
-        // ── Konten Kosakata / Paginasi ──────────────────────────────────────
+        // Konten Kosakata / Paginasi
         Obx(() {
           if (controller.isLoadingVideos.value) {
             return Center(
@@ -209,7 +209,7 @@ class SignVocabularySection extends StatelessWidget {
     );
   }
 
-  // ── Tile Kosakata ──────────────────────────────────────────────────────────
+  // Tile Kosakata
   Widget _buildVocabularyTile(
     BuildContext context,
     SignVideoEntry video, {
@@ -294,7 +294,7 @@ class SignVocabularySection extends StatelessWidget {
     });
   }
 
-  // ── Source Pill (Asset, Local, Cloud) ──────────────────────────────────────
+  // Source Pill (Asset, Local, Cloud
   Widget _buildSourcePill(BuildContext context, SignVideoSource source) {
     final colors = context.hc;
     final textTheme = context.text;
@@ -337,7 +337,7 @@ class SignVocabularySection extends StatelessWidget {
     );
   }
 
-  // ── Kontrol Navigasi Paginasi ──────────────────────────────────────────────
+  // Kontrol Navigasi Paginasi
   Widget _buildPaginationFooter({
     required BuildContext context,
     required int totalPages,

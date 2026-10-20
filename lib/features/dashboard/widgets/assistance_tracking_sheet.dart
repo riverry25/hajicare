@@ -13,7 +13,7 @@ import '../models/assistance_request_model.dart';
 import '../presentation/dashboard_typography.dart';
 import '../services/assistance_request_service.dart';
 
-/// Bottom sheet view displaying real-time assistance request lifecycle tracking:
+/// Bottom sheet view displaying real-time assistance request lifecycle tracking
 /// Terkirim -> Diterima Pendamping -> Sedang Menuju Lokasi -> Selesai.
 class AssistanceTrackingSheet extends StatelessWidget {
   final AssistanceRequestModel request;

@@ -5,7 +5,7 @@ import '../../../../core/theme/theme_context.dart';
 import '../controllers/map_controller.dart';
 
 /// Google Maps-style dynamic GPS user location puck.
-/// Features:
+/// Features
 /// 1. Smooth 360° rotation following device compass (when stationary) & travel heading (when walking).
 /// 2. Iconic directional beam / cone of light (field of view) radiating forward when stationary.
 /// 3. Sharp, high-contrast navigation chevron arrow when walking/moving.
@@ -29,7 +29,7 @@ class _GpsUserPuckState extends State<GpsUserPuck>
   late final AnimationController _pulseCtrl;
   late final Animation<double> _pulseAnim;
 
-  // Unwrapped continuous angle tracking to avoid spinning backward around North (359° -> 1°)
+  // Unwrapped continuous angle tracking to avoid spinning backward around North (359° -> 1°
   double _currentContinuousAngle = 0.0;
   double _lastRawHeading = 0.0;
   bool _hasInitialHeading = false;
@@ -50,7 +50,7 @@ class _GpsUserPuckState extends State<GpsUserPuck>
     super.dispose();
   }
 
-  /// Calculates the shortest angular difference (-180° to +180°)
+  /// Calculates the shortest angular difference (-180° to +180°
   double _shortestAngleDiff(double from, double to) {
     return (to - from + 540.0) % 360.0 - 180.0;
   }
@@ -100,7 +100,7 @@ class _GpsUserPuckState extends State<GpsUserPuck>
               alignment: Alignment.center,
               clipBehavior: Clip.none,
               children: [
-                // 1. Directional Flashlight Beam / Cone of Light (Google Maps signature)
+                // 1. Directional Flashlight Beam / Cone of Light (Google Maps signature
                 // Visible when stationary or moving slowly, pointing where user faces
                 Transform.rotate(
                   angle: radAngle,
@@ -206,7 +206,7 @@ class _GpsUserPuckState extends State<GpsUserPuck>
   }
 }
 
-/// Custom painter for Google Maps-style directional flashlight beam (field of view cone)
+/// Custom painter for Google Maps-style directional flashlight beam (field of view cone
 class _DirectionalBeamPainter extends CustomPainter {
   final Color beamColor;
   final bool isMoving;
@@ -222,7 +222,7 @@ class _DirectionalBeamPainter extends CustomPainter {
 
     final center = Offset(size.width / 2, size.height / 2);
     const radius = 42.0;
-    // 55 degree arc fanning forward (top is -90 degrees in Flutter canvas coordinates)
+    // 55 degree arc fanning forward (top is -90 degrees in Flutter canvas coordinates
     const sweepAngle = 55.0 * (math.pi / 180.0);
     const startAngle = -math.pi / 2 - (sweepAngle / 2);
 

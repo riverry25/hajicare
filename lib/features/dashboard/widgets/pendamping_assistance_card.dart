@@ -219,7 +219,6 @@ class PendampingAssistanceCard extends StatelessWidget {
 
             const SizedBox(height: 14),
 
-            // Actions
             Row(
               children: [
                 Expanded(

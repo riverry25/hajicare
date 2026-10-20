@@ -37,12 +37,12 @@ class LocationService {
     return await Geolocator.requestPermission();
   }
 
-  /// Open device app settings (e.g. if permission was denied permanently)
+  /// Open device app settings (e.g. if permission was denied permanently
   Future<bool> openAppSettings() async {
     return await Geolocator.openAppSettings();
   }
 
-  /// Open device system location settings (e.g. if GPS is disabled)
+  /// Open device system location settings (e.g. if GPS is disabled
   Future<bool> openLocationSettings() async {
     return await Geolocator.openLocationSettings();
   }
@@ -83,17 +83,17 @@ class LocationService {
     return LocationPermissionState.granted;
   }
 
-  /// Safely obtain location:
+  /// Safely obtain location
   /// 1. Uses in-flight guard to deduplicate concurrent calls
   /// 2. Returns recently cached position (within 4 seconds) if available
   /// 3. Verifies service and permissions directly
-  /// 4. Attempts fresh high-accuracy GPS (timeout 5s)
+  /// 4. Attempts fresh high-accuracy GPS (timeout 5s
   /// 5. If fresh GPS fails/times out, smoothly falls back to OS last-known position
   Future<LocationResult> getCurrentPosition({
     Duration timeout = const Duration(seconds: 5),
     LocationAccuracy accuracy = LocationAccuracy.high,
   }) async {
-    // 1. Fast cache check (within 4 seconds)
+    // 1. Fast cache check (within 4 seconds
     final now = DateTime.now();
     if (_lastSuccessfulResult != null && _lastResultTime != null) {
       if (now.difference(_lastResultTime!).inSeconds < 4 &&
@@ -252,7 +252,7 @@ class LocationService {
     return Geolocator.distanceBetween(startLat, startLng, endLat, endLng);
   }
 
-  /// Stream of location updates with distance filter (defaults to 0 for instant reactivity on stationary/emulator/walking)
+  /// Stream of location updates with distance filter (defaults to 0 for instant reactivity on stationary/emulator/walking
   Stream<Position> getPositionStream({
     int distanceFilter = 0,
     LocationAccuracy accuracy = LocationAccuracy.high,

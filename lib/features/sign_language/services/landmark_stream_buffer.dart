@@ -4,12 +4,11 @@ import '../models/bisindo_prediction.dart';
 import 'bisindo_inference_service.dart';
 
 /// Rolling temporal buffer and coordinator for realtime BISINDO GRU inference.
-///
-/// Pipeline:
-/// - Accumulates 48 frames (15 FPS, ~3.2s window).
-/// - When buffer length < 48: does NOT run inference.
-/// - When buffer reaches 48 frames: triggers inference every [inferenceStride] frames (default: 4 frames).
-/// - Threading: concurrency guard prevents overlapping inference calls.
+/// Pipeline
+/// Accumulates 48 frames (15 FPS, ~3.2s window).
+/// When buffer length < 48: does NOT run inference.
+/// When buffer reaches 48 frames: triggers inference every [inferenceStride] frames (default: 4 frames).
+/// Threading: concurrency guard prevents overlapping inference calls.
 class LandmarkStreamBuffer {
   final BisindoPredictor inferenceService;
 
@@ -125,7 +124,7 @@ class LandmarkStreamBuffer {
     // Do NOT infer if buffer has not reached the required minimum sequence length
     if (_frameBuffer.length < effectiveMinFrames) return;
 
-    // Run inference every `inferenceStride` frames (default: 2 frames)
+    // Run inference every `inferenceStride` frames (default: 2 frames
     if (_framesSinceLastInference < inferenceStride) return;
 
     final now = DateTime.now();

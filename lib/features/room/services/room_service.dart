@@ -27,7 +27,6 @@ class StaleInvitationException extends RoomException {
 }
 
 /// Compatibility facade for existing room-domain callers.
-///
 /// Reads are isolated in [RoomQueryService]. Security-sensitive mutations are
 /// isolated in [RoomCommandService] and remain backed by callable Functions.
 class RoomService {

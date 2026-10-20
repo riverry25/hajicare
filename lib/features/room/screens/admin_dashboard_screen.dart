@@ -113,7 +113,7 @@ class _AdminDashboardHome extends StatelessWidget {
         titleSpacing: AppSpacing.screenEdgeGutter,
         title: Row(
           children: [
-            // Circular Avatar (Reference: circle photo on the left)
+            // Circular Avatar : circle photo on the left
             Container(
               width: 40,
               height: 40,
@@ -289,11 +289,11 @@ class _AdminDashboardHome extends StatelessWidget {
                 100, // Inset for floating HajiCareBottomNavBar
               ),
               children: [
-                // 1. Hero Featured Progress Bento Card (Pastel Sky-Cyan)
+                // 1. Hero Featured Progress Bento Card (Pastel Sky-Cyan
                 _buildHeroProgressCard(context, isDark),
                 const SizedBox(height: AppSpacing.xxl),
 
-                // 3. Operational Status & 4-Metric Breakdown (Pastel Sage-Mint Green)
+                // 3. Operational Status & 4-Metric Breakdown (Pastel Sage-Mint Green
                 _buildStatusBreakdownCard(
                   context,
                   isDark,
@@ -325,7 +325,7 @@ class _AdminDashboardHome extends StatelessWidget {
                 ),
                 const SizedBox(height: AppSpacing.xxxl),
 
-                // 7. Bottom Action Pill Button (Reference: Calorie count >>>)
+                // 7. Bottom Action Pill Button : Calorie count >>>
                 // 7. Aksi Cepat - PALING BAWAH
                 _buildQuickActions(
                   context,
@@ -350,7 +350,7 @@ class _AdminDashboardHome extends StatelessWidget {
         : '';
   }
 
-  // ── Unified Sub Section Header (Matches User Reference Image) ──────────────
+  // Unified Sub Section Header (Matches User
   Widget _buildSubSectionHeader({
     required IconData icon,
     required String title,
@@ -475,7 +475,6 @@ class _AdminDashboardHome extends StatelessWidget {
     );
   }
 
-  // 5. Room monitoring section
-  // 6. Recent activities
+  
   // Activity detail bottom sheet
 }

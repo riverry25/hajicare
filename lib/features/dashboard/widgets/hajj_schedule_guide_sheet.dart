@@ -50,7 +50,7 @@ class HajjStageItem {
 }
 
 /// Attractive, gamified & elder-friendly Hajj Journey Stepper Sheet.
-/// Inspired by modern habit/journey trackers and serpentine milestone paths,
+/// Inspired by modern habit/journey trackers and serpentine milestone paths
 /// adapted harmoniously to HajiCare's design tokens and real manasik workflow.
 class HajjScheduleGuideSheet extends StatefulWidget {
   const HajjScheduleGuideSheet({super.key});
@@ -320,7 +320,7 @@ class _HajjScheduleGuideSheetState extends State<HajjScheduleGuideSheet> {
     });
 
     if (!_scrollController.hasClients) return;
-    // Approximate offset per stage card (~240px)
+    // Approximate offset per stage card (~240px
     final targetOffset = (index * 230.0).clamp(
       0.0,
       _scrollController.position.maxScrollExtent,
@@ -365,7 +365,7 @@ class _HajjScheduleGuideSheetState extends State<HajjScheduleGuideSheet> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // ── Top Drag Handle ──────────────────────────────────────────
+              // Top Drag Handle
               const SizedBox(height: AppSpacing.sm),
               Center(
                 child: Container(
@@ -381,7 +381,7 @@ class _HajjScheduleGuideSheetState extends State<HajjScheduleGuideSheet> {
               ),
               const SizedBox(height: AppSpacing.sm),
 
-              // ── Header Title & Close Button ──────────────────────────────
+              // Header Title & Close Button
               Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: AppSpacing.screenEdgeGutter,
@@ -448,7 +448,7 @@ class _HajjScheduleGuideSheetState extends State<HajjScheduleGuideSheet> {
               ),
               const SizedBox(height: AppSpacing.sm),
 
-              // ── Gamified Journey Banner (Image 2 & 3 Concept) ─────────────
+              // Gamified Journey Banner
               Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: AppSpacing.screenEdgeGutter,
@@ -465,7 +465,7 @@ class _HajjScheduleGuideSheetState extends State<HajjScheduleGuideSheet> {
               ),
               const SizedBox(height: 14),
 
-              // ── Horizontal Day Capsule Selector (From Image 2) ────────────
+              // Horizontal Day Capsule Selector (From
               _buildHorizontalDaySelector(
                 context: context,
                 stages: stages,
@@ -477,7 +477,7 @@ class _HajjScheduleGuideSheetState extends State<HajjScheduleGuideSheet> {
 
               const Divider(height: 1, thickness: 0.6),
 
-              // ── Connected Vertical Stepper / Path Timeline (Image 2 & 3) ──
+              // Connected Vertical Stepper / Path Timeline
               Expanded(
                 child: ListView.builder(
                   controller: _scrollController,
@@ -522,7 +522,7 @@ class _HajjScheduleGuideSheetState extends State<HajjScheduleGuideSheet> {
     });
   }
 
-  /// Interactive Journey Progress Banner inspired by Image 2 & 3.
+  /// Interactive Journey Progress Banner
   Widget _buildJourneyProgressBanner({
     required BuildContext context,
     required bool isDark,
@@ -619,7 +619,7 @@ class _HajjScheduleGuideSheetState extends State<HajjScheduleGuideSheet> {
           ),
           const SizedBox(height: 8),
 
-          // Animated Track Progress Bar (Image 2 style)
+          // Animated Track Progress Bar
           ClipRRect(
             borderRadius: BorderRadius.circular(AppRadius.pill),
             child: LinearProgressIndicator(
@@ -638,7 +638,7 @@ class _HajjScheduleGuideSheetState extends State<HajjScheduleGuideSheet> {
     );
   }
 
-  /// Horizontal Day Capsule Selector Strip (Directly inspired by Image 2's top day pills).
+  /// Horizontal Day Capsule Selector Strip (Directly.
   Widget _buildHorizontalDaySelector({
     required BuildContext context,
     required List<HajjStageItem> stages,
@@ -778,7 +778,7 @@ class _HajjScheduleGuideSheetState extends State<HajjScheduleGuideSheet> {
     );
   }
 
-  /// Connected Vertical Timeline Step Row (Combining Image 2 Stepper + Image 3 Path).
+  /// Connected Vertical Timeline Step Row (Combining.
   Widget _buildTimelineStageRow({
     required BuildContext context,
     required HajjStageItem stage,
@@ -798,7 +798,7 @@ class _HajjScheduleGuideSheetState extends State<HajjScheduleGuideSheet> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // ── Left Timeline Rail (Connecting Lines & Circular Milestone Node) ──
+          // Left Timeline Rail (Connecting Lines & Circular Milestone Node
           SizedBox(
             width: 44,
             child: Column(
@@ -819,7 +819,7 @@ class _HajjScheduleGuideSheetState extends State<HajjScheduleGuideSheet> {
                 else
                   const SizedBox(height: 12),
 
-                // Milestone Node Icon (Image 3 circular avatar style)
+                // Milestone Node Icon (Image 3 circular avatar style
                 InkWell(
                   onTap: () =>
                       _toggleStageCompletion(stage.id, deeds: stage.deeds),
@@ -906,7 +906,7 @@ class _HajjScheduleGuideSheetState extends State<HajjScheduleGuideSheet> {
           ),
           const SizedBox(width: 14),
 
-          // ── Right Rich Stage Card (Image 2 style with tasks & progress) ──
+          // Right Rich Stage Card
           Expanded(
             child: Padding(
               padding: const EdgeInsets.only(bottom: 20),
@@ -1023,7 +1023,7 @@ class _HajjScheduleGuideSheetState extends State<HajjScheduleGuideSheet> {
                         ),
                         const SizedBox(width: 8),
 
-                        // Interactive Checkbox / Mark Done Pill (Image 2 style)
+                        // Interactive Checkbox / Mark Done Pill
                         InkWell(
                           onTap: () => _toggleStageCompletion(
                             stage.id,
@@ -1107,7 +1107,7 @@ class _HajjScheduleGuideSheetState extends State<HajjScheduleGuideSheet> {
                     ),
                     const SizedBox(height: 12),
 
-                    // Sub-deeds Micro-tags (Interactive per-deed checkboxes)
+                    // Sub-deeds Micro-tags (Interactive per-deed checkboxes
                     Wrap(
                       spacing: 6,
                       runSpacing: 6,

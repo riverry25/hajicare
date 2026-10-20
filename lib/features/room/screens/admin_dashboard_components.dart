@@ -176,7 +176,7 @@ class _RoomPantauCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(28),
           child: Stack(
             children: [
-              // ── 3D Concentric Rings Effect (Top-Right) ──
+              // 3D Concentric Rings Effect (Top-Right
               Positioned(
                 top: -36,
                 right: -36,
@@ -239,7 +239,7 @@ class _RoomPantauCard extends StatelessWidget {
                         ],
                       ),
                     ),
-                    // Ring 1 (Inner core ring)
+                    // Ring 1 (Inner core ring
                     Container(
                       width: 72,
                       height: 72,
@@ -249,7 +249,7 @@ class _RoomPantauCard extends StatelessWidget {
                             .withValues(alpha: isDark ? 0.18 : 0.20),
                       ),
                     ),
-                    // Center Core 3D Badge (Espresso Theme)
+                    // Center Core 3D Badge (Espresso Theme
                     Container(
                       width: 44,
                       height: 44,
@@ -282,7 +282,7 @@ class _RoomPantauCard extends StatelessWidget {
                 ),
               ),
 
-              // ── Glossy Curved Specular Highlight (Top-Left) ──
+              // Glossy Curved Specular Highlight (Top-Left
               Positioned(
                 top: -50,
                 left: -50,
@@ -302,7 +302,7 @@ class _RoomPantauCard extends StatelessWidget {
                 ),
               ),
 
-              // ── Main Card Content ──
+              // Main Card Content
               Padding(
                 padding: const EdgeInsets.all(20),
                 child: Column(
@@ -457,7 +457,7 @@ class _RoomPantauCard extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        // 3 Circular Action Buttons (Reference: Circular white social/action buttons)
+                        // 3 Circular Action Buttons : Circular white social/action buttons
                         Row(
                           children: [
                             _CircleActionButton(
@@ -504,7 +504,7 @@ class _RoomPantauCard extends StatelessWidget {
                           ],
                         ),
 
-                        // Right Action (Reference: "View more v" style)
+                        // Right Action : "View more v" style
                         Material(
                           color: Colors.transparent,
                           child: InkWell(
@@ -774,7 +774,6 @@ class _ActivityFeedTile extends StatelessWidget {
               ),
               const SizedBox(width: AppSpacing.cardInnerGutter),
 
-              // Content
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -854,7 +853,7 @@ class _ActivityFeedTile extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
 
-                    // Context Chips (Room / Actor)
+                    // Context Chips (Room / Actor
                     if (activity.roomName != null ||
                         activity.userName != null ||
                         activity.role != null) ...[
@@ -955,7 +954,7 @@ class _ActivityFeedTile extends StatelessWidget {
   }
 }
 
-/// Circular gauge painter for the Hero Progress Card (reference: Calorie circular arc)
+/// Circular gauge painter for the Hero Progress Card : Calorie circular arc
 class _HeroGaugePainter extends CustomPainter {
   final double progress;
   final Color trackColor;

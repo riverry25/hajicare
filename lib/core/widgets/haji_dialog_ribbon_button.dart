@@ -3,7 +3,6 @@ import '../theme/theme_context.dart';
 import 'ribbon_fold_painter.dart';
 
 /// Standardized protruding ribbon action button for HajiCare modal dialogs.
-///
 /// Features the signature folded ribbon 3D corner flap and calibrated
 /// high-contrast brand styling across both Light and Dark modes.
 class HajiDialogRibbonButton extends StatelessWidget {

@@ -68,7 +68,7 @@ class GeocodingService {
 
       final placemark = placemarks.first;
 
-      // Extract City following user's defined priority:
+      // Extract City following user's defined priority
       // city (locality) -> town (subLocality) -> municipality/district (subAdministrativeArea) -> state (administrativeArea) -> country
       String city = '';
       if (_isValidName(placemark.locality)) {
@@ -119,9 +119,9 @@ class GeocodingService {
     return name.trim();
   }
 
-  /// Searches places, venues, and addresses using:
-  /// 1. Photon (by Komoot / OSM Elasticsearch) — PRIMARY (supports rich POI/brand/venue search & proximity bias)
-  /// 2. Nominatim (OpenStreetMap) — FALLBACK 1 (robust address geocoding)
+  /// Searches places, venues, and addresses using
+  /// 1. Photon (by Komoot / OSM Elasticsearch) — PRIMARY (supports rich POI/brand/venue search & proximity bias
+  /// 2. Nominatim (OpenStreetMap) — FALLBACK 1 (robust address geocoding
   /// 3. Native Device Geocoder (package:geocoding) — FALLBACK 2
   Future<List<MapSearchResult>> searchLocations(
     String query, {
@@ -139,7 +139,7 @@ class GeocodingService {
     final shouldCloseClient = client == null;
 
     try {
-      // 1. PRIMARY: Photon Search API (OSM Elasticsearch POI Search)
+      // 1. PRIMARY: Photon Search API (OSM Elasticsearch POI Search
       try {
         final photonResults = await _searchPhoton(
           cleanQuery,
@@ -178,7 +178,7 @@ class GeocodingService {
       }
     }
 
-    // 3. FALLBACK 2: Native Device Geocoder (Android/iOS geocoding)
+    // 3. FALLBACK 2: Native Device Geocoder (Android/iOS geocoding
     try {
       final nativeResults = await _searchNative(cleanQuery, limit: limit);
       if (nativeResults.isNotEmpty) {

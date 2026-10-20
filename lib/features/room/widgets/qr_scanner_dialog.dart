@@ -64,9 +64,9 @@ class _QrScannerDialogState extends State<QrScannerDialog>
       final rawValue = barcode.rawValue?.trim();
       if (rawValue == null || rawValue.isEmpty) continue;
 
-      // Extract room code:
+      // Extract room code
       // Case 1: URL with query parameter 'code=' or 'room=' or path segment
-      // Case 2: Plain uppercase alphanumeric (6-8 characters)
+      // Case 2: Plain uppercase alphanumeric (6-8 characters
       String extracted = rawValue;
       final uri = Uri.tryParse(rawValue);
       if (uri != null) {
@@ -126,7 +126,6 @@ class _QrScannerDialogState extends State<QrScannerDialog>
           clipBehavior: Clip.antiAlias,
           child: Column(
             children: [
-              // Header
               Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 16,
@@ -246,7 +245,7 @@ class _QrScannerDialogState extends State<QrScannerDialog>
                           ),
                         ),
 
-                        // Scrim Cutout + Single Smooth Corner Reticle (no double lines)
+                        // Scrim Cutout + Single Smooth Corner Reticle (no double lines
                         Positioned.fill(
                           child: CustomPaint(
                             painter: _QrScannerOverlayPainter(
@@ -328,7 +327,7 @@ class _QrScannerDialogState extends State<QrScannerDialog>
                           ),
                         ),
 
-                        // Controls Floating Bar (Torch & Flip)
+                        // Controls Floating Bar (Torch & Flip
                         Positioned(
                           bottom: 16,
                           child: Container(
@@ -432,7 +431,7 @@ class _QrScannerDialogState extends State<QrScannerDialog>
   }
 }
 
-/// Custom painter that creates a camera scrim with a rounded rectangular cutout,
+/// Custom painter that creates a camera scrim with a rounded rectangular cutout
 /// a subtle guideline frame, and four seamless curved corner brackets.
 class _QrScannerOverlayPainter extends CustomPainter {
   final Rect scanWindow;
@@ -480,7 +479,7 @@ class _QrScannerOverlayPainter extends CustomPainter {
       ..strokeWidth = 1.2;
     canvas.drawRRect(cutoutRRect, framePaint);
 
-    // 3. Four smooth curved corner brackets (perfectly aligned with cutout)
+    // 3. Four smooth curved corner brackets (perfectly aligned with cutout
     final cornerPaint = Paint()
       ..color = cornerColor
       ..style = PaintingStyle.stroke

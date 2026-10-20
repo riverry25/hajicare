@@ -34,7 +34,6 @@ extension _AdminDashboardActiveRoomsSheet on _AdminDashboardHome {
                 child: Column(
                   children: [
                     const SizedBox(height: AppSpacing.md),
-                    // Drag handle
                     Container(
                       width: 40,
                       height: 4,

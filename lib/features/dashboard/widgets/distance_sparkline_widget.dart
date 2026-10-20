@@ -4,15 +4,12 @@ import 'package:flutter/services.dart';
 import '../../../core/theme/theme_context.dart';
 
 /// A distance-reactive sparkline widget for the Jamaah dashboard hero section.
-///
 /// Replaces the static [RotatingSyncButton] with a continuously animated wave
 /// whose shape and colour intensity dynamically reflect the Jamaah's real-time
-/// distance from their Pendamping:
-///
-/// - **Near (< 50 m)**: tall, smooth wave — sage safe tint — "all clear"
-/// - **Mid (50–300 m)**: medium wave — desert gold — normal monitoring range
-/// - **Far (> 300 m)**: low, flat wave — warm ochre / brick red — attention needed
-///
+/// distance from their Pendamping
+/// Near (< 50 m)**: tall, smooth wave — sage safe tint — "all clear"
+/// Mid (50–300 m)**: medium wave — desert gold — normal monitoring range
+/// Far (> 300 m)**: low, flat wave — warm ochre / brick red — attention needed
 /// Tapping triggers a GPS location refresh with a ripple burst animation.
 class DistanceSparklineWidget extends StatefulWidget {
   final Future<void> Function() onSync;
@@ -144,7 +141,7 @@ class _DistanceSparklineWidgetState extends State<DistanceSparklineWidget>
   }
 }
 
-// ── Painter ──────────────────────────────────────────────────────────────────
+// Painter
 
 class _DistanceWavePainter extends CustomPainter {
   final double distance;

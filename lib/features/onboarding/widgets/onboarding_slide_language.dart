@@ -10,7 +10,7 @@ import '../../../../core/theme/theme_context.dart';
 import 'onboarding_hero_banner.dart';
 
 /// First slide of the onboarding flow: Language Selection & Warm Welcoming.
-/// Implements a stacked destination-card layout inspired by WanderWise,
+/// Implements a stacked destination-card layout inspired by WanderWise
 /// featuring a subtle curved dashed route in the background and dynamic card
 /// expansion/elevation when selected, preserving real-time multi-language switching.
 class OnboardingSlideLanguage extends StatelessWidget {
@@ -49,7 +49,7 @@ class OnboardingSlideLanguage extends StatelessWidget {
                 children: [
                   const SizedBox(height: AppSpacing.xs),
 
-                  // ── 1. Visual Showcase: WanderWise Stacked Language Cards ──
+                  // 1. Visual Showcase: WanderWise Stacked Language Cards
                   OnboardingHeroBanner(
                     badgeText: context.tr('onboarding.elderlyAccess'),
                     stageText: context.tr('onboardingStage1'),
@@ -77,7 +77,7 @@ class OnboardingSlideLanguage extends StatelessWidget {
                           ),
                           child: Column(
                             children: [
-                              // Top Frosted Welcome Pill (Ahlan wa Sahlan)
+                              // Top Frosted Welcome Pill (Ahlan wa Sahlan
                               Container(
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 12,
@@ -220,7 +220,7 @@ class OnboardingSlideLanguage extends StatelessWidget {
 
                   const SizedBox(height: AppSpacing.md),
 
-                  // ── 2. Editorial Headline & Narrative Description ──────
+                  // 2. Editorial Headline & Narrative Description
                   Text(
                     context.tr('onboarding.chooseLanguageTitle'),
                     textAlign: TextAlign.center,
@@ -268,7 +268,7 @@ class OnboardingSlideLanguage extends StatelessWidget {
   }) {
     final colors = context.hc;
 
-    // Strict alignment with HajiColors (ThemeExtension):
+    // Strict alignment with HajiColors (ThemeExtension
     // In Light Mode: Signature rich espresso (colors.primary) provides high-contrast, premium, non-orange selection.
     // In Dark Mode: Warm desert amber/gold (colors.accent) glows softly against charcoal surfaces.
     final selectedColor = isDark ? colors.accent : colors.primary;
@@ -306,7 +306,7 @@ class OnboardingSlideLanguage extends StatelessWidget {
             ),
             boxShadow: isSelected
                 ? [
-                    // Cohesive theme glow matching HajiColors primary / accent (zero neon orange)
+                    // Cohesive theme glow matching HajiColors primary / accent (zero neon orange
                     BoxShadow(
                       color: selectedColor.withValues(
                         alpha: isDark ? 0.28 : 0.14,
@@ -334,7 +334,7 @@ class OnboardingSlideLanguage extends StatelessWidget {
           ),
           child: Row(
             children: [
-              // ── Left: Unified Flag Thumbnail (Cohesive HajiCare Palette) ──
+              // Left: Unified Flag Thumbnail (Cohesive HajiCare Palette
               AnimatedContainer(
                 duration: const Duration(milliseconds: 250),
                 width: isSelected ? 42 : 36,
@@ -370,7 +370,7 @@ class OnboardingSlideLanguage extends StatelessWidget {
 
               const SizedBox(width: 10),
 
-              // ── Middle: Language Name & Subtitle ───────────────────────
+              // Middle: Language Name & Subtitle
               Expanded(
                 child: FittedBox(
                   fit: BoxFit.scaleDown,
@@ -379,7 +379,6 @@ class OnboardingSlideLanguage extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Title
                       Text(
                         item.title,
                         maxLines: 1,
@@ -395,7 +394,6 @@ class OnboardingSlideLanguage extends StatelessWidget {
                       ),
                       const SizedBox(height: 2.0),
 
-                      // Subtitle
                       Text(
                         item.subtitle,
                         maxLines: 1,
@@ -414,7 +412,7 @@ class OnboardingSlideLanguage extends StatelessWidget {
 
               const SizedBox(width: 8),
 
-              // ── Right: Clean Selection Indicator (Cohesive Theme Radio/Check) ──
+              // Right: Clean Selection Indicator (Cohesive Theme Radio/Check
               AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 width: isSelected ? 26 : 22,
@@ -473,7 +471,7 @@ class _LanguageItemData {
 }
 
 /// Draws an elegant, smooth S-curved dashed travel route behind the cards
-/// matching the WanderWise reference design.
+/// matching the WanderWisedesign.
 class _CurvedDashedPathPainter extends CustomPainter {
   final Color color;
 

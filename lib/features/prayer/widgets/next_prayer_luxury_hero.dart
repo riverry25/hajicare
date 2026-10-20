@@ -10,8 +10,7 @@ import '../../../core/theme/theme_context.dart';
 import '../controllers/prayer_times_controller.dart';
 
 /// Modern Islamic Luxury Next Prayer Hero Card.
-///
-/// Features:
+/// Features
 /// 1. Asymmetric Islamic Arch (Mihrab) background silhouette.
 /// 2. Deep Espresso & Desert Gold gradient palette from `AppColors`.
 /// 3. Clear, senior-friendly typography hierarchy conforming to `ui-ux-pro-max`.
@@ -97,7 +96,7 @@ class NextPrayerLuxuryHero extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // ── Header: Badge & Sound Toggle ────────────────────────
+                    // Header: Badge & Sound Toggle
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -150,7 +149,7 @@ class NextPrayerLuxuryHero extends StatelessWidget {
                         ),
                         const SizedBox(width: 8),
 
-                        // Quick Sound Toggle (Touch target >= 48x48)
+                        // Quick Sound Toggle (Touch target >= 48x48
                         Material(
                           color: Colors.transparent,
                           child: InkWell(
@@ -191,7 +190,7 @@ class NextPrayerLuxuryHero extends StatelessWidget {
 
                     const SizedBox(height: 18),
 
-                    // ── Hero Body: Prayer Name, Arabic Calligraphy, & Exact Time ─
+                    // Hero Body: Prayer Name, Arabic Calligraphy, & Exact Time
                     LayoutBuilder(
                       builder: (context, constraints) {
                         return Row(
@@ -284,7 +283,7 @@ class NextPrayerLuxuryHero extends StatelessWidget {
 
                     const SizedBox(height: 22),
 
-                    // ── Segmented Countdown Capsule ─────────────────────────
+                    // Segmented Countdown Capsule
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 16,

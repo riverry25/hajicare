@@ -1,5 +1,5 @@
-/// Utilitas sanitasi dan validasi masukan untuk mencegah manipulasi data,
-/// injeksi skrip (XSS), null-byte attacks, serta eksploitasi DoS/buffer overflow (OWASP MASVS V6).
+/// Utilitas sanitasi dan validasi masukan untuk mencegah manipulasi data
+/// injeksi skrip (XSS), null-byte attacks, serta eksploitasi DoS/buffer overflow (OWASP  V6).
 class InputSanitizer {
   InputSanitizer._();
 
@@ -41,12 +41,12 @@ class InputSanitizer {
     return text.trim();
   }
 
-  /// Sanitasi nama pengguna / display name (maksimal 100 karakter)
+  /// Sanitasi nama pengguna / display name (maksimal 100 karakter
   static String sanitizeDisplayName(String? name) {
     return sanitizeText(name, maxLength: 100);
   }
 
-  /// Sanitasi catatan medis / alergi / penyakit (maksimal 500 karakter)
+  /// Sanitasi catatan medis / alergi / penyakit (maksimal 500 karakter
   static String sanitizeMedicalNotes(String? notes) {
     return sanitizeText(notes, maxLength: 500);
   }
@@ -65,7 +65,7 @@ class InputSanitizer {
     return password.length >= minLength && password.length <= 128;
   }
 
-  /// Memvalidasi NIK / Nomor Identitas (numerik, 8-20 digit)
+  /// Memvalidasi NIK / Nomor Identitas (numerik, 8-20 digit
   static bool isValidNik(String? nik) {
     if (nik == null) return false;
     final trimmed = nik.trim();
@@ -73,7 +73,7 @@ class InputSanitizer {
     return RegExp(r'^\d+$').hasMatch(trimmed);
   }
 
-  /// Memvalidasi format kode rombongan (4-12 karakter alfanumerik kapital)
+  /// Memvalidasi format kode rombongan (4-12 karakter alfanumerik kapital
   static bool isValidRoomCode(String? code) {
     if (code == null) return false;
     final trimmed = code.trim().toUpperCase();

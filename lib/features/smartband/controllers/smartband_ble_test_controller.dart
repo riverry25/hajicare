@@ -65,7 +65,7 @@ class SmartbandBleTestController extends GetxController {
     });
   }
 
-  // ── Kontrol BLE ────────────────────────────────────────────────────────────
+  // Kontrol BLE
 
   Future<void> startScan() async {
     errorMessage.value = '';

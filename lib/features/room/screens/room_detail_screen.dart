@@ -269,7 +269,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
     }
   }
 
-  // ── Computed Getters ────────────────────────────────────────────────────────
+  // Computed Getters
   bool _isMemberSos(RoomMemberModel member) {
     if (member.sosActive) return true;
     if (Get.isRegistered<HajiCareController>()) {
@@ -1310,12 +1310,12 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
               parent: BouncingScrollPhysics(),
             ),
             children: [
-              // ── 1. Hero Room Information Card (Tailwind Floating Card style matching Image 2) ──
+              // 1. Hero Room Information Card
               Stack(
                 clipBehavior: Clip.none,
                 alignment: Alignment.topCenter,
                 children: [
-                  // Main Card Body (Below floating hero)
+                  // Main Card Body (Below floating hero
                   Container(
                     margin: const EdgeInsets.only(top: 28),
                     decoration: BoxDecoration(
@@ -1338,7 +1338,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                         // Top Spacing to clear floating hero container
                         const SizedBox(height: 82),
 
-                        // ── Main Body Information (Room Data & Privileged Actions) ──
+                        // Main Body Information (Room Data & Privileged Actions
                         Padding(
                           padding: const EdgeInsets.fromLTRB(18, 0, 18, 18),
                           child: Column(
@@ -1462,7 +1462,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
 
                               const SizedBox(height: 12),
 
-                              // Maktab & Kloter Grid (Spacious 2-column cards)
+                              // Maktab & Kloter Grid (Spacious 2-column cards
                               Row(
                                 children: [
                                   Expanded(
@@ -1649,7 +1649,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
 
                               const SizedBox(height: 16),
 
-                              // ── Aksi Room: Tombol QR Code & Keluar Room (Berdampingan secara responsif) ──
+                              // Aksi Room: Tombol QR Code & Keluar Room (Berdampingan secara responsif
                               LayoutBuilder(
                                 builder: (context, constraints) {
                                   final isNarrow = constraints.maxWidth < 360;
@@ -1753,7 +1753,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                                 },
                               ),
 
-                              // ── Role Privileges: Tombol Edit & Hapus (Admin & Creator Pendamping ONLY) ──
+                              // Role Privileges: Tombol Edit & Hapus (Admin & Creator Pendamping ONLY
                               if (_canEditOrDeleteRoom()) ...[
                                 const SizedBox(height: 10),
                                 Row(
@@ -1841,7 +1841,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                           ),
                         ),
 
-                        // ── Member Breakdown Strip ──────────────────────────────────
+                        // Member Breakdown Strip
                         Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 16,
@@ -1898,7 +1898,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                     ),
                   ),
 
-                  // Floating Hero Header (Protruding at top, like Image 2)
+                  // Floating Hero Header (Protruding at top
                   Positioned(
                     top: 0,
                     left: 14,
@@ -2084,7 +2084,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
               ),
               const SizedBox(height: AppSpacing.lg),
 
-              // ── 2. Search Bar & Filter Chips ──────────────────────────────────
+              // 2. Search Bar & Filter Chips
               _buildSearchAndFilters(
                 context,
                 cardBg,
@@ -2096,7 +2096,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
 
               const SizedBox(height: AppSpacing.md),
 
-              // ── 3. Pagination Summary & Limit Selector ────────────────────────
+              // 3. Pagination Summary & Limit Selector
               _buildPaginationHeader(
                 headingColor,
                 bodyColor,
@@ -2106,7 +2106,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
 
               const SizedBox(height: AppSpacing.sm),
 
-              // ── 4. Members List (Paginated) ───────────────────────────────────
+              // 4. Members List (Paginated
               _buildMembersList(
                 context,
                 room,
@@ -2119,7 +2119,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
 
               const SizedBox(height: AppSpacing.md),
 
-              // ── 5. Pagination Footer Navigation ───────────────────────────────
+              // 5. Pagination Footer Navigation
               if (_filteredMembers.isNotEmpty)
                 _buildPaginationFooter(
                   cardBg,
@@ -2137,9 +2137,6 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
     );
   }
 
-  // ===========================================================================
-  // SEARCH & FILTER CHIPS WIDGET
-  // ===========================================================================
   Widget _buildSearchAndFilters(
     BuildContext context,
     Color cardBg,
@@ -2474,9 +2471,6 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
     );
   }
 
-  // ===========================================================================
-  // PAGINATION HEADER (SUMMARY & LIMIT CHIPS)
-  // ===========================================================================
   Widget _buildPaginationHeader(
     Color headingColor,
     Color bodyColor,
@@ -2566,9 +2560,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
     );
   }
 
-  // ===========================================================================
-  // MEMBERS LIST (PAGABATED)
-  // ===========================================================================
+  // MEMBERS LIST (PAGABATED
   Widget _buildMembersList(
     BuildContext context,
     RoomModel room,
@@ -2740,9 +2732,6 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
     );
   }
 
-  // ===========================================================================
-  // PAGINATION CONTROLS FOOTER
-  // ===========================================================================
   Widget _buildPaginationFooter(
     Color cardBg,
     Color headingColor,
@@ -2820,7 +2809,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
 
     if (Get.isRegistered<HajiCareController>()) {
       final hajiCtrl = Get.find<HajiCareController>();
-      // 1. If active SOS, use SOS location (most critical realtime signal)
+      // 1. If active SOS, use SOS location (most critical realtime signal
       final sos = hajiCtrl.activeSosEvents.firstWhereOrNull(
         (s) =>
             (s['userId'] == member.uid || s['jamaahId'] == member.uid) &&
@@ -2895,9 +2884,6 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
     return result;
   }
 
-  // ===========================================================================
-  // MEMBER DETAIL MODAL SHEET
-  // ===========================================================================
   void _showMemberDetailModal(
     BuildContext context,
     RoomMemberModel member,
@@ -2984,7 +2970,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
 
     final distanceText = _getMemberDistance(effectiveMember);
 
-    // Primary action button colors adaptive to theme (vibrant pill like Image 1)
+    // Primary action button colors adaptive to theme (vibrant pill
     final actionBtnBg = effectiveMember.isPendamping
         ? context.hc.accent
         : context.hc.islamic;
@@ -3002,7 +2988,6 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
             child: Stack(
               clipBehavior: Clip.none,
               children: [
-                // ── Card Container ──
                 Container(
                   margin: const EdgeInsets.only(top: 36),
                   decoration: BoxDecoration(
@@ -3025,7 +3010,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                       // Clearance for the overlapping floating avatar
                       const SizedBox(height: 48),
 
-                      // Member Name (centered like title in reference)
+                      // Member Name (centered like title in
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 20),
                         child: Text(
@@ -3043,7 +3028,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                       ),
                       const SizedBox(height: 6),
 
-                      // Role Badge / Subtitle (centered like subtitle in reference)
+                      // Role Badge / Subtitle (centered like subtitle in
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -3109,7 +3094,6 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                       ),
                       const SizedBox(height: 24),
 
-                      // ── Horizontal Data Rows (matching Image 1 layout) ──
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 24),
                         child: Column(
@@ -3156,7 +3140,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                               color: dividerColor,
                             ),
 
-                            // Row 2: Distance from User (Jarak)
+                            // Row 2: Distance from User (Jarak
                             _buildDetailHorizontalRow(
                               label: context.tr('room.distanceFromYou'),
                               valueText: distanceText,
@@ -3182,7 +3166,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                               bodyColor: bodyColor,
                             ),
 
-                            // Row 4: Coordinates (if available)
+                            // Row 4: Coordinates (if available
                             if (effectiveMember.hasLocation) ...[
                               Divider(
                                 height: 22,
@@ -3202,7 +3186,6 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                       ),
                       const SizedBox(height: 26),
 
-                      // ── Bottom Action Button(s) (Image 1 "Get Directions" style) ──
                       Padding(
                         padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
                         child: Column(
@@ -3514,7 +3497,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                   ),
                 ),
 
-                // ── Overlapping Circular Avatar (top center) ──
+                // Overlapping Circular Avatar (top center
                 Positioned(
                   top: 0,
                   left: 0,
@@ -3733,9 +3716,6 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
   }
 }
 
-// =============================================================================
-// MEMBER TILE ITEM
-// =============================================================================
 class _MemberTile extends StatelessWidget {
   final RoomModel room;
   final RoomMemberModel member;

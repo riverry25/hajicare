@@ -16,7 +16,6 @@ class MoneyAggregator {
   MoneyAggregator._();
 
   /// Calculates total monetary amount grouped by [CurrencyCode].
-  ///
   /// E.g. [10 SAR, 5 SAR, 20 USD, 100000 IDR] ->
   /// `{ CurrencyCode.sar: 15.0, CurrencyCode.usd: 20.0, CurrencyCode.idr: 100000.0 }`
   static Map<CurrencyCode, double> totalsByCurrency(
@@ -47,7 +46,7 @@ class MoneyAggregator {
     return detections.any((d) => d.currency != first);
   }
 
-  /// Returns the unique currency if all detections share the same currency,
+  /// Returns the unique currency if all detections share the same currency
   /// or `null` if mixed or empty.
   static CurrencyCode? singleCurrencyOrNull(List<MoneyDetection> detections) {
     if (detections.isEmpty) return null;
@@ -60,7 +59,6 @@ class MoneyAggregator {
 
   /// Calculates grand total converted equivalent into [targetCurrency]
   /// using the provided [conversionService].
-  ///
   /// If currency equals [targetCurrency], exact original amount is used without rounding.
   static double grandTotalIn({
     required Map<CurrencyCode, double> totals,

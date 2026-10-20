@@ -55,7 +55,6 @@ extension _AdminDashboardJamaahSheet on _AdminDashboardHome {
                     child: Column(
                       children: [
                         const SizedBox(height: AppSpacing.md),
-                        // Drag handle
                         Container(
                           width: 40,
                           height: 4,
@@ -66,7 +65,6 @@ extension _AdminDashboardJamaahSheet on _AdminDashboardHome {
                         ),
                         const SizedBox(height: AppSpacing.md),
 
-                        // Header
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [

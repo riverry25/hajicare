@@ -692,7 +692,7 @@ extension _ProfileScreenSections on ProfileScreen {
     );
   }
 
-  // ── Custom Page Header: title+subtitle left, Hajicare logo right ───────────
+  // Custom Page Header: title+subtitle left, Hajicare logo right
   Widget _buildPageHeader(
     BuildContext context,
     Color headingColor,
@@ -938,7 +938,7 @@ class _EditMedicalDialogState extends State<_EditMedicalDialog> {
           clipBehavior: Clip.none,
           alignment: Alignment.topCenter,
           children: [
-            // ── 1. Main Card Body ─────────────────────────────────────────
+            // 1. Main Card Body
             Container(
               margin: const EdgeInsets.only(
                 top: 28,
@@ -970,7 +970,6 @@ class _EditMedicalDialogState extends State<_EditMedicalDialog> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // Title
                     Text(
                       context.tr('medicalManageTitle'),
                       style: context.text.titleMedium.copyWith(
@@ -982,7 +981,6 @@ class _EditMedicalDialogState extends State<_EditMedicalDialog> {
                     ),
                     const SizedBox(height: 4),
 
-                    // Subtitle
                     Text(
                       context.tr('medicalManageSubtitle'),
                       style: context.text.bodySmall.copyWith(
@@ -1056,7 +1054,7 @@ class _EditMedicalDialogState extends State<_EditMedicalDialog> {
                     ),
                     const SizedBox(height: 14),
 
-                    // Field 5: Nomor Paspor (Opsional)
+                    // Field 5: Nomor Paspor (Opsional
                     _buildUnderlineField(
                       context: context,
                       label: context.tr('medical.passportLabel'),
@@ -1098,7 +1096,7 @@ class _EditMedicalDialogState extends State<_EditMedicalDialog> {
               ),
             ),
 
-            // ── 2. Floating Hero Card ────────────────────────────────────
+            // 2. Floating Hero Card
             Positioned(
               top: 0,
               left: 22,
@@ -1109,7 +1107,7 @@ class _EditMedicalDialogState extends State<_EditMedicalDialog> {
               ),
             ),
 
-            // ── 3. Protruding Ribbon Submit Button ───────────────────────
+            // 3. Protruding Ribbon Submit Button
             Positioned(
               bottom: 0,
               right: 0,

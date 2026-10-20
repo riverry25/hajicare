@@ -1,17 +1,17 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import '../models/sign_video_entry.dart';
 
-/// Layanan manajemen penyimpanan lokal permanen (Persistent Local Storage)
+/// Layanan manajemen penyimpanan lokal permanen (Persistent Local Storage
 /// untuk katalog metadata dan video remote bahasa isyarat yang diunduh.
-///
-/// Menyimpan data di bawah:
+/// Menyimpan data di bawah
 /// `ApplicationSupportDirectory/sign_language/`
 /// ├── catalog.json
 /// └── videos/
-///     ├── sibi/
-///     └── bisindo/
+/// ├── sibi/
+/// └── bisindo/
 class SignLanguageCacheService {
   static SignLanguageCacheService? _instance;
   static SignLanguageCacheService get instance =>
@@ -21,18 +21,33 @@ class SignLanguageCacheService {
 
   Directory? _baseDir;
 
+  @visibleForTesting
+  void setBaseDirectoryForTesting(Directory dir) {
+    _baseDir = dir;
+  }
+
   /// Memastikan folder direktori dasar `sign_language` telah diinisialisasi.
   Future<Directory> _getBaseDirectory() async {
     if (_baseDir != null && await _baseDir!.exists()) {
       return _baseDir!;
     }
-    final appSupport = await getApplicationSupportDirectory();
-    final dir = Directory('${appSupport.path}/sign_language');
-    if (!await dir.exists()) {
-      await dir.create(recursive: true);
+    try {
+      final appSupport = await getApplicationSupportDirectory();
+      final dir = Directory('${appSupport.path}/sign_language');
+      if (!await dir.exists()) {
+        await dir.create(recursive: true);
+      }
+      _baseDir = dir;
+      return dir;
+    } catch (_) {
+      final temp = Directory.systemTemp;
+      final dir = Directory('${temp.path}/sign_language');
+      if (!await dir.exists()) {
+        await dir.create(recursive: true);
+      }
+      _baseDir = dir;
+      return dir;
     }
-    _baseDir = dir;
-    return dir;
   }
 
   /// File `catalog.json` lokal.
@@ -52,7 +67,7 @@ class SignLanguageCacheService {
     return dir;
   }
 
-  /// Target path file lokal untuk suatu video entry:
+  /// Target path file lokal untuk suatu video entry
   /// `${base}/videos/${language}/${id}_v${version}.mp4`
   Future<File> getTargetVideoFile(SignVideoEntry entry) async {
     final dir = await getVideoDirectory(entry.language);
@@ -169,5 +184,29 @@ class SignLanguageCacheService {
       }
     } catch (_) {}
     return totalBytes;
+  }
+
+  /// Membaca asset dari [rootBundle] dan menyimpannya ke cache lokal agar dapat
+  /// diputar oleh VideoPlayerController.file tanpa kendala ExoPlayer AssetDataSource pada HP fisik Android.
+  Future<File> getOrExtractAssetFile(SignVideoEntry entry) async {
+    final base = await _getBaseDirectory();
+    final cleanLang = entry.language.toLowerCase().trim();
+    final bundledDir = Directory('${base.path}/bundled_assets/$cleanLang');
+    if (!await bundledDir.exists()) {
+      await bundledDir.create(recursive: true);
+    }
+
+    final file = File('${bundledDir.path}/${entry.cacheFileName}');
+    if (await file.exists() && (await file.length()) > 1024) {
+      return file;
+    }
+
+    final byteData = await rootBundle.load(entry.path);
+    final buffer = byteData.buffer;
+    await file.writeAsBytes(
+      buffer.asUint8List(byteData.offsetInBytes, byteData.lengthInBytes),
+      flush: true,
+    );
+    return file;
   }
 }

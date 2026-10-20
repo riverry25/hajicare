@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Service untuk persistensi lokal penandaan jadwal dan rukun ibadah haji.
-/// Menyimpan status penyelesaian tahapan (stage) dan amalan (deeds) ke SharedPreferences
+/// Menyimpan status penyelesaian tahapan (stage) dan amalan (deeds) ke SharedPs
 /// sehingga progres tetap tersimpan saat dialog ditutup maupun saat aplikasi dibuka kembali.
 class HajjGuideService extends GetxService {
   static HajjGuideService get instance {
@@ -31,7 +31,7 @@ class HajjGuideService extends GetxService {
     loadPreferences();
   }
 
-  /// Memuat status penandaan dari SharedPreferences secara cepat dan ter-cache.
+  /// Memuat status penandaan dari SharedPs secara cepat dan ter-cache.
   Future<void> loadPreferences({bool force = false}) {
     if (!force && _loadFuture != null) {
       return _loadFuture!;

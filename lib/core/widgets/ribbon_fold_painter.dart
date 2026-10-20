@@ -15,9 +15,9 @@ class RibbonFoldPainter extends CustomPainter {
       ..moveTo(
         0,
         size.height,
-      ) // bottom-left (intersection of card wall & button)
-      ..lineTo(size.width, size.height) // bottom-right (top-right of button)
-      ..lineTo(0, 0) // top-left (on card wall)
+      ) // bottom-left (intersection of card wall & button
+      ..lineTo(size.width, size.height) // bottom-right (top-right of button
+      ..lineTo(0, 0) // top-left (on card wall
       ..close();
 
     canvas.drawPath(path, paint);

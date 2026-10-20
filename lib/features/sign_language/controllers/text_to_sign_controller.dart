@@ -8,6 +8,7 @@ import 'package:video_player/video_player.dart';
 import '../../translator/services/speech_service.dart';
 import '../models/sign_video_entry.dart';
 import '../services/sign_language_asset_registry.dart';
+import '../services/sign_language_cache_service.dart';
 import '../services/sign_language_repository.dart';
 
 /// Metadata paket kategori yang dihitung secara dinamis
@@ -35,11 +36,13 @@ class CategoryPackageInfo {
 /// Controller GetX untuk fitur Text-to-Sign Language (SIBI & BISINDO).
 class TextToSignController extends GetxController {
   final SignLanguageRepository _repository = SignLanguageRepository.instance;
+  final SignLanguageCacheService _cacheService =
+      SignLanguageCacheService.instance;
 
   final TextEditingController textController = TextEditingController();
   final FocusNode searchFocusNode = FocusNode();
 
-  // ── REAKTIF STATE ─────────────────────────────────────────────────────────
+  // REAKTIF STATE
   final RxString selectedLanguage = 'sibi'.obs; // 'sibi' atau 'bisindo'
   final RxString currentQuery = ''.obs;
   String _lastSearchedQuery = '';
@@ -48,7 +51,7 @@ class TextToSignController extends GetxController {
   final Rx<SignVideoEntry?> currentEntry = Rx<SignVideoEntry?>(null);
   final RxList<SignVideoEntry> availableVideos = <SignVideoEntry>[].obs;
 
-  // ── AUTOCOMPLETE SUGGESTIONS STATE ────────────────────────────────────────
+  // AUTOCOMPLETE SUGGESTIONS STATE
   final RxList<String> searchSuggestions = <String>[].obs;
   final RxBool showSuggestions = false.obs;
 
@@ -146,7 +149,7 @@ class TextToSignController extends GetxController {
   final RxString statusMessage = ''.obs;
   final Rx<String?> errorMessage = Rx<String?>(null);
 
-  // ── VIDEO PLAYER STATE ───────────────────────────────────────────────────
+  // VIDEO PLAYER STATE
   VideoPlayerController? _playerController;
   VideoPlayerController? get playerController => _playerController;
 
@@ -159,7 +162,7 @@ class TextToSignController extends GetxController {
   final Rx<Duration> videoPosition = Duration.zero.obs;
   final Rx<Duration> videoDuration = Duration.zero.obs;
 
-  // ── SPEED PLAYBACK STATE ─────────────────────────────────────────────────
+  // SPEED PLAYBACK STATE
   static const List<double> supportedPlaybackSpeeds = [
     0.5,
     0.75,
@@ -174,7 +177,7 @@ class TextToSignController extends GetxController {
   final RxString speedOverlayText = ''.obs;
   Timer? _speedOverlayTimer;
 
-  // ── CATEGORY PACKAGE DOWNLOAD STATE ──────────────────────────────────────
+  // CATEGORY PACKAGE DOWNLOAD STATE
   final RxMap<String, double> categoryDownloadProgress = <String, double>{}.obs;
   final RxMap<String, bool> categoryDownloading = <String, bool>{}.obs;
   final Map<String, CancelToken> _categoryCancelTokens = {};
@@ -195,7 +198,7 @@ class TextToSignController extends GetxController {
     super.onClose();
   }
 
-  // ── 1. PEMUATAN VIDEO & KATALOG ──────────────────────────────────────────
+  // 1. PEMUATAN VIDEO & KATALOG
 
   /// Memuat daftar video yang tersedia untuk bahasa aktif.
   Future<void> loadAvailableVideos({bool forceRefresh = false}) async {
@@ -235,7 +238,7 @@ class TextToSignController extends GetxController {
     }
   }
 
-  // ── 2. AUTOCOMPLETE & TEXT-TO-SIGN SEARCH ─────────────────────────────────
+  // 2. AUTOCOMPLETE & TEXT-TO-SIGN SEARCH
 
   /// Memperbarui query pencarian dan memfilter saran kosakata (autocomplete).
   void updateSearchQuery(String text) {
@@ -372,11 +375,12 @@ class TextToSignController extends GetxController {
     }
   }
 
-  // ── 3. VIDEO PLAYBACK LIFECYCLE ──────────────────────────────────────────
+  // 3. VIDEO PLAYBACK LIFECYCLE
 
   /// Memutar video berdasarkan status source (asset vs localCached vs remote).
   Future<void> playEntry(SignVideoEntry entry, {bool force = false}) async {
     final currentSession = ++_playSessionId;
+    errorMessage.value = null;
 
     // 1. Selesaikan status sumber aktual
     final resolved = await _repository.resolveVideoSource(entry);
@@ -409,17 +413,52 @@ class TextToSignController extends GetxController {
       _disposePlayer();
       statusMessage.value = 'Menyiapkan pemutar video...';
 
-      final VideoPlayerController controller;
+      VideoPlayerController controller;
       if (resolved.source == SignVideoSource.asset) {
-        controller = VideoPlayerController.asset(resolved.path);
+        VideoPlayerController? assetCtrl;
+        try {
+          assetCtrl = VideoPlayerController.asset(resolved.path);
+          await assetCtrl.initialize();
+          controller = assetCtrl;
+        } catch (assetErr) {
+          if (assetErr is PlatformException) {
+            debugPrint(
+              '[TextToSignCtrl] Direct asset playback failed ($assetErr). Extracting asset to local cache for resilient playback...',
+            );
+            await assetCtrl?.dispose();
+            final extractedFile = await _cacheService.getOrExtractAssetFile(
+              resolved,
+            );
+            final fileCtrl = VideoPlayerController.file(extractedFile);
+            await fileCtrl.initialize();
+            controller = fileCtrl;
+          } else {
+            rethrow;
+          }
+        }
       } else if (resolved.source == SignVideoSource.localCached &&
           resolved.cachedFilePath != null) {
-        controller = VideoPlayerController.file(File(resolved.cachedFilePath!));
+        final cachedFile = File(resolved.cachedFilePath!);
+        if (!await cachedFile.exists()) {
+          throw Exception(
+            'File video tidak ditemukan di penyimpanan perangkat.',
+          );
+        }
+        final fileCtrl = VideoPlayerController.file(cachedFile);
+        try {
+          await fileCtrl.initialize();
+          controller = fileCtrl;
+        } catch (fileErr) {
+          await fileCtrl.dispose();
+          await _cacheService.deleteCachedVideo(resolved);
+          throw Exception(
+            'File video di perangkat rusak ($fileErr). Silakan unduh ulang.',
+          );
+        }
       } else {
         throw Exception('File video tidak dapat ditemukan.');
       }
 
-      await controller.initialize();
       if (currentSession != _playSessionId) {
         controller.dispose();
         return;
@@ -579,7 +618,7 @@ class TextToSignController extends GetxController {
     videoDuration.value = Duration.zero;
   }
 
-  // ── 4. DOWNLOAD VIDEO SINGLE & PLAY ──────────────────────────────────────
+  // 4. DOWNLOAD VIDEO SINGLE & PLAY
 
   /// Mengunduh video remote lalu otomatis memutarnya.
   Future<void> downloadAndPlay(SignVideoEntry entry) async {
@@ -619,7 +658,7 @@ class TextToSignController extends GetxController {
     }
   }
 
-  // ── 5. DOWNLOAD PAKET KATEGORI OFFLINE ────────────────────────────────────
+  // 5. DOWNLOAD PAKET KATEGORI OFFLINE
 
   /// Menghasilkan daftar kategori paket secara dinamis berdasarkan video yang ada
   List<CategoryPackageInfo> get dynamicPackageCategories {
@@ -802,7 +841,7 @@ class TextToSignController extends GetxController {
     categoryDownloadProgress[category] = 0.0;
   }
 
-  // ── 6. CACHE MANAGEMENT ──────────────────────────────────────────────────
+  // 6. CACHE MANAGEMENT
 
   /// Menghapus semua video yang telah diunduh dari internet (aset bawaan tidak akan terhapus).
   Future<void> clearDownloadedVideos() async {
@@ -864,7 +903,7 @@ class TextToSignController extends GetxController {
     await playEntry(video);
   }
 
-  // ── 7. SPEECH-TO-SIGN (VOICE RECOGNITION) ──────────────────────────────────
+  // 7. SPEECH-TO-SIGN (VOICE RECOGNITION
   SpeechService? _speechService;
   SpeechService get speechService => _speechService ??= SpeechService();
 
@@ -966,7 +1005,7 @@ class TextToSignController extends GetxController {
     }
   }
 
-  // ── 8. PAGINASI KOSAKATA (MAKSIMAL 5 VIDEO PER HALAMAN) ───────────────────
+  // 8. PAGINASI KOSAKATA (MAKSIMAL 5 VIDEO PER HALAMAN
   static const int vocabPageSize = 5;
   final RxInt currentVocabPage = 1.obs;
 

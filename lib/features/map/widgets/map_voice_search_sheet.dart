@@ -228,7 +228,6 @@ class _MapVoiceSearchSheetState extends State<MapVoiceSearchSheet>
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // Drag Handle
             Center(
               child: Container(
                 width: 44,
@@ -241,7 +240,6 @@ class _MapVoiceSearchSheetState extends State<MapVoiceSearchSheet>
             ),
             const SizedBox(height: AppSpacing.md),
 
-            // Header Bar
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -283,7 +281,7 @@ class _MapVoiceSearchSheetState extends State<MapVoiceSearchSheet>
             ),
             const SizedBox(height: AppSpacing.xl),
 
-            // ── Interactive Pulsing Mic Orb (Google Maps UX) ─────────────────
+            // Interactive Pulsing Mic Orb
             GestureDetector(
               onTap: () {
                 if (_isListening) {
@@ -363,7 +361,7 @@ class _MapVoiceSearchSheetState extends State<MapVoiceSearchSheet>
             ),
             const SizedBox(height: AppSpacing.xl),
 
-            // ── Transcription Result Display Box ────────────────────────────
+            // Transcription Result Display Box
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -417,7 +415,7 @@ class _MapVoiceSearchSheetState extends State<MapVoiceSearchSheet>
             ),
             const SizedBox(height: AppSpacing.lg),
 
-            // ── Quick Suggestions Header & Chips ────────────────────────────
+            // Quick Suggestions Header & Chips
             Align(
               alignment: Alignment.centerLeft,
               child: Text(

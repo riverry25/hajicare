@@ -36,7 +36,7 @@ class JamaahPrayerCard extends StatelessWidget {
       final nextTime = prayerCtrl.nextPrayerTime.value;
       final countdown = prayerCtrl.formatCountdown(context);
 
-      // Filter to the 5 canonical fardhu prayers (exclude Sunrise/Terbit for mini time bar)
+      // Filter to the 5 canonical fardhu prayers (exclude Sunrise/Terbit for mini time bar
       final allPrayers = prayerCtrl.prayers;
       final fardhuPrayers = allPrayers.isNotEmpty
           ? allPrayers.where((p) {
@@ -201,7 +201,7 @@ class JamaahPrayerCard extends StatelessWidget {
                         context,
                         item.name,
                       );
-                      // Extract only HH:mm (omit timezone code AST/WIB to avoid overflow in mini boxes)
+                      // Extract only HH:mm (omit timezone code AST/WIB to avoid overflow in mini boxes
                       final timeParts = item.formattedTime.trim().split(' ');
                       final shortTime = timeParts.isNotEmpty
                           ? timeParts.first

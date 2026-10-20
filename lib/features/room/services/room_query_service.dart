@@ -207,7 +207,7 @@ class RoomQueryService {
       final normalizedRoomId = roomId?.trim();
       Query<Map<String, dynamic>> query = _firestore.collection('sos_events');
 
-      // Single-field queries only: served by automatic single-field indexes,
+      // Single-field queries only: served by automatic single-field indexes
       // avoiding FAILED_PRECONDITION when composite indexes are not deployed.
       if (normalizedRoomId != null && normalizedRoomId.isNotEmpty) {
         query = query.where('roomId', isEqualTo: normalizedRoomId);

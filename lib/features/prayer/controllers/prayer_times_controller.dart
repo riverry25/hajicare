@@ -60,7 +60,7 @@ class PrayerTimesController extends GetxController {
                ? Get.find<AdhanAudioService>()
                : Get.put(AdhanAudioService()));
 
-  // SharedPreferences Keys
+  // SharedPs Keys
   static const String _prefLatKey = 'prayer_cache_lat';
   static const String _prefLngKey = 'prayer_cache_lng';
   static const String _prefCityKey = 'prayer_cache_city';
@@ -69,7 +69,7 @@ class PrayerTimesController extends GetxController {
   static const String _prefTimezoneKey = 'prayer_cache_timezone';
   static const String _prefTimeKey = 'prayer_cache_timestamp';
 
-  // Internal emergency calculation coordinates only (NEVER exposed to user as a location name)
+  // Internal emergency calculation coordinates only (NEVER exposed to user as a location name
   static const double emergencyCalcLat = -6.2088;
   static const double emergencyCalcLng = 106.8456;
 
@@ -79,7 +79,7 @@ class PrayerTimesController extends GetxController {
   static const String fallbackCityName = 'Jakarta';
   static const String fallbackCountryCode = 'ID';
 
-  // Minimum distance moved before triggering a new reverse-geocoding (meters)
+  // Minimum distance moved before triggering a new reverse-geocoding (meters
   static const double distanceThresholdMeters = 500.0;
 
   /// True when GPS/LastKnown location is unavailable and we fell back to
@@ -87,7 +87,7 @@ class PrayerTimesController extends GetxController {
   bool get isUsingFallbackLocation =>
       locationSource.value == LocationSource.unavailable;
 
-  // ── Reactive State ──────────────────────────────────────────────────────────
+  // Reactive State
   final locationSource = LocationSource.unavailable.obs;
 
   final currentLat = 0.0.obs;
@@ -111,7 +111,7 @@ class PrayerTimesController extends GetxController {
   final countdownMinutes = 0.obs;
   final countdownSeconds = 0.obs;
 
-  // Adhan Sound Preferences (prayer key -> bool)
+  // Adhan Sound Ps (prayer key -> bool
   final prayerSoundEnabled = <String, bool>{}.obs;
 
   RxBool get isAdhanPlaying => _adhanAudioService.isPlaying;
@@ -158,11 +158,11 @@ class PrayerTimesController extends GetxController {
     await _loadPrayerSoundPreferences();
     await _adhanAudioService.notificationService.requestPermissions();
 
-    // Priority order:
+    // Priority order
     // 1. Fresh GPS
     // 2. Last known device position
-    // 3. Persistent cache (< 7 days)
-    // 4. Unavailable ("Lokasi tidak tersedia")
+    // 3. Persistent cache (< 7 days
+    // 4. Unavailable ("Lokasi tidak tersedia"
     await loadInitialLocationAndSchedule();
     if (!_isCurrent(generation)) return;
 
@@ -182,11 +182,11 @@ class PrayerTimesController extends GetxController {
     }
   }
 
-  /// Load location following strict priority:
+  /// Load location following strict priority
   /// 1. Fresh GPS
   /// 2. Last known OS position
-  /// 3. Valid persistent application cache (< 7 days)
-  /// 4. Unavailable ("Lokasi tidak tersedia")
+  /// 3. Valid persistent application cache (< 7 days
+  /// 4. Unavailable ("Lokasi tidak tersedia"
   Future<void> loadInitialLocationAndSchedule() async {
     final generation = _lifecycleGeneration;
     isLoadingLocation.value = true;
@@ -363,7 +363,7 @@ class PrayerTimesController extends GetxController {
     _calculateScheduleAndQibla();
   }
 
-  /// Saves valid location to SharedPreferences
+  /// Saves valid location to SharedPs
   Future<void> _saveCachedLocation(PrayerLocationData data) async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -379,7 +379,7 @@ class PrayerTimesController extends GetxController {
     }
   }
 
-  /// Loads cached location from SharedPreferences and checks validity (< 7 days)
+  /// Loads cached location from SharedPs and checks validity (< 7 days
   Future<PrayerLocationData?> _loadCachedLocation() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -412,7 +412,7 @@ class PrayerTimesController extends GetxController {
         source: LocationSource.cache,
       );
 
-      // Validate cache age (must be < 7 days and coords != 0)
+      // Validate cache age (must be < 7 days and coords != 0
       if (data.isValid) {
         return data;
       }
@@ -511,7 +511,7 @@ class PrayerTimesController extends GetxController {
 
     // If next prayer time has arrived or passed, trigger adhan & recalculate schedule
     if (diff.isNegative || diff.inSeconds <= 0) {
-      // ONLY trigger adhan audio if the app was ALREADY running and counting down to this prayer,
+      // ONLY trigger adhan audio if the app was ALREADY running and counting down to this prayer
       // NEVER upon cold start or opening the app!
       if (_hasCompletedInitialScheduleSync &&
           nextPrayerName.value.isNotEmpty &&
@@ -557,7 +557,7 @@ class PrayerTimesController extends GetxController {
     }
   }
 
-  /// Listens to position updates stream with distance filter (e.g. 500 meters)
+  /// Listens to position updates stream with distance filter (e.g. 500 meters
   void _listenToLocationUpdates() {
     if (kIsWeb) return;
 
@@ -601,7 +601,7 @@ class PrayerTimesController extends GetxController {
 
           final heading = event.heading!;
           final prevHeading = deviceHeading.value;
-          // Filter out micro-jitter sensor noise (< 0.5 degrees)
+          // Filter out micro-jitter sensor noise (< 0.5 degrees
           if (prevHeading.isFinite && !prevHeading.isNaN) {
             final delta = ((heading - prevHeading + 180) % 360 - 180).abs();
             if (delta < 0.5) {
@@ -638,7 +638,7 @@ class PrayerTimesController extends GetxController {
     }
     qiblaOffset.value = diff;
 
-    // Hysteresis window:
+    // Hysteresis window
     // Enter aligned state when within ±4 degrees
     // Exit aligned state only when deviation exceeds ±7 degrees
     final currentlyAligned = isQiblaAligned.value;
@@ -671,7 +671,7 @@ class PrayerTimesController extends GetxController {
     return prayerSoundEnabled[key] ?? true;
   }
 
-  /// Toggles adhan sound on/off for the given prayer and saves preference
+  /// Toggles adhan sound on/off for the given prayer and saves p
   Future<void> togglePrayerSound(String rawName) async {
     final key = _normalizePrayerKey(rawName);
     if (key == 'terbit' || key == 'sunrise') return;
@@ -702,7 +702,7 @@ class PrayerTimesController extends GetxController {
     return canonicalKeys.any((k) => isPrayerSoundOn(k));
   }
 
-  /// Toggles all prayer sounds simultaneously (1-click master switch)
+  /// Toggles all prayer sounds simultaneously (1-click master switch
   Future<void> toggleAllPrayerSounds() async {
     final target = !isAnySoundOn;
     await setAllPrayerSounds(target);
@@ -732,7 +732,7 @@ class PrayerTimesController extends GetxController {
     _syncUpcomingPrayerAlarms();
   }
 
-  /// Synchronizes exact system alarm notifications for upcoming prayers (next 7 days)
+  /// Synchronizes exact system alarm notifications for upcoming prayers (next 7 days
   void _syncUpcomingPrayerAlarms() {
     if (currentLat.value == 0.0 && currentLng.value == 0.0) return;
     final tz = timezoneName.value.isNotEmpty
@@ -811,7 +811,7 @@ class PrayerTimesController extends GetxController {
     }
 
     final now = DateTime.now();
-    // Only play if within 45 seconds of the prayer time (avoid playing stale past adhan)
+    // Only play if within 45 seconds of the prayer time (avoid playing stale past adhan
     if (now.difference(targetTime).inSeconds.abs() > 45) {
       return;
     }

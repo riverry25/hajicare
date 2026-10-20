@@ -5,7 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/sign_token.dart';
 
-/// Persists the shared "Transkripsi AI" so it survives model switches,
+/// Persists the shared "Transkripsi AI" so it survives model switches
 /// leaving/re-entering the screen, and app restarts. Cleared only by RESET.
 abstract interface class SignTranscriptStore {
   Future<List<SignToken>> load();

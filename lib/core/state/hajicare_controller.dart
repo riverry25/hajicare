@@ -197,7 +197,7 @@ class HajiCareController extends GetxController {
         }
       }
 
-      // A local preference is never authoritative for privileged access.
+      // A local pis never authoritative for privileged access.
       _role.value = UserRole.jamaah;
     } catch (e) {
       AppLogger.warn(
@@ -442,7 +442,7 @@ class HajiCareController extends GetxController {
             ? userMaktab
             : null;
 
-        // Persist snapshot update to SharedPreferences
+        // Persist snapshot update to SharedPs
         SharedPreferences.getInstance()
             .then((prefs) {
               prefs.setString(keyUserRole, roleStr);
@@ -531,7 +531,7 @@ class HajiCareController extends GetxController {
             .map((e) => e['id']?.toString())
             .whereType<String>()
             .toSet();
-        // Self-healing prune: If an event document is no longer active in Firestore,
+        // Self-healing prune: If an event document is no longer active in Firestore
         // prune it from dismissed IDs so memory never retains stale IDs.
         dismissedSosIds.removeWhere((id) => !activeDocIds.contains(id));
 
@@ -693,9 +693,7 @@ class HajiCareController extends GetxController {
               .toList();
           activeRoomMembers.value = members;
 
-          // If current user is not admin, track and verify presence in members.
-          // Only evict if this user was already confirmed to be in this room,
-          // preventing premature eviction while the initial membership write syncs.
+          // Verifikasi keanggotaan pengguna non-admin dalam room
           if (_role.value != UserRole.admin && snap.docs.isNotEmpty) {
             final isStillInRoom = snap.docs.any((d) => d.id == currentUid);
             if (isStillInRoom) {
@@ -821,7 +819,7 @@ class HajiCareController extends GetxController {
         });
   }
 
-  // ── REAL GPS LOCATION TRACKING (NO DUMMY DATA) ─────────────────────────────
+  // REAL GPS LOCATION TRACKING (NO DUMMY DATA
 
   /// Starts real device GPS tracking and broadcasts position to Firestore.
   Future<void> startLocationTracking([String? uid]) async {
@@ -829,7 +827,7 @@ class HajiCareController extends GetxController {
     final generation = _sessionGeneration;
     _gpsStreamSub?.cancel();
 
-    // 1. Fast Initial Position: Check OS last known position first (instant 0ms response)
+    // 1. Fast Initial Position: Check OS last known position first (instant 0ms response
     try {
       final lastKnown = await _locationService.getLastKnownPosition();
       if (!isClosed && generation == _sessionGeneration && lastKnown != null) {
@@ -844,7 +842,7 @@ class HajiCareController extends GetxController {
       debugPrint('[HajiCareController] Fast lastKnown check: $e');
     }
 
-    // 2. Start continuous GPS stream immediately (distanceFilter: 0 for instant stationary & movement updates)
+    // 2. Start continuous GPS stream immediately (distanceFilter: 0 for instant stationary & movement updates
     try {
       if (isClosed || generation != _sessionGeneration) return;
       _gpsStreamSub = _locationService
@@ -871,7 +869,7 @@ class HajiCareController extends GetxController {
       isMyGpsActive.value = false;
     }
 
-    // 3. Concurrently fetch fresh initial position in background (timeout 5s)
+    // 3. Concurrently fetch fresh initial position in background (timeout 5s
     try {
       final result = await _locationService.getCurrentPosition(
         timeout: const Duration(seconds: 5),
@@ -975,7 +973,7 @@ class HajiCareController extends GetxController {
         return;
       }
 
-      // Step 2: Ambil semua Pendamping dalam room yang sama dengan lokasi GPS valid
+      // Ambil semua data pendamping dengan lokasi valid
       final allCompanionsWithLocation = activeRoomMembers.where((m) {
         if (!m.isPendamping || !m.hasLocation) return false;
         final lat = m.latitude!;
@@ -996,7 +994,7 @@ class HajiCareController extends GetxController {
         return;
       }
 
-      // Step 3 & 4: Hitung jarak geospasial ke setiap Pendamping dan pilih jarak terkecil (argmin).
+      // Hitung jarak ke setiap pendamping dan cari yang terdekat (argmin).
       // Evaluasi kesegaran: utamakan lokasi yang diperbarui dalam 30 menit terakhir.
       final now = DateTime.now();
       const freshnessThreshold = Duration(minutes: 30);
@@ -1025,7 +1023,7 @@ class HajiCareController extends GetxController {
         }
       }
 
-      // Step 5: Tampilkan hasil yang benar
+      // Perbarui jarak dan status pendamping terdekat
       if (closest != null && !minDistance.isInfinite) {
         nearestPendamping.value = closest;
         pendampingName.value = closest.name;
@@ -1110,7 +1108,7 @@ class HajiCareController extends GetxController {
     return false;
   }
 
-  /// Safely clears all local active room state, streams, and SharedPreferences cache.
+  /// Safely clears all local active room state, streams, and SharedPs cache.
   Future<void> clearActiveRoomSession() async {
     _clearRoomListeners();
     activeRoomId.value = null;
@@ -1259,7 +1257,7 @@ class HajiCareController extends GetxController {
     } catch (_) {}
   }
 
-  // ── SOS SYSTEM (TRUE FIRESTORE & REALTIME) ──────────────────────────────────
+  // SOS SYSTEM (TRUE FIRESTORE & REALTIME
 
   /// Triggers a real SOS event with current location to Firestore.
   /// Works reliably for Jamaah both within a room and in standalone emergency mode.

@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 
 import '../models/landmark_frame.dart';
 
-/// Body reference frame used for global landmark normalization.
+/// Bodyframe used for global landmark normalization.
 class BodyReference {
   final double centerX;
   final double centerY;
@@ -25,14 +25,14 @@ class BodyReference {
 }
 
 /// Computes the exact 353-dimensional base feature vector per timestep
-/// matching the training MediaPipe Holistic representation 1:1:
-/// - 0..62:    LEFT_HAND_GLOBAL (21 * 3 = 63)
-/// - 63..125:  LEFT_HAND_LOCAL (21 * 3 = 63)
-/// - 126..188: RIGHT_HAND_GLOBAL (21 * 3 = 63)
-/// - 189..251: RIGHT_HAND_LOCAL (21 * 3 = 63)
-/// - 252..296: SELECTED_POSE_GLOBAL (15 * 3 = 45)
-/// - 297..348: FACE_BLENDSHAPES (52 values)
-/// - 349..352: PRESENCE_MASKS (4 values: [left, right, pose, face])
+/// matching the training MediaPipe Holistic representation 1:1
+/// 0..62:    LEFT_HAND_GLOBAL (21 * 3 = 63
+/// 63..125:  LEFT_HAND_LOCAL (21 * 3 = 63
+/// 126..188: RIGHT_HAND_GLOBAL (21 * 3 = 63
+/// 189..251: RIGHT_HAND_LOCAL (21 * 3 = 63
+/// 252..296: SELECTED_POSE_GLOBAL (15 * 3 = 45
+/// 297..348: FACE_BLENDSHAPES (52 values
+/// 349..352: PRESENCE_MASKS (4 values: [left, right, pose, face]
 /// Total: 353 float32 values.
 class BisindoFeatureExtractor {
   static const int kBaseFeatureDim = 353;
@@ -113,7 +113,7 @@ class BisindoFeatureExtractor {
     "noseSneerRight",
   ];
 
-  /// Computes body reference center and scale:
+  /// Computes bodycenter and scale
   /// Primary: shoulders center + Euclidean shoulder width (X/Y only).
   /// Fallback #1: wrists center + wrist distance (clamped >= 0.15).
   /// Fallback #2: single wrist center + 0.25 scale.
@@ -123,7 +123,7 @@ class BisindoFeatureExtractor {
     List<List<double>>? leftHand,
     List<List<double>>? rightHand,
   }) {
-    // Primary Reference: Pose Shoulders (indices 11 and 12)
+    // Primary: Pose Shoulders (indices 11 and 12
     if (pose != null && pose.length > 12) {
       final leftShoulder = pose[11];
       final rightShoulder = pose[12];
@@ -209,7 +209,7 @@ class BisindoFeatureExtractor {
       rightHand: frame.rightHand,
     );
 
-    // 1. LEFT_HAND_GLOBAL (0..62)
+    // 1. LEFT_HAND_GLOBAL (0..62
     if (hasLeft) {
       _writeGlobalLandmarks(
         landmarks: frame.leftHand!,
@@ -220,7 +220,7 @@ class BisindoFeatureExtractor {
       );
     }
 
-    // 2. LEFT_HAND_LOCAL (63..125)
+    // 2. LEFT_HAND_LOCAL (63..125
     if (hasLeft) {
       _writeLocalHandLandmarks(
         hand: frame.leftHand!,
@@ -229,7 +229,7 @@ class BisindoFeatureExtractor {
       );
     }
 
-    // 3. RIGHT_HAND_GLOBAL (126..188)
+    // 3. RIGHT_HAND_GLOBAL (126..188
     if (hasRight) {
       _writeGlobalLandmarks(
         landmarks: frame.rightHand!,
@@ -240,7 +240,7 @@ class BisindoFeatureExtractor {
       );
     }
 
-    // 4. RIGHT_HAND_LOCAL (189..251)
+    // 4. RIGHT_HAND_LOCAL (189..251
     if (hasRight) {
       _writeLocalHandLandmarks(
         hand: frame.rightHand!,
@@ -249,7 +249,7 @@ class BisindoFeatureExtractor {
       );
     }
 
-    // 5. SELECTED_POSE_GLOBAL (252..296: 15 landmarks * 3 = 45)
+    // 5. SELECTED_POSE_GLOBAL (252..296: 15 landmarks * 3 = 45
     if (hasPose) {
       _writeSelectedPoseGlobal(
         pose: frame.pose!,
@@ -259,7 +259,7 @@ class BisindoFeatureExtractor {
       );
     }
 
-    // 6. FACE_BLENDSHAPES (297..348: 52 values)
+    // 6. FACE_BLENDSHAPES (297..348: 52 values
     if (hasFace) {
       final blendshapes = frame.faceBlendshapes!;
       for (int i = 0; i < kFaceBlendshapeNames.length; i++) {
@@ -269,7 +269,7 @@ class BisindoFeatureExtractor {
       }
     }
 
-    // 7. PRESENCE_MASKS (349..352: 4 values)
+    // 7. PRESENCE_MASKS (349..352: 4 values
     feature[349] = hasLeft ? 1.0 : 0.0;
     feature[350] = hasRight ? 1.0 : 0.0;
     feature[351] = hasPose ? 1.0 : 0.0;

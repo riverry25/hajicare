@@ -143,13 +143,11 @@ const List<HajjDuaCategory> hajjDuaCategories = [
   ),
 ];
 
-/// Authentic Hajj Duas and Dhikr sourced from the official Ministry of Religious Affairs (Kemenag RI)
-/// references: "Tuntunan Manasik Haji dan Umrah Kemenag RI" & "Buku Doa dan Zikir Manasik Haji dan Umrah Kemenag RI".
+/// Authentic Hajj Duas and Dhikr sourced from the official Ministry of Religious Affairs (Kemenag RI
+/// s: "Tuntunan Manasik Haji dan Umrah Kemenag RI" & "Buku Doa dan Zikir Manasik Haji dan Umrah Kemenag RI".
 /// Existing prayers (talbiyah_existing, masuk_masjid_existing, rukun_yamani_existing) are preserved verbatim.
 const List<HajjDua> hajjDuas = [
-  // ==========================================
   // 1. IHRAM & TALBIYAH
-  // ==========================================
   HajjDua(
     id: 'ihram_niat_haji',
     stage: HajjDuaStage.ihram,
@@ -232,9 +230,7 @@ const List<HajjDua> hajjDuas = [
     tags: ['Perjalanan', 'Makkah'],
   ),
 
-  // ==========================================
   // 2. MASUK MASJIDIL HARAM
-  // ==========================================
   HajjDua(
     id: 'masuk_masjid_existing',
     stage: HajjDuaStage.masjidAlHaram,
@@ -287,9 +283,7 @@ const List<HajjDua> hajjDuas = [
     tags: ["Ka'bah", 'Adab'],
   ),
 
-  // ==========================================
   // 3. THAWAF
-  // ==========================================
   HajjDua(
     id: 'thawaf_mulai_hajar_aswad',
     stage: HajjDuaStage.tawaf,
@@ -381,9 +375,7 @@ const List<HajjDua> hajjDuas = [
     tags: ['Selesai Thawaf', 'Maqam Ibrahim'],
   ),
 
-  // ==========================================
   // 4. MINUM AIR ZAMZAM
-  // ==========================================
   HajjDua(
     id: 'zamzam_doa_minum',
     stage: HajjDuaStage.zamzam,
@@ -412,9 +404,7 @@ const List<HajjDua> hajjDuas = [
     tags: ['Adab Minum', 'Air Zamzam'],
   ),
 
-  // ==========================================
   // 5. SA'I
-  // ==========================================
   HajjDua(
     id: 'sai_menuju_shafa',
     stage: HajjDuaStage.sai,
@@ -494,9 +484,7 @@ const List<HajjDua> hajjDuas = [
     tags: ['Lampu Hijau', 'Sa\'i'],
   ),
 
-  // ==========================================
   // 6. WUKUF DI ARAFAH
-  // ==========================================
   HajjDua(
     id: 'arafah_dzikir_terbaik',
     stage: HajjDuaStage.arafah,
@@ -551,9 +539,7 @@ const List<HajjDua> hajjDuas = [
     tags: ['Istighfar', 'Taubat'],
   ),
 
-  // ==========================================
   // 7. MUZDALIFAH
-  // ==========================================
   HajjDua(
     id: 'muzdalifah_masyaril_haram',
     stage: HajjDuaStage.muzdalifah,
@@ -581,9 +567,7 @@ const List<HajjDua> hajjDuas = [
     tags: ['Masy\'aril Haram', 'Mabit'],
   ),
 
-  // ==========================================
   // 8. MINA & MELONTAR JUMRAH
-  // ==========================================
   HajjDua(
     id: 'mina_melontar_jumrah',
     stage: HajjDuaStage.mina,
@@ -637,9 +621,7 @@ const List<HajjDua> hajjDuas = [
     tags: ['Setelah Melontar', 'Hari Tasyrik'],
   ),
 
-  // ==========================================
   // 9. TAHALLUL
-  // ==========================================
   HajjDua(
     id: 'tahallul_cukur_rambut',
     stage: HajjDuaStage.tahallul,
@@ -673,9 +655,7 @@ const List<HajjDua> hajjDuas = [
     tags: ['Tahallul', 'Bercukur'],
   ),
 
-  // ==========================================
   // 10. THAWAF IFADAH
-  // ==========================================
   HajjDua(
     id: 'thawaf_ifadah_panduan',
     stage: HajjDuaStage.tawafIfadah,
@@ -703,9 +683,7 @@ const List<HajjDua> hajjDuas = [
     tags: ['Rukun Haji', 'Thawaf Ifadah'],
   ),
 
-  // ==========================================
   // 11. TAWAF WADA
-  // ==========================================
   HajjDua(
     id: 'tawaf_wada_doa_selesai',
     stage: HajjDuaStage.tawafWada,
@@ -733,9 +711,7 @@ const List<HajjDua> hajjDuas = [
     tags: ['Tawaf Wada', 'Perpisahan'],
   ),
 
-  // ==========================================
   // 12. MADINAH & MASJID NABAWI
-  // ==========================================
   HajjDua(
     id: 'madinah_salam_rasulullah',
     stage: HajjDuaStage.madinah,

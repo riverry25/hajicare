@@ -74,7 +74,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                       tooltip: 'Tandai Semua Dibaca',
                       onPressed: () => ctrl.markAllAsRead(),
                     ),
-                  // Hapus semua notifikasi (soft-delete per user)
+                  // Hapus semua notifikasi (soft-delete per user
                   if (hasNotifs)
                     IconButton(
                       icon: Icon(
@@ -233,7 +233,6 @@ class _NotificationScreenState extends State<NotificationScreen> {
               ),
             ),
             const SizedBox(height: 24),
-            // Icon
             Container(
               width: 64,
               height: 64,
@@ -563,7 +562,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
             ),
             const SizedBox(height: AppSpacing.md),
 
-            // Action Buttons (Terima & Tolak)
+            // Action Buttons (Terima & Tolak
             Row(
               children: [
                 Expanded(
@@ -852,7 +851,6 @@ class _NotificationScreenState extends State<NotificationScreen> {
                         ),
                         const SizedBox(width: AppSpacing.md),
 
-                        // Content
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -915,7 +913,6 @@ class _NotificationScreenState extends State<NotificationScreen> {
                               ),
                               const SizedBox(height: 8),
 
-                              // Title
                               Text(
                                 title,
                                 style: text.titleSmall.copyWith(

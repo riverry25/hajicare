@@ -37,7 +37,7 @@ class _ProfileHeader extends StatelessWidget {
         clipBehavior: Clip.none,
         alignment: Alignment.topCenter,
         children: [
-          // ── 1. Main Card Container ─────────────────────────────────────
+          // 1. Main Card Container
           Container(
             width: double.infinity,
             padding: const EdgeInsets.fromLTRB(
@@ -81,7 +81,6 @@ class _ProfileHeader extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
 
-                // Email
                 if (controller.safeEmail.isNotEmpty)
                   Row(
                     children: [
@@ -214,7 +213,7 @@ class _ProfileHeader extends StatelessWidget {
             ),
           ),
 
-          // ── 2. Elevated Floating Top Banner ──────────────────────────
+          // 2. Elevated Floating Top Banner
           Positioned(
             top: -bannerProtrude,
             left: 12,
@@ -559,7 +558,7 @@ class _EditNameDialogState extends State<_EditNameDialog> {
           clipBehavior: Clip.none,
           alignment: Alignment.topCenter,
           children: [
-            // ── 1. Main Card Body ─────────────────────────────────────────
+            // 1. Main Card Body
             Container(
               margin: const EdgeInsets.only(
                 top: 28,
@@ -593,7 +592,6 @@ class _EditNameDialogState extends State<_EditNameDialog> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // Title
                     Text(
                       context.tr('profileEditNameTitle'),
                       style: context.text.titleMedium.copyWith(
@@ -742,7 +740,7 @@ class _EditNameDialogState extends State<_EditNameDialog> {
               ),
             ),
 
-            // ── 2. Floating Hero Card ────────────────────────────────────
+            // 2. Floating Hero Card
             Positioned(
               top: 0,
               left: 22,
@@ -753,7 +751,7 @@ class _EditNameDialogState extends State<_EditNameDialog> {
               ),
             ),
 
-            // ── 3. Protruding Ribbon Submit Button ───────────────────────
+            // 3. Protruding Ribbon Submit Button
             Positioned(
               bottom: 0,
               right: 0,
@@ -773,7 +771,7 @@ class _EditNameDialogState extends State<_EditNameDialog> {
   }
 }
 
-// ── Initials Avatar with Edit Badge ──────────────────────────────────────────
+// Initials Avatar with Edit Badge
 
 class _InitialsAvatar extends StatelessWidget {
   final String initials;
@@ -908,7 +906,7 @@ class _TagChip extends StatelessWidget {
   }
 }
 
-// ── Settings Group ────────────────────────────────────────────────────────────
+// Settings Group
 
 class _SettingsGroup extends StatelessWidget {
   final String title;
@@ -960,7 +958,7 @@ class _SettingsGroup extends StatelessWidget {
   }
 }
 
-// ── Settings Tile ─────────────────────────────────────────────────────────────
+// Settings Tile
 
 class _SettingsTile extends StatelessWidget {
   final IconData icon;
@@ -1043,7 +1041,7 @@ class _SettingsTile extends StatelessWidget {
   }
 }
 
-// ── Thin Divider ──────────────────────────────────────────────────────────────
+// Thin Divider
 
 class _DividerThin extends StatelessWidget {
   @override
@@ -1052,7 +1050,7 @@ class _DividerThin extends StatelessWidget {
   }
 }
 
-// ── Logout Button ─────────────────────────────────────────────────────────────
+// Logout Button
 
 class _LogoutButton extends StatelessWidget {
   final String label;
@@ -1105,7 +1103,7 @@ class _LogoutButton extends StatelessWidget {
   }
 }
 
-// ── Picker Option ─────────────────────────────────────────────────────────────
+// Picker Option
 
 class _PickerOption extends StatelessWidget {
   final IconData? icon;

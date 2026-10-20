@@ -44,10 +44,10 @@ class PendampingRadarCard extends StatelessWidget {
 
   String _formatDistanceValue(double distanceMeters) {
     if (distanceMeters >= 100000) {
-      // >= 100 km (e.g. 7858 km)
+      // >= 100 km (e.g. 7858 km
       return (distanceMeters / 1000).toStringAsFixed(0);
     } else if (distanceMeters >= 1000) {
-      // 1 km - 99.9 km (e.g. 1.2 km or 12.5 km)
+      // 1 km - 99.9 km (e.g. 1.2 km or 12.5 km
       final km = distanceMeters / 1000;
       return km >= 10 ? km.toStringAsFixed(0) : km.toStringAsFixed(1);
     } else {
@@ -192,7 +192,7 @@ class PendampingRadarCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // ── Floating 3D Radar Wave Header (Luxury Flight Cockpit Aesthetic) ──
+            // Floating 3D Radar Wave Header
             Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(20),
@@ -233,7 +233,7 @@ class PendampingRadarCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(20),
                 child: Stack(
                   children: [
-                    // Concentric 3D Radar Ripple Waves (Photo 2)
+                    // Concentric 3D Radar Ripple Waves (Photo 2
                     Positioned.fill(
                       child: RepaintBoundary(
                         child: CustomPaint(
@@ -278,7 +278,7 @@ class PendampingRadarCard extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Top Row: Radar Active Pill & Floating Status Emblem (Photo 2 - Dynamic Text Scale Responsive)
+                          // Top Row: Radar Active Pill & Floating Status Emblem (Photo 2 - Dynamic Text Scale Responsive
                           LayoutBuilder(
                             builder: (context, headerConstraints) {
                               final textScale = MediaQuery.textScalerOf(
@@ -602,7 +602,7 @@ class PendampingRadarCard extends StatelessWidget {
             ),
             const SizedBox(height: 14),
 
-            // ── Hero Distance & Safe Radius Container ────────────────────────
+            // Hero Distance & Safe Radius Container
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               decoration: BoxDecoration(
@@ -615,7 +615,7 @@ class PendampingRadarCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Distance Number + Safe Limit Capsule (Text Scale Responsive)
+                  // Distance Number + Safe Limit Capsule (Text Scale Responsive
                   LayoutBuilder(
                     builder: (context, distConstraints) {
                       final textScale = MediaQuery.textScalerOf(
@@ -856,7 +856,7 @@ class PendampingRadarCard extends StatelessWidget {
             ),
             const SizedBox(height: 12),
 
-            // ── Device & Sync Telemetry Tiles (Text Scale Responsive) ────────────────
+            // Device & Sync Telemetry Tiles (Text Scale Responsive
             LayoutBuilder(
               builder: (context, telemConstraints) {
                 final textScale = MediaQuery.textScalerOf(context).scale(1);
@@ -1023,7 +1023,7 @@ class PendampingRadarCard extends StatelessWidget {
             ),
             const SizedBox(height: 14),
 
-            // ── Bottom Action Bar (Photo 2 Circular Quick-Actions + Photo 1 Pill Action) ─
+            // Bottom Action Bar (Photo 2 Circular Quick-Actions + Photo 1 Pill Action
             LayoutBuilder(
               builder: (context, actionConstraints) {
                 final textScale = MediaQuery.textScalerOf(context).scale(1);
@@ -1222,7 +1222,7 @@ class PendampingRadarCard extends StatelessWidget {
   }
 }
 
-/// Concentric 3D Radar Wave Painter inspired by Reference 2 (UIVERSE 3D UI)
+/// Concentric 3D Radar Wave Painter inspired by2 (UIVERSE 3D UI
 class _RadarWavesPainter extends CustomPainter {
   final Color waveColor;
   final Offset centerFraction;

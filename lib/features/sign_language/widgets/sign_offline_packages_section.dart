@@ -52,7 +52,6 @@ class SignOfflinePackagesSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Section Header
         Row(
           children: [
             Icon(Icons.downloading_rounded, size: 20, color: colors.accent),
@@ -73,7 +72,7 @@ class SignOfflinePackagesSection extends StatelessWidget {
         ),
         const SizedBox(height: AppSpacing.md),
 
-        // Responsive Cards (Horizontal carousel on phones, Grid on wide screens)
+        // Responsive Cards (Horizontal carousel on phones, Grid on wide screens
         Obx(() {
           final packages = controller.dynamicPackageCategories;
           if (packages.isEmpty) {

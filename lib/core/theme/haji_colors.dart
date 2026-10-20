@@ -5,11 +5,11 @@ import 'package:flutter/material.dart';
 enum StatusTone { neutral, success, warning, danger, info, islamic }
 
 /// Semantic, M3-aligned ThemeExtension for HajiCare.
-/// Implements the "White Sand" aesthetic:
-/// - 60% warm-white canvas (#FBF9F6) and pure white cards (#FFFFFF)
-/// - 30% refined desert sand, camel tan, and espresso surfaces
-/// - 10% rich espresso (#3B2A1F) and desert gold (#B08A57) primary actions
-/// - Non-neon, earthy status tones calibrated for elderly readability & WCAG AA/AAA.
+/// Implements the "White Sand" aesthetic
+/// 60% warm-white canvas (#FBF9F6) and pure white cards (#FFFFFF
+/// 30% refined desert sand, camel tan, and espresso surfaces
+/// 10% rich espresso (#3B2A1F) and desert gold (#B08A57) primary actions
+/// Non-neon, earthy status tones calibrated for elderly readability &  AA/AAA.
 class HajiColors extends ThemeExtension<HajiColors> {
   const HajiColors({
     required this.canvas,
@@ -51,7 +51,7 @@ class HajiColors extends ThemeExtension<HajiColors> {
     required this.currency,
   });
 
-  // ── Structural Surfaces ───────────────────────────────────────────────────
+  // Structural Surfaces
   final Color canvas;
   final Color surface;
   final Color surfaceSubtle;
@@ -59,12 +59,12 @@ class HajiColors extends ThemeExtension<HajiColors> {
   final Color border;
   final Color borderStrong;
 
-  // ── High-Contrast Typography ──────────────────────────────────────────────
+  // High-Contrast Typography
   final Color textPrimary;
   final Color textSecondary;
   final Color textTertiary;
 
-  // ── Brand Accents & CTAs ──────────────────────────────────────────────────
+  // Brand Accents & CTAs
   final Color primary;
   final Color onPrimary;
   final Color primaryContainer;
@@ -72,7 +72,7 @@ class HajiColors extends ThemeExtension<HajiColors> {
   final Color accent;
   final Color accentText;
 
-  // ── Calibrated Earthy / Non-Neon Semantic Tones ────────────────────────────
+  // Calibrated Earthy / Non-Neon Semantic Tones
   final Color danger;
   final Color dangerContainer;
   final Color onDanger;
@@ -97,15 +97,15 @@ class HajiColors extends ThemeExtension<HajiColors> {
   final Color neutralContainer;
   final Color onNeutral;
 
-  // ── Overlays & Elevations ─────────────────────────────────────────────────
+  // Overlays & Elevations
   final Color shadow;
   final Color scrim;
 
-  // ── Domain-Specific Maps (POI & Currency) ──────────────────────────────────
+  // Domain-Specific Maps (POI & Currency
   final Map<String, Color> poi;
   final Map<int, Color> currency;
 
-  // ── Semantic Tone Resolvers ───────────────────────────────────────────────
+  // Semantic Tone Resolvers
   Color tone(StatusTone t) {
     switch (t) {
       case StatusTone.danger:
@@ -157,7 +157,7 @@ class HajiColors extends ThemeExtension<HajiColors> {
     }
   }
 
-  // ── Light Theme Instance (Warm White & Espresso Sand) ──────────────────────
+  // Light Theme Instance (Warm White & Espresso Sand
   static const HajiColors light = HajiColors(
     canvas: Color(0xFFFBF9F6),
     surface: Color(0xFFFFFFFF),
@@ -174,7 +174,7 @@ class HajiColors extends ThemeExtension<HajiColors> {
     onPrimaryContainer: Color(0xFF3B2A1F),
     accent: Color(0xFFB08A57),
     accentText: Color(0xFF6F4F24),
-    // Earthy semantic tones (calm, non-neon, saturation <= 0.80)
+    // Earthy semantic tones (calm, non-neon, saturation <= 0.80
     danger: Color(0xFFB3412F),
     dangerContainer: Color(0xFFF8E8E4),
     onDanger: Color(0xFFFFFFFF),
@@ -215,7 +215,7 @@ class HajiColors extends ThemeExtension<HajiColors> {
     },
   );
 
-  // ── Dark Theme Instance (Charcoal Espresso & Desert Amber) ─────────────────
+  // Dark Theme Instance (Charcoal Espresso & Desert Amber
   static const HajiColors dark = HajiColors(
     canvas: Color(0xFF15100C),
     surface: Color(0xFF1F1813),
@@ -420,7 +420,7 @@ class HajiColors extends ThemeExtension<HajiColors> {
   /// Convenience helper to detect whether this instance represents a dark palette.
   bool get isDark => canvas.computeLuminance() < 0.2;
 
-  /// Semantic sand tokens (Desert Sand & Espresso palette)
+  /// Semantic sand tokens (Desert Sand & Espresso palette
   Color get sand => surfaceSand;
   Color get sandLight =>
       isDark ? const Color(0xFFE0D2C3) : const Color(0xFFF6F1EA);

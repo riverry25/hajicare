@@ -132,7 +132,6 @@ class _MapTopHeaderState extends State<MapTopHeader> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               mainAxisSize: MainAxisSize.min,
               children: [
-                // ── ROW 1: FLOATING STATUS & HUB (GPS BADGE, ROOM INFO, SOS) ──
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: SizedBox(
@@ -144,7 +143,7 @@ class _MapTopHeaderState extends State<MapTopHeader> {
 
                         const SizedBox(width: 8),
 
-                        // Contextual Active Room Pill (if in a room)
+                        // Contextual Active Room Pill (if in a room
                         if (hasRoom)
                           Expanded(child: _buildRoomHubPill(context, isDark))
                         else
@@ -163,7 +162,6 @@ class _MapTopHeaderState extends State<MapTopHeader> {
 
                 const SizedBox(height: 8),
 
-                // ── ROW 2: GOOGLE MAPS STYLE FLOATING SEARCH BAR ──
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: _buildSearchBar(context, isDark),
@@ -171,7 +169,6 @@ class _MapTopHeaderState extends State<MapTopHeader> {
 
                 const SizedBox(height: 9),
 
-                // ── ROW 3: FLOATING CATEGORY & ROLE FILTER CHIPS ──
                 _buildFilterChips(context, isDark),
               ],
             ),
@@ -181,9 +178,6 @@ class _MapTopHeaderState extends State<MapTopHeader> {
     );
   }
 
-  // ===========================================================================
-  // ROW 1 WIDGETS (FLOATING OVER MAP)
-  // ===========================================================================
 
   Widget _buildGpsStatusPill(BuildContext context, bool isDark) {
     return Container(
@@ -364,9 +358,6 @@ class _MapTopHeaderState extends State<MapTopHeader> {
     );
   }
 
-  // ===========================================================================
-  // ROW 2: GOOGLE MAPS STYLE FLOATING SEARCH BAR
-  // ===========================================================================
 
   Widget _buildSearchBar(BuildContext context, bool isDark) {
     String displayName = context.tr('maps.pilgrims');
@@ -549,9 +540,6 @@ class _MapTopHeaderState extends State<MapTopHeader> {
     );
   }
 
-  // ===========================================================================
-  // ROW 3: FLOATING CATEGORY & ROLE FILTER CHIPS
-  // ===========================================================================
 
   Widget _buildFilterChips(BuildContext context, bool isDark) {
     return SizedBox(

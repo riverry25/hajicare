@@ -47,7 +47,7 @@ class LoginController extends GetxController {
         rememberMe.value = value;
       }
     } catch (_) {
-      // Gunakan default true jika gagal membaca preference.
+      // Gunakan default true jika gagal membaca p.
     }
   }
 
@@ -78,11 +78,7 @@ class LoginController extends GetxController {
 
     FocusManager.instance.primaryFocus?.unfocus();
 
-    // ============================================================
-    // PENTING:
-    // Ambil text SEKALI sebelum await.
-    // Setelah ini jangan membaca TextEditingController lagi.
-    // ============================================================
+    // Ambil nilai text input sebelum operasi asynchronous
 
     final email = InputSanitizer.sanitizeText(
       emailController.text,
@@ -102,9 +98,7 @@ class LoginController extends GetxController {
     final stopwatch = Stopwatch()..start();
 
     try {
-      // ============================================================
       // 1. Firebase Authentication
-      // ============================================================
 
       final userCredential = await FirebaseAuth.instance
           .signInWithEmailAndPassword(email: email, password: password);
@@ -128,9 +122,7 @@ class LoginController extends GetxController {
         return;
       }
 
-      // ============================================================
       // 2. Simpan onboarding + remember me
-      // ============================================================
 
       final startup = Get.find<AppStartupController>();
 
@@ -167,9 +159,7 @@ class LoginController extends GetxController {
         debugPrint('[LoginController] User doc self-heal check: $docErr');
       }
 
-      // ============================================================
       // 3. Tentukan dashboard berdasarkan role
-      // ============================================================
 
       final destination = await startup.resolveUserRoleDestination(uid);
 
@@ -192,9 +182,7 @@ class LoginController extends GetxController {
         durationSeconds: durationSec,
       );
 
-      // ============================================================
       // 4. Tampilkan feedback dialog saat berhasil login
-      // ============================================================
 
       bool hasNavigated = false;
       void navigate() {
@@ -273,9 +261,7 @@ class LoginController extends GetxController {
     try {
       await _ensureGoogleSignInInitialized();
 
-      // CATATAN: Jangan panggil signOut() sebelum authenticate() di Credential Manager v7.
-      // signOut() menyebabkan race condition yang membuat Credential Manager
-      // melaporkan "canceled" meski user sudah memilih akun.
+      // Hindari pemanggilan signOut sebelum authenticate untuk mencegah race condition
 
       debugPrint('[LoginController] Memulai Google Sign-In authenticate()...');
 
@@ -459,9 +445,7 @@ class LoginController extends GetxController {
       debugPrint(
         '[LoginController] GoogleSignInException code=${e.code} desc=${e.description}',
       );
-      // Jangan silent-return untuk SEMUA kode canceled.
-      // Jika user benar-benar memilih akun tapi canceled ter-throw,
-      // tampilkan pesan agar user tahu ada masalah konfigurasi.
+      // Tampilkan pesan jika proses login dibatalkan atau terkendala konfigurasi
       if (e.code == GoogleSignInExceptionCode.canceled) {
         // Tunjukkan pesan ringan — mungkin user menekan back, atau ada issue SHA-1
         errorMessage.value =

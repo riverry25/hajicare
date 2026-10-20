@@ -36,7 +36,6 @@ extension _AdminDashboardActivitySheets on _AdminDashboardHome {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Drag Handle
               Center(
                 child: Container(
                   width: 40,
@@ -334,7 +333,6 @@ extension _AdminDashboardActivitySheets on _AdminDashboardHome {
 
               const SizedBox(height: AppSpacing.lg),
 
-              // Close Button
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton(
@@ -413,7 +411,6 @@ extension _AdminDashboardActivitySheets on _AdminDashboardHome {
                   child: Column(
                     children: [
                       const SizedBox(height: AppSpacing.md),
-                      // Drag handle
                       Container(
                         width: 40,
                         height: 4,

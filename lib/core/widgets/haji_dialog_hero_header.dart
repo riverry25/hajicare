@@ -2,12 +2,11 @@ import 'package:flutter/material.dart';
 import '../theme/theme_context.dart';
 
 /// Standardized floating hero card header for HajiCare modal dialogs.
-///
-/// Implements the signature HajiCare floating header:
-/// - Rich Espresso gradient background with calibrated gold ambient glows
-/// - Circular icon container with calibrated gold border
-/// - Uppercase letterspaced badge text with WCAG AAA contrast in both Light & Dark mode
-/// - Optional close button
+/// Implements the signature HajiCare floating header
+/// Rich Espresso gradient background with calibrated gold ambient glows
+/// Circular icon container with calibrated gold border
+/// Uppercase letterspaced badge text with  AAA contrast in both Light & Dark mode
+/// Optional close button
 class HajiDialogHeroHeader extends StatelessWidget {
   final IconData icon;
   final String title;

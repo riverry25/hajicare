@@ -169,7 +169,6 @@ class DistanceAlertScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: AppSpacing.lg),
 
-                  // Action Buttons
                   SizedBox(
                     width: double.infinity,
                     height: AppSizes.buttonHeightPrimary,

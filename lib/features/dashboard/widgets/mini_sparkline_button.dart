@@ -10,8 +10,7 @@ import '../../../core/theme/theme_context.dart';
 /// An enlarged, transparent mini sparkline wave chart button that blends
 /// seamlessly into the hero card background, featuring a glowing desert gold
 /// wave with gradient fill matching White Sand theme.
-///
-/// Synchronizes visually with the room's live jamaah data (distance & status)
+/// Synchronizes visually with the room's live jamaah data (distance & status
 /// and triggers full location & room synchronization on tap.
 class MiniSparklineButton extends StatefulWidget {
   final Future<void> Function() onSync;
@@ -217,7 +216,7 @@ class _SparklineWavePainter extends CustomPainter {
     final breathe2 = math.cos(pulsePhase * 2 * math.pi) * 2.8;
     final ripple = isSyncing ? math.sin(syncPhase * 2 * math.pi) * 5.0 : 0.0;
 
-    // ── 1. Secondary Ambient Echo Wave (Background Depth) ──
+    // 1. Secondary Ambient Echo Wave (Background Depth
     final echoPaint = Paint()
       ..color = effectiveColor.withValues(alpha: 0.28)
       ..style = PaintingStyle.stroke
@@ -255,7 +254,7 @@ class _SparklineWavePainter extends CustomPainter {
 
     canvas.drawPath(echoPath, echoPaint);
 
-    // ── 2. Primary Foreground Hero Wave ──
+    // 2. Primary Foreground Hero Wave
     final p0 = Offset(
       4,
       (h * 0.64 + elevationOffset + breathe1 + ripple).clamp(
@@ -323,7 +322,7 @@ class _SparklineWavePainter extends CustomPainter {
     canvas.drawPath(fillPath, fillPaint);
     canvas.drawPath(heroPath, strokePaint);
 
-    // ── 3. Live Glowing Beacon Point with Expanding Sonar Halo ──
+    // 3. Live Glowing Beacon Point with Expanding Sonar Halo
     final haloPulse = 6.0 + 3.0 * math.sin(pulsePhase * 2 * math.pi);
     final haloPaint = Paint()
       ..color = effectiveColor.withValues(alpha: 0.22)
@@ -350,7 +349,7 @@ class _SparklineWavePainter extends CustomPainter {
       canvas.drawCircle(p4, rippleRadius, ripplePaint);
     }
 
-    // ── 4. Metric / Status Badge Label in Corner ──
+    // 4. Metric / Status Badge Label in Corner
     _drawMetricLabel(canvas, size);
   }
 

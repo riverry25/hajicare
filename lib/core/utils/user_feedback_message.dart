@@ -1,5 +1,4 @@
 /// Converts internal failures into short, actionable messages for end users.
-///
 /// Technical details must stay in debug logs and must never be shown directly
 /// to jamaah, especially elderly users.
 class UserFeedbackMessage {
