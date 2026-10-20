@@ -72,6 +72,35 @@ Solusi kecerdasan buatan terpasang (*on-device AI*) yang berjalan langsung di HP
 
 ---
 
+## 📱 Matriks Fitur Lengkap Aplikasi
+
+Berikut adalah rincian seluruh modul fitur yang terimplementasi di dalam aplikasi HajiCare:
+
+| Kategori | Fitur Unggulan | Deskripsi & Manfaat |
+| :--- | :--- | :--- |
+| **🧕 Khusus Jamaah** | **Live Status Monitoring Card** | Menampilkan status koneksi GPS, jarak geospasial ke posko, dan indikator keamanan (Aman, Waspada, Di Luar Radius). |
+| | **Fitur "Jemput Saya" (Quick Assistance)** | Mengirim permintaan bantuan cepat ke pendamping cukup 1 klik saat jamaah kelelahan, tersesat, atau butuh kursi roda. |
+| | **Bento Services Grid** | Menu navigasi modular satu ketukan untuk mengakses penerjemah isyarat, deteksi uang, jadwal shalat, dan doa. |
+| | **Emergency Hotline Terintegrasi** | Panggilan darurat langsung ke Ambulans Saudi (997), Polisi (999), dan Call Center Haji Indonesia Kemenag. |
+| **🛡️ Khusus Pendamping** | **Radar Monitoring Rombongan** | Radar visual interaktif yang memetakan persebaran dan posisi seluruh jamaah di sekitar posko secara real-time. |
+| | **Dynamic Geofencing Slider** | Pengaturan batas radius aman fleksibel (50m - 1000m) yang disesuaikan dengan kondisi area (Masjidil Haram vs Mina). |
+| | **Smart Room Management** | Pembuatan dan pengelolaan kamar rombongan dengan kode 6-digit acak serta QR Code untuk kemudahan bergabung. |
+| | **Konsol SOS Dispatcher** | Menerima peringatan darurat instan disertai koordinat GPS akurat, visualisasi rute tercepat, dan data tanda vital jamaah. |
+| **🤖 Edge AI Aksesibilitas** | **Sign-to-Text (BISINDO & SIBI)** | Pengenalan gerakan tangan via kamera menggunakan MediaPipe 543 Landmarks dan model Recurrent Neural Network Bi-GRU. |
+| | **Text / Voice-to-Sign** | Kamus video bahasa isyarat beresolusi tinggi offline yang diputar mulus via ExoPlayer native tanpa jeda buffering. |
+| | **Deteksi Uang Cerdas (SAR & IDR)** | Klasifikasi nominal uang kertas dan koin Riyal serta Rupiah berbasis model TFLite dilengkapi bounding box visual. |
+| | **Audio Voice Feedback (TTS)** | Suara pembacaan otomatis nominal uang dan hasil kalkulasi kurs untuk membantu jamaah tunanetra dan lansia. |
+| **⌚ IoT Smartband ESP32-S3** | **Telemetri Vital 4-Sensor** | Pembacaan detak jantung & SpO2 (MAX30102), suhu tubuh (MLX90614), akselerometer jatuh (MPU6050), dan GPS ATGM336H. |
+| | **Notifikasi Haptik Bergetar** | Getaran otomatis saat jamaah keluar dari radius aman atau saat waktu shalat tiba via Mobile Vibration Motor. |
+| | **Layar Pergelangan Tangan 0.96"** | Menampilkan data vital mandiri (denyut nadi, suhu tubuh, baterai, GPS, dan waktu) langsung di gelang tanpa buka ponsel. |
+| | **Offline Sensor Persistence** | Penyimpanan riwayat telemetri di storage lokal perangkat saat koneksi internet terputus. |
+| **🕋 Spiritual & Navigasi** | **Kumpulan Doa Haji & Umrah** | Doa lengkap bertahap (Ihram, Tawaf, Sa'i, Wukuf, Jumrah, Tahallul) teks Arab, Latin, arti, dan audio tilawah. |
+| | **Background Adzan Service** | Alarm adzan otomatis yang berjalan di latar belakang (Foreground Service) dan kebal terhadap *battery saver* Android. |
+| | **Kompas Kiblat Astrolabe** | Penunjuk arah Ka'bah presisi berbasis perpaduan sensor geomagnetik dan komputasi lintang/bujur. |
+| | **Peta POI & Routing Pejalan Kaki** | Peta interaktif Makkah & Madinah dengan rute pejalan kaki serta penanda Posko Kesehatan Haji Indonesia dan hotel. |
+
+---
+
 ## 🏗️ Arsitektur Sistem
 
 Berikut adalah alur komunikasi data antara perangkat fisik jamaah, smartphone, cloud database, dan dashboard pendamping:
@@ -116,6 +145,26 @@ graph TD
     DB <-->|Event Triggers & Validasi| CF
     DB -->|Realtime Stream Listener| Companion_Dashboard
 ```
+
+---
+
+## 🌐 Daftar API & Integrasi Layanan Eksternal
+
+Aplikasi HajiCare mengintegrasikan berbagai API standar industri dengan pendekatan **Offline-First & Resilient Fallback**:
+
+| Nama API / Layanan | Penyedia / Sumber | Endpoint / Fungsi Utama | Mekanisme Fallback / Offline |
+| :--- | :--- | :--- | :--- |
+| **OpenRouteService API** | Heidelberg Institute (HeiGIT) | `api.heigit.org/openrouteservice/v2/directions/foot-walking` — Kalkulasi rute dan jarak navigasi jalan kaki di kawasan Makkah. | Otomatis beralih (*graceful fallback*) ke Public OpenStreetMap Routing (`routing.openstreetmap.de`) jika kuota limit atau offline. |
+| **Nominatim Geocoding API** | OpenStreetMap Foundation | `nominatim.openstreetmap.org/search` — Pencarian alamat, gedung hotel, dan konversi koordinat GPS ke teks alamat. | Didukung oleh Komoot Photon API (`photon.komoot.io`) dan Android Native Geocoder lokal. |
+| **Overpass API (OSM Data)** | OpenStreetMap Project | `overpass-api.de/api/interpreter` — Ekstraksi Point of Interest (POI) posko kesehatan, masjid, pos keamanan, dan toilet. | Hasil query disimpan dalam cache memori lokal sehingga dapat diakses tanpa query ulang berulang kali. |
+| **Open Exchange Rates API** | Open Exchange Rates Inc. | `open.er-api.com/v6/latest/USD` — Pengambilan kurs konversi valuta asing terkini (SAR ke IDR dan USD). | Menggunakan nilai kurs konversi lokal yang tersimpan di `SharedPreferences` jika perangkat tidak memiliki internet. |
+| **Cloud Firestore API** | Google Cloud Platform | Sinkronisasi dua arah real-time data kamar rombongan, koordinat anggota, dan siaran alarm darurat SOS. | Dilengkapi fitur *offline persistence cache* lokal bawaan Firestore SDK. |
+| **Firebase Auth & Credential Manager** | Google Identity Platform | Pengelolaan akun pengguna, login Google satu ketukan (*Google Credential Manager v7*), dan proteksi berbasis role. | Token sesi disimpan secara terenkripsi dalam *Android Keystore* (`flutter_secure_storage`). |
+| **Firebase App Check API** | Google Play Integrity | Menjamin setiap request ke server backend hanya berasal dari aplikasi resmi HajiCare yang valid dan tidak dimodifikasi. | Mode debug provider khusus untuk pengujian lokal developer. |
+| **Firebase Cloud Functions** | Google Cloud Serverless | Backend komputasi tanpa server untuk operasi kritis, validasi kode room, dan broadcast push notification. | Fallback penulisan langsung ke koleksi Firestore berkeamanan tinggi jika fungsi sedang *cold-start*. |
+| **CartoDB & OSM Map Tiles API** | CartoDB & OpenStreetMap | `basemaps.cartocdn.com` & `tile.openstreetmap.org` — Penyedia ubin peta vektor tampilan terang (Voyager) dan gelap (Dark All). | Tile peta di-cache ke dalam penyimpanan penyimpanan lokal ponsel melalui `flutter_map`. |
+| **Google ML Kit Translation API** | Google Machine Learning | Penerjemahan teks dwibahasa (Arab $\leftrightarrow$ Indonesia) secara langsung di perangkat. | Model bahasa diunduh satu kali ke penyimpanan lokal dan bekerja 100% offline tanpa internet. |
+| **Adhan Calculation Engine** | Umm al-Qura Univ. / MWL | Komputasi hisab astronomis posisi matahari untuk penentuan waktu shalat Subuh, Dzuhur, Ashar, Maghrib, dan Isya. | Algoritma matematis murni terpasang (*built-in*), tanpa perlu koneksi internet untuk menghitung jadwal shalat. |
 
 ---
 
