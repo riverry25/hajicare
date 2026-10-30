@@ -38,7 +38,8 @@ class SmartbandBleTestController extends GetxController {
     _statusSub = bleService.connectionStateStream.listen((status) {
       connectionStatus.value = status;
       if (status == SmartbandBleStatus.disconnected) {
-        if (errorMessage.isEmpty && currentData.value != null) {
+        currentData.value = null;
+        if (errorMessage.isEmpty) {
           errorMessage.value = 'Koneksi ke Smartband terputus.';
         }
       } else if (status == SmartbandBleStatus.connected) {

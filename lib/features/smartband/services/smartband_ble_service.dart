@@ -599,6 +599,7 @@ class SmartbandBleService {
     _dataCharacteristic = null;
     _writeCharacteristic = null;
     _connectedDevice = null;
+    _lastData = null;
     _fragmentParts.clear();
   }
 
