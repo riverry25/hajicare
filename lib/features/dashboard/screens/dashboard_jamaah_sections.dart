@@ -2075,12 +2075,10 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                   final lastLat = ldrCtrl.lastKnownLatitude.value;
                   final lastLng = ldrCtrl.lastKnownLongitude.value;
                   final relativeTime = ldrCtrl.relativeTimeText.value;
-                  // hasLocation: juga cek data storage (lastKnown bahkan tanpa timestamp fresh
+                  // hasLocation: koordinat satelit GPS aktif atau lokasi terakhir
                   final hasLocation =
                       (isConnected && lat != null && lng != null) ||
-                      (lastLat != null && lastLng != null) ||
-                      (ldrCtrl.isSimulationMode.value &&
-                          (lat != null || lastLat != null));
+                      (lastLat != null && lastLng != null);
                   final LatLng? activeTarget = hasLocation
                       ? LatLng(lat ?? lastLat!, lng ?? lastLng!)
                       : null;

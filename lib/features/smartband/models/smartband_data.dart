@@ -1,12 +1,13 @@
 import 'dart:convert';
 
-/// Model representasi data telemetri dari ESP32-S3 Smartband
-/// Dilengkapi 5 modul/sensor spesifik
-/// 1. MAX30102: Detak Jantung (BPM) & Saturasi Oksigen Darah (SpO2 %
-/// 2. MCP9808: Suhu Tubuh Presisi Tinggi (°C
-/// 3. MPU6050: Akselerometer & Giroskop -> Deteksi Aktivitas Langkah (stepCount), Keseimbangan (roll, pitch, accelG), & Deteksi Jatuh (fallDetected
-/// 4. GPS NEO-6M: Lokasi Koordinat Satelit (latitude, longitude, satellites, isValidLocation
-/// 5. LCD 16x2 + I2C Backpack: Tampilan Status Kesehatan (BPM, Suhu) & Pesan Darurat di Pergelangan Tangan (lcdLine1, lcdLine2, emergencyMessage
+/// Model representasi data telemetri dari ESP32-S3 Smartband Pro v2.0
+/// Dilengkapi modul & sensor spesifik:
+/// 1. MAX30102: Detak Jantung (BPM) & Sentuhan Kulit (fingerDetected)
+/// 2. DFRobot MCP9808: Suhu Tubuh (°C)
+/// 3. MPU6050: Motion totalG, Kemiringan (roll/pitch), & Deteksi Jatuh (fallStatus)
+/// 4. GPS ATGM336H: Satelit, Status Fix, & Koordinat (latitude, longitude)
+/// 5. Action Button: Manual SOS (3 detik) & Batal Alarm
+/// 6. Dynamic Safe Radius: Jarak (m), Batas Radius (m), Peringatan Radius (radiusAlert)
 class SmartbandData {
   final String braceletId;
   final double? latitude;
@@ -27,11 +28,16 @@ class SmartbandData {
   final String? lcdLine1;
   final String? lcdLine2;
   final String? emergencyMessage;
+  final bool fingerDetected;
+  final String fallStatus;
+  final double safeRadius;
+  final double? distanceM;
+  final bool radiusAlert;
   final DateTime timestamp;
   final String rawJson;
   final bool isValidLocation;
 
-  /// Default koordinat GPS referensi Smartband (Pelataran Masjidil Haram, Makkah
+  /// Default koordinat GPS referensi Smartband (Pelataran Masjidil Haram, Makkah)
   static const double staticDefaultLatitude = 21.422487;
   static const double staticDefaultLongitude = 39.826206;
 
@@ -59,6 +65,11 @@ class SmartbandData {
     this.lcdLine1,
     this.lcdLine2,
     this.emergencyMessage,
+    this.fingerDetected = false,
+    this.fallStatus = 'NORMAL',
+    this.safeRadius = 50.0,
+    this.distanceM,
+    this.radiusAlert = false,
     DateTime? timestamp,
     this.rawJson = '',
     bool? isValidLocation,
@@ -84,41 +95,37 @@ class SmartbandData {
   double? get gyroRoll => roll;
   double? get gyroPitch => pitch;
 
-  /// Validasi rentang fisiologis SpO2 (70% - 100%
+  /// Validasi rentang fisiologis SpO2 (70% - 100%)
   bool get isValidSpo2 => spo2 != null && spo2! >= 70 && spo2! <= 100;
 
-  /// Validasi rentang fisiologis suhu tubuh jemaah (30°C - 45°C
+  /// Validasi rentang fisiologis suhu tubuh jemaah (30°C - 45°C)
   bool get isValidTemperature =>
       temperature != null && temperature! >= 30.0 && temperature! <= 45.0;
 
   /// Indikator apakah data tanda-tanda vital valid
-  bool get hasValidVitals => heartRate > 0 && isValidSpo2;
+  bool get hasValidVitals => heartRate > 0;
 
-  /// Teks LCD 16x2 Baris 1 (Format 16 Karakter Pas
+  /// Teks LCD / OLED Baris 1
   String get displayLcdLine1 {
     if (lcdLine1 != null && lcdLine1!.trim().isNotEmpty) {
       final s = lcdLine1!.trim();
       return s.length > 16 ? s.substring(0, 16) : s.padRight(16);
     }
-    // Format otomatis status kesehatan: HR: 76  SpO2:98%
     final hrStr = heartRate > 0 ? heartRate.toString().padLeft(3) : ' --';
     final oxStr = spo2 != null ? '$spo2%' : '--%';
     final line = 'HR:$hrStr  SpO2:$oxStr';
     return line.length > 16 ? line.substring(0, 16) : line.padRight(16);
   }
 
-  /// Teks LCD 16x2 Baris 2 (Format 16 Karakter Pas
+  /// Teks LCD / OLED Baris 2
   String get displayLcdLine2 {
     if (lcdLine2 != null && lcdLine2!.trim().isNotEmpty) {
       final s = lcdLine2!.trim();
       return s.length > 16 ? s.substring(0, 16) : s.padRight(16);
     }
-    if (isSos) {
-      return '!TOMBOL SOS!    ';
-    }
-    if (fallDetected) {
-      return '!JATUH DETEKSI !';
-    }
+    if (isSos) return '!TOMBOL SOS!    ';
+    if (fallDetected) return '!JATUH DETEKSI !';
+    if (radiusAlert) return '!KELUAR RADIUS! ';
     if (emergencyMessage != null && emergencyMessage!.trim().isNotEmpty) {
       final s = emergencyMessage!.trim();
       return s.length > 16 ? s.substring(0, 16) : s.padRight(16);
@@ -155,6 +162,11 @@ class SmartbandData {
     String? lcdLine1,
     String? lcdLine2,
     String? emergencyMessage,
+    bool? fingerDetected,
+    String? fallStatus,
+    double? safeRadius,
+    double? distanceM,
+    bool? radiusAlert,
     DateTime? timestamp,
     String? rawJson,
     bool? isValidLocation,
@@ -179,14 +191,18 @@ class SmartbandData {
       lcdLine1: lcdLine1 ?? this.lcdLine1,
       lcdLine2: lcdLine2 ?? this.lcdLine2,
       emergencyMessage: emergencyMessage ?? this.emergencyMessage,
+      fingerDetected: fingerDetected ?? this.fingerDetected,
+      fallStatus: fallStatus ?? this.fallStatus,
+      safeRadius: safeRadius ?? this.safeRadius,
+      distanceM: distanceM ?? this.distanceM,
+      radiusAlert: radiusAlert ?? this.radiusAlert,
       timestamp: timestamp ?? this.timestamp,
       rawJson: rawJson ?? this.rawJson,
       isValidLocation: isValidLocation ?? this.isValidLocation,
     );
   }
 
-  /// Factory untuk mem-parse JSON payload dari BLE notification
-  /// Melempar [FormatException] jika JSON rusak atau field wajib tidak tersedia
+  /// Factory untuk mem-parse JSON payload dari BLE notification ESP32
   factory SmartbandData.fromJson(Map<String, dynamic> json, {String raw = ''}) {
     final bId = json['braceletId']?.toString().trim();
     if (bId == null || bId.isEmpty) {
@@ -198,23 +214,27 @@ class SmartbandData {
     double? parseDouble(dynamic val) {
       if (val == null) return null;
       if (val is num) return val.toDouble();
-      return double.tryParse(val.toString());
+      final str = val.toString().trim().toLowerCase();
+      if (str.isEmpty || str == 'null' || str == 'nan') return null;
+      return double.tryParse(str);
     }
 
     int? parseInt(dynamic val) {
       if (val == null) return null;
       if (val is num) return val.toInt();
-      return int.tryParse(val.toString());
+      final str = val.toString().trim().toLowerCase();
+      if (str.isEmpty || str == 'null' || str == 'nan') return null;
+      return int.tryParse(str);
     }
 
     bool parseBool(dynamic val) {
       if (val == null) return false;
       if (val is bool) return val;
-      final str = val.toString().toLowerCase();
+      final str = val.toString().toLowerCase().trim();
       return str == 'true' || str == '1';
     }
 
-    // 1. MAX30102: BPM & SpO2
+    // 1. MAX30102: BPM & Finger Detection
     int hr = 0;
     if (json['heartRate'] != null ||
         json['bpm'] != null ||
@@ -224,22 +244,26 @@ class SmartbandData {
     final int? oxygen = parseInt(
       json['spo2'] ?? json['oxygen'] ?? json['ox'] ?? json['o2'],
     );
+    final bool finger = parseBool(
+      json['fingerDetected'] ?? json['contact'] ?? json['touch'],
+    );
 
-    // 2. MCP9808: Suhu Tubuh (°C
+    // 2. DFRobot MCP9808: Suhu Tubuh (°C)
     final double? temp = parseDouble(
-      json['temperature'] ??
-          json['temperatureC'] ??
+      json['temperatureC'] ??
+          json['temperature'] ??
           json['temp'] ??
           json['tempC'] ??
           json['mcpTemp'] ??
           json['bodyTemp'],
     );
 
-    // 3. MPU6050: Deteksi Jatuh, Langkah, Keseimbangan
+    // 3. MPU6050: Deteksi Jatuh, Langkah, Total G, Fall Status
     final dynamic rawFallStatus = json['fallStatus'];
+    final String fallStat = rawFallStatus?.toString() ?? 'NORMAL';
     final bool fallConfirmed =
-        rawFallStatus != null &&
-        rawFallStatus.toString().toUpperCase().contains('CONFIRMED');
+        fallStat.toUpperCase().contains('CONFIRMED') ||
+        fallStat.toUpperCase().contains('COUNTDOWN');
     final bool fall =
         fallConfirmed ||
         parseBool(
@@ -254,15 +278,16 @@ class SmartbandData {
     final double? rollVal = parseDouble(json['roll'] ?? json['gyroRoll']);
     final double? pitchVal = parseDouble(json['pitch'] ?? json['gyroPitch']);
     final double? gForce = parseDouble(
-      json['accelG'] ?? json['motionG'] ?? json['gForce'] ?? json['accel'],
+      json['motionG'] ?? json['accelG'] ?? json['gForce'] ?? json['accel'],
     );
 
-    // 4. GPS NEO-6M: Koordinat & Satelit
+    // 4. GPS ATGM336H: Koordinat & Satelit & Fix
     final double? lat = parseDouble(json['latitude'] ?? json['lat']);
     final double? lng = parseDouble(
       json['longitude'] ?? json['lng'] ?? json['lon'],
     );
     final int? sats = parseInt(json['satellites'] ?? json['sats']);
+    final bool isFix = parseBool(json['gpsFix'] ?? json['fix']);
 
     // 5. Baterai LiPo
     final int? bat = parseInt(
@@ -271,15 +296,14 @@ class SmartbandData {
     final double? batVolt = parseDouble(json['batteryVoltage'] ?? json['volt']);
     final bool charging = parseBool(json['isCharging'] ?? json['charging']);
 
-    // 6. LCD 16x2 + I2C Backpack & Tombol SOS
+    // 6. Tombol SOS & LCD / OLED
     final bool isSos = parseBool(
       json['sos'] ??
           json['isSos'] ??
           json['sosButton'] ??
           json['buttonSos'] ??
           json['btnSos'] ??
-          json['emergencyButton'] ??
-          json['emergencyBtn'],
+          json['emergencyButton'],
     );
     final String? l1 =
         json['lcdLine1']?.toString() ??
@@ -296,23 +320,31 @@ class SmartbandData {
         json['msg']?.toString() ??
         (isSos ? 'TOMBOL SOS AKTIF!' : null);
 
+    // 7. Dynamic Safe Radius & Distance
+    final double sRadius =
+        parseDouble(json['safeRadius'] ?? json['radius']) ?? 50.0;
+    final double? distM = parseDouble(
+      json['distanceM'] ?? json['dist'] ?? json['distance'],
+    );
+    final bool radAlert = parseBool(json['radiusAlert'] ?? json['outOfRange']);
+
     // Validasi lokasi geografis
-    // Koordinat (0.0, 0.0) atau koordinat di luar batas bumi dianggap belum valid (misal GPS fix belum dapat
     final bool validLoc =
-        lat != null &&
-        lng != null &&
-        !lat.isNaN &&
-        !lng.isNaN &&
-        (lat.abs() > 0.000001 || lng.abs() > 0.000001) &&
-        lat >= -90.0 &&
-        lat <= 90.0 &&
-        lng >= -180.0 &&
-        lng <= 180.0;
+        isFix ||
+        (lat != null &&
+            lng != null &&
+            !lat.isNaN &&
+            !lng.isNaN &&
+            (lat.abs() > 0.000001 || lng.abs() > 0.000001) &&
+            lat >= -90.0 &&
+            lat <= 90.0 &&
+            lng >= -180.0 &&
+            lng <= 180.0);
 
     return SmartbandData(
       braceletId: bId,
-      latitude: lat,
-      longitude: lng,
+      latitude: (lat != null && lat.abs() > 0.000001) ? lat : null,
+      longitude: (lng != null && lng.abs() > 0.000001) ? lng : null,
       heartRate: hr < 0 ? 0 : hr,
       spo2: oxygen?.clamp(0, 100),
       temperature: temp,
@@ -329,6 +361,11 @@ class SmartbandData {
       lcdLine1: l1,
       lcdLine2: l2,
       emergencyMessage: emerg,
+      fingerDetected: finger,
+      fallStatus: fallStat,
+      safeRadius: sRadius,
+      distanceM: distM,
+      radiusAlert: radAlert,
       timestamp: DateTime.now(),
       rawJson: raw,
       isValidLocation: validLoc,
@@ -366,12 +403,17 @@ class SmartbandData {
     'lcdLine1': lcdLine1,
     'lcdLine2': lcdLine2,
     'emergencyMessage': emergencyMessage,
+    'fingerDetected': fingerDetected,
+    'fallStatus': fallStatus,
+    'safeRadius': safeRadius,
+    'distanceM': distanceM,
+    'radiusAlert': radiusAlert,
     'timestamp': timestamp.toIso8601String(),
     'isValidLocation': isValidLocation,
   };
 
   @override
   String toString() {
-    return 'SmartbandData(braceletId: $braceletId, lat: $latitude, lng: $longitude, hr: $heartRate, spo2: $spo2, temp: $temperature, steps: $stepCount, fall: $fallDetected, sos: $isSos, bat: $batteryLevel%, validLoc: $isValidLocation, lcd: [$displayLcdLine1 | $displayLcdLine2])';
+    return 'SmartbandData(braceletId: $braceletId, lat: $latitude, lng: $longitude, hr: $heartRate, finger: $fingerDetected, temp: $temperature, motionG: $accelG, fall: $fallStatus, sos: $isSos, radius: $safeRadius, dist: $distanceM, radAlert: $radiusAlert)';
   }
 }
