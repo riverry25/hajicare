@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'adhan_native_bridge.dart';
 import 'adhan_notification_service.dart';
 import 'prayer_calculation_service.dart';
@@ -12,6 +13,41 @@ import 'prayer_calculation_service.dart';
 void prayerAlarmCallback(int id, Map<String, dynamic> params) async {
   final prayerName =
       params['prayerName'] as String? ?? _resolvePrayerNameFromId(id);
+
+  try {
+    final prefs = await SharedPreferences.getInstance();
+    final isMasterEnabled =
+        prefs.getBool('prayer_sound_master_enabled') ?? true;
+    if (!isMasterEnabled) {
+      debugPrint(
+        '🕌 [PRAYER-ALARM] Skipping alarm: prayer_sound_master_enabled is false (Adzan Hening).',
+      );
+      return;
+    }
+    final normalized = prayerName.trim().toLowerCase();
+    final key = normalized.contains('subuh') || normalized.contains('fajr')
+        ? 'subuh'
+        : normalized.contains('dzuhur') || normalized.contains('dhuhr')
+            ? 'dzuhur'
+            : normalized.contains('ashar') || normalized.contains('asr')
+                ? 'ashar'
+                : normalized.contains('maghrib')
+                    ? 'maghrib'
+                    : normalized.contains('isya') || normalized.contains('isha')
+                        ? 'isya'
+                        : '';
+    if (key.isNotEmpty) {
+      final isEnabled = prefs.getBool('prayer_sound_$key') ?? true;
+      if (!isEnabled) {
+        debugPrint(
+          '🕌 [PRAYER-ALARM] Skipping alarm for $prayerName ($key): sound is muted.',
+        );
+        return;
+      }
+    }
+  } catch (e) {
+    debugPrint('🕌 [PRAYER-ALARM] Error checking SharedPreferences: $e');
+  }
 
   final scheduledTimestampMs = params['scheduledTimeMs'] as int?;
   if (scheduledTimestampMs != null) {

@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:vibration/vibration.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/state/hajicare_controller.dart';
 import '../../../core/theme/app_colors.dart';
@@ -76,12 +77,14 @@ class SmartbandLdrController extends GetxController {
   final RxInt stabilityScore = 98.obs; // Skor stabilitas tubuh (0 - 100%
   final RxString postureKey = 'smartband.postureUpright'.obs;
 
-  // 4. GPS NEO-6M (Satelit & Koordinat Presisi
+  // 4. GPS NEO-6M / ATGM336H (Satelit & Koordinat Presisi)
   final RxInt gpsSatellites = 0.obs;
 
-  // 5. LCD 16x2 + I2C Backpack (Layar Pergelangan Tangan
+  // 5. Layar OLED 0.96 Inci (SSD1306 128x64 / I2C 0x3C)
   final RxString lcdLine1 = 'HR:--   SpO2:--%'.obs;
   final RxString lcdLine2 = 'STATUS: NORMAL  '.obs;
+  RxString get oledLine1 => lcdLine1;
+  RxString get oledLine2 => lcdLine2;
   final RxString emergencyMessage = ''.obs;
 
   // 6. Baterai LiPo 3.7V
@@ -89,30 +92,52 @@ class SmartbandLdrController extends GetxController {
   final RxDouble batteryVoltage = 3.96.obs;
   final RxBool isCharging = false.obs;
 
-  // Tombol SOS Fisik Smartband (Interrupt Button
+  // 7. Dynamic Safe Radius & Mobile Vibration Motor Alert
+  final RxBool isOutsideSafeRadius = false.obs;
+  final RxDouble currentDistanceToPosko = 0.0.obs;
+  final RxDouble activeSafeRadius = 200.0.obs;
+  final RxString safeRadiusStatusLabel = 'Di Dalam Radius Aman'.obs;
+  Timer? _safeRadiusWatcherTimer;
+
+  // Tombol SOS Fisik Smartband (Interrupt Button)
   final RxBool isSosButtonPressed = false.obs;
   final RxBool isSosTransmitted = false.obs;
   DateTime? _lastSosTriggerTime;
   Timer? _sosCountdownTimer;
 
-  // Mode Simulasi Hardware (Untuk alat yang baru setengah jadi
+  // Mode Simulasi Hardware (Untuk alat yang baru setengah jadi)
   final RxBool isSimulationMode = false.obs;
   Timer? _simulationTimer;
   Timer? _fallCountdownTimer;
   double _simPhase = 0.0;
 
   // UI Filter & Hero Selector
-  // 0: MAX30102, 1: MCP9808, 2: MPU6050, 3: NEO-6M, 4: LiPo
+  // 0: MAX30102, 1: MCP9808, 2: MPU6050, 3: NEO-6M, 4: LiPo, 5: Layar OLED 0.96"
   final RxInt selectedSensorIndex = 0.obs;
   final RxString trendPeriod = 'today'.obs; // 'today', 'week', 'month'
+
+  // Dynamic Historical Telemetry Buffers (Real-time live streaming)
+  final RxList<double> heartRateHistory = <double>[
+    72.0, 74.0, 75.0, 78.0, 80.0, 77.0, 76.0,
+  ].obs;
+  final RxList<double> temperatureHistory = <double>[
+    36.4, 36.5, 36.5, 36.6, 36.7, 36.6, 36.6,
+  ].obs;
+  final RxList<double> spo2History = <double>[
+    98.0, 98.0, 97.0, 99.0, 98.0, 98.0, 98.0,
+  ].obs;
+  final RxList<double> stabilityHistory = <double>[
+    96.0, 97.0, 98.0, 95.0, 97.0, 98.0, 98.0,
+  ].obs;
+  final RxList<double> stepHistory = <double>[
+    1200.0, 1850.0, 2400.0, 2800.0, 3100.0, 3300.0, 3420.0,
+  ].obs;
+  final RxList<double> batteryHistory = <double>[
+    98.0, 95.0, 93.0, 91.0, 90.0, 89.0, 88.0,
+  ].obs;
+
   final RxList<double> trendData = <double>[
-    72.0,
-    74.0,
-    78.0,
-    82.0,
-    86.0,
-    79.0,
-    76.0,
+    72.0, 74.0, 78.0, 82.0, 86.0, 79.0, 76.0,
   ].obs;
 
   // Observable State - Legacy / Generic Connection
@@ -160,6 +185,9 @@ class SmartbandLdrController extends GetxController {
       ? lcdLine2.value
       : 'T:${currentTemperature.toStringAsFixed(1)}C ST:NORMAL';
 
+  String get currentOledLine1 => currentLcdLine1;
+  String get currentOledLine2 => currentLcdLine2;
+
   double get trendAverage {
     if (trendData.isEmpty) return 0;
     return trendData.reduce((a, b) => a + b) / trendData.length;
@@ -173,6 +201,83 @@ class SmartbandLdrController extends GetxController {
   double get trendMin {
     if (trendData.isEmpty) return 0;
     return trendData.reduce(min);
+  }
+
+  String get trendUnit {
+    switch (selectedSensorIndex.value) {
+      case 0:
+        return 'BPM';
+      case 1:
+        return '°C';
+      case 2:
+        return '%';
+      case 3:
+        return 'Sats';
+      case 4:
+        return '%';
+      default:
+        return 'FPS';
+    }
+  }
+
+  String formatTrendValue(double val) {
+    if (selectedSensorIndex.value == 1) {
+      return val.toStringAsFixed(1);
+    }
+    return val.toStringAsFixed(0);
+  }
+
+  /// Ringkasan kondisi umum yang ramah lansia / awam
+  String get elderlyOverallSummary {
+    if (isFallDetected.value) {
+      return '⚠️ Perhatian: Jatuh terdeteksi! Mohon periksa kondisi fisik Anda atau batalkan bila aman.';
+    }
+    if (isOutsideSafeRadius.value) {
+      return '⚠️ Anda di luar radius aman! Gelang bergetar, segera kembali ke arah petugas rombongan.';
+    }
+    if (currentHeartRate >= 105) {
+      return '⚠️ Denyut jantung agak cepat ($currentHeartRate BPM). Mohon istirahat di tempat teduh dan minum air.';
+    }
+    if (currentTemperature >= 37.8) {
+      return '⚠️ Suhu tubuh meningkat (${currentTemperature.toStringAsFixed(1)}°C). Segera basahi wajah dan minum air.';
+    }
+    if (currentSpo2 > 0 && currentSpo2 < 95) {
+      return '⚠️ Oksigen tubuh agak rendah ($currentSpo2%). Tarik napas teratur dan jangan memaksakan berjalan.';
+    }
+    return '✅ Alhamdulillah, kondisi tubuh stabil dan sehat. Anda siap melanjutkan ibadah.';
+  }
+
+  String get elderlyHeartRateAdvice {
+    final hr = currentHeartRate;
+    if (hr == 0) return 'Menunggu pembacaan sensor...';
+    if (hr < 55) return 'Denyut santai ($hr BPM) - Istirahat normal';
+    if (hr <= 95) return 'Denyut normal ($hr BPM) - Kondisi sehat';
+    if (hr <= 110) return 'Denyut meningkat ($hr BPM) - Harap kurangi kecepatan jalan';
+    return 'Denyut tinggi ($hr BPM) - Segera duduk dan istirahat!';
+  }
+
+  String get elderlyTemperatureAdvice {
+    final t = currentTemperature;
+    if (t < 36.0) return 'Suhu sejuk (${t.toStringAsFixed(1)}°C) - Cukup nyaman';
+    if (t <= 37.2) return 'Suhu normal (${t.toStringAsFixed(1)}°C) - Kondisi stabil';
+    if (t <= 37.8) return 'Suhu agak hangat (${t.toStringAsFixed(1)}°C) - Perbanyak minum air';
+    return 'Waspada panas (${t.toStringAsFixed(1)}°C) - Segera berteduh dan minum!';
+  }
+
+  String get elderlySpo2Advice {
+    final ox = currentSpo2;
+    if (ox == 0) return 'Menunggu kadar oksigen...';
+    if (ox >= 96) return 'Oksigen $ox% (Sangat Baik) - Paru-paru & napas lancar';
+    if (ox >= 93) return 'Oksigen $ox% (Cukup) - Istirahat bila lelah';
+    return 'Oksigen $ox% (Rendah) - Harap duduk dan bernapas teratur!';
+  }
+
+  String get elderlyMobilityAdvice {
+    if (isFallDetected.value) return 'Posisi terjatuh terdeteksi! Segera cari bantuan';
+    final score = stabilityScore.value;
+    if (score >= 90) return 'Keseimbangan sangat baik ($currentSteps langkah)';
+    if (score >= 75) return 'Keseimbangan cukup, berjalan tenang bersama rombongan';
+    return 'Keseimbangan menurun, hindari berjalan terburu-buru';
   }
 
   /// Calculates Heat Index (°C) - Preserved for tests
@@ -300,6 +405,7 @@ class SmartbandLdrController extends GetxController {
     _initStorage();
     _subscribeToBleService();
     _startRelativeTimeTicker();
+    _initSafeRadiusWatcher();
   }
 
   /// Inisialisasi storage dan muat data tersimpan
@@ -510,9 +616,16 @@ class SmartbandLdrController extends GetxController {
     }
 
     if (data.isSos) {
-      triggerSosButtonAlert();
-    } else if (data.fallDetected) {
-      triggerFallAlert();
+      if (!isSosButtonPressed.value) {
+        triggerSosButtonAlert();
+      }
+    } else {
+      if (isSosButtonPressed.value) {
+        cancelSosButtonAlert();
+      }
+      if (data.fallDetected) {
+        triggerFallAlert();
+      }
     }
 
     lastDataReceivedAt.value = data.timestamp;
@@ -520,6 +633,16 @@ class SmartbandLdrController extends GetxController {
     receivingData.value = true;
     rawDataString.value = data.rawJson;
     _updateRelativeTime();
+
+    // Rekam ke buffer riwayat dinamis
+    _recordTelemetryToHistory(
+      hr: data.heartRate,
+      temp: data.temperature ?? mcpTemperature.value ?? 36.6,
+      ox: data.spo2 ?? spo2.value ?? 98,
+      stab: stabilityScore.value,
+      steps: stepCount.value,
+      bat: batteryPercent.value,
+    );
 
     // Persist data ke local storage agar tidak hilang saat smartband mati
     _storage.saveSmartbandData(data);
@@ -624,6 +747,16 @@ class SmartbandLdrController extends GetxController {
 
       lastDataReceivedAt.value = DateTime.now();
       _updateRelativeTime();
+
+      // Rekam telemetri dinamis ke buffer riwayat
+      _recordTelemetryToHistory(
+        hr: simHr,
+        temp: mcpTemperature.value ?? 36.6,
+        ox: spo2.value ?? 98,
+        stab: stabilityScore.value,
+        steps: stepCount.value,
+        bat: batteryPercent.value,
+      );
     });
   }
 
@@ -691,10 +824,14 @@ class SmartbandLdrController extends GetxController {
   /// Dipicu saat tombol SOS pada hardware gelang ditekan
   void triggerSosButtonAlert({bool immediate = false}) {
     final now = DateTime.now();
-    if (_lastSosTriggerTime != null &&
+    if (!immediate &&
+        _lastSosTriggerTime != null &&
         now.difference(_lastSosTriggerTime!).inSeconds < 8 &&
         isSosButtonPressed.value) {
       // Debounce sinyal berulang cepat dari paket BLE notifikasi
+      return;
+    }
+    if (!immediate && isSosButtonPressed.value && isSosTransmitted.value) {
       return;
     }
     _lastSosTriggerTime = now;
@@ -721,6 +858,7 @@ class SmartbandLdrController extends GetxController {
     _sosCountdownTimer = null;
     isSosButtonPressed.value = false;
     isSosTransmitted.value = false;
+    _lastSosTriggerTime = null;
     emergencyMessage.value = '';
     final tempStr = mcpTemperature.value != null
         ? '${mcpTemperature.value!.toStringAsFixed(1)}C'
@@ -825,7 +963,7 @@ class SmartbandLdrController extends GetxController {
     }
   }
 
-  /// Kirim / perbarui pesan darurat ke layar LCD 16x2 Smartband
+  /// Kirim / perbarui pesan darurat ke layar OLED 0.96 Inci Smartband
   void sendEmergencyMessage(String message) {
     emergencyMessage.value = message;
     final trimmed = message.trim();
@@ -839,45 +977,215 @@ class SmartbandLdrController extends GetxController {
     }
   }
 
-  // Filter Periode Tren
+  // ==========================================
+  // DYNAMIC SENSOR TREND TELEMETRY STREAM
+  // ==========================================
+
+  /// Rekam telemetri baru ke buffer riwayat dinamis
+  void _recordTelemetryToHistory({
+    required int hr,
+    required double temp,
+    required int ox,
+    required int stab,
+    required int steps,
+    required int bat,
+  }) {
+    if (hr > 0) {
+      heartRateHistory.add(hr.toDouble());
+      if (heartRateHistory.length > 24) heartRateHistory.removeAt(0);
+    }
+    if (temp > 0) {
+      temperatureHistory.add(double.parse(temp.toStringAsFixed(1)));
+      if (temperatureHistory.length > 24) temperatureHistory.removeAt(0);
+    }
+    if (ox > 0) {
+      spo2History.add(ox.toDouble());
+      if (spo2History.length > 24) spo2History.removeAt(0);
+    }
+    if (stab > 0) {
+      stabilityHistory.add(stab.toDouble());
+      if (stabilityHistory.length > 24) stabilityHistory.removeAt(0);
+    }
+    if (steps > 0) {
+      stepHistory.add(steps.toDouble());
+      if (stepHistory.length > 24) stepHistory.removeAt(0);
+    }
+    if (bat > 0) {
+      batteryHistory.add(bat.toDouble());
+      if (batteryHistory.length > 24) batteryHistory.removeAt(0);
+    }
+
+    _syncActiveTrendData();
+  }
+
+  void _syncActiveTrendData() {
+    _updateTrendDataForPeriod(trendPeriod.value);
+  }
+
+  // Filter Periode Tren Dinamis
   void setTrendPeriod(String period) {
     trendPeriod.value = period;
     _updateTrendDataForPeriod(period);
   }
 
   void _updateTrendDataForPeriod(String period) {
-    if (selectedSensorIndex.value == 0) {
-      // MAX30102 Heart Rate
-      if (period == 'today') {
-        trendData.assignAll([72.0, 75.0, 78.0, 84.0, 88.0, 80.0, 76.0]);
-      } else if (period == 'week') {
-        trendData.assignAll([74.0, 76.0, 73.0, 81.0, 85.0, 78.0, 76.0]);
+    List<double> rawSeries;
+    switch (selectedSensorIndex.value) {
+      case 0: // Detak Jantung BPM
+        rawSeries = heartRateHistory.toList();
+        break;
+      case 1: // Suhu Tubuh °C
+        rawSeries = temperatureHistory.toList();
+        break;
+      case 2: // Stabilitas & Keseimbangan %
+        rawSeries = stabilityHistory.toList();
+        break;
+      case 3: // Satelit GPS
+        rawSeries = [
+          6.0,
+          7.0,
+          8.0,
+          9.0,
+          8.0,
+          9.0,
+          gpsSatellites.value > 0 ? gpsSatellites.value.toDouble() : 9.0,
+        ];
+        break;
+      case 4: // Baterai LiPo %
+        rawSeries = batteryHistory.toList();
+        break;
+      default: // Layar OLED 0.96"
+        rawSeries = [60.0, 60.0, 60.0, 59.0, 60.0, 60.0, 60.0];
+        break;
+    }
+
+    if (rawSeries.isEmpty) {
+      trendData.assignAll([72.0, 74.0, 76.0, 78.0, 80.0, 77.0, 76.0]);
+      return;
+    }
+
+    if (period == 'today') {
+      // Tampilkan titik-titik data riil terkini (maksimal 7 titik terkini)
+      if (rawSeries.length >= 7) {
+        trendData.assignAll(rawSeries.sublist(rawSeries.length - 7));
       } else {
-        trendData.assignAll([72.0, 74.0, 77.0, 82.0, 80.0, 75.0, 77.0]);
+        trendData.assignAll(rawSeries);
       }
-    } else if (selectedSensorIndex.value == 1) {
-      // MCP9808 Temperature
-      if (period == 'today') {
-        trendData.assignAll([36.4, 36.5, 36.6, 36.8, 36.7, 36.6, 36.5]);
-      } else if (period == 'week') {
-        trendData.assignAll([36.5, 36.6, 36.7, 36.6, 36.5, 36.6, 36.6]);
-      } else {
-        trendData.assignAll([36.4, 36.5, 36.6, 36.7, 36.6, 36.5, 36.6]);
-      }
-    } else if (selectedSensorIndex.value == 2) {
-      // MPU6050 Stability
-      trendData.assignAll([95.0, 97.0, 98.0, 94.0, 96.0, 99.0, 98.0]);
-    } else if (selectedSensorIndex.value == 4) {
-      // LiPo Battery
-      trendData.assignAll([100.0, 96.0, 92.0, 89.0, 88.0, 85.0, 83.0]);
+    } else if (period == 'week') {
+      // Variasi dinamis mingguan berbasis rata-rata data riil
+      final avg = rawSeries.reduce((a, b) => a + b) / rawSeries.length;
+      final factor = selectedSensorIndex.value == 1 ? 0.15 : 2.5;
+      trendData.assignAll([
+        double.parse((avg - factor).toStringAsFixed(1)),
+        double.parse((avg + factor * 0.5).toStringAsFixed(1)),
+        double.parse((avg - factor * 0.8).toStringAsFixed(1)),
+        double.parse((avg + factor * 1.2).toStringAsFixed(1)),
+        double.parse((avg + factor * 0.2).toStringAsFixed(1)),
+        double.parse((avg - factor * 0.4).toStringAsFixed(1)),
+        double.parse(rawSeries.last.toStringAsFixed(1)),
+      ]);
     } else {
-      trendData.assignAll([8.0, 9.0, 9.0, 10.0, 9.0, 9.0, 9.0]);
+      // Variasi dinamis bulanan berbasis rata-rata data riil
+      final avg = rawSeries.reduce((a, b) => a + b) / rawSeries.length;
+      final factor = selectedSensorIndex.value == 1 ? 0.2 : 3.5;
+      trendData.assignAll([
+        double.parse((avg - factor * 1.2).toStringAsFixed(1)),
+        double.parse((avg - factor * 0.4).toStringAsFixed(1)),
+        double.parse((avg + factor * 0.8).toStringAsFixed(1)),
+        double.parse((avg + factor * 1.5).toStringAsFixed(1)),
+        double.parse((avg + factor * 0.3).toStringAsFixed(1)),
+        double.parse((avg - factor * 0.2).toStringAsFixed(1)),
+        double.parse(rawSeries.last.toStringAsFixed(1)),
+      ]);
     }
   }
 
   void selectSensor(int index) {
     selectedSensorIndex.value = index;
     _updateTrendDataForPeriod(trendPeriod.value);
+  }
+
+  // ==========================================
+  // DYNAMIC SAFE RADIUS & MOTOR GETAR ALERT
+  // ==========================================
+
+  void _initSafeRadiusWatcher() {
+    _safeRadiusWatcherTimer?.cancel();
+    _safeRadiusWatcherTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      _checkSafeRadiusBreach();
+    });
+  }
+
+  void _checkSafeRadiusBreach() {
+    if (!Get.isRegistered<HajiCareController>()) return;
+    final hajiCtrl = Get.find<HajiCareController>();
+    final radius = hajiCtrl.safeRadiusMeters.value;
+    activeSafeRadius.value = radius;
+
+    final dist = hajiCtrl.calculatedDistance.value;
+    if (dist != null && dist > 0) {
+      currentDistanceToPosko.value = dist;
+      final outside = dist > radius;
+      if (outside && !isOutsideSafeRadius.value) {
+        _triggerSafeRadiusVibrationAlert(dist, radius);
+      } else if (!outside && isOutsideSafeRadius.value) {
+        _cancelSafeRadiusVibrationAlert();
+      }
+    }
+  }
+
+  /// Aktifkan alarm getar otomatis saat keluar dari safe radius
+  void _triggerSafeRadiusVibrationAlert(double distance, double radius) {
+    isOutsideSafeRadius.value = true;
+    safeRadiusStatusLabel.value =
+        'Di Luar Radius Aman (${distance.round()}m / batas ${radius.round()}m)';
+
+    // 1. Getaran Haptik HP
+    try {
+      Vibration.vibrate(pattern: [0, 500, 200, 500, 200, 800]).catchError((_) {});
+    } catch (_) {}
+
+    // 2. Kirim sinyal ke Mobile Vibration Motor gelang via BLE
+    bleService.sendCommand('VIBRATE');
+    bleService.sendCommand('BUZZ');
+
+    // 3. Tampilkan pesan darurat di layar OLED 0.96" smartband
+    lcdLine2.value = '!LUAR RADIUS !';
+    emergencyMessage.value = 'DI LUAR RADIUS AMAN';
+
+    AppLogger.warn(
+      'Jamaah keluar dari safe radius ($distance m > $radius m). Mengaktifkan motor getar smartband!',
+      tag: 'SmartbandLdr',
+    );
+  }
+
+  /// Matikan alarm getar otomatis saat kembali ke dalam safe radius
+  void _cancelSafeRadiusVibrationAlert() {
+    isOutsideSafeRadius.value = false;
+    safeRadiusStatusLabel.value = 'Di Dalam Radius Aman';
+
+    // Matikan getaran / buzzer di gelang via BLE
+    bleService.sendCommand('STOP_BUZZ');
+
+    final tempStr = mcpTemperature.value != null
+        ? '${mcpTemperature.value!.toStringAsFixed(1)}C'
+        : '36.6C';
+    lcdLine2.value = 'T:$tempStr ST:NORMAL';
+    emergencyMessage.value = '';
+
+    AppLogger.info(
+      'Jamaah kembali ke dalam radius aman. Mematikan motor getar smartband.',
+      tag: 'SmartbandLdr',
+    );
+  }
+
+  /// Simulasi / Uji Coba Peringatan Radius Aman & Motor Getar
+  void testSafeRadiusAlert({bool trigger = true}) {
+    if (trigger) {
+      _triggerSafeRadiusVibrationAlert(280.0, activeSafeRadius.value);
+    } else {
+      _cancelSafeRadiusVibrationAlert();
+    }
   }
 
   /// Hubungkan ke Smartband dengan memindai BLE dan auto-connect
@@ -970,6 +1278,7 @@ class SmartbandLdrController extends GetxController {
 
   @override
   void onClose() {
+    _safeRadiusWatcherTimer?.cancel();
     _simulationTimer?.cancel();
     _fallCountdownTimer?.cancel();
     _sosCountdownTimer?.cancel();

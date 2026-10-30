@@ -863,7 +863,7 @@ class _SaudiRiyalBanknotePainter extends CustomPainter {
     );
     canvas.drawLine(
       const Offset(0.8, 0.8),
-      Offset(0.8 + cornerLen, 0.8),
+      const Offset(0.8 + cornerLen, 0.8),
       reticlePaint,
     );
     // Top-right

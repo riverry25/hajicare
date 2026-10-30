@@ -42,6 +42,28 @@ class SosService {
         ? roomName.trim()
         : 'Rombongan';
 
+    // Defense-in-depth: Check if this user already has an active SOS event in Firestore
+    try {
+      final existingSnap = await _firestore
+          .collection('sos_events')
+          .where('userId', isEqualTo: userId)
+          .where('status', whereIn: const ['active', 'baru', 'direspons'])
+          .limit(1)
+          .get();
+      if (existingSnap.docs.isNotEmpty) {
+        final existingDoc = existingSnap.docs.first;
+        if (location != null) {
+          await existingDoc.reference.update({
+            'location': location,
+            'locationUpdatedAt': FieldValue.serverTimestamp(),
+          });
+        }
+        return existingDoc.id;
+      }
+    } catch (e) {
+      debugPrint('[SosService] Check existing active SOS error: $e');
+    }
+
     final batch = _firestore.batch();
     final eventData = <String, dynamic>{
       'userId': userId,

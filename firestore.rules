@@ -91,10 +91,11 @@ service cloud.firestore {
       allow update: if isSelf(uid) &&
         request.resource.data.diff(resource.data).affectedKeys().hasOnly([
           'allergies', 'bloodType', 'conditions', 'currentLocation',
-          'displayName', 'emergencyContact', 'isGpsActive',
+          'displayName', 'emergencyContact', 'isGpsActive', 'isSmartbandConnected',
           'locationUpdatedAt', 'name', 'nomorPorsi', 'porsi', 'photoUrl', 'updatedAt',
           'email', 'normalizedEmail', 'activeRoomId', 'sosActive', 'sosTime',
-          'phone', 'phoneNumber', 'nik', 'maktab', 'kloter'
+          'phone', 'phoneNumber', 'nik', 'maktab', 'kloter', 'onlineStatus',
+          'distance', 'separatedMode'
         ]) &&
         request.resource.data.get('displayName', '').size() <= 100 &&
         request.resource.data.get('emergencyContact', '').size() <= 50 &&
@@ -144,8 +145,8 @@ service cloud.firestore {
         allow update: if isSelf(memberUid) &&
           request.resource.data.get('role', resource.data.get('role', 'jamaah')) == resource.data.get('role', 'jamaah') &&
           request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-            'currentLocation', 'locationUpdatedAt', 'isGpsActive', 'sosActive', 'sosTime',
-            'updatedAt', 'lastActiveAt', 'displayName', 'name'
+            'currentLocation', 'locationUpdatedAt', 'isGpsActive', 'isSmartbandConnected',
+            'sosActive', 'sosTime', 'updatedAt', 'lastActiveAt', 'displayName', 'name'
           ]);
 
         allow delete: if isSelf(memberUid) || isAdmin() || isRoomManager(roomId);

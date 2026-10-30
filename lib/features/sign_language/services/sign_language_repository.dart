@@ -178,12 +178,12 @@ class SignLanguageRepository {
   }
 
   /// Katalog statis default v1.1.0 sebagai jaminan ketersediaan metadata saat offline/initial launch
-  static final SignLanguageCatalog _fallbackCatalog = SignLanguageCatalog(
+  static const SignLanguageCatalog _fallbackCatalog = SignLanguageCatalog(
     schemaVersion: 1,
     catalogVersion: '1.1.0',
     updatedAt: '2026-10-06',
     videos: [
-      const SignVideoEntry(
+      SignVideoEntry(
         id: 'bisindo_baik',
         language: 'bisindo',
         type: 'word',
@@ -194,7 +194,7 @@ class SignLanguageRepository {
         path: 'videos/bisindo/baik_v1.mp4',
         source: SignVideoSource.remote,
       ),
-      const SignVideoEntry(
+      SignVideoEntry(
         id: 'bisindo_berapa',
         language: 'bisindo',
         type: 'word',
@@ -205,7 +205,7 @@ class SignLanguageRepository {
         path: 'videos/bisindo/berapa_v1.mp4',
         source: SignVideoSource.remote,
       ),
-      const SignVideoEntry(
+      SignVideoEntry(
         id: 'bisindo_berdiri',
         language: 'bisindo',
         type: 'word',
@@ -216,7 +216,7 @@ class SignLanguageRepository {
         path: 'videos/bisindo/berdiri_v1.mp4',
         source: SignVideoSource.remote,
       ),
-      const SignVideoEntry(
+      SignVideoEntry(
         id: 'bisindo_dia',
         language: 'bisindo',
         type: 'word',
@@ -227,7 +227,7 @@ class SignLanguageRepository {
         path: 'videos/bisindo/dia_v1.mp4',
         source: SignVideoSource.remote,
       ),
-      const SignVideoEntry(
+      SignVideoEntry(
         id: 'bisindo_duduk',
         language: 'bisindo',
         type: 'word',
@@ -238,7 +238,7 @@ class SignLanguageRepository {
         path: 'videos/bisindo/duduk_v1.mp4',
         source: SignVideoSource.remote,
       ),
-      const SignVideoEntry(
+      SignVideoEntry(
         id: 'bisindo_f',
         language: 'bisindo',
         type: 'letter',
@@ -249,7 +249,7 @@ class SignLanguageRepository {
         path: 'videos/bisindo/f_v1.mp4',
         source: SignVideoSource.remote,
       ),
-      const SignVideoEntry(
+      SignVideoEntry(
         id: 'bisindo_g',
         language: 'bisindo',
         type: 'letter',
@@ -260,7 +260,7 @@ class SignLanguageRepository {
         path: 'videos/bisindo/g_v1.mp4',
         source: SignVideoSource.remote,
       ),
-      const SignVideoEntry(
+      SignVideoEntry(
         id: 'bisindo_h',
         language: 'bisindo',
         type: 'letter',
@@ -271,7 +271,7 @@ class SignLanguageRepository {
         path: 'videos/bisindo/h_v1.mp4',
         source: SignVideoSource.remote,
       ),
-      const SignVideoEntry(
+      SignVideoEntry(
         id: 'bisindo_i',
         language: 'bisindo',
         type: 'letter',
@@ -282,7 +282,7 @@ class SignLanguageRepository {
         path: 'videos/bisindo/i_v1.mp4',
         source: SignVideoSource.remote,
       ),
-      const SignVideoEntry(
+      SignVideoEntry(
         id: 'bisindo_j',
         language: 'bisindo',
         type: 'letter',
@@ -293,7 +293,7 @@ class SignLanguageRepository {
         path: 'videos/bisindo/j_v1.mp4',
         source: SignVideoSource.remote,
       ),
-      const SignVideoEntry(
+      SignVideoEntry(
         id: 'bisindo_k',
         language: 'bisindo',
         type: 'letter',
@@ -304,7 +304,7 @@ class SignLanguageRepository {
         path: 'videos/bisindo/k_v1.mp4',
         source: SignVideoSource.remote,
       ),
-      const SignVideoEntry(
+      SignVideoEntry(
         id: 'bisindo_kalian',
         language: 'bisindo',
         type: 'word',
@@ -315,7 +315,7 @@ class SignLanguageRepository {
         path: 'videos/bisindo/kalian_v1.mp4',
         source: SignVideoSource.remote,
       ),
-      const SignVideoEntry(
+      SignVideoEntry(
         id: 'bisindo_kami',
         language: 'bisindo',
         type: 'word',
@@ -326,7 +326,7 @@ class SignLanguageRepository {
         path: 'videos/bisindo/kami_v1.mp4',
         source: SignVideoSource.remote,
       ),
-      const SignVideoEntry(
+      SignVideoEntry(
         id: 'bisindo_kamu',
         language: 'bisindo',
         type: 'word',
@@ -337,7 +337,7 @@ class SignLanguageRepository {
         path: 'videos/bisindo/kamu_v1.mp4',
         source: SignVideoSource.remote,
       ),
-      const SignVideoEntry(
+      SignVideoEntry(
         id: 'bisindo_kapan',
         language: 'bisindo',
         type: 'word',
@@ -348,7 +348,7 @@ class SignLanguageRepository {
         path: 'videos/bisindo/kapan_v1.mp4',
         source: SignVideoSource.remote,
       ),
-      const SignVideoEntry(
+      SignVideoEntry(
         id: 'bisindo_kemana',
         language: 'bisindo',
         type: 'word',
@@ -359,7 +359,7 @@ class SignLanguageRepository {
         path: 'videos/bisindo/kemana_v1.mp4',
         source: SignVideoSource.remote,
       ),
-      const SignVideoEntry(
+      SignVideoEntry(
         id: 'bisindo_kita',
         language: 'bisindo',
         type: 'word',
@@ -370,7 +370,7 @@ class SignLanguageRepository {
         path: 'videos/bisindo/kita_v1.mp4',
         source: SignVideoSource.remote,
       ),
-      const SignVideoEntry(
+      SignVideoEntry(
         id: 'bisindo_l',
         language: 'bisindo',
         type: 'letter',
@@ -381,7 +381,7 @@ class SignLanguageRepository {
         path: 'videos/bisindo/l_v1.mp4',
         source: SignVideoSource.remote,
       ),
-      const SignVideoEntry(
+      SignVideoEntry(
         id: 'bisindo_m',
         language: 'bisindo',
         type: 'letter',
@@ -392,7 +392,7 @@ class SignLanguageRepository {
         path: 'videos/bisindo/m_v1.mp4',
         source: SignVideoSource.remote,
       ),
-      const SignVideoEntry(
+      SignVideoEntry(
         id: 'bisindo_mandi',
         language: 'bisindo',
         type: 'word',
@@ -403,7 +403,7 @@ class SignLanguageRepository {
         path: 'videos/bisindo/mandi_v1.mp4',
         source: SignVideoSource.remote,
       ),
-      const SignVideoEntry(
+      SignVideoEntry(
         id: 'bisindo_n',
         language: 'bisindo',
         type: 'letter',
@@ -414,7 +414,7 @@ class SignLanguageRepository {
         path: 'videos/bisindo/n_v1.mp4',
         source: SignVideoSource.remote,
       ),
-      const SignVideoEntry(
+      SignVideoEntry(
         id: 'bisindo_o',
         language: 'bisindo',
         type: 'letter',
@@ -425,7 +425,7 @@ class SignLanguageRepository {
         path: 'videos/bisindo/o_v1.mp4',
         source: SignVideoSource.remote,
       ),
-      const SignVideoEntry(
+      SignVideoEntry(
         id: 'bisindo_p',
         language: 'bisindo',
         type: 'letter',
@@ -436,7 +436,7 @@ class SignLanguageRepository {
         path: 'videos/bisindo/p_v1.mp4',
         source: SignVideoSource.remote,
       ),
-      const SignVideoEntry(
+      SignVideoEntry(
         id: 'bisindo_q',
         language: 'bisindo',
         type: 'letter',
@@ -447,7 +447,7 @@ class SignLanguageRepository {
         path: 'videos/bisindo/q_v1.mp4',
         source: SignVideoSource.remote,
       ),
-      const SignVideoEntry(
+      SignVideoEntry(
         id: 'bisindo_r',
         language: 'bisindo',
         type: 'letter',
@@ -458,7 +458,7 @@ class SignLanguageRepository {
         path: 'videos/bisindo/r_v1.mp4',
         source: SignVideoSource.remote,
       ),
-      const SignVideoEntry(
+      SignVideoEntry(
         id: 'bisindo_s',
         language: 'bisindo',
         type: 'letter',
@@ -469,7 +469,7 @@ class SignLanguageRepository {
         path: 'videos/bisindo/s_v1.mp4',
         source: SignVideoSource.remote,
       ),
-      const SignVideoEntry(
+      SignVideoEntry(
         id: 'bisindo_siapa',
         language: 'bisindo',
         type: 'word',
@@ -480,7 +480,7 @@ class SignLanguageRepository {
         path: 'videos/bisindo/siapa_v1.mp4',
         source: SignVideoSource.remote,
       ),
-      const SignVideoEntry(
+      SignVideoEntry(
         id: 'bisindo_t',
         language: 'bisindo',
         type: 'letter',
@@ -491,7 +491,7 @@ class SignLanguageRepository {
         path: 'videos/bisindo/t_v1.mp4',
         source: SignVideoSource.remote,
       ),
-      const SignVideoEntry(
+      SignVideoEntry(
         id: 'bisindo_u',
         language: 'bisindo',
         type: 'letter',
@@ -502,7 +502,7 @@ class SignLanguageRepository {
         path: 'videos/bisindo/u_v1.mp4',
         source: SignVideoSource.remote,
       ),
-      const SignVideoEntry(
+      SignVideoEntry(
         id: 'bisindo_v',
         language: 'bisindo',
         type: 'letter',
@@ -513,7 +513,7 @@ class SignLanguageRepository {
         path: 'videos/bisindo/v_v1.mp4',
         source: SignVideoSource.remote,
       ),
-      const SignVideoEntry(
+      SignVideoEntry(
         id: 'bisindo_w',
         language: 'bisindo',
         type: 'letter',
@@ -524,7 +524,7 @@ class SignLanguageRepository {
         path: 'videos/bisindo/w_v1.mp4',
         source: SignVideoSource.remote,
       ),
-      const SignVideoEntry(
+      SignVideoEntry(
         id: 'bisindo_x',
         language: 'bisindo',
         type: 'letter',
@@ -535,7 +535,7 @@ class SignLanguageRepository {
         path: 'videos/bisindo/x_v1.mp4',
         source: SignVideoSource.remote,
       ),
-      const SignVideoEntry(
+      SignVideoEntry(
         id: 'bisindo_y',
         language: 'bisindo',
         type: 'letter',
@@ -546,7 +546,7 @@ class SignLanguageRepository {
         path: 'videos/bisindo/y_v1.mp4',
         source: SignVideoSource.remote,
       ),
-      const SignVideoEntry(
+      SignVideoEntry(
         id: 'bisindo_z',
         language: 'bisindo',
         type: 'letter',
@@ -557,7 +557,7 @@ class SignLanguageRepository {
         path: 'videos/bisindo/z_v1.mp4',
         source: SignVideoSource.remote,
       ),
-      const SignVideoEntry(
+      SignVideoEntry(
         id: 'sibi_beli',
         language: 'sibi',
         type: 'word',
@@ -568,7 +568,7 @@ class SignLanguageRepository {
         path: 'videos/sibi/beli_v1.mp4',
         source: SignVideoSource.remote,
       ),
-      const SignVideoEntry(
+      SignVideoEntry(
         id: 'sibi_dokter',
         language: 'sibi',
         type: 'word',
@@ -579,7 +579,7 @@ class SignLanguageRepository {
         path: 'videos/sibi/dokter_v1.mp4',
         source: SignVideoSource.remote,
       ),
-      const SignVideoEntry(
+      SignVideoEntry(
         id: 'sibi_hilang',
         language: 'sibi',
         type: 'word',
@@ -590,7 +590,7 @@ class SignLanguageRepository {
         path: 'videos/sibi/hilang_v1.mp4',
         source: SignVideoSource.remote,
       ),
-      const SignVideoEntry(
+      SignVideoEntry(
         id: 'sibi_mana',
         language: 'sibi',
         type: 'word',
@@ -601,7 +601,7 @@ class SignLanguageRepository {
         path: 'videos/sibi/mana_v1.mp4',
         source: SignVideoSource.remote,
       ),
-      const SignVideoEntry(
+      SignVideoEntry(
         id: 'sibi_obat',
         language: 'sibi',
         type: 'word',
@@ -612,7 +612,7 @@ class SignLanguageRepository {
         path: 'videos/sibi/obat_v1.mp4',
         source: SignVideoSource.remote,
       ),
-      const SignVideoEntry(
+      SignVideoEntry(
         id: 'sibi_segera',
         language: 'sibi',
         type: 'word',
@@ -623,7 +623,7 @@ class SignLanguageRepository {
         path: 'videos/sibi/segera_v1.mp4',
         source: SignVideoSource.remote,
       ),
-      const SignVideoEntry(
+      SignVideoEntry(
         id: 'sibi_sesat',
         language: 'sibi',
         type: 'word',

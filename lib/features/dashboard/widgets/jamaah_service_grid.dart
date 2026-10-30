@@ -4,7 +4,6 @@ import 'package:get/get.dart';
 import '../../../../core/locales/app_translations.dart';
 import '../../../../core/routes/app_routes.dart';
 import '../../../../core/services/app_alert_service.dart';
-import '../../../../core/state/app_settings_controller.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/theme_context.dart';
@@ -216,9 +215,6 @@ class JamaahServiceGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hc = context.hc;
-    final textScale = Get.isRegistered<AppSettingsController>()
-        ? Get.find<AppSettingsController>().textScaleFactor
-        : 1.0;
 
     final List<Map<String, dynamic>> services = [
       {
@@ -300,38 +296,39 @@ class JamaahServiceGrid extends StatelessWidget {
           ],
         ),
         const SizedBox(height: AppSpacing.sm),
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final double cardWidth = (constraints.maxWidth - AppSpacing.sm) / 2;
-            double ratio = cardWidth < 170 ? 0.95 : 1.05;
-            if (textScale > 1.25) {
-              ratio = ratio * 0.76;
-            } else if (textScale > 1.1) {
-              ratio = ratio * 0.88;
-            }
-
-            return GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: services.length,
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                crossAxisSpacing: AppSpacing.md,
-                mainAxisSpacing: AppSpacing.md,
-                childAspectRatio: ratio,
+        Column(
+          children: [
+            for (int i = 0; i < services.length; i += 2) ...[
+              if (i > 0) const SizedBox(height: AppSpacing.md),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: _buildServiceCard(
+                      context: context,
+                      title: services[i]['title'] as String,
+                      subtitle: services[i]['subtitle'] as String,
+                      icon: services[i]['icon'] as IconData,
+                      onTap: services[i]['action'] as VoidCallback?,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.md),
+                  if (i + 1 < services.length)
+                    Expanded(
+                      child: _buildServiceCard(
+                        context: context,
+                        title: services[i + 1]['title'] as String,
+                        subtitle: services[i + 1]['subtitle'] as String,
+                        icon: services[i + 1]['icon'] as IconData,
+                        onTap: services[i + 1]['action'] as VoidCallback?,
+                      ),
+                    )
+                  else
+                    const Expanded(child: SizedBox.shrink()),
+                ],
               ),
-              itemBuilder: (context, index) {
-                final item = services[index];
-                return _buildServiceCard(
-                  context: context,
-                  title: item['title'] as String,
-                  subtitle: item['subtitle'] as String,
-                  icon: item['icon'] as IconData,
-                  onTap: item['action'] as VoidCallback?,
-                );
-              },
-            );
-          },
+            ],
+          ],
         ),
       ],
     );
@@ -351,41 +348,36 @@ class JamaahServiceGrid extends StatelessWidget {
       onTap: onTap,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Container(
-            width: 48,
-            height: 48,
+            width: 44,
+            height: 44,
             decoration: BoxDecoration(
               color: hc.sandLight,
               borderRadius: BorderRadius.circular(AppRadius.md),
             ),
-            child: Icon(icon, color: hc.brand, size: 24),
+            child: Icon(icon, color: hc.brand, size: 22),
           ),
-          const SizedBox(height: AppSpacing.xs),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: context.text.titleMedium.copyWith(
-                  color: hc.textPrimary,
-                  fontWeight: FontWeight.w700,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 3),
-              Text(
-                subtitle,
-                style: context.text.bodySmall.copyWith(color: hc.textSecondary),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            title,
+            style: context.text.titleMedium.copyWith(
+              color: hc.textPrimary,
+              fontWeight: FontWeight.w700,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 3),
+          Text(
+            subtitle,
+            style: context.text.bodySmall.copyWith(color: hc.textSecondary),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),
     );
   }
 }
+

@@ -38,10 +38,6 @@ class NextPrayerLuxuryHero extends StatelessWidget {
       final timeStr = controller.nextPrayerTime.value;
       final isSoundOn = controller.isPrayerSoundOn(rawPrayerName);
 
-      final hours = controller.countdownHours.value;
-      final minutes = controller.countdownMinutes.value;
-      final seconds = controller.countdownSeconds.value;
-
       return Container(
         width: double.infinity,
         decoration: BoxDecoration(
@@ -79,12 +75,14 @@ class NextPrayerLuxuryHero extends StatelessWidget {
           borderRadius: BorderRadius.circular(AppRadius.xl),
           child: Stack(
             children: [
-              // Subtle Islamic Mihrab Arch Silhouette Pattern
+              // Subtle Islamic Mihrab Arch Silhouette Pattern - raster cached
               Positioned.fill(
-                child: CustomPaint(
-                  painter: _MihrabSilhouettePainter(
-                    accentColor: accentColor.withValues(
-                      alpha: isDark ? 0.08 : 0.10,
+                child: RepaintBoundary(
+                  child: CustomPaint(
+                    painter: _MihrabSilhouettePainter(
+                      accentColor: accentColor.withValues(
+                        alpha: isDark ? 0.08 : 0.10,
+                      ),
                     ),
                   ),
                 ),
@@ -149,7 +147,7 @@ class NextPrayerLuxuryHero extends StatelessWidget {
                         ),
                         const SizedBox(width: 8),
 
-                        // Quick Sound Toggle (Touch target >= 48x48
+                        // Quick Sound Toggle (Touch target >= 48x48)
                         Material(
                           color: Colors.transparent,
                           child: InkWell(
@@ -283,79 +281,12 @@ class NextPrayerLuxuryHero extends StatelessWidget {
 
                     const SizedBox(height: 22),
 
-                    // Segmented Countdown Capsule
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withValues(
-                          alpha: isDark ? 0.38 : 0.28,
-                        ),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: accentColor.withValues(alpha: 0.35),
-                          width: 1.2,
-                        ),
-                      ),
-                      child: Column(
-                        children: [
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.hourglass_top_rounded,
-                                color: accentTextColor,
-                                size: 15,
-                              ),
-                              const SizedBox(width: 6),
-                              Expanded(
-                                child: Text(
-                                  context
-                                      .tr('prayerTimeRemaining')
-                                      .toUpperCase(),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: context.text.labelSmall.copyWith(
-                                    color: Colors.white.withValues(alpha: 0.90),
-                                    fontWeight: FontWeight.w700,
-                                    letterSpacing: 0.8,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 10),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: [
-                              _buildTimeSegment(
-                                context,
-                                value: hours.toString().padLeft(2, '0'),
-                                unit: 'JAM',
-                                accentColor: accentColor,
-                                accentTextColor: accentTextColor,
-                              ),
-                              _buildTimeDivider(accentColor),
-                              _buildTimeSegment(
-                                context,
-                                value: minutes.toString().padLeft(2, '0'),
-                                unit: 'MENIT',
-                                accentColor: accentColor,
-                                accentTextColor: accentTextColor,
-                              ),
-                              _buildTimeDivider(accentColor),
-                              _buildTimeSegment(
-                                context,
-                                value: seconds.toString().padLeft(2, '0'),
-                                unit: 'DETIK',
-                                accentColor: accentColor,
-                                accentTextColor: accentTextColor,
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
+                    // Segmented Countdown Capsule (Isolated 1s ticker Obx)
+                    _PrayerCountdownCapsule(
+                      controller: controller,
+                      accentColor: accentColor,
+                      accentTextColor: accentTextColor,
+                      isDark: isDark,
                     ),
                   ],
                 ),
@@ -366,14 +297,118 @@ class NextPrayerLuxuryHero extends StatelessWidget {
       );
     });
   }
+}
 
-  Widget _buildTimeSegment(
-    BuildContext context, {
-    required String value,
-    required String unit,
-    required Color accentColor,
-    required Color accentTextColor,
-  }) {
+/// Dedicated granular countdown capsule that isolates 1-second reactive ticks
+/// from rebuilding the full NextPrayerLuxuryHero card.
+class _PrayerCountdownCapsule extends StatelessWidget {
+  final PrayerTimesController controller;
+  final Color accentColor;
+  final Color accentTextColor;
+  final bool isDark;
+
+  const _PrayerCountdownCapsule({
+    required this.controller,
+    required this.accentColor,
+    required this.accentTextColor,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() {
+      // Rule 1: Always evaluate .obs variables on the top line before any conditionals
+      final hours = controller.countdownHours.value;
+      final minutes = controller.countdownMinutes.value;
+      final seconds = controller.countdownSeconds.value;
+
+      return Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 12,
+        ),
+        decoration: BoxDecoration(
+          color: Colors.black.withValues(
+            alpha: isDark ? 0.38 : 0.28,
+          ),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: accentColor.withValues(alpha: 0.35),
+            width: 1.2,
+          ),
+        ),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.hourglass_top_rounded,
+                  color: accentTextColor,
+                  size: 15,
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    context.tr('prayerTimeRemaining').toUpperCase(),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: context.text.labelSmall.copyWith(
+                      color: Colors.white.withValues(alpha: 0.90),
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _CountdownTimeSegment(
+                  value: hours.toString().padLeft(2, '0'),
+                  unit: 'JAM',
+                  accentColor: accentColor,
+                  accentTextColor: accentTextColor,
+                ),
+                _CountdownTimeDivider(accentColor: accentColor),
+                _CountdownTimeSegment(
+                  value: minutes.toString().padLeft(2, '0'),
+                  unit: 'MENIT',
+                  accentColor: accentColor,
+                  accentTextColor: accentTextColor,
+                ),
+                _CountdownTimeDivider(accentColor: accentColor),
+                _CountdownTimeSegment(
+                  value: seconds.toString().padLeft(2, '0'),
+                  unit: 'DETIK',
+                  accentColor: accentColor,
+                  accentTextColor: accentTextColor,
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+    });
+  }
+}
+
+class _CountdownTimeSegment extends StatelessWidget {
+  final String value;
+  final String unit;
+  final Color accentColor;
+  final Color accentTextColor;
+
+  const _CountdownTimeSegment({
+    required this.value,
+    required this.unit,
+    required this.accentColor,
+    required this.accentTextColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return Expanded(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -415,8 +450,15 @@ class NextPrayerLuxuryHero extends StatelessWidget {
       ),
     );
   }
+}
 
-  Widget _buildTimeDivider(Color accentColor) {
+class _CountdownTimeDivider extends StatelessWidget {
+  final Color accentColor;
+
+  const _CountdownTimeDivider({required this.accentColor});
+
+  @override
+  Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 14, left: 4, right: 4),
       child: Text(

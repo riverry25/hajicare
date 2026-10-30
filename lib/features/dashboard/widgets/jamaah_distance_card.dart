@@ -48,11 +48,27 @@ class JamaahDistanceCard extends StatelessWidget {
 
   String _formatTimestamp(BuildContext context, DateTime? dt) {
     if (dt == null) return context.tr('dashboard.waitingLocation');
-    final diff = DateTime.now().difference(dt);
-    if (diff.inSeconds < 30) return context.tr('dashboard.justNow');
+    final now = DateTime.now();
+    final diff = now.difference(dt);
+    if (diff.isNegative || diff.inSeconds < 45) {
+      return context.tr('dashboard.justNow');
+    }
     if (diff.inMinutes < 60) {
       return context.tr('dashboard.minutesAgo', {'minutes': diff.inMinutes});
     }
+
+    final calendarDayDiff = DateTime(now.year, now.month, now.day)
+        .difference(DateTime(dt.year, dt.month, dt.day))
+        .inDays;
+    final durationDays =
+        diff.inDays > 0 ? diff.inDays : (diff.inHours / 24).floor();
+    final effectiveDays =
+        calendarDayDiff > durationDays ? calendarDayDiff : durationDays;
+
+    if (effectiveDays >= 1) {
+      return context.tr('dashboard.daysAgo', {'days': effectiveDays});
+    }
+
     return '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
   }
 

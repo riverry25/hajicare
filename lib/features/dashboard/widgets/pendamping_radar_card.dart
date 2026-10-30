@@ -13,6 +13,7 @@ import '../presentation/dashboard_typography.dart';
 import '../../../../core/widgets/animated_ping_dot.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../room/widgets/jamaah_detail_sheet.dart';
+import '../../smartband/controllers/smartband_ldr_controller.dart';
 import 'adjust_safe_radius_dialog.dart';
 
 class PendampingRadarCard extends StatelessWidget {
@@ -34,11 +35,27 @@ class PendampingRadarCard extends StatelessWidget {
 
   String _formatTimestamp(BuildContext context, DateTime? dt) {
     if (dt == null) return context.tr('dashboard.waiting');
-    final diff = DateTime.now().difference(dt);
-    if (diff.inSeconds < 30) return context.tr('dashboard.justNow');
+    final now = DateTime.now();
+    final diff = now.difference(dt);
+    if (diff.isNegative || diff.inSeconds < 45) {
+      return context.tr('dashboard.justNow');
+    }
     if (diff.inMinutes < 60) {
       return context.tr('dashboard.minutesAgo', {'minutes': diff.inMinutes});
     }
+
+    final calendarDayDiff = DateTime(now.year, now.month, now.day)
+        .difference(DateTime(dt.year, dt.month, dt.day))
+        .inDays;
+    final durationDays =
+        diff.inDays > 0 ? diff.inDays : (diff.inHours / 24).floor();
+    final effectiveDays =
+        calendarDayDiff > durationDays ? calendarDayDiff : durationDays;
+
+    if (effectiveDays >= 1) {
+      return context.tr('dashboard.daysAgo', {'days': effectiveDays});
+    }
+
     return '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
   }
 
@@ -863,6 +880,19 @@ class PendampingRadarCard extends StatelessWidget {
                 final bool stackTelemetry =
                     textScale > 1.25 || telemConstraints.maxWidth < 285;
 
+                final bool isBandActive = () {
+                  if (jamaah.isSmartbandConnected) return true;
+                  final currentUid = Get.isRegistered<HajiCareController>()
+                      ? Get.find<HajiCareController>().currentUid
+                      : null;
+                  if (jamaah.id == currentUid || jamaah.id == 'current_user') {
+                    if (Get.isRegistered<SmartbandLdrController>()) {
+                      return Get.find<SmartbandLdrController>().isConnected;
+                    }
+                  }
+                  return false;
+                }();
+
                 final smartBandTile = Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 10,
@@ -887,18 +917,19 @@ class PendampingRadarCard extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.all(6),
                         decoration: BoxDecoration(
-                          color:
-                              (jamaah.isGpsActive
-                                      ? context.hc.success
-                                      : context.hc.danger)
-                                  .withValues(alpha: 0.12),
+                          color: (isBandActive
+                                  ? context.hc.success
+                                  : bodyColor.withValues(alpha: 0.15))
+                              .withValues(alpha: 0.12),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
-                          Icons.watch_rounded,
-                          color: jamaah.isGpsActive
+                          isBandActive
+                              ? Icons.watch_rounded
+                              : Icons.watch_off_outlined,
+                          color: isBandActive
                               ? context.hc.success
-                              : context.hc.danger,
+                              : bodyColor.withValues(alpha: 0.55),
                           size: 15,
                         ),
                       ),
@@ -916,13 +947,30 @@ class PendampingRadarCard extends StatelessWidget {
                               ),
                             ),
                             Text(
-                              jamaah.isGpsActive
-                                  ? context.tr('dashboard.gpsActive')
-                                  : context.tr('dashboard.gpsInactive'),
+                              () {
+                                if (isBandActive) {
+                                  final text =
+                                      context.tr('dashboard.smartbandConnected');
+                                  if (text.isNotEmpty &&
+                                      !text.startsWith('dashboard.')) {
+                                    return text;
+                                  }
+                                  return 'Terhubung';
+                                } else {
+                                  final text = context.tr(
+                                    'dashboard.smartbandNotConnected',
+                                  );
+                                  if (text.isNotEmpty &&
+                                      !text.startsWith('dashboard.')) {
+                                    return text;
+                                  }
+                                  return 'Belum Terhubung';
+                                }
+                              }(),
                               style: TextStyle(
-                                color: jamaah.isGpsActive
+                                color: isBandActive
                                     ? context.hc.success
-                                    : context.hc.danger,
+                                    : bodyColor.withValues(alpha: 0.75),
                                 fontSize: 11,
                                 fontWeight: FontWeight.w700,
                               ),

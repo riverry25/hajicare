@@ -261,6 +261,30 @@ async function transitionSos(db, auth, data) {
     transaction.set(memberRef, {sosActive: false}, {merge: true});
     result = {eventId, status: 'selesai', roomId: authorization.roomRef.id};
   });
+
+  if (action === 'cancel' && ownerHint) {
+    try {
+      const remainingActive = await db
+        .collection('sos_events')
+        .where('userId', '==', ownerHint)
+        .where('status', 'in', ['active', 'baru', 'direspons'])
+        .get();
+      if (!remainingActive.empty) {
+        const batch = db.batch();
+        for (const doc of remainingActive.docs) {
+          if (doc.id !== result?.eventId) {
+            batch.update(doc.ref, {
+              status: 'cancelled',
+              cancelledAt: FieldValue.serverTimestamp(),
+              cancelledBy: auth.uid,
+            });
+          }
+        }
+        await batch.commit();
+      }
+    } catch (_) {}
+  }
+
   return result;
 }
 

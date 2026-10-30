@@ -274,7 +274,7 @@ class AssistanceTrackingSheet extends StatelessWidget {
     final hc = context.hc;
     final status = current.status;
 
-    final bool step1Active = true;
+    const bool step1Active = true;
     final bool step2Active =
         status == AssistanceStatus.acknowledged ||
         status == AssistanceStatus.onTheWay ||

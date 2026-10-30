@@ -46,9 +46,10 @@ class DashboardPendampingScreen extends StatelessWidget {
         backgroundColor: context.hc.canvas,
         extendBody: true,
         body: Obx(() {
+          final currentIdx = dashboardCtrl.currentIndex.value;
           settings?.rxLocale.value;
           return IndexedStack(
-            index: dashboardCtrl.currentIndex.value,
+            index: currentIdx,
             children: [
               _buildHome(context, state, dashboardCtrl),
               if (dashboardCtrl.visitedTabs.contains(1))
@@ -67,14 +68,16 @@ class DashboardPendampingScreen extends StatelessWidget {
           );
         }),
         bottomNavigationBar: Obx(() {
+          // Rule 1: Evaluate .obs at top line before conditionals
+          final currentIdx = dashboardCtrl.currentIndex.value;
           if (Get.isRegistered<MapController>()) {
             final mapCtrl = MapController.to;
-            if (dashboardCtrl.currentIndex.value == 1 && mapCtrl.isNavigating) {
+            if (currentIdx == 1 && mapCtrl.isNavigating) {
               return const SizedBox.shrink();
             }
           }
           return HajiCareBottomNavBar(
-            currentIndex: dashboardCtrl.currentIndex.value,
+            currentIndex: currentIdx,
             onTap: dashboardCtrl.changeTab,
           );
         }),
@@ -120,17 +123,15 @@ class DashboardPendampingScreen extends StatelessWidget {
       backgroundColor: context.hc.canvas,
       body: Container(
         decoration: BoxDecoration(gradient: dashGradient),
-        child: Obx(
-          () => SingleChildScrollView(
-            physics: const ClampingScrollPhysics(),
-            child: ResponsiveCenter(
-              maxWidth: AppBreakpoints.maxTabletContentWidth,
-              child: Column(
-                children: [
-                  _hero(context, state, dashboardCtrl, prayerCtrl, isDark),
-                  _body(context, state, dashboardCtrl, isDark),
-                ],
-              ),
+        child: SingleChildScrollView(
+          physics: const ClampingScrollPhysics(),
+          child: ResponsiveCenter(
+            maxWidth: AppBreakpoints.maxTabletContentWidth,
+            child: Column(
+              children: [
+                _hero(context, state, dashboardCtrl, prayerCtrl, isDark),
+                _body(context, state, dashboardCtrl, isDark),
+              ],
             ),
           ),
         ),
@@ -150,114 +151,114 @@ class DashboardPendampingScreen extends StatelessWidget {
     final heroFg = context.hc.dashboardHeroOnSurface;
     final heroAccent = context.hc.dashboardHeroAccent;
 
-    final displayName = state.pendampingName.value.isNotEmpty
-        ? state.pendampingName.value
-        : (state.self.name.trim().isNotEmpty
-              ? state.self.name.trim()
-              : context.tr('dashboard.officerFallback'));
-    final initialLetter = displayName.isNotEmpty
-        ? displayName[0].toUpperCase()
-        : 'P';
-
-    final kloterStr = state.effectiveKloter ?? '-';
-    final maktabStr = state.effectiveMaktab ?? '-';
-    final jamaahCount = state.jamaahList.length;
-
-    final prayerName = prayerCtrl.nextPrayerName.value.isNotEmpty
-        ? context.localizedPrayerName(prayerCtrl.nextPrayerName.value)
-        : context.tr('ashar');
-    final cleanTime =
-        (prayerCtrl.nextPrayerTime.value.isNotEmpty
-                ? prayerCtrl.nextPrayerTime.value
-                : '15:20')
-            .split(' ')
-            .first;
-    final gpsDisplay = state.isMyGpsActive.value
-        ? context.tr('dashboard.gpsActive')
-        : context.tr('dashboard.gpsInactive');
-
     return Container(
       width: double.infinity,
       padding: EdgeInsets.fromLTRB(20, topInset + 14, 20, 26),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header row
+          // Header row: Greeting, Broadcast, & Notif
           Row(
             children: [
-              // Avatar (Glassmorphic
-              Container(
-                width: 46,
-                height: 46,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: isDark
-                        ? Colors.white.withValues(alpha: 0.18)
-                        : Colors.white.withValues(alpha: 0.85),
-                    width: 1.2,
-                  ),
-                  color: isDark
-                      ? Colors.white.withValues(alpha: 0.10)
-                      : Colors.white.withValues(alpha: 0.65),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(
-                        alpha: isDark ? 0.35 : 0.05,
-                      ),
-                      blurRadius: 10,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
-                ),
-                child: Center(
-                  child: Text(
-                    initialLetter,
-                    style: TextStyle(
-                      color: heroAccent,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 19,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 14),
-              // Greeting
+              // Greeting & Avatar (Granular Obx)
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "Assalamu'alaikum,",
-                      style: TextStyle(
-                        color: heroFg.withValues(alpha: 0.72),
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w500,
+                child: Obx(() {
+                  // Rule 1: Evaluate .obs at top line before conditionals
+                  final pendampingName = state.pendampingName.value;
+                  final _ = state.jamaahList.length;
+                  final _ = state.activeRoomId.value;
+                  final self = state.self;
+                  final displayName = pendampingName.isNotEmpty
+                      ? pendampingName
+                      : (self.name.trim().isNotEmpty
+                            ? self.name.trim()
+                            : context.tr('dashboard.officerFallback'));
+                  final initialLetter = displayName.isNotEmpty
+                      ? displayName[0].toUpperCase()
+                      : 'P';
+
+                  final kloterStr = state.effectiveKloter ?? '-';
+                  final maktabStr = state.effectiveMaktab ?? '-';
+
+                  return Row(
+                    children: [
+                      // Avatar (Glassmorphic)
+                      Container(
+                        width: 46,
+                        height: 46,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: isDark
+                                ? Colors.white.withValues(alpha: 0.18)
+                                : Colors.white.withValues(alpha: 0.85),
+                            width: 1.2,
+                          ),
+                          color: isDark
+                              ? Colors.white.withValues(alpha: 0.10)
+                              : Colors.white.withValues(alpha: 0.65),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(
+                                alpha: isDark ? 0.35 : 0.05,
+                              ),
+                              blurRadius: 10,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        child: Center(
+                          child: Text(
+                            initialLetter,
+                            style: TextStyle(
+                              color: heroAccent,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 19,
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 1),
-                    Text(
-                      displayName,
-                      style: TextStyle(
-                        color: heroFg,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: -0.2,
+                      const SizedBox(width: 14),
+                      // Greeting
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Assalamu'alaikum,",
+                              style: TextStyle(
+                                color: heroFg.withValues(alpha: 0.72),
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            const SizedBox(height: 1),
+                            Text(
+                              displayName,
+                              style: TextStyle(
+                                color: heroFg,
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: -0.2,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              '${kloterStr.toLowerCase().startsWith('kloter') ? kloterStr : 'Kloter $kloterStr'} · ${maktabStr.toLowerCase().startsWith('maktab') ? maktabStr : 'Maktab $maktabStr'}',
+                              style: TextStyle(
+                                color: heroAccent,
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      '${kloterStr.toLowerCase().startsWith('kloter') ? kloterStr : 'Kloter $kloterStr'} · ${maktabStr.toLowerCase().startsWith('maktab') ? maktabStr : 'Maktab $maktabStr'}',
-                      style: TextStyle(
-                        color: heroAccent,
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
+                    ],
+                  );
+                }),
               ),
               _broadcastHeaderButton(context, state),
               const SizedBox(width: 8),
@@ -267,109 +268,115 @@ class DashboardPendampingScreen extends StatelessWidget {
 
           const SizedBox(height: 26),
 
-          // Big hero number
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          '$jamaahCount',
-                          style: TextStyle(
-                            color: heroFg,
-                            fontSize: 42,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 0.5,
-                            height: 1.0,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 6),
-                          child: Text(
-                            context.tr('room.roleJamaah').toLowerCase(),
-                            style: TextStyle(
-                              color: heroFg.withValues(alpha: 0.72),
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 3.5,
-                      ),
-                      decoration: BoxDecoration(
-                        color: heroFg.withValues(alpha: isDark ? 0.10 : 0.16),
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(
-                          color: heroFg.withValues(alpha: 0.20),
-                          width: 1.0,
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
+          // Big hero number (Granular Obx)
+          Obx(() {
+            // Rule 1: Evaluate .obs at top line before conditionals
+            final jamaahList = state.jamaahList;
+            final jamaahCount = jamaahList.length;
+
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          Container(
-                            width: 6,
-                            height: 6,
-                            decoration: BoxDecoration(
-                              color: context.hc.success,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                          const SizedBox(width: 5),
                           Text(
-                            context.tr('dashboard.monitoredPilgrims'),
+                            '$jamaahCount',
                             style: TextStyle(
                               color: heroFg,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
+                              fontSize: 42,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.5,
+                              height: 1.0,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 6),
+                            child: Text(
+                              context.tr('room.roleJamaah').toLowerCase(),
+                              style: TextStyle(
+                                color: heroFg.withValues(alpha: 0.72),
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
                           ),
                         ],
                       ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 6),
-              // Sparkline statistics wave (transparent & gold, enlarged, synced with room
-              MiniSparklineButton(
-                width: 175,
-                height: 84,
-                waveColor: context.hc.accent,
-                jamaahList: state.jamaahList,
-                tooltip: context.tr('dashboard.syncGroupTooltip'),
-                onSync: () async {
-                  final success = await state.refreshLocation();
-                  state.jamaahList.refresh();
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          success
-                              ? context.tr('dashboard.syncSuccess')
-                              : context.tr('dashboard.syncFinishedGpsHint'),
+                      const SizedBox(height: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 3.5,
                         ),
-                        duration: const Duration(seconds: 3),
-                        behavior: SnackBarBehavior.floating,
+                        decoration: BoxDecoration(
+                          color: heroFg.withValues(alpha: isDark ? 0.10 : 0.16),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: heroFg.withValues(alpha: 0.20),
+                            width: 1.0,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              width: 6,
+                              height: 6,
+                              decoration: BoxDecoration(
+                                color: context.hc.success,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 5),
+                            Text(
+                              context.tr('dashboard.monitoredPilgrims'),
+                              style: TextStyle(
+                                color: heroFg,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    );
-                  }
-                },
-              ),
-            ],
-          ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 6),
+                // Sparkline statistics wave
+                MiniSparklineButton(
+                  width: 175,
+                  height: 84,
+                  waveColor: context.hc.accent,
+                  jamaahList: jamaahList,
+                  tooltip: context.tr('dashboard.syncGroupTooltip'),
+                  onSync: () async {
+                    final success = await state.refreshLocation();
+                    state.jamaahList.refresh();
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            success
+                                ? context.tr('dashboard.syncSuccess')
+                                : context.tr('dashboard.syncFinishedGpsHint'),
+                          ),
+                          duration: const Duration(seconds: 3),
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    }
+                  },
+                ),
+              ],
+            );
+          }),
 
           const SizedBox(height: 18),
           _dashedLine(heroFg.withValues(alpha: 0.22)),
@@ -381,15 +388,41 @@ class DashboardPendampingScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               _textToSignChip(context),
-              _metricCol(
-                context,
-                value: '$prayerName $cleanTime',
-                label: context.tr('dashboard.prayerSchedule'),
+              Expanded(
+                child: Obx(() {
+                  // Rule 1: Evaluate .obs at top line before conditionals
+                  final rawPrayerName = prayerCtrl.nextPrayerName.value;
+                  final rawPrayerTime = prayerCtrl.nextPrayerTime.value;
+
+                  final prayerName = rawPrayerName.isNotEmpty
+                      ? context.localizedPrayerName(rawPrayerName)
+                      : context.tr('ashar');
+                  final cleanTime =
+                      (rawPrayerTime.isNotEmpty ? rawPrayerTime : '15:20')
+                          .split(' ')
+                          .first;
+
+                  return _metricCol(
+                    context,
+                    value: '$prayerName $cleanTime',
+                    label: context.tr('dashboard.prayerSchedule'),
+                  );
+                }),
               ),
-              _metricCol(
-                context,
-                value: gpsDisplay,
-                label: context.tr('dashboard.locationStatus'),
+              Expanded(
+                child: Obx(() {
+                  // Rule 1: Evaluate .obs at top line before conditionals
+                  final isGps = state.isMyGpsActive.value;
+                  final gpsDisplay = isGps
+                      ? context.tr('dashboard.gpsActive')
+                      : context.tr('dashboard.gpsInactive');
+
+                  return _metricCol(
+                    context,
+                    value: gpsDisplay,
+                    label: context.tr('dashboard.locationStatus'),
+                  );
+                }),
               ),
             ],
           ),
@@ -560,243 +593,275 @@ class DashboardPendampingScreen extends StatelessWidget {
         ],
       ),
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 110),
-      child: Obx(() {
-        final selectedJamaah =
-            (state.jamaahList.isNotEmpty &&
-                state.jamaahList.length >
-                    dashboardCtrl.selectedJamaahIndex.value)
-            ? state.jamaahList[dashboardCtrl.selectedJamaahIndex.value]
-            : (state.jamaahList.isNotEmpty
-                  ? state.jamaahList.first
-                  : state.self);
-
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const ActiveAdhanDashboardBanner(),
-            // 4 Quick icons
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 8),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _iconItem(
-                    context: context,
-                    label: context.tr('dashboard.manageRoom'),
-                    icon: Icons.meeting_room_rounded,
-                    isDark: isDark,
-                    onTap: () => state.activeRoomId.value != null
-                        ? Get.toNamed(
-                            AppRoutes.roomDetail,
-                            arguments: state.activeRoom.value,
-                          )
-                        : Get.toNamed(AppRoutes.joinRoom),
-                  ),
-                  _iconItem(
-                    context: context,
-                    label: context.tr('dashboard.invitePilgrim'),
-                    icon: Icons.person_add_alt_1_rounded,
-                    isDark: isDark,
-                    onTap: () {
-                      final roomId = state.activeRoomId.value;
-                      if (roomId != null && roomId.isNotEmpty) {
-                        AddJamaahDialog.show(context, roomId);
-                      } else {
-                        AppAlert.warning(
-                          context,
-                          title: context.tr('dashboard.noGroupYet'),
-                          message: context.tr('dashboard.selectOrCreateRoom'),
-                          onOk: () => Get.toNamed(AppRoutes.joinRoom),
-                          okText: context.tr('dashboard.manageRoom'),
-                        );
-                      }
-                    },
-                  ),
-                  _iconItem(
-                    context: context,
-                    label: context.tr('dashboard.prayerSchedule'),
-                    icon: Icons.access_time_rounded,
-                    isDark: isDark,
-                    onTap: () => dashboardCtrl.changeTab(2),
-                  ),
-                  _iconItem(
-                    context: context,
-                    label: context.tr('dashboard.emergencySos'),
-                    icon: Icons.emergency_rounded,
-                    isDark: isDark,
-                    iconColor: context.hc.danger,
-                    onTap: () => Get.toNamed(AppRoutes.modalSos),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 20),
-
-            // Permintaan Bantuan Jamaah (Request Assistance Lifecycle
-            Obx(() {
-              final activeReq =
-                  AssistanceRequestService.instance.activeRequest.value;
-              if (activeReq == null || !activeReq.isActive) {
-                return const SizedBox.shrink();
-              }
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _sectionHeader(
-                    title: 'Permintaan Bantuan',
-                    subtitle: 'Bantuan jamaah rombongan membutuhkan penanganan',
-                    actionText: 'Lihat Peta',
-                    onAction: () {
-                      final mapCtrl = MapController.to;
-                      mapCtrl.focusOnAssistanceRequest(
-                        activeReq,
-                        autoRoute: false,
-                      );
-                      dashboardCtrl.changeTab(1);
-                    },
-                    headingColor: headingColor,
-                    isDark: isDark,
-                  ),
-                  const SizedBox(height: 12),
-                  PendampingAssistanceCard(request: activeReq, isDark: isDark),
-                  const SizedBox(height: 12),
-                ],
-              );
-            }),
-
-            // Status Darurat (only when active) — wrapped in Obx for reactivity
-            Obx(() {
-              final hasSos = state.anySosActive;
-              final hasSeparated = state.anyJamaahSeparated;
-              if (!hasSos && !hasSeparated) return const SizedBox.shrink();
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _sectionHeader(
-                    title: context.tr('dashboard.emergencyStatus'),
-                    subtitle: context.tr('dashboard.sosSeparatedSub'),
-                    actionText: context.tr('dashboard.viewMap'),
-                    onAction: () {
-                      final target =
-                          state.jamaahList.firstWhereOrNull(
-                            (j) => j.sosActive || j.separatedMode,
-                          ) ??
-                          selectedJamaah;
-                      _trackJamaahOnMap(context, target, autoRoute: false);
-                    },
-                    headingColor: headingColor,
-                    isDark: isDark,
-                  ),
-                  const SizedBox(height: 12),
-                  if (hasSos && state.activeRoomId.value != null)
-                    PendampingSosBanner(
-                      state: state,
-                      onDismissSos: (jamaahId) async {
-                        AppAlert.confirm(
-                          context,
-                          title: context.tr('dashboard.endSos'),
-                          message: context.tr('dashboard.endSosConfirm'),
-                          confirmText: context.tr('dashboard.yesEndSos'),
-                          cancelText: context.tr('common.cancel'),
-                          onConfirm: () async {
-                            final success = await state.dismissSos(jamaahId);
-                            if (context.mounted) {
-                              if (success) {
-                                AppAlert.success(
-                                  context,
-                                  title: context.tr('dashboard.sosEnded'),
-                                  message: context.tr('dashboard.sosDisabled'),
-                                );
-                              } else {
-                                AppAlert.error(
-                                  context,
-                                  title: context.tr('dashboard.sosEndFailed'),
-                                  message: context.tr('dashboard.sosEndRetry'),
-                                  okText: context.tr('common.tryAgain'),
-                                );
-                              }
-                            }
-                          },
-                        );
-                      },
-                    ),
-                  if (hasSeparated) _separatedAlert(context, state, isDark),
-                  const SizedBox(height: 26),
-                ],
-              );
-            }),
-
-            // Monitored Pilgrims Pills
-            if (state.activeRoomId.value != null &&
-                state.jamaahList.isNotEmpty) ...[
-              _PilgrimsPillsSection(
-                state: state,
-                dashboardCtrl: dashboardCtrl,
-                headingColor: headingColor,
-                isDark: isDark,
-              ),
-              const SizedBox(height: 26),
-            ],
-
-            // Detail posisi jamaah terpilih
-            if (state.activeRoomId.value != null &&
-                state.jamaahList.isNotEmpty) ...[
-              _sectionHeader(
-                title: context.tr('dashboard.positionDetail'),
-                subtitle: context.tr('dashboard.positionDetailSub'),
-                actionText: context.tr('dashboard.openNavigation'),
-                onAction: () =>
-                    _trackJamaahOnMap(context, selectedJamaah, autoRoute: true),
-                headingColor: headingColor,
-                isDark: isDark,
-              ),
-              const SizedBox(height: 12),
-              PendampingRadarCard(
-                jamaah: selectedJamaah,
-                onTrackMap: () => _trackJamaahOnMap(
-                  context,
-                  selectedJamaah,
-                  autoRoute: false,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const ActiveAdhanDashboardBanner(),
+          // 4 Quick icons
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _iconItem(
+                  context: context,
+                  label: context.tr('dashboard.manageRoom'),
+                  icon: Icons.meeting_room_rounded,
+                  isDark: isDark,
+                  onTap: () => state.activeRoomId.value != null
+                      ? Get.toNamed(
+                          AppRoutes.roomDetail,
+                          arguments: state.activeRoom.value,
+                        )
+                      : Get.toNamed(AppRoutes.joinRoom),
                 ),
-              ),
-              const SizedBox(height: 26),
-            ],
-
-            // Kamar & Maktab
-            _sectionHeader(
-              title: context.tr('dashboard.roomAndMaktab'),
-              subtitle: context.tr('dashboard.hotelRoomSub'),
-              actionText: context.tr('dashboard.manage'),
-              onAction: () => state.activeRoomId.value != null
-                  ? Get.toNamed(
-                      AppRoutes.roomDetail,
-                      arguments: state.activeRoom.value,
-                    )
-                  : Get.toNamed(AppRoutes.joinRoom),
-              headingColor: headingColor,
-              isDark: isDark,
+                _iconItem(
+                  context: context,
+                  label: context.tr('dashboard.invitePilgrim'),
+                  icon: Icons.person_add_alt_1_rounded,
+                  isDark: isDark,
+                  onTap: () {
+                    final roomId = state.activeRoomId.value;
+                    if (roomId != null && roomId.isNotEmpty) {
+                      AddJamaahDialog.show(context, roomId);
+                    } else {
+                      AppAlert.warning(
+                        context,
+                        title: context.tr('dashboard.noGroupYet'),
+                        message: context.tr('dashboard.selectOrCreateRoom'),
+                        onOk: () => Get.toNamed(AppRoutes.joinRoom),
+                        okText: context.tr('dashboard.manageRoom'),
+                      );
+                    }
+                  },
+                ),
+                _iconItem(
+                  context: context,
+                  label: context.tr('dashboard.prayerSchedule'),
+                  icon: Icons.access_time_rounded,
+                  isDark: isDark,
+                  onTap: () => dashboardCtrl.changeTab(2),
+                ),
+                _iconItem(
+                  context: context,
+                  label: context.tr('dashboard.emergencySos'),
+                  icon: Icons.emergency_rounded,
+                  isDark: isDark,
+                  iconColor: context.hc.danger,
+                  onTap: () => Get.toNamed(AppRoutes.modalSos),
+                ),
+              ],
             ),
-            const SizedBox(height: 12),
-            const ActiveRoomCard(isPendamping: true),
+          ),
 
-            const SizedBox(height: 26),
+          const SizedBox(height: 20),
 
-            // Tips
-            _sectionHeader(
-              title: context.tr('dashboard.taskGuidance'),
-              subtitle: context.tr('dashboard.taskGuidanceSub'),
-              actionText: context.tr('dashboard.moreDetails'),
-              onAction: () {},
-              headingColor: headingColor,
-              isDark: isDark,
-            ),
-            const SizedBox(height: 12),
-            _tipsCard(context, isDark, headingColor),
-          ],
-        );
-      }),
+          // Permintaan Bantuan Jamaah (Request Assistance Lifecycle)
+          Obx(() {
+            // Rule 1: Evaluate .obs at top line before conditionals
+            final activeReq =
+                AssistanceRequestService.instance.activeRequest.value;
+            if (activeReq == null || !activeReq.isActive) {
+              return const SizedBox.shrink();
+            }
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _sectionHeader(
+                  title: 'Permintaan Bantuan',
+                  subtitle: 'Bantuan jamaah rombongan membutuhkan penanganan',
+                  actionText: 'Lihat Peta',
+                  onAction: () {
+                    final mapCtrl = MapController.to;
+                    mapCtrl.focusOnAssistanceRequest(
+                      activeReq,
+                      autoRoute: false,
+                    );
+                    dashboardCtrl.changeTab(1);
+                  },
+                  headingColor: headingColor,
+                  isDark: isDark,
+                ),
+                const SizedBox(height: 12),
+                PendampingAssistanceCard(request: activeReq, isDark: isDark),
+                const SizedBox(height: 12),
+              ],
+            );
+          }),
+
+          // Status Darurat (only when active) — wrapped in Obx for reactivity
+          Obx(() {
+            // Rule 1: Evaluate .obs at top line before conditionals
+            final activeSosCount = state.activeSosCount.value;
+            final separatedList = state.separatedJamaahList;
+            final hasSos = activeSosCount > 0 || state.anySosActive;
+            final hasSeparated = separatedList.isNotEmpty;
+            if (!hasSos && !hasSeparated) return const SizedBox.shrink();
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _sectionHeader(
+                  title: context.tr('dashboard.emergencyStatus'),
+                  subtitle: context.tr('dashboard.sosSeparatedSub'),
+                  actionText: context.tr('dashboard.viewMap'),
+                  onAction: () {
+                    final target =
+                        state.jamaahList.firstWhereOrNull(
+                          (j) => j.sosActive || j.separatedMode,
+                        ) ??
+                        separatedList.firstOrNull ??
+                        (state.jamaahList.isNotEmpty
+                            ? state.jamaahList[
+                                dashboardCtrl.selectedJamaahIndex.value <
+                                        state.jamaahList.length
+                                    ? dashboardCtrl.selectedJamaahIndex.value
+                                    : 0]
+                            : state.self);
+                    _trackJamaahOnMap(context, target, autoRoute: false);
+                  },
+                  headingColor: headingColor,
+                  isDark: isDark,
+                ),
+                const SizedBox(height: 12),
+                if (hasSos && state.activeRoomId.value != null)
+                  PendampingSosBanner(
+                    state: state,
+                    onDismissSos: (jamaahId) async {
+                      AppAlert.confirm(
+                        context,
+                        title: context.tr('dashboard.endSos'),
+                        message: context.tr('dashboard.endSosConfirm'),
+                        confirmText: context.tr('dashboard.yesEndSos'),
+                        cancelText: context.tr('common.cancel'),
+                        onConfirm: () async {
+                          final success = await state.dismissSos(jamaahId);
+                          if (context.mounted) {
+                            if (success) {
+                              AppAlert.success(
+                                context,
+                                title: context.tr('dashboard.sosEnded'),
+                                message: context.tr('dashboard.sosDisabled'),
+                              );
+                            } else {
+                              AppAlert.error(
+                                context,
+                                title: context.tr('dashboard.sosEndFailed'),
+                                message: context.tr('dashboard.sosEndRetry'),
+                                okText: context.tr('common.tryAgain'),
+                              );
+                            }
+                          }
+                        },
+                      );
+                    },
+                  ),
+                if (hasSeparated) _separatedAlert(context, state, isDark),
+                const SizedBox(height: 26),
+              ],
+            );
+          }),
+
+          // Monitored Pilgrims Pills (Granular Obx)
+          Obx(() {
+            // Rule 1: Evaluate .obs at top line before conditionals
+            final activeRoomId = state.activeRoomId.value;
+            final jamaahList = state.jamaahList;
+
+            if (activeRoomId == null || jamaahList.isEmpty) {
+              return const SizedBox.shrink();
+            }
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _PilgrimsPillsSection(
+                  state: state,
+                  dashboardCtrl: dashboardCtrl,
+                  headingColor: headingColor,
+                  isDark: isDark,
+                ),
+                const SizedBox(height: 26),
+              ],
+            );
+          }),
+
+          // Detail posisi jamaah terpilih (Granular Obx)
+          Obx(() {
+            // Rule 1: Evaluate .obs at top line before conditionals
+            final selectedIdx = dashboardCtrl.selectedJamaahIndex.value;
+            final activeRoomId = state.activeRoomId.value;
+            final list = state.jamaahList;
+
+            if (activeRoomId == null || list.isEmpty) {
+              return const SizedBox.shrink();
+            }
+
+            final selectedJamaah = (list.length > selectedIdx)
+                ? list[selectedIdx]
+                : list.first;
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _sectionHeader(
+                  title: context.tr('dashboard.positionDetail'),
+                  subtitle: context.tr('dashboard.positionDetailSub'),
+                  actionText: context.tr('dashboard.openNavigation'),
+                  onAction: () => _trackJamaahOnMap(
+                    context,
+                    selectedJamaah,
+                    autoRoute: true,
+                  ),
+                  headingColor: headingColor,
+                  isDark: isDark,
+                ),
+                const SizedBox(height: 12),
+                PendampingRadarCard(
+                  jamaah: selectedJamaah,
+                  onTrackMap: () => _trackJamaahOnMap(
+                    context,
+                    selectedJamaah,
+                    autoRoute: false,
+                  ),
+                ),
+                const SizedBox(height: 26),
+              ],
+            );
+          }),
+
+          // Kamar & Maktab
+          _sectionHeader(
+            title: context.tr('dashboard.roomAndMaktab'),
+            subtitle: context.tr('dashboard.hotelRoomSub'),
+            actionText: context.tr('dashboard.manage'),
+            onAction: () => state.activeRoomId.value != null
+                ? Get.toNamed(
+                    AppRoutes.roomDetail,
+                    arguments: state.activeRoom.value,
+                  )
+                : Get.toNamed(AppRoutes.joinRoom),
+            headingColor: headingColor,
+            isDark: isDark,
+          ),
+          const SizedBox(height: 12),
+          const ActiveRoomCard(isPendamping: true),
+
+          const SizedBox(height: 26),
+
+          // Tips
+          _sectionHeader(
+            title: context.tr('dashboard.taskGuidance'),
+            subtitle: context.tr('dashboard.taskGuidanceSub'),
+            actionText: context.tr('dashboard.moreDetails'),
+            onAction: () {},
+            headingColor: headingColor,
+            isDark: isDark,
+          ),
+          const SizedBox(height: 12),
+          _tipsCard(context, isDark, headingColor),
+        ],
+      ),
     );
   }
 
@@ -847,6 +912,8 @@ class DashboardPendampingScreen extends StatelessWidget {
           ),
         ),
         Obx(() {
+          // Rule 1: Always evaluate an .obs at top line before conditionals
+          final activeSos = state.activeSosCount.value;
           final notifCtrl = Get.isRegistered<NotificationController>()
               ? Get.find<NotificationController>()
               : null;
@@ -854,7 +921,7 @@ class DashboardPendampingScreen extends StatelessWidget {
               ? notifCtrl.unreadCount.value +
                     notifCtrl.pendingInvitations.length
               : 0;
-          final hasSos = state.anySosActive;
+          final hasSos = activeSos > 0 || state.anySosActive;
           if (unread <= 0 && !hasSos) return const SizedBox.shrink();
           return Positioned(
             top: 2,
@@ -863,7 +930,7 @@ class DashboardPendampingScreen extends StatelessWidget {
               width: 11,
               height: 11,
               decoration: BoxDecoration(
-                color: hasSos ? context.hc.danger : context.hc.info,
+                color: context.hc.danger,
                 shape: BoxShape.circle,
                 border: Border.all(
                   color: isDark ? const Color(0xFF1E1510) : Colors.white,
@@ -871,8 +938,7 @@ class DashboardPendampingScreen extends StatelessWidget {
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: (hasSos ? context.hc.danger : context.hc.info)
-                        .withValues(alpha: 0.55),
+                    color: context.hc.danger.withValues(alpha: 0.55),
                     blurRadius: 6,
                     spreadRadius: 1,
                   ),
@@ -1240,48 +1306,106 @@ class DashboardPendampingScreen extends StatelessWidget {
     HajiCareController state,
     bool isDark,
   ) {
-    return Container(
-      margin: const EdgeInsets.only(top: 10),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: isDark
-            ? AppColors.darkSurfaceContainerHighest
-            : AppColors.surfaceContainerLow,
+    final separatedList = state.separatedJamaahList;
+    final count = separatedList.length;
+
+    final String alertText;
+    if (count <= 1) {
+      final name = separatedList.isNotEmpty
+          ? separatedList.first.name
+          : state.separatedJamaahName;
+      alertText = context.tr('dashboard.separatedPilgrimDesc', {
+        'name': name,
+      });
+    } else if (count == 2) {
+      final names = '${separatedList[0].name} & ${separatedList[1].name}';
+      alertText = context.tr('dashboard.separatedMultipleDesc', {
+        'count': count,
+        'names': names,
+      });
+    } else {
+      final names =
+          '${separatedList[0].name}, ${separatedList[1].name}, dan ${count - 2} jamaah lainnya';
+      alertText = context.tr('dashboard.separatedMultipleDesc', {
+        'count': count,
+        'names': names,
+      });
+    }
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: AppColors.statusWarning.withValues(alpha: 0.6),
-          width: 1.5,
-        ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: AppColors.statusWarning.withValues(alpha: 0.15),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.person_off_rounded,
-              color: AppColors.statusWarning,
-              size: 20,
+        onTap: () {
+          final target = separatedList.isNotEmpty
+              ? separatedList.first
+              : (state.jamaahList.isNotEmpty
+                  ? state.jamaahList.first
+                  : state.self);
+          _trackJamaahOnMap(context, target, autoRoute: false);
+        },
+        child: Container(
+          margin: const EdgeInsets.only(top: 10),
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: isDark
+                ? AppColors.darkSurfaceContainerHighest
+                : AppColors.surfaceContainerLow,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: AppColors.statusWarning.withValues(alpha: 0.6),
+              width: 1.5,
             ),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              context.tr('dashboard.separatedPilgrimDesc', {
-                'name': state.separatedJamaahName,
-              }),
-              style: TextStyle(
-                color: isDark ? AppColors.statusWarning : AppColors.secondary,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                height: 1.4,
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.statusWarning.withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.person_off_rounded,
+                  color: AppColors.statusWarning,
+                  size: 20,
+                ),
               ),
-            ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  alertText,
+                  style: TextStyle(
+                    color: isDark ? AppColors.statusWarning : AppColors.secondary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    height: 1.4,
+                  ),
+                ),
+              ),
+              if (count > 1) ...[
+                const SizedBox(width: 8),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppColors.statusWarning.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    '$count',
+                    style: TextStyle(
+                      color:
+                          isDark ? AppColors.statusWarning : AppColors.secondary,
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

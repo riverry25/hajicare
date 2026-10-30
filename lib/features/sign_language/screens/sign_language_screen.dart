@@ -97,7 +97,9 @@ class _SignLanguageScreenState extends State<SignLanguageScreen> {
 
   void _applyModelThresholds(SignLanguageModel model) {
     _recognition.setModelThresholds(
-      confidenceThreshold: model.config.defaultConfidenceThreshold,
+      confidenceThreshold: model == SignLanguageModel.bisindo
+          ? 0.58
+          : model.config.defaultConfidenceThreshold,
       stablePredictionsRequired: 2,
     );
   }
@@ -351,7 +353,7 @@ class _SignLanguageScreenState extends State<SignLanguageScreen> {
           Expanded(
             child: _buildModelOptionTab(
               model: SignLanguageModel.sibi,
-              label: 'SIBI',
+              label: 'SIBI (${SignLanguageModel.sibi.classCount})',
               icon: Icons.sort_by_alpha_rounded,
               isSelected: _currentModel == SignLanguageModel.sibi,
               isDisabled: isBusy,
@@ -361,7 +363,7 @@ class _SignLanguageScreenState extends State<SignLanguageScreen> {
           Expanded(
             child: _buildModelOptionTab(
               model: SignLanguageModel.bisindo,
-              label: 'BISINDO',
+              label: 'BISINDO (${SignLanguageModel.bisindo.classCount})',
               icon: Icons.handshake_rounded,
               isSelected: _currentModel == SignLanguageModel.bisindo,
               isDisabled: isBusy,

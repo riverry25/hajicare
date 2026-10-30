@@ -41,9 +41,9 @@ class BisindoCameraHelper(
 ) {
     companion object {
         private const val TAG = "BISINDO_CAMERA"
-        private const val MIN_FRAME_INTERVAL_MS = 50L // ~20 FPS max for optimal latency and thermals
-        private const val MAX_PROCESSING_DIM = 640
-        private val TARGET_ANALYSIS_SIZE = Size(640, 480)
+        private const val MIN_FRAME_INTERVAL_MS = 66L // ~15 FPS max for optimal latency and thermals
+        private const val MAX_PROCESSING_DIM = 480 // 480px max: 44% fewer pixels than 640px, 2x faster MediaPipe
+        private val TARGET_ANALYSIS_SIZE = Size(480, 360)
     }
 
     private var cameraExecutor: ExecutorService = Executors.newSingleThreadExecutor()
@@ -361,10 +361,10 @@ class BisindoCameraHelper(
                 }
             }
 
-            // 3. Face Blendshapes detection
+            // 3. Face Blendshapes detection (only when hands are present, saving massive CPU when idle)
             var blendshapesMap: Map<String, Double>? = null
             val currentFaceLandmarker = faceLandmarker
-            if (currentFaceLandmarker != null) {
+            if (currentFaceLandmarker != null && (leftHand != null || rightHand != null)) {
                 try {
                     val faceResult = currentFaceLandmarker.detect(mpImage)
                     if (faceResult != null) {
@@ -408,16 +408,16 @@ class BisindoCameraHelper(
         } catch (t: Throwable) {
             Log.e(TAG, "Error processing camera frame: ${t.message}", t)
         } finally {
-            // Recycle bitmaps to avoid native GraphicBuffer OOM
+            // Recycle all unique bitmaps cleanly to avoid GC pauses and native GraphicBuffer OOM
             try {
-                if (originalBitmap != null && originalBitmap != rotatedBitmap && !originalBitmap.isRecycled) {
-                    originalBitmap.recycle()
-                }
-                if (rotatedBitmap != null && rotatedBitmap != processedBitmap && rotatedBitmap != originalBitmap && !rotatedBitmap.isRecycled) {
-                    rotatedBitmap.recycle()
-                }
-                if (processedBitmap != null && processedBitmap != rotatedBitmap && processedBitmap != originalBitmap && !processedBitmap.isRecycled) {
-                    processedBitmap.recycle()
+                val toRecycle = mutableSetOf<Bitmap>()
+                originalBitmap?.let { toRecycle.add(it) }
+                rotatedBitmap?.let { toRecycle.add(it) }
+                processedBitmap?.let { toRecycle.add(it) }
+                for (b in toRecycle) {
+                    if (!b.isRecycled) {
+                        b.recycle()
+                    }
                 }
             } catch (_: Throwable) {}
 

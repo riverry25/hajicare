@@ -113,6 +113,9 @@ const Map<String, String> dashboardIdTranslations = {
   'dashboard.sendNotification': 'Kirim Notif',
   'dashboard.separatedPilgrimDesc':
       '{name} terdeteksi jauh dari rombongan. Segera cek posisi di peta.',
+  'dashboard.separatedMultipleDesc':
+      '{count} jamaah ({names}) terdeteksi jauh dari rombongan. Segera cek posisi di peta.',
+  'dashboard.daysAgo': '{days} hari lalu',
   'dashboard.attendanceTip': 'Absensi Rutin',
   'dashboard.attendanceTipDesc':
       'Cek kehadiran jamaah minimal 3× sehari: subuh, zuhur, dan isya.',
@@ -385,6 +388,8 @@ const Map<String, String> dashboardIdTranslations = {
   'dashboard.bandConnecting': 'Menghubungkan...',
   'dashboard.bandDisconnected': 'Gelang Terputus',
   'dashboard.bandNotConnected': 'Gelang Belum Terhubung',
+  'dashboard.smartbandConnected': 'Terhubung',
+  'dashboard.smartbandNotConnected': 'Belum Terhubung',
   'dashboard.bleConnected': 'BLE Terhubung',
   'dashboard.bleScanning': 'BLE Memindai',
   'dashboard.bleDisconnected': 'BLE Terputus',
@@ -510,6 +515,9 @@ const Map<String, String> dashboardEnTranslations = {
   'dashboard.sendNotification': 'Send Notification',
   'dashboard.separatedPilgrimDesc':
       '{name} is far from the group. Check their map position now.',
+  'dashboard.separatedMultipleDesc':
+      '{count} pilgrims ({names}) are far from the group. Check their positions on the map now.',
+  'dashboard.daysAgo': '{days} days ago',
   'dashboard.attendanceTip': 'Routine Attendance',
   'dashboard.attendanceTipDesc':
       'Check pilgrim attendance at least three times daily.',
@@ -779,6 +787,8 @@ const Map<String, String> dashboardEnTranslations = {
   'dashboard.bandConnecting': 'Connecting...',
   'dashboard.bandDisconnected': 'Band Disconnected',
   'dashboard.bandNotConnected': 'Band Not Connected',
+  'dashboard.smartbandConnected': 'Connected',
+  'dashboard.smartbandNotConnected': 'Not Connected',
   'dashboard.bleConnected': 'BLE Connected',
   'dashboard.bleScanning': 'BLE Scanning',
   'dashboard.bleDisconnected': 'BLE Disconnected',
@@ -1142,6 +1152,8 @@ final Map<String, String> dashboardJvTranslations = {
   'dashboard.bandConnecting': 'Nyambungke...',
   'dashboard.bandDisconnected': 'Gelang Pedhot',
   'dashboard.bandNotConnected': 'Gelang Durung Kasambung',
+  'dashboard.smartbandConnected': 'Kasambung',
+  'dashboard.smartbandNotConnected': 'Durung Kasambung',
   'dashboard.bleConnected': 'BLE Kasambung',
   'dashboard.bleScanning': 'BLE Mindai',
   'dashboard.bleDisconnected': 'BLE Pedhot',
@@ -1235,6 +1247,8 @@ final Map<String, String> dashboardSuTranslations = {
   'dashboard.bandConnecting': 'Nyambungkeun...',
   'dashboard.bandDisconnected': 'Gelang Pegat',
   'dashboard.bandNotConnected': 'Gelang Teu Acan Kahubung',
+  'dashboard.smartbandConnected': 'Kahubung',
+  'dashboard.smartbandNotConnected': 'Teu Acan Kahubung',
   'dashboard.bleConnected': 'BLE Kahubung',
   'dashboard.bleScanning': 'BLE Mindai',
   'dashboard.bleDisconnected': 'BLE Pegat',

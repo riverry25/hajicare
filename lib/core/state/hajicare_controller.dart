@@ -1054,6 +1054,7 @@ class HajiCareController extends GetxController {
       for (final j in jamaahList) {
         final member = activeRoomMembers.firstWhereOrNull((m) => m.uid == j.id);
         if (member != null) {
+          j.isSmartbandConnected = member.isSmartbandConnected;
           if (member.currentLocation != null) {
             if (j.currentLocation == null ||
                 (member.locationUpdatedAt != null &&
@@ -1266,6 +1267,36 @@ class HajiCareController extends GetxController {
     final user = _firebaseAuth.currentUser;
     if (user == null) return false;
 
+    // Guard: Prevent duplicate SOS creation if user already has an active emergency
+    final uid = user.uid;
+    final existingEvent = activeSosEvents.firstWhereOrNull(
+      (e) =>
+          (e['userId'] == uid || e['jamaahId'] == uid) &&
+          (e['status'] == 'active' ||
+              e['status'] == 'baru' ||
+              e['status'] == 'direspons'),
+    );
+    if ((_self?.sosActive == true && _activeSosEventId != null) ||
+        existingEvent != null) {
+      final activeId = _activeSosEventId ?? existingEvent?['id']?.toString();
+      AppLogger.info(
+        'User $uid already has active SOS ($activeId), skipping duplicate event creation',
+        tag: 'HajiCareController',
+      );
+      if (_self != null) {
+        _self!.sosActive = true;
+        _self!.refresh();
+      }
+      final myPos = myCurrentPosition.value;
+      if (activeId != null && myPos != null) {
+        _sosService.updateSosLocation(
+          eventId: activeId,
+          location: GeoPoint(myPos.latitude, myPos.longitude),
+        );
+      }
+      return true;
+    }
+
     _isSosMutationInFlight = true;
     final stopwatch = Stopwatch()..start();
     String? currentRoomName;
@@ -1435,7 +1466,12 @@ class HajiCareController extends GetxController {
 
   /// Resolves an active SOS event in Firestore.
   Future<bool> dismissSos(String id, {String? eventId}) async {
-    if (_isSosMutationInFlight) return false;
+    // If a mutation is currently in-flight, wait up to 4s for it to finish so cancellation is never dropped
+    int attempts = 0;
+    while (_isSosMutationInFlight && attempts < 40) {
+      await Future.delayed(const Duration(milliseconds: 100));
+      attempts++;
+    }
     _isSosMutationInFlight = true;
 
     // Immediately mark eventId in dismissed set for instant UI responsiveness
@@ -1447,13 +1483,19 @@ class HajiCareController extends GetxController {
         roomId = _cachedRoomId?.trim();
       }
 
-      // If eventId wasn't explicitly supplied, find it from current active SOS events
+      // If eventId wasn't explicitly supplied, find it from _activeSosEventId or current active SOS events
       String? resolvedEventId = eventId;
       if (resolvedEventId == null || resolvedEventId.isEmpty) {
-        final match = activeSosEvents.firstWhereOrNull(
-          (e) => e['userId'] == id || e['jamaahId'] == id,
-        );
-        resolvedEventId = match?['id'] as String?;
+        if (id == currentUid &&
+            _activeSosEventId != null &&
+            _activeSosEventId!.isNotEmpty) {
+          resolvedEventId = _activeSosEventId;
+        } else {
+          final match = activeSosEvents.firstWhereOrNull(
+            (e) => e['userId'] == id || e['jamaahId'] == id,
+          );
+          resolvedEventId = match?['id'] as String?;
+        }
       }
       if (resolvedEventId != null && resolvedEventId.isNotEmpty) {
         dismissedSosIds.add(resolvedEventId);
@@ -1590,9 +1632,21 @@ class HajiCareController extends GetxController {
             j.sosActive && (activeSosEvents.isNotEmpty || currentUid == null),
       );
 
-  bool get anyJamaahSeparated => jamaahList.any((j) => j.separatedMode);
+  List<JamaahData> get separatedJamaahList {
+    final maxRadius = safeRadiusMeters.value;
+    return jamaahList.where((j) {
+      if (j.separatedMode) return true;
+      if (j.tier == DistanceTier.terlalujJauh) return true;
+      if (j.distance > 0 && j.distance > maxRadius) return true;
+      return false;
+    }).toList();
+  }
+
+  bool get anyJamaahSeparated => separatedJamaahList.isNotEmpty;
 
   String get separatedJamaahName {
+    final list = separatedJamaahList;
+    if (list.isNotEmpty) return list.first.name;
     final j = jamaahList.firstWhere(
       (j) => j.separatedMode,
       orElse: () => jamaahList.isEmpty ? self : jamaahList.first,

@@ -30,6 +30,15 @@ enum SignLanguageModel {
     }
   }
 
+  int get classCount {
+    switch (this) {
+      case SignLanguageModel.sibi:
+        return 72;
+      case SignLanguageModel.bisindo:
+        return 49;
+    }
+  }
+
   SignLanguageModelConfig get config => SignLanguageModelConfig.forModel(this);
 }
 
@@ -42,11 +51,13 @@ class SignLanguageModelConfig {
   final String labelAsset;
   final String? configAsset;
   final double defaultConfidenceThreshold;
+  final double minMargin;
   final int windowSize;
   final int minimumFrames;
   final int inferenceStride;
   final Duration throttleDuration;
   final int expectedInputFeatures;
+  final int classCount;
 
   const SignLanguageModelConfig({
     required this.model,
@@ -54,14 +65,16 @@ class SignLanguageModelConfig {
     required this.labelAsset,
     this.configAsset,
     required this.defaultConfidenceThreshold,
+    this.minMargin = 0.08,
     required this.windowSize,
     required this.minimumFrames,
     this.inferenceStride = 2,
-    this.throttleDuration = const Duration(milliseconds: 70),
+    this.throttleDuration = const Duration(milliseconds: 180),
     required this.expectedInputFeatures,
+    required this.classCount,
   });
 
-  /// SIBI Model: MotionGRU model (48 frames x 706 features: 353 base + 353 motion
+  /// SIBI Model: MotionGRU model (48 frames x 706 features: 353 base + 353 motion)
   /// Output: 72 kelas kosakata & alfabet SIBI.
   static const SignLanguageModelConfig sibi = SignLanguageModelConfig(
     model: SignLanguageModel.sibi,
@@ -69,26 +82,30 @@ class SignLanguageModelConfig {
     labelAsset: 'assets/models/sibi/labels.txt',
     configAsset: 'assets/models/sibi/model_metadata.json',
     defaultConfidenceThreshold: 0.70,
+    minMargin: 0.08,
     windowSize: 48,
     minimumFrames: 24,
     inferenceStride: 2,
-    throttleDuration: Duration(milliseconds: 70),
+    throttleDuration: Duration(milliseconds: 180),
     expectedInputFeatures: 706,
+    classCount: 72,
   );
 
-  /// BISINDO Model: MotionGRU model (48 frames x 706 features: 353 base + 353 motion
-  /// Output: 47 kelas kosakata BISINDO.
+  /// BISINDO Model: MotionGRU model (48 frames x 706 features: 353 base + 353 motion)
+  /// Output: 49 kelas kosakata BISINDO.
   static const SignLanguageModelConfig bisindo = SignLanguageModelConfig(
     model: SignLanguageModel.bisindo,
     modelAsset: 'assets/models/bisindo/bisindo_motion_gru_float16.tflite',
     labelAsset: 'assets/models/bisindo/labels.txt',
     configAsset: 'assets/models/bisindo/model_metadata.json',
-    defaultConfidenceThreshold: 0.70,
+    defaultConfidenceThreshold: 0.58,
+    minMargin: 0.08,
     windowSize: 48,
     minimumFrames: 24,
     inferenceStride: 2,
-    throttleDuration: Duration(milliseconds: 70),
+    throttleDuration: Duration(milliseconds: 180),
     expectedInputFeatures: 706,
+    classCount: 49,
   );
 
   static SignLanguageModelConfig forModel(SignLanguageModel model) {
@@ -102,5 +119,5 @@ class SignLanguageModelConfig {
 
   @override
   String toString() =>
-      'SignLanguageModelConfig(model: ${model.displayName}, asset: $modelAsset, window: $windowSize, minFrames: $minimumFrames)';
+      'SignLanguageModelConfig(model: ${model.displayName}, asset: $modelAsset, window: $windowSize, minFrames: $minimumFrames, classes: $classCount)';
 }

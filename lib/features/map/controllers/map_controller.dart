@@ -38,7 +38,8 @@ enum MapSearchState { idle, loading, results, empty, error, history }
 
 /// Controller managing reactive interactive map state, camera
 /// real geolocation with live streaming, dynamic POIs, and Room Member markers.
-class MapController extends GetxController with GetTickerProviderStateMixin {
+class MapController extends GetxController
+    with GetTickerProviderStateMixin, WidgetsBindingObserver {
   fmap.MapController _flutterMapController = fmap.MapController();
   fmap.MapController get flutterMapController => _flutterMapController;
 
@@ -300,9 +301,12 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
 
   bool _initialMoveDone = false;
 
+  DateTime _lastCompassUiUpdate = DateTime.fromMillisecondsSinceEpoch(0);
+
   @override
   void onInit() {
     super.onInit();
+    WidgetsBinding.instance.addObserver(this);
     loadSearchHistory();
     _initRoomListener();
     _autoStartGps();
@@ -330,15 +334,21 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
             return;
           }
 
-          // Normalize heading to [0, 360
+          // Normalize heading to [0, 360)
           final heading = (rawHeading % 360.0 + 360.0) % 360.0;
 
           // When user is stationary, device orientation dictates the puck's facing direction.
           if (!isUserMoving.value) {
+            final now = DateTime.now();
+            // Throttle UI update frequency to ~80ms (12.5 fps) to save GPU/CPU raster budget
+            if (now.difference(_lastCompassUiUpdate).inMilliseconds < 80) {
+              return;
+            }
             final prev = userHeading.value;
-            // Deadband threshold: filter minor sensor noise (< 0.6°) to maintain stillness
+            // Deadband threshold: filter minor sensor noise (< 1.5°) to eliminate battery-draining micro-jitter
             final delta = ((heading - prev + 180.0) % 360.0 - 180.0).abs();
-            if (delta >= 0.6) {
+            if (delta >= 1.5) {
+              _lastCompassUiUpdate = now;
               userHeading.value = heading;
             }
           }
@@ -348,6 +358,7 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
           hasCompassSensor.value = false;
         },
       );
+
     } catch (e) {
       debugPrint('[MapController] Compass stream unavailable: $e');
       hasCompassSensor.value = false;
@@ -798,11 +809,12 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
   void _startPositionStream() {
     _statePositionSub?.cancel();
     _nativePositionSub?.cancel();
+    final int filter = isNavigating ? 1 : 3;
     _nativePositionSub =
         Geolocator.getPositionStream(
-          locationSettings: const LocationSettings(
+          locationSettings: LocationSettings(
             accuracy: LocationAccuracy.high,
-            distanceFilter: 0,
+            distanceFilter: filter,
           ),
         ).listen(
           (pos) {
@@ -817,6 +829,7 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
         );
     isLiveTracking.value = true;
   }
+
 
   void _applyPosition(Position position, {bool publishToRoom = true}) {
     final newCoord = LatLng(position.latitude, position.longitude);
@@ -2449,8 +2462,21 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused) {
+      _compassSub?.cancel();
+      _compassSub = null;
+    } else if (state == AppLifecycleState.resumed) {
+      if (_compassSub == null) {
+        _initCompassStream();
+      }
+    }
+  }
+
+  @override
   void onClose() {
     _isManuallyClosed = true;
+    WidgetsBinding.instance.removeObserver(this);
     voiceService.reset();
     _lifecycleGeneration++;
     _searchDebounceTimer?.cancel();
@@ -2470,3 +2496,4 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     super.onClose();
   }
 }
+

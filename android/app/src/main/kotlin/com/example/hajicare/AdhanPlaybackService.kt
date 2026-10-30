@@ -59,6 +59,32 @@ class AdhanPlaybackService : Service() {
         val notificationId = intent?.getIntExtra(EXTRA_NOTIFICATION_ID, 0) ?: 0
         activeFallbackNotifId = notificationId
 
+        val prefs = getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
+        val masterEnabled = prefs.getBoolean("flutter.prayer_sound_master_enabled", true)
+        if (!masterEnabled) {
+            Log.i(TAG, "AdhanPlaybackService suppressed: master adhan is silenced (Adzan Hening).")
+            stopAdhanPlayback()
+            return START_NOT_STICKY
+        }
+
+        val prayerKey = when {
+            prayerName.contains("subuh", ignoreCase = true) || prayerName.contains("fajr", ignoreCase = true) -> "subuh"
+            prayerName.contains("dzuhur", ignoreCase = true) || prayerName.contains("dhuhr", ignoreCase = true) -> "dzuhur"
+            prayerName.contains("ashar", ignoreCase = true) || prayerName.contains("asr", ignoreCase = true) -> "ashar"
+            prayerName.contains("maghrib", ignoreCase = true) -> "maghrib"
+            prayerName.contains("isya", ignoreCase = true) || prayerName.contains("isha", ignoreCase = true) -> "isya"
+            else -> ""
+        }
+
+        if (prayerKey.isNotEmpty()) {
+            val isEnabled = prefs.getBoolean("flutter.prayer_sound_$prayerKey", true)
+            if (!isEnabled) {
+                Log.i(TAG, "AdhanPlaybackService suppressed: sound for $prayerName ($prayerKey) is muted.")
+                stopAdhanPlayback()
+                return START_NOT_STICKY
+            }
+        }
+
         Log.d(TAG, "Starting adhan foreground playback for: $prayerName, isSubuh: $isSubuh")
         startAdhanPlayback(prayerName, isSubuh, notificationId)
 

@@ -3,6 +3,7 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'adhan_native_bridge.dart';
 import 'adhan_notification_service.dart';
 
@@ -102,6 +103,42 @@ class AdhanAudioService extends GetxService with WidgetsBindingObserver {
       }
 
       await stopAdhan();
+
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        final masterEnabled =
+            prefs.getBool('prayer_sound_master_enabled') ?? true;
+        if (!masterEnabled) {
+          debugPrint(
+            '[AdhanAudioService] Adhan suppressed: prayer_sound_master_enabled is false.',
+          );
+          return;
+        }
+
+        final lower = prayerName.trim().toLowerCase();
+        final prayerKey = lower.contains('subuh') || lower.contains('fajr')
+            ? 'subuh'
+            : lower.contains('dzuhur') || lower.contains('dhuhr')
+                ? 'dzuhur'
+                : lower.contains('ashar') || lower.contains('asr')
+                    ? 'ashar'
+                    : lower.contains('maghrib')
+                        ? 'maghrib'
+                        : lower.contains('isya') || lower.contains('isha')
+                            ? 'isya'
+                            : '';
+        if (prayerKey.isNotEmpty) {
+          final isEnabled = prefs.getBool('prayer_sound_$prayerKey') ?? true;
+          if (!isEnabled) {
+            debugPrint(
+              '[AdhanAudioService] Adhan suppressed: sound for $prayerName is muted.',
+            );
+            return;
+          }
+        }
+      } catch (e) {
+        debugPrint('[AdhanAudioService] Prefs check error: $e');
+      }
 
       final isFajr =
           prayerName.trim().toLowerCase() == 'subuh' ||

@@ -50,6 +50,31 @@ class AdhanAlarmReceiver : BroadcastReceiver() {
         val isSubuh = intent?.getBooleanExtra(EXTRA_IS_SUBUH, false) ?: false
         val notifIdExtra = intent?.getIntExtra(EXTRA_NOTIFICATION_ID, 0) ?: 0
 
+        // Strict guard: Verify SharedPreferences before playing audio or starting foreground service
+        val prefs = context.getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
+        val masterEnabled = prefs.getBoolean("flutter.prayer_sound_master_enabled", true)
+        if (!masterEnabled) {
+            Log.i(TAG, "Adhan suppressed: master switch is disabled (Adzan Hening).")
+            return
+        }
+
+        val prayerKey = when {
+            prayerName.contains("subuh", ignoreCase = true) || prayerName.contains("fajr", ignoreCase = true) -> "subuh"
+            prayerName.contains("dzuhur", ignoreCase = true) || prayerName.contains("dhuhr", ignoreCase = true) -> "dzuhur"
+            prayerName.contains("ashar", ignoreCase = true) || prayerName.contains("asr", ignoreCase = true) -> "ashar"
+            prayerName.contains("maghrib", ignoreCase = true) -> "maghrib"
+            prayerName.contains("isya", ignoreCase = true) || prayerName.contains("isha", ignoreCase = true) -> "isya"
+            else -> ""
+        }
+
+        if (prayerKey.isNotEmpty()) {
+            val isEnabled = prefs.getBoolean("flutter.prayer_sound_$prayerKey", true)
+            if (!isEnabled) {
+                Log.i(TAG, "Adhan suppressed: sound for $prayerName ($prayerKey) is muted in preferences.")
+                return
+            }
+        }
+
         createNotificationChannel(context)
 
         // 1. Try starting AdhanPlaybackService as Foreground Service

@@ -269,21 +269,72 @@ class MainActivity : FlutterFragmentActivity() {
                         try {
                             val id = call.argument<Int>("id") ?: 0
                             val alarmManager = getSystemService(Context.ALARM_SERVICE) as? AlarmManager
-                            val intent = Intent(this, AdhanAlarmReceiver::class.java)
+                            val intent = Intent(this, AdhanAlarmReceiver::class.java).apply {
+                                action = AdhanAlarmReceiver.ACTION_PLAY_ADHAN_ALARM
+                            }
                             val pendingIntent = PendingIntent.getBroadcast(
                                 this,
                                 id,
                                 intent,
-                                PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE
+                                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
                             )
-                            if (pendingIntent != null && alarmManager != null) {
+                            if (alarmManager != null) {
                                 alarmManager.cancel(pendingIntent)
-                                pendingIntent.cancel()
                             }
+                            pendingIntent.cancel()
                             result.success(true)
                         } catch (e: Exception) {
                             Log.e("ADHAN_MAIN", "Error cancelling native adhan: ${e.message}", e)
                             result.error("CANCEL_FAILED", e.message, null)
+                        }
+                    }
+                    "cancelAllNativeAdhans" -> {
+                        try {
+                            val alarmManager = getSystemService(Context.ALARM_SERVICE) as? AlarmManager
+                            if (alarmManager != null) {
+                                for (day in 0..14) {
+                                    for (p in 0..9) {
+                                        val notifId = 91000 + (day * 10) + p
+                                        val reminderId = 92000 + (day * 10) + p
+
+                                        val intent1 = Intent(this, AdhanAlarmReceiver::class.java).apply {
+                                            action = AdhanAlarmReceiver.ACTION_PLAY_ADHAN_ALARM
+                                        }
+                                        val pi1 = PendingIntent.getBroadcast(
+                                            this,
+                                            notifId,
+                                            intent1,
+                                            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                                        )
+                                        alarmManager.cancel(pi1)
+                                        pi1.cancel()
+
+                                        val pi2 = PendingIntent.getBroadcast(
+                                            this,
+                                            reminderId,
+                                            intent1,
+                                            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                                        )
+                                        alarmManager.cancel(pi2)
+                                        pi2.cancel()
+                                    }
+                                }
+                                val testIntent = Intent(this, AdhanAlarmReceiver::class.java).apply {
+                                    action = AdhanAlarmReceiver.ACTION_PLAY_ADHAN_ALARM
+                                }
+                                val piTest = PendingIntent.getBroadcast(
+                                    this,
+                                    99999,
+                                    testIntent,
+                                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                                )
+                                alarmManager.cancel(piTest)
+                                piTest.cancel()
+                            }
+                            result.success(true)
+                        } catch (e: Exception) {
+                            Log.e("ADHAN_MAIN", "Error cancelling all native adhans: ${e.message}", e)
+                            result.error("CANCEL_ALL_FAILED", e.message, null)
                         }
                     }
                     else -> result.notImplemented()

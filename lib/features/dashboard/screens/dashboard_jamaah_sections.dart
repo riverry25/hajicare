@@ -316,8 +316,8 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
         : null;
 
     return Obx(() {
-      // 1. Read live safe radius (reactive
-      final safeRadius = hc?.safeRadiusMeters.value ?? 200.0;
+      // Rule 1: Always evaluate .obs on line 1 before conditionals
+      final safeRadius = (hc ?? Get.find<HajiCareController>()).safeRadiusMeters.value;
 
       // 2. Recompute tier against current safeRadius
       // JamaahData.tier may be stale; we recompute inline.
@@ -1052,27 +1052,6 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
     }
   }
 
-  // Dashed Line Painter Helper
-  Widget _buildDashedLine(Color color) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final boxWidth = constraints.constrainWidth();
-        const dashWidth = 5.0;
-        const dashSpace = 4.0;
-        final dashCount = (boxWidth / (dashWidth + dashSpace)).floor();
-        return Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: List.generate(dashCount, (_) {
-            return SizedBox(
-              width: dashWidth,
-              height: 1.2,
-              child: DecoratedBox(decoration: BoxDecoration(color: color)),
-            );
-          }),
-        );
-      },
-    );
-  }
 
   Widget _buildJamaahBentoSection({
     required BuildContext context,
@@ -2521,10 +2500,10 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                                           children: [
                                             Row(
                                               children: [
-                                                Icon(
+                                                const Icon(
                                                   Icons.air_rounded,
                                                   size: 14,
-                                                  color: const Color(
+                                                  color: Color(
                                                     0xFF0EA5E9,
                                                   ),
                                                 ),
@@ -2633,10 +2612,10 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                                           children: [
                                             Row(
                                               children: [
-                                                Icon(
+                                                const Icon(
                                                   Icons.thermostat_rounded,
                                                   size: 14,
-                                                  color: const Color(
+                                                  color: Color(
                                                     0xFFEA580C,
                                                   ),
                                                 ),

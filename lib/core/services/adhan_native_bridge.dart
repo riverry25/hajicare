@@ -49,6 +49,18 @@ class AdhanNativeBridge {
     }
   }
 
+  /// Cancels all scheduled native adhan alarms in Android AlarmManager.
+  static Future<bool> cancelAllNativeAdhans() async {
+    if (!isSupported) return false;
+    try {
+      final res = await _channel.invokeMethod<bool>('cancelAllNativeAdhans');
+      return res ?? false;
+    } catch (e) {
+      debugPrint('[AdhanNativeBridge] cancelAllNativeAdhans error: $e');
+      return false;
+    }
+  }
+
   /// Immediately starts the native Foreground Service to play the adhan.
   static Future<bool> startAdhanService({
     required String prayerName,

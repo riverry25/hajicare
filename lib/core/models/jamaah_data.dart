@@ -63,6 +63,7 @@ class JamaahData {
   bool sosActive;
   GeoPoint? currentLocation;
   bool isGpsActive;
+  bool isSmartbandConnected;
   DateTime? locationUpdatedAt;
   bool onlineStatus;
   DateTime? _dangerStart;
@@ -89,6 +90,7 @@ class JamaahData {
     this.sosActive = false,
     this.currentLocation,
     this.isGpsActive = false,
+    this.isSmartbandConnected = false,
     this.locationUpdatedAt,
     this.onlineStatus = true,
     this.bloodType,
@@ -176,6 +178,10 @@ class JamaahData {
 
     final isGps = (data['isGpsActive'] as bool?) ?? (loc != null);
     final isOnline = (data['onlineStatus'] as bool?) ?? true;
+    final isSmartband = (data['isSmartbandConnected'] as bool?) ??
+        (data['smartbandConnected'] as bool?) ??
+        (data['isSmartbandActive'] as bool?) ??
+        false;
 
     return JamaahData(
       id: doc.id,
@@ -190,6 +196,7 @@ class JamaahData {
       sosActive: data['sosActive'] as bool? ?? false,
       currentLocation: loc,
       isGpsActive: isGps,
+      isSmartbandConnected: isSmartband,
       locationUpdatedAt: locationTime,
       onlineStatus: isOnline,
       bloodType: bloodType,
@@ -212,6 +219,7 @@ class JamaahData {
       if (activeRoomId != null) 'activeRoomId': activeRoomId,
       if (currentLocation != null) 'currentLocation': currentLocation,
       'isGpsActive': isGpsActive,
+      'isSmartbandConnected': isSmartbandConnected,
       if (locationUpdatedAt != null)
         'locationUpdatedAt': Timestamp.fromDate(locationUpdatedAt!),
       'onlineStatus': onlineStatus,

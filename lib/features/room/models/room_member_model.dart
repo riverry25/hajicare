@@ -9,6 +9,7 @@ class RoomMemberModel {
   final DateTime? joinedAt;
   final GeoPoint? currentLocation;
   final DateTime? locationUpdatedAt;
+  final bool isSmartbandConnected;
 
   const RoomMemberModel({
     required this.uid,
@@ -17,6 +18,7 @@ class RoomMemberModel {
     this.joinedAt,
     this.currentLocation,
     this.locationUpdatedAt,
+    this.isSmartbandConnected = false,
     this.sosActive = false,
   });
 
@@ -48,6 +50,7 @@ class RoomMemberModel {
     DateTime? joinedAt,
     GeoPoint? currentLocation,
     DateTime? locationUpdatedAt,
+    bool? isSmartbandConnected,
     bool? sosActive,
   }) {
     return RoomMemberModel(
@@ -57,6 +60,7 @@ class RoomMemberModel {
       joinedAt: joinedAt ?? this.joinedAt,
       currentLocation: currentLocation ?? this.currentLocation,
       locationUpdatedAt: locationUpdatedAt ?? this.locationUpdatedAt,
+      isSmartbandConnected: isSmartbandConnected ?? this.isSmartbandConnected,
       sosActive: sosActive ?? this.sosActive,
     );
   }
@@ -97,7 +101,7 @@ class RoomMemberModel {
       locationUpdatedAt = rawLocTime;
     }
 
-    // Parse currentLocation (GeoPoint or backward-compatible Map
+    // Parse currentLocation (GeoPoint or backward-compatible Map)
     GeoPoint? currentLocation;
     final rawLoc = data['currentLocation'];
     if (rawLoc is GeoPoint) {
@@ -110,6 +114,11 @@ class RoomMemberModel {
       }
     }
 
+    final isSmartband = (data['isSmartbandConnected'] as bool?) ??
+        (data['smartbandConnected'] as bool?) ??
+        (data['isSmartbandActive'] as bool?) ??
+        false;
+
     return RoomMemberModel(
       uid: doc.id,
       name: (data['name'] as String?)?.trim() ?? 'Pengguna',
@@ -117,6 +126,7 @@ class RoomMemberModel {
       joinedAt: joinedAt,
       currentLocation: currentLocation,
       locationUpdatedAt: locationUpdatedAt,
+      isSmartbandConnected: isSmartband,
       sosActive: (data['sosActive'] as bool?) ?? false,
     );
   }
@@ -127,6 +137,7 @@ class RoomMemberModel {
       'name': name.trim(),
       'role': role.trim().toLowerCase(),
       'sosActive': sosActive,
+      'isSmartbandConnected': isSmartbandConnected,
       'joinedAt': joinedAt != null
           ? Timestamp.fromDate(joinedAt!)
           : FieldValue.serverTimestamp(),

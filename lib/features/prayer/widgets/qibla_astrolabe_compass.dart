@@ -150,20 +150,23 @@ class QiblaAstrolabeCompass extends StatelessWidget {
                   child: Stack(
                     alignment: Alignment.center,
                     children: [
-                      // Dial plate with Astrolabe ticks & Khatam Rosette
+                      // Dial plate with Astrolabe ticks & Khatam Rosette (Isolated in RepaintBoundary)
                       Positioned.fill(
-                        child: CustomPaint(
-                          painter: _QiblaCompassDialPainter(
-                            isAligned: isAligned,
-                            isDark: isDark,
-                            accentColor: colors.accent,
-                            successColor: colors.islamic,
-                            borderColor: colors.border,
+                        child: RepaintBoundary(
+                          child: CustomPaint(
+                            size: const Size(230, 230),
+                            painter: _QiblaCompassDialPainter(
+                              isAligned: isAligned,
+                              isDark: isDark,
+                              accentColor: colors.accent,
+                              successColor: colors.islamic,
+                              borderColor: colors.border,
+                            ),
                           ),
                         ),
                       ),
 
-                      // Cardinal Labels (U, S, B, T
+                      // Cardinal Labels (U, S, B, T)
                       Positioned(
                         top: 14,
                         child: Text(
@@ -209,12 +212,14 @@ class QiblaAstrolabeCompass extends StatelessWidget {
                         ),
                       ),
 
-                      // Rotating Kaaba Pointer Needle
-                      Transform.rotate(
-                        angle: safeAngle,
-                        child: SizedBox(
-                          width: 170,
-                          height: 170,
+                      // Rotating Kaaba Pointer Needle (Isolated in RepaintBoundary)
+                      RepaintBoundary(
+                        child: Transform.rotate(
+                          angle: safeAngle,
+                          child: SizedBox(
+                            width: 170,
+                            height: 170,
+
                           child: Stack(
                             alignment: Alignment.center,
                             children: [
@@ -317,8 +322,9 @@ class QiblaAstrolabeCompass extends StatelessWidget {
                           ),
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
+                ),
                 ),
               ),
 

@@ -230,7 +230,7 @@ class AdhanNotificationService {
         await initialize();
       }
 
-      final androidDetails = AndroidNotificationDetails(
+      const androidDetails = AndroidNotificationDetails(
         channelIdPlayback,
         channelNamePlayback,
         channelDescription: channelDescPlayback,
@@ -242,7 +242,7 @@ class AdhanNotificationService {
             false, // In foreground, audio is handled by AdhanAudioService
         enableVibration: true,
         category: AndroidNotificationCategory.alarm,
-        actions: const <AndroidNotificationAction>[
+        actions: <AndroidNotificationAction>[
           AndroidNotificationAction(
             actionStopAdhan,
             'Matikan Adzan',
@@ -259,7 +259,7 @@ class AdhanNotificationService {
         interruptionLevel: InterruptionLevel.timeSensitive,
       );
 
-      final notificationDetails = NotificationDetails(
+      const notificationDetails = NotificationDetails(
         android: androidDetails,
         iOS: darwinDetails,
       );
@@ -520,6 +520,14 @@ class AdhanNotificationService {
     final prayerCalc = PrayerCalculationService();
     const canonicalOrder = ['subuh', 'dzuhur', 'ashar', 'maghrib', 'isya'];
 
+    final anyEnabled = isPrayerSoundEnabled == null ||
+        canonicalOrder.any((k) => isPrayerSoundEnabled(k));
+
+    if (!anyEnabled) {
+      await cancelAllScheduledAdhans();
+      return;
+    }
+
     for (int day = 0; day < daysAhead; day++) {
       final targetDate = now.add(Duration(days: day));
       try {
@@ -653,7 +661,9 @@ class AdhanNotificationService {
   /// Cancel specific notification by ID
   Future<void> cancelNotification(int id) async {
     try {
-      await _notificationsPlugin.cancel(id: id);
+      if (_isInitialized) {
+        await _notificationsPlugin.cancel(id: id);
+      }
       await AdhanNativeBridge.cancelNativeAdhan(id: id);
     } catch (e) {
       debugPrint(
@@ -670,7 +680,10 @@ class AdhanNotificationService {
   /// Cancel all scheduled and active adhan notifications
   Future<void> cancelAllScheduledAdhans() async {
     try {
-      await _notificationsPlugin.cancelAll();
+      if (_isInitialized) {
+        await _notificationsPlugin.cancelAll();
+      }
+      await AdhanNativeBridge.cancelAllNativeAdhans();
       await AdhanNativeBridge.stopAdhanService();
       await PrayerAlarmManagerService.cancelAllPrayerAlarms();
     } catch (e) {

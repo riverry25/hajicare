@@ -1339,7 +1339,7 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
       children: [
         Row(
           children: [
-            Icon(
+            const Icon(
               Icons.auto_awesome_rounded,
               size: 16,
               color: AppColors.accentGoldStar,

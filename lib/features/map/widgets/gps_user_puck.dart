@@ -25,11 +25,11 @@ class GpsUserPuck extends StatefulWidget {
 }
 
 class _GpsUserPuckState extends State<GpsUserPuck>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   late final AnimationController _pulseCtrl;
   late final Animation<double> _pulseAnim;
 
-  // Unwrapped continuous angle tracking to avoid spinning backward around North (359° -> 1°
+  // Unwrapped continuous angle tracking to avoid spinning backward around North (359° -> 1°)
   double _currentContinuousAngle = 0.0;
   double _lastRawHeading = 0.0;
   bool _hasInitialHeading = false;
@@ -37,6 +37,7 @@ class _GpsUserPuckState extends State<GpsUserPuck>
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _pulseCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 2000),
@@ -45,12 +46,27 @@ class _GpsUserPuckState extends State<GpsUserPuck>
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive) {
+      if (_pulseCtrl.isAnimating) {
+        _pulseCtrl.stop();
+      }
+    } else if (state == AppLifecycleState.resumed) {
+      if (!_pulseCtrl.isAnimating) {
+        _pulseCtrl.repeat(reverse: true);
+      }
+    }
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _pulseCtrl.dispose();
     super.dispose();
   }
 
-  /// Calculates the shortest angular difference (-180° to +180°
+  /// Calculates the shortest angular difference (-180° to +180°)
   double _shortestAngleDiff(double from, double to) {
     return (to - from + 540.0) % 360.0 - 180.0;
   }
@@ -78,7 +94,9 @@ class _GpsUserPuckState extends State<GpsUserPuck>
         : hc.primary; // Elegant brand espresso/accent in browsing mode
     final beamColor = widget.isNavigating ? const Color(0xFF22C55E) : hc.accent;
 
-    return Obx(() {
+    return RepaintBoundary(
+      child: Obx(() {
+
       final rawHeading = widget.mapCtrl.userHeading.value;
       final isMoving = widget.mapCtrl.isUserMoving.value;
       final targetContinuousAngle = _getContinuousAngle(rawHeading);
@@ -188,8 +206,8 @@ class _GpsUserPuckState extends State<GpsUserPuck>
                               color: Colors.white,
                             )
                           // Subtle forward-pointing directional tip when standing still
-                          : CustomPaint(
-                              size: const Size(10, 10),
+                          : const CustomPaint(
+                              size: Size(10, 10),
                               painter: _StationaryPointerPainter(
                                 pointerColor: Colors.white,
                               ),
@@ -202,9 +220,11 @@ class _GpsUserPuckState extends State<GpsUserPuck>
           );
         },
       );
-    });
+    }),
+    );
   }
 }
+
 
 /// Custom painter for Google Maps-style directional flashlight beam (field of view cone
 class _DirectionalBeamPainter extends CustomPainter {

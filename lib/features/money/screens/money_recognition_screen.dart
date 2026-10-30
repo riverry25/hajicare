@@ -1,5 +1,4 @@
 import 'dart:typed_data';
-import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -18,6 +17,7 @@ import '../services/money_aggregator.dart';
 import '../services/money_currency_helper.dart';
 import '../services/money_tts_service.dart';
 import '../services/smart_multi_pass_detector.dart';
+import '../widgets/exchange_rate_sheet.dart';
 
 /// State modes for photo-based money recognition.
 enum RecognitionMode { camera, processing, result }
@@ -55,9 +55,10 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
       'assets/models/money_recognition.tflite';
 
   // TUNABLE PIPELINE CONFIGURATION
-  static const double _finalConfidenceThreshold = 0.65;
-  static const double _candidateConfidenceThreshold = 0.50;
-  static const double _crossPassIoUThreshold = 0.50;
+  static const double _finalConfidenceThreshold = 0.58;
+  static const double _candidateConfidenceThreshold = 0.42;
+  static const double _crossPassIoUThreshold = 0.45;
+  static const double _conflictIoUThreshold = 0.48;
   static const int _maxAdditionalPasses = 2;
 
   // UX State Machine
@@ -114,6 +115,7 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
           finalConfidenceThreshold: _finalConfidenceThreshold,
           candidateConfidenceThreshold: _candidateConfidenceThreshold,
           crossPassIoUThreshold: _crossPassIoUThreshold,
+          conflictIoUThreshold: _conflictIoUThreshold,
           maxAdditionalPasses: _maxAdditionalPasses,
         ),
       );
@@ -205,15 +207,7 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
         debugPrint('[MoneyAI] pause error: $e');
       }
 
-      // 2. Decode image dimensions to ensure pixel-perfect bounding box alignment
-      final ui.Image decodedImage = await decodeImageFromList(photoBytes);
-      final Size imageSize = Size(
-        decodedImage.width.toDouble(),
-        decodedImage.height.toDouble(),
-      );
-      decodedImage.dispose();
-
-      // 3. Run Smart Multi-Pass Pipeline
+      // 2. Run Smart Multi-Pass Pipeline (image downscaled in isolate without UI freeze)
       final MultiPassDetectionResult result = await _multiPassDetector
           .processImage(
             photoBytes,
@@ -227,6 +221,10 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
           );
 
       if (!mounted) return;
+
+      final Size imageSize = (result.imageWidth > 0 && result.imageHeight > 0)
+          ? Size(result.imageWidth.toDouble(), result.imageHeight.toDouble())
+          : const Size(1080, 1920);
 
       _capturedImageBytes = photoBytes;
       _capturedImageSize = imageSize;
@@ -518,7 +516,10 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
               includeOBB: false,
               includeOriginalImage: false,
               maxFPS: 1,
-              skipFrames: 30,
+              throttleInterval: Duration(seconds: 4),
+              inferenceFrequency: 1,
+              skipFrames: 60,
+              analysisResolution: Size(160, 120),
             ),
             onModelLoad: (path, task) {
               _yoloController.setShowOverlays(false);
@@ -2123,370 +2124,15 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
 
   // 5. EXCHANGE RATE CUSTOMIZATION BOTTOM SHEET
 
-  void _showExchangeRateSheet() {
-    final TextEditingController rateController = TextEditingController(
-      text: _exchangeRate.round().toString(),
+  Future<void> _showExchangeRateSheet() async {
+    final newRate = await showExchangeRateSheet(
+      context,
+      initialRate: _exchangeRate,
     );
-    bool isCheckingOnline = false;
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (bottomSheetContext) {
-        return StatefulBuilder(
-          builder: (context, setSheetState) {
-            final bottomInset = MediaQuery.of(context).viewInsets.bottom;
-            final sheetMaxHeight = MediaQuery.sizeOf(context).height * 0.88;
-
-            return ConstrainedBox(
-              constraints: BoxConstraints(maxHeight: sheetMaxHeight),
-              child: Container(
-                padding: EdgeInsets.fromLTRB(
-                  AppSpacing.screenEdgeGutter,
-                  AppSpacing.lg,
-                  AppSpacing.screenEdgeGutter,
-                  bottomInset + AppSpacing.xl,
-                ),
-                decoration: const BoxDecoration(
-                  color: AppColors.espressoDark,
-                  borderRadius: BorderRadius.vertical(
-                    top: Radius.circular(AppRadius.xl),
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black54,
-                      blurRadius: 20,
-                      offset: Offset(0, -4),
-                    ),
-                  ],
-                ),
-                child: SingleChildScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Center(
-                        child: Container(
-                          width: 42,
-                          height: 4,
-                          decoration: BoxDecoration(
-                            color: Colors.white24,
-                            borderRadius: BorderRadius.circular(2),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: AppSpacing.md),
-
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: AppColors.goldPrimary.withValues(
-                                alpha: 0.15,
-                              ),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.currency_exchange_rounded,
-                              color: AppColors.goldPrimary,
-                              size: 24,
-                            ),
-                          ),
-                          const SizedBox(width: AppSpacing.sm),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  context.tr('money.rateSettingsTitle'),
-                                  style: AppTypography.titleLarge.copyWith(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                                ),
-                                Text(
-                                  CurrencyRateService.instance.lastApiUtcTime !=
-                                          null
-                                      ? 'Live API: ${CurrencyRateService.instance.lastApiUtcTime}'
-                                      : 'SAR ↔ IDR ↔ USD (Dynamic FX)',
-                                  style: AppTypography.captionSmall.copyWith(
-                                    color: AppColors.goldLight.withValues(
-                                      alpha: 0.9,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          IconButton(
-                            icon: const Icon(
-                              Icons.close_rounded,
-                              color: Colors.white70,
-                            ),
-                            onPressed: () => Navigator.pop(bottomSheetContext),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: AppSpacing.lg),
-
-                      // Quick presets
-                      Text(
-                        context.tr('money.quickPresets'),
-                        style: AppTypography.labelMedium.copyWith(
-                          color: AppColors.canvasCream.withValues(alpha: 0.8),
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children:
-                            <double>{
-                              if (CurrencyRateService.instance.currentRate > 0)
-                                CurrencyRateService.instance.currentRate,
-                              4500.0,
-                              4600.0,
-                              4700.0,
-                              4750.0,
-                              4800.0,
-                            }.map((preset) {
-                              final currentVal = double.tryParse(
-                                rateController.text,
-                              );
-                              final isSelected = (currentVal == preset);
-                              return ChoiceChip(
-                                label: Text(
-                                  CurrencyFormatter.formatRupiah(preset),
-                                  style: TextStyle(
-                                    color: isSelected
-                                        ? AppColors.espressoDark
-                                        : Colors.white,
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 13,
-                                  ),
-                                ),
-                                selected: isSelected,
-                                selectedColor: AppColors.goldPrimary,
-                                backgroundColor: AppColors.primaryContainer,
-                                side: BorderSide(
-                                  color: isSelected
-                                      ? AppColors.goldPrimary
-                                      : Colors.white24,
-                                ),
-                                onSelected: (selected) {
-                                  if (selected) {
-                                    setSheetState(() {
-                                      rateController.text = preset
-                                          .toInt()
-                                          .toString();
-                                    });
-                                  }
-                                },
-                              );
-                            }).toList(),
-                      ),
-                      const SizedBox(height: AppSpacing.md),
-
-                      // Manual input
-                      Text(
-                        context.tr('money.manualRateLabel'),
-                        style: AppTypography.labelMedium.copyWith(
-                          color: AppColors.canvasCream.withValues(alpha: 0.8),
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      TextField(
-                        controller: rateController,
-                        keyboardType: TextInputType.number,
-                        style: AppTypography.titleLarge.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w800,
-                        ),
-                        decoration: InputDecoration(
-                          prefixText: 'Rp  ',
-                          prefixStyle: AppTypography.titleLarge.copyWith(
-                            color: AppColors.goldPrimary,
-                            fontWeight: FontWeight.w800,
-                          ),
-                          filled: true,
-                          fillColor: AppColors.primaryContainer.withValues(
-                            alpha: 0.8,
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(AppRadius.md),
-                            borderSide: const BorderSide(
-                              color: AppColors.goldPrimary,
-                            ),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(AppRadius.md),
-                            borderSide: BorderSide(
-                              color: Colors.white.withValues(alpha: 0.25),
-                            ),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(AppRadius.md),
-                            borderSide: const BorderSide(
-                              color: AppColors.goldPrimary,
-                              width: 2,
-                            ),
-                          ),
-                          hintText: '4750',
-                          hintStyle: const TextStyle(color: Colors.white38),
-                        ),
-                      ),
-                      const SizedBox(height: AppSpacing.md),
-
-                      // Fetch online button
-                      OutlinedButton.icon(
-                        style: OutlinedButton.styleFrom(
-                          side: BorderSide(
-                            color: AppColors.goldPrimary.withValues(alpha: 0.6),
-                          ),
-                          foregroundColor: AppColors.goldPrimary,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(AppRadius.pill),
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 12,
-                            horizontal: 16,
-                          ),
-                        ),
-                        onPressed: isCheckingOnline
-                            ? null
-                            : () async {
-                                final rateUpdatedTitle = context.tr(
-                                  'money.rateUpdatedTitle',
-                                );
-                                final cannotConnectTitle = context.tr(
-                                  'money.cannotConnectTitle',
-                                );
-                                final cannotConnectMsg = context.tr(
-                                  'money.cannotConnectMsg',
-                                );
-
-                                setSheetState(() => isCheckingOnline = true);
-                                final success = await CurrencyRateService
-                                    .instance
-                                    .fetchLatestOnlineRate();
-                                if (!bottomSheetContext.mounted) return;
-                                setSheetState(() => isCheckingOnline = false);
-
-                                if (success) {
-                                  setSheetState(() {
-                                    rateController.text = CurrencyRateService
-                                        .instance
-                                        .currentRate
-                                        .toInt()
-                                        .toString();
-                                  });
-                                  Get.snackbar(
-                                    rateUpdatedTitle,
-                                    '1 SAR = ${CurrencyFormatter.formatRupiah(CurrencyRateService.instance.currentRate)}',
-                                    snackPosition: SnackPosition.BOTTOM,
-                                    backgroundColor: AppColors.primaryContainer,
-                                    colorText: Colors.white,
-                                  );
-                                } else {
-                                  Get.snackbar(
-                                    cannotConnectTitle,
-                                    cannotConnectMsg,
-                                    snackPosition: SnackPosition.BOTTOM,
-                                    backgroundColor: AppColors.primaryContainer,
-                                    colorText: Colors.white,
-                                  );
-                                }
-                              },
-                        icon: isCheckingOnline
-                            ? const SizedBox(
-                                width: 16,
-                                height: 16,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: AppColors.goldPrimary,
-                                ),
-                              )
-                            : const Icon(Icons.cloud_sync_rounded, size: 20),
-                        label: FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Text(
-                            isCheckingOnline
-                                ? context.tr('money.fetchingOnline')
-                                : context.tr('money.fetchOnline'),
-                            style: AppTypography.labelLarge.copyWith(
-                              color: AppColors.goldPrimary,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: AppSpacing.md),
-
-                      // Save & Apply button
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.goldPrimary,
-                          foregroundColor: AppColors.espressoDark,
-                          minimumSize: const Size.fromHeight(52),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(AppRadius.pill),
-                          ),
-                        ),
-                        onPressed: () async {
-                          final val = double.tryParse(
-                            rateController.text.replaceAll(
-                              RegExp(r'[^0-9]'),
-                              '',
-                            ),
-                          );
-                          if (val != null && val > 500 && val < 20000) {
-                            await CurrencyRateService.instance.setCustomRate(
-                              val,
-                            );
-                            if (mounted) {
-                              setState(() {
-                                _exchangeRate = val;
-                                _recalculateConversions();
-                              });
-                            }
-                            if (bottomSheetContext.mounted) {
-                              Navigator.pop(bottomSheetContext);
-                            }
-                          } else {
-                            Get.snackbar(
-                              context.tr('money.invalidRateTitle'),
-                              context.tr('money.invalidRateMsg'),
-                              snackPosition: SnackPosition.BOTTOM,
-                              backgroundColor: Colors.black87,
-                              colorText: Colors.white,
-                            );
-                          }
-                        },
-                        child: FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Text(
-                            context.tr('money.applyRate'),
-                            style: AppTypography.titleMedium.copyWith(
-                              color: AppColors.espressoDark,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            );
-          },
-        );
-      },
-    ).whenComplete(rateController.dispose);
+    // Applied only after the sheet route has fully popped. The service then
+    // notifies rateNotifier, and _onRateChanged performs the single rebuild.
+    if (newRate == null || !mounted) return;
+    await CurrencyRateService.instance.setCustomRate(newRate);
   }
 }
 

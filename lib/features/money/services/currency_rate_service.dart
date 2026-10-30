@@ -58,6 +58,14 @@ class CurrencyRateService implements CurrencyConversionService {
   /// Initial benchmark rate for 1 SAR to IDR (Rp 4,750).
   static const double defaultRate = 4750.0;
 
+  /// Accepted sanity range for a manual SAR -> IDR rate (exclusive bounds).
+  static const double minManualRate = 500.0;
+  static const double maxManualRate = 20000.0;
+
+  /// Returns true when [rate] is a plausible SAR -> IDR value.
+  static bool isValidManualRate(double? rate) =>
+      rate != null && rate > minManualRate && rate < maxManualRate;
+
   /// Default benchmark exchange rate snapshot (Base USD).
   /// 1 USD = 3.75 SAR
   /// 1 USD = 17,812.5 IDR (=> 1 SAR = 4,750 IDR
@@ -76,7 +84,8 @@ class CurrencyRateService implements CurrencyConversionService {
   static const Duration _cacheStaleness = Duration(hours: 12);
 
   ExchangeRateSnapshot _snapshot = defaultSnapshot;
-  bool _isFetching = false;
+  Future<bool>? _inFlightFetch;
+  Future<void>? _initFuture;
   bool _isInitialized = false;
 
   /// Current exchange rate snapshot.
@@ -92,19 +101,25 @@ class CurrencyRateService implements CurrencyConversionService {
 
   String? get lastApiUtcTime => _snapshot.apiUtcString;
 
-  bool get isFetching => _isFetching;
+  bool get isFetching => _inFlightFetch != null;
 
   /// Notifier triggered whenever active rates update.
   final ValueNotifier<double> rateNotifier = ValueNotifier<double>(defaultRate);
 
   /// Initializes exchange rates from persistent SharedPs storage
   /// falling back to defaults, and triggers background refresh if stale.
-  Future<void> init() async {
+  Future<void> init() {
     if (_isInitialized) {
       autoSyncIfStale();
-      return;
+      return Future<void>.value();
     }
+    // Concurrent callers share one initialization instead of racing on prefs.
+    return _initFuture ??= _loadFromStorage().whenComplete(() {
+      _initFuture = null;
+    });
+  }
 
+  Future<void> _loadFromStorage() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final savedRatesJson = prefs.getString(_kRatesMapKey);
@@ -170,7 +185,7 @@ class CurrencyRateService implements CurrencyConversionService {
     final now = DateTime.now();
     final bool isStale =
         lastUpdated == null || now.difference(lastUpdated!) > _cacheStaleness;
-    if (isStale && !_isFetching) {
+    if (isStale && _inFlightFetch == null) {
       fetchLatestOnlineRate();
     }
   }
@@ -224,6 +239,10 @@ class CurrencyRateService implements CurrencyConversionService {
       );
       if (_snapshot.apiUtcString != null) {
         await prefs.setString(_kApiUpdateUtcKey, _snapshot.apiUtcString!);
+      } else {
+        // Manual override: drop the old API timestamp so it isn't shown again
+        // as "Live API" after the app restarts.
+        await prefs.remove(_kApiUpdateUtcKey);
       }
     } catch (e) {
       debugPrint('[MoneyFX] Error saving rates: $e');
@@ -235,7 +254,10 @@ class CurrencyRateService implements CurrencyConversionService {
     double newSarToIdrRate, {
     String? utcTimeString,
   }) async {
-    if (newSarToIdrRate <= 0) return;
+    if (!isValidManualRate(newSarToIdrRate)) {
+      debugPrint('[MoneyFX] Rejected out-of-range manual rate: $newSarToIdrRate');
+      return;
+    }
     final currentUsdToSar = _snapshot.rates[CurrencyCode.sar] ?? 3.75;
     final updatedRates = {
       CurrencyCode.usd: 1.0,
@@ -253,10 +275,15 @@ class CurrencyRateService implements CurrencyConversionService {
 
   /// Fetches live multi-currency rates from open.er-api.com (base USD).
   /// Falls back gracefully without throwing if offline or unreachable.
-  Future<bool> fetchLatestOnlineRate() async {
-    if (_isFetching) return false;
-    _isFetching = true;
+  /// Concurrent callers (e.g. background auto-sync + the user's button) share
+  /// the same in-flight request and receive the same result.
+  Future<bool> fetchLatestOnlineRate() {
+    return _inFlightFetch ??= _fetchOnline().whenComplete(() {
+      _inFlightFetch = null;
+    });
+  }
 
+  Future<bool> _fetchOnline() async {
     try {
       final url = Uri.parse('https://open.er-api.com/v6/latest/USD');
       final response = await http.get(url).timeout(const Duration(seconds: 8));
@@ -288,7 +315,6 @@ class CurrencyRateService implements CurrencyConversionService {
               debugPrint(
                 '[MoneyFX] Live rates updated: 1 USD = $usd, 1 SAR = ${(idr / sar).toStringAsFixed(1)} IDR (UTC: $utcTime)',
               );
-              _isFetching = false;
               return true;
             }
           }
@@ -296,8 +322,6 @@ class CurrencyRateService implements CurrencyConversionService {
       }
     } catch (e) {
       debugPrint('[MoneyFX] Online fetch failed (offline or timeout): $e');
-    } finally {
-      _isFetching = false;
     }
     return false;
   }

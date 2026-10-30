@@ -20,7 +20,8 @@ import '../../../core/services/prayer_alarm_manager_service.dart';
 import '../models/prayer_location_data.dart';
 import '../models/prayer_schedule_item.dart';
 
-class PrayerTimesController extends GetxController {
+class PrayerTimesController extends GetxController
+    with WidgetsBindingObserver {
   // Services
   final LocationService _locationService;
   final GeocodingService _geocodingService;
@@ -144,12 +145,15 @@ class PrayerTimesController extends GetxController {
   int _lifecycleGeneration = 0;
 
   bool _isCurrent(int generation) => generation == _lifecycleGeneration;
+  DateTime _lastCompassUpdate = DateTime.fromMillisecondsSinceEpoch(0);
 
   @override
   void onInit() {
     super.onInit();
+    WidgetsBinding.instance.addObserver(this);
     unawaited(initialize());
   }
+
 
   Future<void> initialize() async {
     final generation = _lifecycleGeneration;
@@ -601,7 +605,13 @@ class PrayerTimesController extends GetxController {
 
           final heading = event.heading!;
           final prevHeading = deviceHeading.value;
-          // Filter out micro-jitter sensor noise (< 0.5 degrees
+
+          final now = DateTime.now();
+          if (now.difference(_lastCompassUpdate).inMilliseconds < 80) {
+            return;
+          }
+
+          // Filter out micro-jitter sensor noise (< 0.5 degrees)
           if (prevHeading.isFinite && !prevHeading.isNaN) {
             final delta = ((heading - prevHeading + 180) % 360 - 180).abs();
             if (delta < 0.5) {
@@ -609,9 +619,11 @@ class PrayerTimesController extends GetxController {
             }
           }
 
+          _lastCompassUpdate = now;
           deviceHeading.value = heading;
           _updateQiblaOffset(heading);
         },
+
         onError: (e) {
           debugPrint('[PrayerTimesController] Compass stream error: $e');
           hasCompassSensor.value = false;
@@ -671,7 +683,7 @@ class PrayerTimesController extends GetxController {
     return prayerSoundEnabled[key] ?? true;
   }
 
-  /// Toggles adhan sound on/off for the given prayer and saves p
+  /// Toggles adhan sound on/off for the given prayer and saves preferences
   Future<void> togglePrayerSound(String rawName) async {
     final key = _normalizePrayerKey(rawName);
     if (key == 'terbit' || key == 'sunrise') return;
@@ -690,6 +702,7 @@ class PrayerTimesController extends GetxController {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('prayer_sound_$key', next);
+      await prefs.setBool('prayer_sound_master_enabled', isAnySoundOn);
     } catch (e) {
       debugPrint('[PrayerTimesController] Error saving sound preference: $e');
     }
@@ -702,7 +715,7 @@ class PrayerTimesController extends GetxController {
     return canonicalKeys.any((k) => isPrayerSoundOn(k));
   }
 
-  /// Toggles all prayer sounds simultaneously (1-click master switch
+  /// Toggles all prayer sounds simultaneously (1-click master switch)
   Future<void> toggleAllPrayerSounds() async {
     final target = !isAnySoundOn;
     await setAllPrayerSounds(target);
@@ -721,6 +734,7 @@ class PrayerTimesController extends GetxController {
 
     try {
       final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('prayer_sound_master_enabled', enabled);
       for (final k in canonicalKeys) {
         await prefs.setBool('prayer_sound_$k', enabled);
       }
@@ -732,8 +746,22 @@ class PrayerTimesController extends GetxController {
     _syncUpcomingPrayerAlarms();
   }
 
-  /// Synchronizes exact system alarm notifications for upcoming prayers (next 7 days
+  /// Synchronizes exact system alarm notifications for upcoming prayers (next 7 days)
   void _syncUpcomingPrayerAlarms() {
+    if (!isAnySoundOn) {
+      // User turned on Adzan Hening (all muted)
+      if (isAdhanPlaying.value) {
+        stopAdhan();
+      }
+      unawaited(
+        _adhanAudioService.notificationService.cancelAllScheduledAdhans(),
+      );
+      unawaited(AdhanNativeBridge.cancelAllNativeAdhans());
+      unawaited(AdhanNativeBridge.stopAdhanService());
+      unawaited(PrayerAlarmManagerService.cancelAllPrayerAlarms());
+      return;
+    }
+
     if (currentLat.value == 0.0 && currentLng.value == 0.0) return;
     final tz = timezoneName.value.isNotEmpty
         ? timezoneName.value
@@ -783,10 +811,14 @@ class PrayerTimesController extends GetxController {
     try {
       final prefs = await SharedPreferences.getInstance();
       const canonicalKeys = ['subuh', 'dzuhur', 'ashar', 'maghrib', 'isya'];
+      final masterEnabled = prefs.getBool('prayer_sound_master_enabled');
+
       for (final k in canonicalKeys) {
         final prefKey = 'prayer_sound_$k';
         if (prefs.containsKey(prefKey)) {
           prayerSoundEnabled[k] = prefs.getBool(prefKey) ?? true;
+        } else if (masterEnabled != null && !masterEnabled) {
+          prayerSoundEnabled[k] = false;
         } else {
           prayerSoundEnabled[k] = true;
         }
@@ -803,6 +835,14 @@ class PrayerTimesController extends GetxController {
     final key = _normalizePrayerKey(prayerName);
     if (key == 'terbit' || key == 'sunrise') return;
     if (!_hasCompletedInitialScheduleSync) return;
+
+    if (!isPrayerSoundOn(key)) {
+      final isNativeRunning = await AdhanNativeBridge.isServiceRunning();
+      if (isNativeRunning) {
+        unawaited(AdhanNativeBridge.stopAdhanService());
+      }
+      return;
+    }
 
     final triggerKey =
         '${key}_${targetTime.year}_${targetTime.month}_${targetTime.day}_${targetTime.hour}_${targetTime.minute}';
@@ -829,14 +869,25 @@ class PrayerTimesController extends GetxController {
       return;
     }
 
-    if (isPrayerSoundOn(key)) {
-      debugPrint('[PrayerTimesController] Triggering adhan for $prayerName');
-      unawaited(_adhanAudioService.playAdhan(prayerName: prayerName));
+    debugPrint('[PrayerTimesController] Triggering adhan for $prayerName');
+    unawaited(_adhanAudioService.playAdhan(prayerName: prayerName));
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused) {
+      _compassSubscription?.cancel();
+      _compassSubscription = null;
+    } else if (state == AppLifecycleState.resumed) {
+      if (_compassSubscription == null) {
+        _initCompass();
+      }
     }
   }
 
   @override
   void onClose() {
+    WidgetsBinding.instance.removeObserver(this);
     _lifecycleGeneration++;
     _countdownTimer?.cancel();
     _compassSubscription?.cancel();
@@ -844,3 +895,4 @@ class PrayerTimesController extends GetxController {
     super.onClose();
   }
 }
+

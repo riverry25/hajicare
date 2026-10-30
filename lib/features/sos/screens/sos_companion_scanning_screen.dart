@@ -1434,7 +1434,7 @@ class _WinkyOrganicRadarPainter extends CustomPainter {
     final maxRadius = size.width / 2;
 
     // 1. Layered Organic Concentric Disks
-    final diskLayers = [
+    const diskLayers = [
       _RadarDisk(radiusFactor: 1.00, rotationOffset: 0.00),
       _RadarDisk(radiusFactor: 0.76, rotationOffset: 0.08),
       _RadarDisk(radiusFactor: 0.54, rotationOffset: -0.05),

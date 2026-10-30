@@ -1023,7 +1023,7 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
     final distanceText = _getDistanceText();
 
     final actionBtnBg = hc.brand;
-    final actionBtnFg = Colors.white;
+    const actionBtnFg = Colors.white;
 
     final hasEmergencyContact =
         _resolvedEmergencyContact != null &&

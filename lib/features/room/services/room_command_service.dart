@@ -1482,36 +1482,34 @@ class RoomCommandService {
           await _firestore
               .collection('sos_events')
               .doc(resolvedEventId)
-              .update({
-                'status': 'selesai',
-                'resolvedAt': now,
-                'resolvedBy': currentAuthUid ?? userId,
-              });
+              .update(eventUpdates);
         } catch (_) {}
       }
-    } else {
-      try {
-        final activeEvents = await _firestore
-            .collection('sos_events')
-            .where('userId', isEqualTo: userId)
-            .where('status', whereIn: const ['active', 'baru', 'direspons'])
-            .get();
-        for (final doc in activeEvents.docs) {
+    }
+
+    // Defense-in-depth: Ensure all active/open SOS events for this user are resolved/cancelled
+    // so no orphaned active events remain in Firestore if the user spammed triggers.
+    try {
+      final activeEvents = await _firestore
+          .collection('sos_events')
+          .where('userId', isEqualTo: userId)
+          .where('status', whereIn: const ['active', 'baru', 'direspons'])
+          .get();
+      for (final doc in activeEvents.docs) {
+        if (doc.id != resolvedEventId) {
           try {
             await doc.reference.set(eventUpdates, SetOptions(merge: true));
           } catch (_) {
-            await doc.reference.update({
-              'status': 'selesai',
-              'resolvedAt': now,
-              'resolvedBy': currentAuthUid ?? userId,
-            });
+            try {
+              await doc.reference.update(eventUpdates);
+            } catch (_) {}
           }
         }
-      } catch (e) {
-        debugPrint(
-          '[RoomCommandService] Fallback searching active events failed: $e',
-        );
       }
+    } catch (e) {
+      debugPrint(
+        '[RoomCommandService] Fallback searching active events failed: $e',
+      );
     }
 
     // 4. Safely clean up active_sos pointer if present

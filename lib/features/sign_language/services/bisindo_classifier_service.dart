@@ -8,13 +8,13 @@ import '../models/sign_language_model.dart';
 
 /// Production TFLite classifier service for MotionGRU float16 models (SIBI & BISINDO).
 /// Input: [1, 48, 706] float32
-/// Output: [1, num_classes] float32 (softmax probabilities
+/// Output: [1, num_classes] float32 (softmax probabilities)
 class BisindoClassifierService {
-  static const double kDefaultConfidenceThreshold = 0.70;
+  static const double kDefaultConfidenceThreshold = 0.58;
   static const int kExpectedSequenceLen = 48;
   static const int kExpectedBaseFeatureDim = 353;
   static const int kExpectedInputFeatureDim = 706;
-  static const int kExpectedNumClasses = 47;
+  static const int kExpectedNumClasses = 49;
 
   SignLanguageModelConfig _currentConfig = SignLanguageModelConfig.bisindo;
   SignLanguageModel get currentModel => _currentConfig.model;
@@ -27,6 +27,7 @@ class BisindoClassifierService {
   bool _isInitialized = false;
   bool _isRunningInference = false;
   bool _isDisposed = false;
+  List<List<double>>? _cachedOutputTensor;
 
   bool get isInitialized => _isInitialized;
   bool get isRunningInference => _isRunningInference;
@@ -63,25 +64,13 @@ class BisindoClassifierService {
         try {
           final metadataStr = await rootBundle.loadString(config.configAsset!);
           _metadata = json.decode(metadataStr) as Map<String, dynamic>;
-
-          if (_metadata.containsKey(
-            'recommended_confidence_threshold_initial',
-          )) {
-            _confidenceThreshold =
-                (_metadata['recommended_confidence_threshold_initial'] as num)
-                    .toDouble();
-          } else {
-            _confidenceThreshold = config.defaultConfidenceThreshold;
-          }
         } catch (e) {
           debugPrint(
             '[SIGN_CLASSIFIER] Metadata load warning ($e), using default threshold: ${config.defaultConfidenceThreshold}',
           );
-          _confidenceThreshold = config.defaultConfidenceThreshold;
         }
-      } else {
-        _confidenceThreshold = config.defaultConfidenceThreshold;
       }
+      _confidenceThreshold = config.defaultConfidenceThreshold;
 
       // 2. Load labels dynamically
       final labelsStr = await rootBundle.loadString(config.labelAsset);
@@ -189,10 +178,14 @@ class BisindoClassifierService {
     final stopwatch = Stopwatch()..start();
 
     try {
-      // 1. Prepare output tensor [1, 47]
-      final List<List<double>> output = [
-        List<double>.filled(_labels.length, 0.0),
-      ];
+      // 1. Prepare reusable output tensor [1, num_classes]
+      if (_cachedOutputTensor == null ||
+          _cachedOutputTensor![0].length != _labels.length) {
+        _cachedOutputTensor = [List<double>.filled(_labels.length, 0.0)];
+      } else {
+        _cachedOutputTensor![0].fillRange(0, _labels.length, 0.0);
+      }
+      final output = _cachedOutputTensor!;
 
       // 2. Run TFLite inference
       interpreter.run(inputTensor, output);

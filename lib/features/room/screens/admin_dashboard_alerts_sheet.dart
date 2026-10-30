@@ -392,7 +392,7 @@ extension _AdminDashboardAlertsSheet on _AdminDashboardHome {
                                                   size: 13,
                                                   color: context.hc.danger,
                                                 ),
-                                                SizedBox(width: 4),
+                                                const SizedBox(width: 4),
                                                 Text(
                                                   'SOS',
                                                   style: TextStyle(

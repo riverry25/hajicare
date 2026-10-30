@@ -216,7 +216,7 @@ class LocationService {
             state: LocationPermissionState.granted,
           );
         }
-        return LocationResult(
+        return const LocationResult(
           source: LocationSource.unavailable,
           state: LocationPermissionState.denied,
           errorMessage:
@@ -233,7 +233,7 @@ class LocationService {
           state: LocationPermissionState.granted,
         );
       }
-      return LocationResult(
+      return const LocationResult(
         source: LocationSource.unavailable,
         state: LocationPermissionState.denied,
         errorMessage:

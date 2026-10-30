@@ -823,7 +823,7 @@ class SignVideoPlayerWidget extends StatelessWidget {
     final colors = context.hc;
     final textTheme = context.text;
 
-    final speeds = TextToSignController.supportedPlaybackSpeeds;
+    const speeds = TextToSignController.supportedPlaybackSpeeds;
 
     final speedMetadata = <double, Map<String, dynamic>>{
       0.5: {

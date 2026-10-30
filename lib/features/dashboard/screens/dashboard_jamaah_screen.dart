@@ -67,9 +67,10 @@ class DashboardJamaahScreen extends StatelessWidget {
         backgroundColor: context.hc.canvas,
         extendBody: true,
         body: Obx(() {
+          final currentIdx = dashboardCtrl.currentIndex.value;
           settings?.rxLocale.value;
           return IndexedStack(
-            index: dashboardCtrl.currentIndex.value,
+            index: currentIdx,
             children: [
               _buildJamaahHome(context, state, dashboardCtrl, prayerCtrl),
               if (dashboardCtrl.visitedTabs.contains(1))
@@ -88,14 +89,16 @@ class DashboardJamaahScreen extends StatelessWidget {
           );
         }),
         bottomNavigationBar: Obx(() {
+          // Rule 1: Evaluate .obs at top line before any conditionals
+          final currentIdx = dashboardCtrl.currentIndex.value;
           if (Get.isRegistered<MapController>()) {
             final mapCtrl = MapController.to;
-            if (dashboardCtrl.currentIndex.value == 1 && mapCtrl.isNavigating) {
+            if (currentIdx == 1 && mapCtrl.isNavigating) {
               return const SizedBox.shrink();
             }
           }
           return HajiCareBottomNavBar(
-            currentIndex: dashboardCtrl.currentIndex.value,
+            currentIndex: currentIdx,
             onTap: dashboardCtrl.changeTab,
           );
         }),
@@ -117,39 +120,33 @@ class DashboardJamaahScreen extends StatelessWidget {
       backgroundColor: context.hc.canvas,
       body: Container(
         decoration: BoxDecoration(gradient: dashGradient),
-        child: Obx(() {
-          final jamaah = state.self;
+        child: SingleChildScrollView(
+          physics: const ClampingScrollPhysics(),
+          child: ResponsiveCenter(
+            maxWidth: AppBreakpoints.maxTabletContentWidth,
+            child: Column(
+              children: [
+                // Top Hero Card (Seamless Gradient Canvas - Extracted StatelessWidget)
+                DashboardJamaahHeroSection(
+                  state: state,
+                  dashboardCtrl: dashboardCtrl,
+                  prayerCtrl: prayerCtrl,
+                  isDark: isDark,
+                ),
 
-          return SingleChildScrollView(
-            physics: const ClampingScrollPhysics(),
-            child: ResponsiveCenter(
-              maxWidth: AppBreakpoints.maxTabletContentWidth,
-              child: Column(
-                children: [
-                  // Top Hero Card (Seamless Gradient Canvas
-                  _buildHeroSection(
-                    context: context,
-                    jamaah: jamaah,
-                    state: state,
-                    dashboardCtrl: dashboardCtrl,
-                    prayerCtrl: prayerCtrl,
-                    isDark: isDark,
-                  ),
-
-                  // Curved White/Cream Canvas Sheet
-                  _buildCurvedBody(
-                    context: context,
-                    jamaah: jamaah,
-                    state: state,
-                    dashboardCtrl: dashboardCtrl,
-                    isDark: isDark,
-                    headingColor: headingColor,
-                  ),
-                ],
-              ),
+                // Curved White/Cream Canvas Sheet
+                _buildCurvedBody(
+                  context: context,
+                  jamaah: state.self,
+                  state: state,
+                  dashboardCtrl: dashboardCtrl,
+                  isDark: isDark,
+                  headingColor: headingColor,
+                ),
+              ],
             ),
-          );
-        }),
+          ),
+        ),
       ),
     );
   }

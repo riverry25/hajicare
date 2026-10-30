@@ -445,44 +445,92 @@ class HajiColors extends ThemeExtension<HajiColors> {
   Color get dangerDark =>
       isDark ? const Color(0xFF7A2012) : const Color(0xFF8F2818);
 
-  /// Brand gradients
+  /// Brand gradients (Cached const instances to eliminate GC heap churn on low-spec phones)
+  static const LinearGradient _lightHeroGradient = LinearGradient(
+    begin: Alignment.topRight,
+    end: Alignment.bottomCenter,
+    colors: [Color(0xFFF5EBE0), Color(0xFFFAF5EE), Color(0xFFFBF9F6)],
+  );
+
+  static const LinearGradient _darkHeroGradient = LinearGradient(
+    begin: Alignment.topRight,
+    end: Alignment.bottomCenter,
+    colors: [
+      Color(0xFF2C1E16),
+      Color(0xFF1E1510),
+      Color.fromARGB(255, 36, 26, 19),
+    ],
+  );
+
+  static const LinearGradient _lightDashboardHeroGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    stops: [0.0, 0.48, 1.0],
+    colors: [
+      Color(0xFFEADBCA), // Refined warm desert cashmere sand
+      Color(0xFFF3ECE0), // Soft alabaster warm cream
+      Color(0xFFFBF9F6), // Pure warm white canvas
+    ],
+  );
+
+  static const LinearGradient _darkDashboardHeroGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    stops: [0.0, 0.45, 1.0],
+    colors: [
+      Color(0xFF3E2716), // Deep espresso top-left
+      Color(0xFF2A1A0F), // Mocha mid
+      Color(0xFF1A120A), // Near-black canvas bottom-right
+    ],
+  );
+
+  static const LinearGradient _lightDangerGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFFB3412F), Color(0xFFF8E8E4)],
+  );
+
+  static const LinearGradient _darkDangerGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFFE58A7C), Color(0xFF4A231D)],
+  );
+
+  static const LinearGradient _lightSandGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFFF6F1EA), Color(0xFFEFE6D8)],
+  );
+
+  static const LinearGradient _darkSandGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFF28201A), Color(0xFF352A21)],
+  );
+
+  static const LinearGradient _lightDialogHeroGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFF3B2A1F), Color(0xFF2C1E16), Color(0xFF21150E)],
+  );
+
+  static const LinearGradient _darkDialogHeroGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFF2E1F17), Color(0xFF1F140E), Color(0xFF160E09)],
+  );
 
   /// Subtle tonal canvas gradient — for screen backgrounds behind cards.
   /// Very low contrast by design; intended as a neutral surface tint, NOT for text-over backgrounds.
-  LinearGradient get heroGradient => LinearGradient(
-    begin: Alignment.topRight,
-    end: Alignment.bottomCenter,
-    colors: isDark
-        ? const [
-            Color(0xFF2C1E16),
-            Color(0xFF1E1510),
-            Color.fromARGB(255, 36, 26, 19),
-          ]
-        : const [Color(0xFFF5EBE0), Color(0xFFFAF5EE), Color(0xFFFBF9F6)],
-  );
+  LinearGradient get heroGradient =>
+      isDark ? _darkHeroGradient : _lightHeroGradient;
 
   /// Rich espresso dashboard hero gradient — dedicated for full-bleed top hero sections
   /// on DashboardJamaah and DashboardPendamping. Smooth, organic, and elegant in light mode;
   /// rich deep espresso in dark mode.
   /// Text/icons on this surface should use [dashboardHeroOnSurface] and [dashboardHeroAccent].
-  LinearGradient get dashboardHeroGradient => LinearGradient(
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-    stops: isDark ? const [0.0, 0.45, 1.0] : const [0.0, 0.48, 1.0],
-    colors: isDark
-        // Dark mode: rich deep espresso → dark mocha → slightly lighter canvas
-        ? const [
-            Color(0xFF3E2716), // Deep espresso top-left
-            Color(0xFF2A1A0F), // Mocha mid
-            Color(0xFF1A120A), // Near-black canvas bottom-right
-          ]
-        // Light mode: elegant desert sand cashmere → gentle alabaster cream → canvas
-        : const [
-            Color(0xFFEADBCA), // Refined warm desert cashmere sand
-            Color(0xFFF3ECE0), // Soft alabaster warm cream
-            Color(0xFFFBF9F6), // Pure warm white canvas
-          ],
-  );
+  LinearGradient get dashboardHeroGradient =>
+      isDark ? _darkDashboardHeroGradient : _lightDashboardHeroGradient;
 
   /// High-contrast foreground color for text/icons overlaid on [dashboardHeroGradient].
   Color get dashboardHeroOnSurface =>
@@ -492,26 +540,15 @@ class HajiColors extends ThemeExtension<HajiColors> {
   Color get dashboardHeroAccent =>
       isDark ? const Color(0xFFE5C28A) : const Color(0xFF86572A);
 
-  LinearGradient get dangerGradient => LinearGradient(
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-    colors: [danger, dangerContainer],
-  );
+  LinearGradient get dangerGradient =>
+      isDark ? _darkDangerGradient : _lightDangerGradient;
 
-  LinearGradient get sandGradient => LinearGradient(
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-    colors: [surfaceSubtle, surfaceSand],
-  );
+  LinearGradient get sandGradient =>
+      isDark ? _darkSandGradient : _lightSandGradient;
 
   /// Dedicated gradient for modal floating hero headers (distinct from screen heroGradient).
-  LinearGradient get dialogHeroGradient => LinearGradient(
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-    colors: isDark
-        ? const [Color(0xFF2E1F17), Color(0xFF1F140E), Color(0xFF160E09)]
-        : const [Color(0xFF3B2A1F), Color(0xFF2C1E16), Color(0xFF21150E)],
-  );
+  LinearGradient get dialogHeroGradient =>
+      isDark ? _darkDialogHeroGradient : _lightDialogHeroGradient;
 
   /// High-contrast text & icon foreground color for modal floating hero headers.
   Color get dialogHeroForeground =>
@@ -521,3 +558,4 @@ class HajiColors extends ThemeExtension<HajiColors> {
   Color get dialogHeroAccent =>
       isDark ? const Color(0xFFE2C499) : const Color(0xFFD4B896);
 }
+

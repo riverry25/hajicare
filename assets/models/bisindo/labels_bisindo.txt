@@ -29,6 +29,7 @@ L
 M
 Mandi
 Minum
+Minum_old
 N
 O
 P
@@ -45,3 +46,4 @@ W
 X
 Y
 Z
+kopi

@@ -6,7 +6,7 @@ import 'dart:convert';
 /// 2. MCP9808: Suhu Tubuh Presisi Tinggi (°C
 /// 3. MPU6050: Akselerometer & Giroskop -> Deteksi Aktivitas Langkah (stepCount), Keseimbangan (roll, pitch, accelG), & Deteksi Jatuh (fallDetected
 /// 4. GPS NEO-6M: Lokasi Koordinat Satelit (latitude, longitude, satellites, isValidLocation
-/// 5. LCD 16x2 + I2C Backpack: Tampilan Status Kesehatan (BPM, Suhu) & Pesan Darurat di Pergelangan Tangan (lcdLine1, lcdLine2, emergencyMessage
+/// 5. Layar OLED 0.96 Inci: Tampilan Status Kesehatan (BPM, Suhu) & Pesan Darurat di Pergelangan Tangan (lcdLine1, lcdLine2, emergencyMessage
 class SmartbandData {
   final String braceletId;
   final double? latitude;
@@ -94,7 +94,7 @@ class SmartbandData {
   /// Indikator apakah data tanda-tanda vital valid
   bool get hasValidVitals => heartRate > 0 && isValidSpo2;
 
-  /// Teks LCD 16x2 Baris 1 (Format 16 Karakter Pas
+  /// Teks Layar OLED 0.96 Inci Baris 1 (Format 16 Karakter Pas)
   String get displayLcdLine1 {
     if (lcdLine1 != null && lcdLine1!.trim().isNotEmpty) {
       final s = lcdLine1!.trim();
@@ -107,7 +107,7 @@ class SmartbandData {
     return line.length > 16 ? line.substring(0, 16) : line.padRight(16);
   }
 
-  /// Teks LCD 16x2 Baris 2 (Format 16 Karakter Pas
+  /// Teks Layar OLED 0.96 Inci Baris 2 (Format 16 Karakter Pas)
   String get displayLcdLine2 {
     if (lcdLine2 != null && lcdLine2!.trim().isNotEmpty) {
       final s = lcdLine2!.trim();
@@ -129,6 +129,12 @@ class SmartbandData {
     final line = 'T:$tempStr NORMAL';
     return line.length > 16 ? line.substring(0, 16) : line.padRight(16);
   }
+
+  /// Teks Layar OLED 0.96" Baris 1
+  String get displayOledLine1 => displayLcdLine1;
+
+  /// Teks Layar OLED 0.96" Baris 2
+  String get displayOledLine2 => displayLcdLine2;
 
   /// Salin objek SmartbandData dengan field yang diperbarui
   SmartbandData copyWith({
@@ -271,7 +277,7 @@ class SmartbandData {
     final double? batVolt = parseDouble(json['batteryVoltage'] ?? json['volt']);
     final bool charging = parseBool(json['isCharging'] ?? json['charging']);
 
-    // 6. LCD 16x2 + I2C Backpack & Tombol SOS
+    // 6. Layar OLED 0.96 Inci & Tombol SOS
     final bool isSos = parseBool(
       json['sos'] ??
           json['isSos'] ??
@@ -282,10 +288,14 @@ class SmartbandData {
           json['emergencyBtn'],
     );
     final String? l1 =
+        json['oledLine1']?.toString() ??
+        json['oled1']?.toString() ??
         json['lcdLine1']?.toString() ??
         json['lcd1']?.toString() ??
         json['line1']?.toString();
     final String? l2 =
+        json['oledLine2']?.toString() ??
+        json['oled2']?.toString() ??
         json['lcdLine2']?.toString() ??
         json['lcd2']?.toString() ??
         json['line2']?.toString();

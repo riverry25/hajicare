@@ -61,37 +61,44 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // 0A. BANNER PERINGATAN DARURAT JATUH (MPU6050
+              // 0A. BANNER PERINGATAN DARURAT JATUH (MPU6050)
               _buildEmergencyFallBanner(context, ctrl),
 
               // 0B. BANNER PERINGATAN DARURAT TOMBOL SOS SMARTBAND
               _buildEmergencySosBanner(context, ctrl),
 
+              // 0C. BANNER PERINGATAN DI LUAR RADIUS AMAN & MOTOR GETAR
+              _buildSafeRadiusAlertBanner(context, ctrl),
+
               // 1. STATUS GELANG & TOGGLE SIMULASI MODE
               _buildTopStatusBar(context, ctrl),
               const SizedBox(height: AppSpacing.gapCards),
 
-              // 2. HERO METRIC ARC GAUGE (Fokus Sensor Terpilih
+              // 1B. KONDISI & PANDUAN KESEHATAN LANSIA / AWAM
+              _buildElderlyHealthSummaryCard(context, ctrl),
+              const SizedBox(height: AppSpacing.gapCards),
+
+              // 2. HERO METRIC ARC GAUGE (Fokus Sensor Terpilih)
               _buildHeroMetricArcCard(context, ctrl),
               const SizedBox(height: AppSpacing.gapCards),
 
-              // 3. RINGKASAN SENSOR KESEHATAN (Interactive Vitals Grid
+              // 3. RINGKASAN SENSOR KESEHATAN (Interactive Vitals Grid)
               _buildVitalsSummaryCard(context, ctrl),
               const SizedBox(height: AppSpacing.gapCards),
 
-              // 4. LAYAR LCD 16x2 + I2C BACKPACK (Pergelangan Tangan
-              _buildLcdScreenCard(context, ctrl),
+              // 4. LAYAR OLED 0.96 INCI (Pergelangan Tangan)
+              _buildOledScreenCard(context, ctrl),
               const SizedBox(height: AppSpacing.gapCards),
 
-              // 5. GRAFIK TREN SENSOR BEZIER SPLINE
+              // 5. GRAFIK TREN SENSOR BEZIER SPLINE (Dinamis)
               _buildTrendSectionCard(context, ctrl),
               const SizedBox(height: AppSpacing.gapCards),
 
-              // 5. DETEKSI JATUH & KEAMANAN JAMAAH
+              // 6. DETEKSI JATUH & KEAMANAN JAMAAH
               _buildFallDetectionCard(context, ctrl),
               const SizedBox(height: AppSpacing.gapCards),
 
-              // 6. LOKASI TERKINI JAMAAH (PREVIEW MAP CARTO
+              // 7. LOKASI TERKINI JAMAAH (PREVIEW MAP CARTO)
               _buildGpsSatelliteCard(context, ctrl),
               const SizedBox(height: 24),
             ],
@@ -350,6 +357,150 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
     });
   }
 
+  // 0C. BANNER PERINGATAN DI LUAR RADIUS AMAN & MOTOR GETAR
+  Widget _buildSafeRadiusAlertBanner(
+    BuildContext context,
+    SmartbandLdrController ctrl,
+  ) {
+    return Obx(() {
+      if (!ctrl.isOutsideSafeRadius.value) return const SizedBox.shrink();
+
+      final distance = ctrl.currentDistanceToPosko.value.round();
+      final safeRadius = ctrl.activeSafeRadius.value.round();
+
+      return Container(
+        margin: const EdgeInsets.only(bottom: AppSpacing.gapCards),
+        padding: const EdgeInsets.all(AppSpacing.cardPadding),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFFEA580C), Color(0xFFC2410C)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(AppRadius.card),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFFEA580C).withValues(alpha: 0.35),
+              blurRadius: 14,
+              offset: const Offset(0, 5),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.vibration_rounded,
+                    color: Colors.white,
+                    size: 26,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'PERINGATAN: DI LUAR RADIUS AMAN!',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 14.5,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.3,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Motor getar gelang otomatis bergetar di pergelangan tangan.',
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.9),
+                          fontSize: 11.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.navigation_rounded,
+                    color: Colors.white,
+                    size: 18,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Jarak saat ini: $distance meter dari posko / pendamping (Batas aman: $safeRadius m). Segera kembali mendekat ke rombongan.',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.white,
+                      side: const BorderSide(color: Colors.white70),
+                      padding: const EdgeInsets.symmetric(vertical: 9),
+                    ),
+                    icon: const Icon(Icons.map_rounded, size: 16),
+                    label: const Text(
+                      'Buka Peta Navigasi',
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                    ),
+                    onPressed: () => ctrl.navigateToMap(context),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: const Color(0xFFC2410C),
+                      padding: const EdgeInsets.symmetric(vertical: 9),
+                      elevation: 0,
+                    ),
+                    icon: const Icon(Icons.volume_off_rounded, size: 16),
+                    label: const Text(
+                      'Hentikan Getaran',
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                    ),
+                    onPressed: () => ctrl.testSafeRadiusAlert(trigger: false),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+    });
+  }
+
   // 1. STATUS GELANG & TOGGLE SIMULASI MODE
   Widget _buildTopStatusBar(BuildContext context, SmartbandLdrController ctrl) {
     final isDark = AppColors.isDark(context);
@@ -450,7 +601,191 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
     });
   }
 
-  // 2. HERO METRIC ARC GAUGE (Fokus Sensor Terpilih
+  // 1B. KONDISI & PANDUAN KESEHATAN LANSIA / AWAM
+  Widget _buildElderlyHealthSummaryCard(
+    BuildContext context,
+    SmartbandLdrController ctrl,
+  ) {
+    final isDark = AppColors.isDark(context);
+    final headingColor = AppColors.textHeadingColor(context);
+    final bodyColor = AppColors.textBodyColor(context);
+
+    return Obx(() {
+      final summary = ctrl.elderlyOverallSummary;
+      final hrAdvice = ctrl.elderlyHeartRateAdvice;
+      final tempAdvice = ctrl.elderlyTemperatureAdvice;
+      final oxAdvice = ctrl.elderlySpo2Advice;
+      final mobAdvice = ctrl.elderlyMobilityAdvice;
+      final isOutside = ctrl.isOutsideSafeRadius.value;
+      final isFall = ctrl.isFallDetected.value;
+      final isWarning = isOutside ||
+          isFall ||
+          ctrl.currentHeartRate >= 105 ||
+          ctrl.currentTemperature >= 37.8;
+
+      return AppCard(
+        padding: const EdgeInsets.all(AppSpacing.cardPadding),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(7),
+                  decoration: BoxDecoration(
+                    color: isWarning
+                        ? const Color(0xFFEA580C).withValues(alpha: 0.15)
+                        : const Color(0xFF10B981).withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                  ),
+                  child: Icon(
+                    isWarning
+                        ? Icons.health_and_safety_rounded
+                        : Icons.verified_user_rounded,
+                    color: isWarning
+                        ? const Color(0xFFEA580C)
+                        : const Color(0xFF10B981),
+                    size: 22,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Panduan Kesehatan Jamaah Lansia',
+                        style: AppTypography.titleMedium.copyWith(
+                          color: headingColor,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        'Rangkuman kondisi fisik dalam bahasa yang mudah dipahami',
+                        style: AppTypography.captionSmall.copyWith(
+                          color: bodyColor.withValues(alpha: 0.7),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+
+            // Banner Ringkasan Utama Ramah Lansia
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: isWarning
+                    ? (isDark
+                        ? const Color(0xFF451A03)
+                        : const Color(0xFFFFF7ED))
+                    : (isDark
+                        ? const Color(0xFF064E3B).withValues(alpha: 0.4)
+                        : const Color(0xFFECFDF5)),
+                borderRadius: BorderRadius.circular(AppRadius.md),
+                border: Border.all(
+                  color: isWarning
+                      ? const Color(0xFFF97316).withValues(alpha: 0.4)
+                      : const Color(0xFF10B981).withValues(alpha: 0.3),
+                ),
+              ),
+              child: Text(
+                summary,
+                style: TextStyle(
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w600,
+                  height: 1.35,
+                  color: isWarning
+                      ? (isDark
+                          ? const Color(0xFFFDBA74)
+                          : const Color(0xFFC2410C))
+                      : (isDark
+                          ? const Color(0xFF6EE7B7)
+                          : const Color(0xFF047857)),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // 4 Panduan Vital Lansia
+            _buildElderlyTipRow(
+              context,
+              icon: Icons.favorite_rounded,
+              iconColor: const Color(0xFFEF4444),
+              title: 'Jantung:',
+              desc: hrAdvice,
+            ),
+            const SizedBox(height: 6),
+            _buildElderlyTipRow(
+              context,
+              icon: Icons.device_thermostat_rounded,
+              iconColor: const Color(0xFFD4A857),
+              title: 'Suhu Tubuh:',
+              desc: tempAdvice,
+            ),
+            const SizedBox(height: 6),
+            _buildElderlyTipRow(
+              context,
+              icon: Icons.air_rounded,
+              iconColor: const Color(0xFF0284C7),
+              title: 'Oksigen (SpO2):',
+              desc: oxAdvice,
+            ),
+            const SizedBox(height: 6),
+            _buildElderlyTipRow(
+              context,
+              icon: Icons.directions_walk_rounded,
+              iconColor: const Color(0xFF10B981),
+              title: 'Keseimbangan:',
+              desc: mobAdvice,
+            ),
+          ],
+        ),
+      );
+    });
+  }
+
+  Widget _buildElderlyTipRow(
+    BuildContext context, {
+    required IconData icon,
+    required Color iconColor,
+    required String title,
+    required String desc,
+  }) {
+    final headingColor = AppColors.textHeadingColor(context);
+    final bodyColor = AppColors.textBodyColor(context);
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 16, color: iconColor),
+        const SizedBox(width: 8),
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 12.5,
+            fontWeight: FontWeight.bold,
+            color: headingColor,
+          ),
+        ),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Text(
+            desc,
+            style: TextStyle(
+              fontSize: 12,
+              color: bodyColor.withValues(alpha: 0.85),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // 2. HERO METRIC ARC GAUGE (Fokus Sensor Terpilih)
   Widget _buildHeroMetricArcCard(
     BuildContext context,
     SmartbandLdrController ctrl,
@@ -472,16 +807,16 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
       Color statusPillColor;
 
       switch (sensorIdx) {
-        case 1: // MCP9808 Suhu Tubuh
-          heroTitle = 'MCP9808 Suhu Tubuh (°C)';
+        case 1: // Suhu Tubuh
+          heroTitle = 'Suhu Tubuh Mandiri';
           final temp = ctrl.mcpTemperature.value ?? 36.6;
           heroValue = temp.toStringAsFixed(1);
-          heroUnit = '°C';
+          heroUnit = '°C (MLX90614 / MCP9808)';
           arcPercent = ((temp - 35.0) / (40.0 - 35.0)).clamp(0.1, 1.0);
           arcColor = const Color(0xFFD4A857);
           statusPillText = temp >= 37.5
-              ? context.tr('smartband.warning')
-              : context.tr('smartband.normal');
+              ? 'WASPADA PANAS'
+              : 'SUHU NORMAL SEHAT';
           statusPillBg = temp >= 37.5
               ? AppColors.statusWarning.withValues(alpha: 0.15)
               : AppColors.statusSafe.withValues(alpha: 0.15);
@@ -489,8 +824,8 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
               ? AppColors.statusWarning
               : AppColors.statusSafe;
           break;
-        case 2: // MPU6050 Langkah & Deteksi Jatuh
-          heroTitle = 'MPU6050 Langkah & Jatuh';
+        case 2: // Langkah & Deteksi Jatuh
+          heroTitle = 'Keseimbangan & Langkah Kaki';
           heroValue = '${ctrl.currentSteps}';
           heroUnit = 'Langkah (${ctrl.stabilityScore.value}% Stabil)';
           arcPercent = (ctrl.currentSteps / 6000.0).clamp(0.05, 1.0);
@@ -499,7 +834,7 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
               : const Color(0xFF10B981);
           statusPillText = ctrl.isFallDetected.value
               ? 'JATUH TERDETEKSI'
-              : 'POSTUR AMAN';
+              : 'POSTUR AMAN TEGAP';
           statusPillBg = ctrl.isFallDetected.value
               ? AppColors.statusDanger.withValues(alpha: 0.15)
               : AppColors.statusSafe.withValues(alpha: 0.15);
@@ -507,13 +842,13 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
               ? AppColors.statusDanger
               : AppColors.statusSafe;
           break;
-        case 3: // NEO-6M GPS
-          heroTitle = 'GPS NEO-6M Satelit';
+        case 3: // GPS Satelit
+          heroTitle = 'Titik Lokasi GPS Satelit';
           heroValue = '${ctrl.gpsSatellites.value}';
-          heroUnit = ctrl.isGpsFix.value ? 'Sats (FIX)' : 'Sats (Mencari)';
+          heroUnit = ctrl.isGpsFix.value ? 'Sats (Terkunci FIX)' : 'Sats (Mencari)';
           arcPercent = (ctrl.gpsSatellites.value / 12.0).clamp(0.1, 1.0);
           arcColor = const Color(0xFF0284C7);
-          statusPillText = ctrl.isGpsFix.value ? 'GPS FIX' : 'MENCARI SINYAL';
+          statusPillText = ctrl.isGpsFix.value ? 'GPS TERKUNCI' : 'MENCARI SATELIT';
           statusPillBg = ctrl.isGpsFix.value
               ? AppColors.statusSafe.withValues(alpha: 0.15)
               : AppColors.primaryGold.withValues(alpha: 0.15);
@@ -522,31 +857,33 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
               : AppColors.primaryGold;
           break;
         case 4: // LiPo Baterai
-          heroTitle = context.tr('smartband.heroBattery');
+          heroTitle = 'Daya Baterai Gelang';
           heroValue = '${ctrl.batteryPercent.value}';
-          heroUnit = '%';
+          heroUnit = '% (${ctrl.batteryVoltage.value.toStringAsFixed(2)}V)';
           arcPercent = (ctrl.batteryPercent.value / 100.0).clamp(0.0, 1.0);
           arcColor = const Color(0xFF10B981);
-          statusPillText = '${ctrl.batteryVoltage.value.toStringAsFixed(2)}V';
+          statusPillText = ctrl.isCharging.value ? 'MENGISI DAYA' : 'DAYA AMAN';
           statusPillBg = AppColors.statusSafe.withValues(alpha: 0.15);
           statusPillColor = AppColors.statusSafe;
           break;
-        case 5: // LCD 16x2 + I2C Backpack
-          heroTitle = 'LCD 16x2 Layar Gelang';
-          heroValue = '16x2';
-          heroUnit = 'Karakter Teks';
+        case 5: // Layar OLED 0.96 Inci
+          heroTitle = 'Layar OLED 0.96 Inci Gelang';
+          heroValue = '0.96"';
+          heroUnit = 'OLED 128x64 px';
           arcPercent = 1.0;
-          arcColor = const Color(0xFF14B8A6);
+          arcColor = const Color(0xFF00E5FF);
           statusPillText = ctrl.isFallDetected.value
               ? 'SOS JATUH'
-              : (ctrl.emergencyMessage.value.isNotEmpty
-                    ? 'PESAN SOS'
-                    : 'SINKRON AKTIF');
-          statusPillBg = const Color(0xFF14B8A6).withValues(alpha: 0.15);
-          statusPillColor = const Color(0xFF14B8A6);
+              : (ctrl.isOutsideSafeRadius.value
+                    ? 'LUAR RADIUS'
+                    : (ctrl.emergencyMessage.value.isNotEmpty
+                          ? 'PESAN AKTIF'
+                          : 'OLED AKTIF'));
+          statusPillBg = const Color(0xFF00E5FF).withValues(alpha: 0.15);
+          statusPillColor = const Color(0xFF00E5FF);
           break;
-        default: // MAX30102 Detak Jantung & SpO2
-          heroTitle = 'MAX30102 Jantung & SpO2';
+        default: // Detak Jantung & SpO2
+          heroTitle = 'Detak Jantung & Oksigen Darah';
           final hr =
               ctrl.heartRate.value ?? (ctrl.isSimulationMode.value ? 78 : 0);
           heroValue = hr > 0 ? '$hr' : '--';
@@ -555,10 +892,10 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
           arcPercent = hr > 0 ? ((hr - 40) / (140 - 40)).clamp(0.1, 1.0) : 0.0;
           arcColor = const Color(0xFF10B981);
           statusPillText = hr >= 100
-              ? context.tr('smartband.warning')
+              ? 'JANTUNG CEPAT'
               : (ox > 0 && ox < 95
-                    ? 'SpO2 Rendah'
-                    : context.tr('smartband.normal'));
+                    ? 'Oksigen Rendah'
+                    : 'DENYUT NORMAL');
           statusPillBg = AppColors.statusSafe.withValues(alpha: 0.15);
           statusPillColor = AppColors.statusSafe;
           break;
@@ -765,7 +1102,7 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
             ),
             const SizedBox(height: 16),
 
-            // Baris 1: MAX30102 & MCP9808
+            // Baris 1: Detak Jantung/SpO2 & Suhu Tubuh
             Row(
               children: [
                 Expanded(
@@ -777,10 +1114,10 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
                     iconColor: const Color(0xFFEF4444),
                     valueText: hr > 0 ? '$hr' : '--',
                     unit: 'BPM',
-                    title: 'MAX30102 Jantung & O2',
+                    title: 'Detak Jantung & O2',
                     subtitle: ctrl.currentSpo2 > 0
-                        ? '${ctrl.currentSpo2}% SpO2'
-                        : 'SpO2: --',
+                        ? '${ctrl.currentSpo2}% SpO2 Sehat'
+                        : 'Mengukur sensor...',
                     onTap: () => ctrl.selectSensor(0),
                   ),
                 ),
@@ -794,10 +1131,10 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
                     iconColor: const Color(0xFFD4A857),
                     valueText: temp.toStringAsFixed(1),
                     unit: '°C',
-                    title: 'MCP9808 Suhu Tubuh',
+                    title: 'Suhu Tubuh Mandiri',
                     subtitle: temp >= 37.5
-                        ? context.tr('smartband.warning')
-                        : 'Presisi I2C Digital',
+                        ? 'Waspada Panas'
+                        : 'Suhu Normal Nyaman',
                     onTap: () => ctrl.selectSensor(1),
                   ),
                 ),
@@ -805,7 +1142,7 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
             ),
             const SizedBox(height: 8),
 
-            // Baris 2: MPU6050 & GPS NEO-6M
+            // Baris 2: Keseimbangan & GPS Satelit
             Row(
               children: [
                 Expanded(
@@ -817,7 +1154,7 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
                     iconColor: const Color(0xFF10B981),
                     valueText: '${ctrl.currentSteps}',
                     unit: 'Langkah',
-                    title: 'MPU6050 Langkah & Gerak',
+                    title: 'Langkah & Keseimbangan',
                     subtitle: isFall ? 'JATUH!' : '$stability% Stabil',
                     onTap: () => ctrl.selectSensor(2),
                   ),
@@ -832,8 +1169,8 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
                     iconColor: const Color(0xFF0284C7),
                     valueText: '${ctrl.gpsSatellites.value}',
                     unit: 'Sats',
-                    title: 'GPS NEO-6M Satelit',
-                    subtitle: ctrl.isGpsFix.value ? 'Sinyal FIX' : 'Mencari...',
+                    title: 'Lokasi Satelit GPS',
+                    subtitle: ctrl.isGpsFix.value ? 'Sinyal Terkunci FIX' : 'Mencari Satelit...',
                     onTap: () => ctrl.selectSensor(3),
                   ),
                 ),
@@ -841,7 +1178,7 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
             ),
             const SizedBox(height: 8),
 
-            // Baris 3: LCD 16x2 + I2C Backpack & Baterai LiPo
+            // Baris 3: Layar OLED 0.96 Inci & Baterai Gelang
             Row(
               children: [
                 Expanded(
@@ -849,14 +1186,14 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
                     context,
                     index: 5,
                     isSelected: selected == 5,
-                    icon: Icons.developer_board_rounded,
-                    iconColor: const Color(0xFF14B8A6),
-                    valueText: '16x2',
-                    unit: 'LCD',
-                    title: 'LCD 16x2 Backpack',
+                    icon: Icons.screenshot_monitor_rounded,
+                    iconColor: const Color(0xFF00E5FF),
+                    valueText: '0.96"',
+                    unit: 'OLED',
+                    title: 'Layar OLED 0.96"',
                     subtitle: ctrl.emergencyMessage.value.isNotEmpty
                         ? 'Pesan Darurat'
-                        : 'Layar Gelang',
+                        : 'OLED 128x64 px',
                     onTap: () => ctrl.selectSensor(5),
                   ),
                 ),
@@ -870,9 +1207,10 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
                     iconColor: const Color(0xFF8B5CF6),
                     valueText: '$bat',
                     unit: '%',
-                    title: context.tr('smartband.batteryLabel'),
-                    subtitle:
-                        '${ctrl.batteryVoltage.value.toStringAsFixed(2)}V',
+                    title: 'Daya Baterai Gelang',
+                    subtitle: ctrl.isCharging.value
+                        ? 'Mengisi Daya'
+                        : '${ctrl.batteryVoltage.value.toStringAsFixed(2)}V (Aman)',
                     onTap: () => ctrl.selectSensor(4),
                   ),
                 ),
@@ -1008,12 +1346,12 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
     );
   }
 
-  // 4. LAYAR LCD 16x2 + I2C BACKPACK (Pergelangan Tangan
-  Widget _buildLcdScreenCard(
+  // 4. LAYAR OLED 0.96 INCI (Pergelangan Tangan)
+  Widget _buildOledScreenCard(
     BuildContext context,
     SmartbandLdrController ctrl,
   ) {
-    return _SmartbandLcd16x2Card(ctrl: ctrl);
+    return _SmartbandOled096Card(ctrl: ctrl);
   }
 
   // 5. GRAFIK TREN SENSOR BEZIER CURVE
@@ -1062,7 +1400,7 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
             ),
             const SizedBox(height: 12),
 
-            // Tab Selector Periode (Hari Ini / Minggu / Bulan
+            // Tab Selector Periode (Hari Ini / Minggu / Bulan)
             Container(
               decoration: BoxDecoration(
                 color: isDark
@@ -1096,7 +1434,7 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
             ),
             const SizedBox(height: 18),
 
-            // Cubic Bezier Spline Chart (Emerald & Soft Gradient
+            // Cubic Bezier Spline Chart (Emerald & Soft Gradient)
             SizedBox(
               height: 150,
               child: CustomPaint(
@@ -1113,7 +1451,7 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
             ),
             const SizedBox(height: 8),
 
-            // Sumbu X (Hari
+            // Sumbu X (Hari)
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -1128,15 +1466,15 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
             ),
             const SizedBox(height: 16),
 
-            // 3 Kartu Mini Ringkasan (Rata-rata, MAX, MIN
+            // 3 Kartu Mini Ringkasan (Rata-rata, MAX, MIN Dinamis)
             Row(
               children: [
                 Expanded(
                   child: _buildSummaryMiniCard(
                     context,
                     title: context.tr('smartband.avg'),
-                    value: ctrl.trendAverage.toStringAsFixed(0),
-                    unit: 'BPM',
+                    value: ctrl.formatTrendValue(ctrl.trendAverage),
+                    unit: ctrl.trendUnit,
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -1144,8 +1482,8 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
                   child: _buildSummaryMiniCard(
                     context,
                     title: context.tr('smartband.max'),
-                    value: ctrl.trendMax.toStringAsFixed(0),
-                    unit: 'BPM',
+                    value: ctrl.formatTrendValue(ctrl.trendMax),
+                    unit: ctrl.trendUnit,
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -1153,8 +1491,8 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
                   child: _buildSummaryMiniCard(
                     context,
                     title: context.tr('smartband.min'),
-                    value: ctrl.trendMin.toStringAsFixed(0),
-                    unit: 'BPM',
+                    value: ctrl.formatTrendValue(ctrl.trendMin),
+                    unit: ctrl.trendUnit,
                   ),
                 ),
               ],
@@ -2098,16 +2436,16 @@ class CubicBezierTrendChartPainter extends CustomPainter {
   }
 }
 
-/// Widget Card Simulasi Layar Fisik LCD 16x2 + I2C Backpack pada Pergelangan Tangan
-class _SmartbandLcd16x2Card extends StatefulWidget {
+/// Widget Card Simulasi Layar Fisik OLED 0.96 Inci pada Pergelangan Tangan
+class _SmartbandOled096Card extends StatefulWidget {
   final SmartbandLdrController ctrl;
-  const _SmartbandLcd16x2Card({required this.ctrl});
+  const _SmartbandOled096Card({required this.ctrl});
 
   @override
-  State<_SmartbandLcd16x2Card> createState() => _SmartbandLcd16x2CardState();
+  State<_SmartbandOled096Card> createState() => _SmartbandOled096CardState();
 }
 
-class _SmartbandLcd16x2CardState extends State<_SmartbandLcd16x2Card> {
+class _SmartbandOled096CardState extends State<_SmartbandOled096Card> {
   final TextEditingController _textController = TextEditingController();
 
   @override
@@ -2121,9 +2459,9 @@ class _SmartbandLcd16x2CardState extends State<_SmartbandLcd16x2Card> {
     _textController.text = msg;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Pesan "$msg" disinkronkan ke LCD gelang.'),
+        content: Text('Pesan "$msg" disinkronkan ke Layar OLED 0.96" gelang.'),
         duration: const Duration(seconds: 2),
-        backgroundColor: const Color(0xFF0F766E),
+        backgroundColor: const Color(0xFF0284C7),
       ),
     );
   }
@@ -2135,10 +2473,12 @@ class _SmartbandLcd16x2CardState extends State<_SmartbandLcd16x2Card> {
     final bodyColor = AppColors.textBodyColor(context);
 
     return Obx(() {
-      final line1 = widget.ctrl.currentLcdLine1;
-      final line2 = widget.ctrl.currentLcdLine2;
+      final line1 = widget.ctrl.currentOledLine1;
+      final line2 = widget.ctrl.currentOledLine2;
       final isFall = widget.ctrl.isFallDetected.value;
-      final isEmergency = isFall || widget.ctrl.isSosButtonPressed.value;
+      final isOutside = widget.ctrl.isOutsideSafeRadius.value;
+      final isSos = widget.ctrl.isSosButtonPressed.value;
+      final isAlert = isFall || isOutside || isSos;
 
       return AppCard(
         padding: const EdgeInsets.all(AppSpacing.cardPadding),
@@ -2150,12 +2490,12 @@ class _SmartbandLcd16x2CardState extends State<_SmartbandLcd16x2Card> {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF14B8A6).withValues(alpha: 0.15),
+                    color: const Color(0xFF0284C7).withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(AppRadius.sm),
                   ),
                   child: const Icon(
-                    Icons.developer_board_rounded,
-                    color: Color(0xFF14B8A6),
+                    Icons.screenshot_monitor_rounded,
+                    color: Color(0xFF0284C7),
                     size: 22,
                   ),
                 ),
@@ -2168,7 +2508,7 @@ class _SmartbandLcd16x2CardState extends State<_SmartbandLcd16x2Card> {
                         fit: BoxFit.scaleDown,
                         alignment: Alignment.centerLeft,
                         child: Text(
-                          'LCD 16x2 + I2C Backpack',
+                          'Layar OLED 0.96 Inci',
                           style: AppTypography.titleMedium.copyWith(
                             color: headingColor,
                             fontWeight: FontWeight.bold,
@@ -2179,7 +2519,7 @@ class _SmartbandLcd16x2CardState extends State<_SmartbandLcd16x2Card> {
                         fit: BoxFit.scaleDown,
                         alignment: Alignment.centerLeft,
                         child: Text(
-                          'Mirror Layar Fisik Pergelangan Tangan',
+                          'Tampilan Layar Gelang Smartband (SSD1306)',
                           style: AppTypography.captionSmall.copyWith(
                             color: bodyColor.withValues(alpha: 0.7),
                           ),
@@ -2195,20 +2535,20 @@ class _SmartbandLcd16x2CardState extends State<_SmartbandLcd16x2Card> {
                       vertical: 3,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF14B8A6).withValues(alpha: 0.15),
+                      color: const Color(0xFF0284C7).withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(AppRadius.chip),
                       border: Border.all(
-                        color: const Color(0xFF14B8A6).withValues(alpha: 0.4),
+                        color: const Color(0xFF0284C7).withValues(alpha: 0.4),
                       ),
                     ),
                     child: const FittedBox(
                       fit: BoxFit.scaleDown,
                       child: Text(
-                        'I2C 0x27 SINKRON',
+                        'OLED 128x64 px',
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF14B8A6),
+                          color: Color(0xFF0284C7),
                         ),
                       ),
                     ),
@@ -2218,24 +2558,26 @@ class _SmartbandLcd16x2CardState extends State<_SmartbandLcd16x2Card> {
             ),
             const SizedBox(height: 14),
 
-            // Authentic Physical LCD 16x2 Bezel Display Container
+            // Authentic 0.96" OLED Smartband Bezel
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: const Color(0xFF0F172A),
+                color: const Color(0xFF090D16),
                 borderRadius: BorderRadius.circular(AppRadius.card),
                 border: Border.all(
-                  color: isEmergency
-                      ? const Color(0xFFEF4444)
-                      : const Color(0xFF334155),
+                  color: isAlert
+                      ? (isOutside ? const Color(0xFFEA580C) : const Color(0xFFEF4444))
+                      : const Color(0xFF1E293B),
                   width: 2.0,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: isEmergency
-                        ? const Color(0xFFEF4444).withValues(alpha: 0.3)
-                        : Colors.black.withValues(alpha: 0.4),
+                    color: isAlert
+                        ? (isOutside
+                            ? const Color(0xFFEA580C).withValues(alpha: 0.3)
+                            : const Color(0xFFEF4444).withValues(alpha: 0.3))
+                        : Colors.black.withValues(alpha: 0.45),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
@@ -2244,85 +2586,103 @@ class _SmartbandLcd16x2CardState extends State<_SmartbandLcd16x2Card> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // OLED Top Mini Status Bar
                   Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Container(
-                        width: 7,
-                        height: 7,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: isEmergency
-                              ? const Color(0xFFEF4444)
-                              : const Color(0xFF22C55E),
-                          boxShadow: [
-                            BoxShadow(
-                              color: isEmergency
-                                  ? const Color(
-                                      0xFFEF4444,
-                                    ).withValues(alpha: 0.8)
-                                  : const Color(
-                                      0xFF22C55E,
-                                    ).withValues(alpha: 0.8),
-                              blurRadius: 6,
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                          isEmergency
-                              ? 'STATUS: SOS DARURAT'
-                              : 'LCD BACKLIGHT ON',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontFamily: 'monospace',
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            color: isEmergency
-                                ? const Color(0xFFFCA5A5)
-                                : const Color(0xFF86EFAC),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.satellite_alt_rounded,
+                            size: 11,
+                            color: widget.ctrl.isGpsFix.value
+                                ? const Color(0xFF38BDF8)
+                                : const Color(0xFF64748B),
                           ),
-                        ),
+                          const SizedBox(width: 4),
+                          Text(
+                            widget.ctrl.isGpsFix.value
+                                ? 'GPS:${widget.ctrl.gpsSatellites.value}'
+                                : 'GPS:SEARCH',
+                            style: TextStyle(
+                              fontFamily: 'monospace',
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.bold,
+                              color: widget.ctrl.isGpsFix.value
+                                  ? const Color(0xFF38BDF8)
+                                  : const Color(0xFF64748B),
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 8),
-                      const Text(
-                        '16x2 I2C',
+                      Text(
+                        isOutside
+                            ? '!DI LUAR RADIUS!'
+                            : (isSos
+                                ? '!DARURAT SOS!'
+                                : (isFall ? '!JATUH!' : 'HAJICARE 0.96"')),
                         style: TextStyle(
                           fontFamily: 'monospace',
                           fontSize: 9.5,
-                          color: Color(0xFF94A3B8),
+                          fontWeight: FontWeight.bold,
+                          color: isAlert
+                              ? const Color(0xFFF87171)
+                              : const Color(0xFF94A3B8),
                         ),
+                      ),
+                      Row(
+                        children: [
+                          Text(
+                            '${widget.ctrl.batteryPercent.value}%',
+                            style: const TextStyle(
+                              fontFamily: 'monospace',
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF38BDF8),
+                            ),
+                          ),
+                          const SizedBox(width: 3),
+                          Icon(
+                            widget.ctrl.isCharging.value
+                                ? Icons.battery_charging_full_rounded
+                                : Icons.battery_std_rounded,
+                            size: 11,
+                            color: const Color(0xFF38BDF8),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
+                  Container(
+                    height: 1,
+                    width: double.infinity,
+                    color: const Color(0xFF1E293B),
+                  ),
+                  const SizedBox(height: 10),
 
-                  // LCD Dot-Matrix Screen Glass Panel
+                  // OLED Pure Black Phosphor Display Panel (0.96" Aspect)
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 14,
-                      vertical: 12,
+                      vertical: 14,
                     ),
                     decoration: BoxDecoration(
-                      color: isFall
-                          ? const Color(0xFF450A0A)
-                          : const Color(0xFF042F2E),
-                      borderRadius: BorderRadius.circular(6),
+                      color: Colors.black,
+                      borderRadius: BorderRadius.circular(8),
                       border: Border.all(
-                        color: isFall
+                        color: isAlert
                             ? const Color(0xFFDC2626)
-                            : const Color(0xFF0D9488),
+                            : const Color(0xFF0284C7).withValues(alpha: 0.6),
                         width: 1.5,
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: isFall
+                          color: isAlert
                               ? const Color(0xFFDC2626).withValues(alpha: 0.25)
-                              : const Color(0xFF0D9488).withValues(alpha: 0.25),
-                          blurRadius: 8,
+                              : const Color(0xFF0284C7).withValues(alpha: 0.2),
+                          blurRadius: 10,
                           spreadRadius: 1,
                         ),
                       ],
@@ -2337,16 +2697,16 @@ class _SmartbandLcd16x2CardState extends State<_SmartbandLcd16x2Card> {
                             line1.padRight(16).substring(0, 16),
                             style: TextStyle(
                               fontFamily: 'monospace',
-                              fontSize: 15.5,
+                              fontSize: 16,
                               fontWeight: FontWeight.w700,
-                              letterSpacing: 2.2,
-                              color: isFall
+                              letterSpacing: 1.8,
+                              color: isAlert
                                   ? const Color(0xFFFCA5A5)
-                                  : const Color(0xFF5EEAD4),
+                                  : const Color(0xFF38BDF8),
                             ),
                           ),
                         ),
-                        const SizedBox(height: 5),
+                        const SizedBox(height: 6),
                         FittedBox(
                           fit: BoxFit.scaleDown,
                           alignment: Alignment.centerLeft,
@@ -2354,12 +2714,12 @@ class _SmartbandLcd16x2CardState extends State<_SmartbandLcd16x2Card> {
                             line2.padRight(16).substring(0, 16),
                             style: TextStyle(
                               fontFamily: 'monospace',
-                              fontSize: 15.5,
+                              fontSize: 16,
                               fontWeight: FontWeight.w700,
-                              letterSpacing: 2.2,
-                              color: isFall
+                              letterSpacing: 1.8,
+                              color: isAlert
                                   ? const Color(0xFFEF4444)
-                                  : const Color(0xFF5EEAD4),
+                                  : const Color(0xFF38BDF8),
                             ),
                           ),
                         ),
@@ -2371,9 +2731,9 @@ class _SmartbandLcd16x2CardState extends State<_SmartbandLcd16x2Card> {
             ),
             const SizedBox(height: 14),
 
-            // Kirim Pesan Darurat ke Pergelangan Tangan
+            // Kirim Pesan Cepat ke Gelang
             Text(
-              'Kirim Pesan Darurat / Panduan ke Gelang:',
+              'Pesan Singkat ke Layar Gelang (Maks 16 Karakter):',
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
@@ -2403,6 +2763,12 @@ class _SmartbandLcd16x2CardState extends State<_SmartbandLcd16x2Card> {
                   ),
                   const SizedBox(width: 6),
                   _buildPresetChip(
+                    '!LUAR RADIUS!',
+                    () => _sendPreset('!LUAR RADIUS!'),
+                    isAlert: true,
+                  ),
+                  const SizedBox(width: 6),
+                  _buildPresetChip(
                     '!MEDIS BUTUH!',
                     () => _sendPreset('!MEDIS BUTUH!'),
                     isAlert: true,
@@ -2425,7 +2791,7 @@ class _SmartbandLcd16x2CardState extends State<_SmartbandLcd16x2Card> {
                     controller: _textController,
                     maxLength: 16,
                     decoration: InputDecoration(
-                      hintText: 'Teks gelang (maks 16 char)...',
+                      hintText: 'Teks layar 0.96" (maks 16 char)...',
                       hintStyle: TextStyle(
                         fontSize: 12,
                         color: bodyColor.withValues(alpha: 0.5),
@@ -2457,7 +2823,7 @@ class _SmartbandLcd16x2CardState extends State<_SmartbandLcd16x2Card> {
                     }
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF14B8A6),
+                    backgroundColor: const Color(0xFF0284C7),
                     foregroundColor: Colors.white,
                     minimumSize: const Size(70, 40),
                     padding: const EdgeInsets.symmetric(
@@ -2498,12 +2864,12 @@ class _SmartbandLcd16x2CardState extends State<_SmartbandLcd16x2Card> {
         decoration: BoxDecoration(
           color: isAlert
               ? const Color(0xFFDC2626).withValues(alpha: 0.15)
-              : const Color(0xFF14B8A6).withValues(alpha: 0.12),
+              : const Color(0xFF0284C7).withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(AppRadius.chip),
           border: Border.all(
             color: isAlert
                 ? const Color(0xFFDC2626).withValues(alpha: 0.4)
-                : const Color(0xFF14B8A6).withValues(alpha: 0.3),
+                : const Color(0xFF0284C7).withValues(alpha: 0.3),
           ),
         ),
         child: Text(
@@ -2511,7 +2877,7 @@ class _SmartbandLcd16x2CardState extends State<_SmartbandLcd16x2Card> {
           style: TextStyle(
             fontSize: 11,
             fontWeight: FontWeight.bold,
-            color: isAlert ? const Color(0xFFDC2626) : const Color(0xFF0F766E),
+            color: isAlert ? const Color(0xFFDC2626) : const Color(0xFF0284C7),
           ),
         ),
       ),

@@ -15,18 +15,21 @@ class BisindoRecognitionConfig {
   final Duration duplicateCooldown;
   final Duration handPresenceTimeout;
 
-  /// Spelled letters (SIBI / BISINDO alphabet) are spoken as one word after
-  /// this idle period, or immediately when SPASI is pressed.
-  final Duration letterSpeechIdle;
+  /// Spelled letters and full words/sentences are spoken as a coherent utterance
+  /// after this idle period (when the jamaah has stopped demonstrating for a few seconds).
+  final Duration speechIdleDelay;
 
   const BisindoRecognitionConfig({
     this.confidenceThreshold = 0.58,
     this.stablePredictionsRequired = 3,
-    this.duplicateCooldown = const Duration(milliseconds: 1200),
-    this.handPresenceTimeout = const Duration(milliseconds: 1000),
-    this.letterSpeechIdle = const Duration(milliseconds: 1500),
+    this.duplicateCooldown = const Duration(milliseconds: 1400),
+    this.handPresenceTimeout = const Duration(milliseconds: 1200),
+    this.speechIdleDelay = const Duration(milliseconds: 2600), // ~2.6s calm pause
   }) : assert(stablePredictionsRequired > 0),
        assert(confidenceThreshold >= 0.0 && confidenceThreshold <= 1.0);
+
+  /// Backward-compatible alias
+  Duration get letterSpeechIdle => speechIdleDelay;
 }
 
 /// Owns the single shared "Transkripsi AI" used by both SIBI and BISINDO.
@@ -89,7 +92,8 @@ class BisindoRecognitionController extends GetxController {
   // Speech
   Future<void> _speechChain = Future<void>.value();
   int _pendingSpeechCount = 0;
-  DateTime? _lastLetterCommitAt;
+  DateTime? _lastGestureCommitAt;
+  int _lastSpokenTokenIndex = 0;
   int _lastSpokenLetterRunEnd = -1;
 
   /// Completes once the persisted transcript has been restored (if any).
@@ -140,6 +144,7 @@ class BisindoRecognitionController extends GetxController {
     tokens.assignAll(saved);
     rawTranscript.value = tokenComposer.compose(tokens);
     // Restored letters are considered already spoken.
+    _lastSpokenTokenIndex = tokens.length;
     _lastSpokenLetterRunEnd = tokens.length;
   }
 
@@ -238,7 +243,11 @@ class BisindoRecognitionController extends GetxController {
   }
 
   /// Returns the committed token, or null if suppressed/invalid.
-  SignToken? _commitLabel(String label, DateTime now) {
+  SignToken? _commitLabel(
+    String label,
+    DateTime now, {
+    bool shouldSpeak = true,
+  }) {
     // Anti Duplicate Cooldown Check
     if (_lastCommittedLabel == label && _lastCommittedAt != null) {
       final elapsed = now.difference(_lastCommittedAt!);
@@ -255,11 +264,6 @@ class BisindoRecognitionController extends GetxController {
       return null;
     }
 
-    if (token.type == SignTokenType.word) {
-      // A word ends any spelled run: speak it first so audio order matches text.
-      _speakPendingLetters();
-    }
-
     tokens.add(token);
     _onTranscriptChanged();
     _lastCommittedLabel = label;
@@ -270,8 +274,8 @@ class BisindoRecognitionController extends GetxController {
     stabilityStreak.value = 0;
     holdProgress.value = 1.0;
 
-    if (token.type == SignTokenType.letter) {
-      _lastLetterCommitAt = now;
+    if (shouldSpeak) {
+      _lastGestureCommitAt = now;
     }
 
     if (kDebugMode) {
@@ -282,17 +286,13 @@ class BisindoRecognitionController extends GetxController {
     return token;
   }
 
-  /// Commits an externally recognized label (e.g. BISINDO segment classifier
-  /// directly to the shared transcript. Words are spoken immediately when
-  /// [speak] is true; letters are spoken as a whole word later.
+  /// Commits an externally recognized label (e.g. BISINDO segment classifier)
+  /// directly to the shared transcript. Utterance is debounced until the jamaah
+  /// stops gesturing for a few seconds.
   bool commitWord(String label, {bool speak = false, DateTime? now}) {
     if (_isClosed) return false;
-    final token = _commitLabel(label, now ?? DateTime.now());
-    if (token == null) return false;
-    if (speak && token.type == SignTokenType.word) {
-      _enqueueSpeech(token.value);
-    }
-    return true;
+    final token = _commitLabel(label, now ?? DateTime.now(), shouldSpeak: speak);
+    return token != null;
   }
 
   /// Handles absence of hands.
@@ -309,7 +309,7 @@ class BisindoRecognitionController extends GetxController {
   void tick({DateTime? now}) {
     if (_isClosed) return;
     final timestamp = now ?? DateTime.now();
-    _maybeSpeakIdleLetters(timestamp);
+    _maybeSpeakIdleTranscript(timestamp);
 
     if (!isCameraActive.value) return;
     final lastHand = _lastHandSeenAt;
@@ -321,7 +321,7 @@ class BisindoRecognitionController extends GetxController {
 
   void insertSpace() {
     if (tokens.isEmpty || tokens.last.type == SignTokenType.space) return;
-    _speakPendingLetters();
+    _speakPendingTokens(force: true);
     tokens.add(const SignToken.space());
     _onTranscriptChanged();
   }
@@ -343,6 +343,9 @@ class BisindoRecognitionController extends GetxController {
   void deleteLast() {
     if (tokens.isEmpty) return;
     tokens.removeLast();
+    if (_lastSpokenTokenIndex > tokens.length) {
+      _lastSpokenTokenIndex = tokens.length;
+    }
     if (_lastSpokenLetterRunEnd > tokens.length) {
       _lastSpokenLetterRunEnd = tokens.length;
     }
@@ -355,7 +358,8 @@ class BisindoRecognitionController extends GetxController {
     rawTranscript.value = '';
     _lastCommittedAt = null;
     _lastCommittedLabel = null;
-    _lastLetterCommitAt = null;
+    _lastGestureCommitAt = null;
+    _lastSpokenTokenIndex = 0;
     _lastSpokenLetterRunEnd = -1;
     _resetRecognition(clearAll: true);
     _transcriptTouched = true;
@@ -372,7 +376,8 @@ class BisindoRecognitionController extends GetxController {
   Future<void> speakTranscript() async {
     final text = rawTranscript.value.trim();
     if (text.isEmpty) return;
-    _lastLetterCommitAt = null;
+    _lastGestureCommitAt = null;
+    _lastSpokenTokenIndex = tokens.length;
     _lastSpokenLetterRunEnd = tokens.length;
     await _enqueueSpeech(text);
   }
@@ -401,36 +406,37 @@ class BisindoRecognitionController extends GetxController {
     return _speechChain;
   }
 
-  /// Text of the trailing run of letter tokens not yet spoken, or null.
-  String? _pendingLetterRun() {
-    if (tokens.isEmpty || tokens.length == _lastSpokenLetterRunEnd) {
-      return null;
+  /// Speaks accumulated words and spelled letters after the jamaah pauses signing
+  /// for [BisindoRecognitionConfig.speechIdleDelay].
+  void _maybeSpeakIdleTranscript(DateTime now) {
+    final lastCommit = _lastGestureCommitAt;
+    if (lastCommit == null) return;
+    if (now.difference(lastCommit) < config.speechIdleDelay) return;
+    // Still holding an active candidate: wait for user to finish gesture
+    if (stabilityStreak.value > 0 ||
+        recognitionState.value == SignRecognitionState.reading) {
+      return;
     }
-    final buffer = <String>[];
-    for (var i = tokens.length - 1; i >= 0; i--) {
-      final token = tokens[i];
-      if (token.type != SignTokenType.letter) break;
-      buffer.insert(0, token.value);
-    }
-    if (buffer.isEmpty) return null;
-    return buffer.join();
+    _speakPendingTokens();
   }
 
-  void _speakPendingLetters() {
-    final run = _pendingLetterRun();
-    _lastLetterCommitAt = null;
-    if (run == null) return;
+  void _speakPendingTokens({bool force = false}) {
+    _lastGestureCommitAt = null;
+
+    if (tokens.isEmpty) return;
+    if (_lastSpokenTokenIndex >= tokens.length && !force) return;
+
+    final startIndex = _lastSpokenTokenIndex.clamp(0, tokens.length);
+    final pendingTokens = tokens.sublist(startIndex);
+    if (pendingTokens.isEmpty) return;
+
+    final text = tokenComposer.compose(pendingTokens).trim();
+    _lastSpokenTokenIndex = tokens.length;
     _lastSpokenLetterRunEnd = tokens.length;
-    _enqueueSpeech(run);
-  }
 
-  void _maybeSpeakIdleLetters(DateTime now) {
-    final lastLetter = _lastLetterCommitAt;
-    if (lastLetter == null) return;
-    if (now.difference(lastLetter) < config.letterSpeechIdle) return;
-    // Still holding a new letter candidate: wait for it to finish.
-    if (stabilityStreak.value > 0) return;
-    _speakPendingLetters();
+    if (text.isNotEmpty) {
+      _enqueueSpeech(text);
+    }
   }
 
 

@@ -21,14 +21,22 @@ class MultiPassConfig {
   /// Intersection-over-Union threshold to identify the same physical object across passes.
   final double crossPassIoUThreshold;
 
+  /// Intersection-over-Union threshold to suppress conflicting denominations on the same physical object.
+  final double conflictIoUThreshold;
+
   /// Maximum number of additional passes (Pass 2 enhanced + Pass 3 tiled).
   final int maxAdditionalPasses;
 
+  /// Maximum image dimension for inference downscaling (default 1280px).
+  final int maxInferenceDimension;
+
   const MultiPassConfig({
-    this.finalConfidenceThreshold = 0.65,
-    this.candidateConfidenceThreshold = 0.50,
-    this.crossPassIoUThreshold = 0.50,
+    this.finalConfidenceThreshold = 0.58,
+    this.candidateConfidenceThreshold = 0.42,
+    this.crossPassIoUThreshold = 0.45,
+    this.conflictIoUThreshold = 0.48,
     this.maxAdditionalPasses = 2,
+    this.maxInferenceDimension = 1280,
   });
 }
 
@@ -53,12 +61,16 @@ class MultiPassDetectionResult {
   final Map<CurrencyCode, double> totalsByCurrency;
   final List<PassResult> passResults;
   final int totalExecutionTimeMs;
+  final int imageWidth;
+  final int imageHeight;
 
   const MultiPassDetectionResult({
     required this.finalDetections,
     required this.totalsByCurrency,
     required this.passResults,
     required this.totalExecutionTimeMs,
+    this.imageWidth = 0,
+    this.imageHeight = 0,
   });
 
   /// Total amount for a given currency code.
@@ -68,7 +80,7 @@ class MultiPassDetectionResult {
   double get totalAmount => totalFor(CurrencyCode.sar);
 }
 
-/// Engine that performs smart multi-pass detection, enhancement
+/// Engine that performs smart multi-pass detection, enhancement,
 /// adaptive tiling, and cross-pass deduplication across multiple currencies.
 class SmartMultiPassDetector {
   final YOLO yolo;
@@ -88,12 +100,23 @@ class SmartMultiPassDetector {
     final overallStopwatch = Stopwatch()..start();
     final List<PassResult> passResults = [];
 
-    // PASS 1: Baseline inference on original image
+    // Step 0: Optimize and normalize image size in background isolate
     onStatusUpdate?.call('Memeriksa foto...');
+    final optimizedPayload = await optimizeImageForInference(
+      originalImageBytes,
+      maxDimension: config.maxInferenceDimension,
+    );
+    final Uint8List inferenceBytes = optimizedPayload.bytes;
+    final int origW = optimizedPayload.width;
+    final int origH = optimizedPayload.height;
+
+    // PASS 1: Baseline inference on optimized image
     final pass1Stopwatch = Stopwatch()..start();
     final pass1Detections = await _runInference(
-      imageBytes: originalImageBytes,
+      imageBytes: inferenceBytes,
       confidenceThreshold: config.candidateConfidenceThreshold,
+      imageW: origW,
+      imageH: origH,
     );
     pass1Stopwatch.stop();
 
@@ -112,21 +135,20 @@ class SmartMultiPassDetector {
 
     // ADAPTIVE EVALUATION: Decide whether additional passes are required
     final bool shouldRunEnhancedPass = _shouldRunEnhancedPass(pass1Detections);
-    final bool shouldRunTiledPass = _shouldRunTiledPass(
-      pass1Detections,
-      originalImageBytes,
-    );
+    final bool shouldRunTiledPass = _shouldRunTiledPass(pass1Detections);
 
-    // PASS 2: Enhanced image inference (if adaptive condition met
+    // PASS 2: Enhanced image inference (if adaptive condition met)
     if (shouldRunEnhancedPass && config.maxAdditionalPasses >= 1) {
       onStatusUpdate?.call('Meningkatkan kejernihan foto...');
       final pass2Stopwatch = Stopwatch()..start();
 
-      final enhancedBytes = await _enhanceImage(originalImageBytes);
+      final enhancedBytes = await _enhanceImage(inferenceBytes);
       if (enhancedBytes != null) {
         final pass2Detections = await _runInference(
           imageBytes: enhancedBytes,
           confidenceThreshold: config.candidateConfidenceThreshold,
+          imageW: origW,
+          imageH: origH,
         );
         pass2Stopwatch.stop();
 
@@ -149,14 +171,16 @@ class SmartMultiPassDetector {
       );
     }
 
-    // PASS 3: Tiled / Cropped inference (if adaptive condition met
+    // PASS 3: Tiled / Cropped inference (if adaptive condition met)
     if (shouldRunTiledPass && config.maxAdditionalPasses >= 2) {
       onStatusUpdate?.call('Mencari semua lembar uang...');
       final pass3Stopwatch = Stopwatch()..start();
 
       final tiledDetections = await _runTiledInference(
-        originalImageBytes,
+        inferenceBytes,
         config.candidateConfidenceThreshold,
+        imageW: origW,
+        imageH: origH,
       );
       pass3Stopwatch.stop();
 
@@ -178,13 +202,14 @@ class SmartMultiPassDetector {
       );
     }
 
-    // MERGE & CROSS-PASS DEDUPLICATION
+    // MERGE & CROSS-PASS DEDUPLICATION WITH CONFLICT SUPPRESSION
     onStatusUpdate?.call('Memastikan hasil deteksi...');
     final List<MoneyDetection> finalDetections = mergeCrossPassDetections(
       passResults.map((p) => p.detections).toList(),
       finalThreshold: config.finalConfidenceThreshold,
       candidateThreshold: config.candidateConfidenceThreshold,
       iouThreshold: config.crossPassIoUThreshold,
+      conflictIoUThreshold: config.conflictIoUThreshold,
     );
 
     // Multi-currency totals calculation
@@ -202,6 +227,8 @@ class SmartMultiPassDetector {
       totalsByCurrency: totalsByCurrency,
       passResults: passResults,
       totalExecutionTimeMs: overallStopwatch.elapsedMilliseconds,
+      imageWidth: origW,
+      imageHeight: origH,
     );
   }
 
@@ -210,6 +237,8 @@ class SmartMultiPassDetector {
   Future<List<MoneyDetection>> _runInference({
     required Uint8List imageBytes,
     required double confidenceThreshold,
+    int? imageW,
+    int? imageH,
   }) async {
     final Map<String, dynamic> result = await yolo.predict(
       imageBytes,
@@ -223,6 +252,9 @@ class SmartMultiPassDetector {
         [];
 
     final List<MoneyDetection> list = [];
+    final int w = (imageW != null && imageW > 0) ? imageW : 1;
+    final int h = (imageH != null && imageH > 0) ? imageH : 1;
+
     for (final res in rawList) {
       if (res.confidence < confidenceThreshold) continue;
       final info = MoneyClassParser.parse(res.className);
@@ -236,7 +268,12 @@ class SmartMultiPassDetector {
           spokenName: info.spokenName,
           amount: info.amount,
           confidence: res.confidence,
-          box: res.boundingBox,
+          box: Rect.fromLTWH(
+            res.normalizedBox.left * w,
+            res.normalizedBox.top * h,
+            res.normalizedBox.width * w,
+            res.normalizedBox.height * h,
+          ),
           normalizedBox: res.normalizedBox,
           isCoin: info.isCoin,
         ),
@@ -249,57 +286,46 @@ class SmartMultiPassDetector {
 
   /// Determines whether the enhanced image pass should be executed.
   bool _shouldRunEnhancedPass(List<MoneyDetection> pass1Detections) {
-    // Condition 1: No detections found in Pass 1 (possible poor lighting/contrast
+    // Condition 1: No detections found in Pass 1 (possible poor lighting/contrast)
     if (pass1Detections.isEmpty) return true;
 
-    // Condition 2: Any detection has borderline confidence (< 0.80
-    final hasBorderlineConfidence = pass1Detections.any(
-      (d) => d.confidence < 0.80,
+    // Condition 2: Any detection has borderline/low confidence (< 0.70)
+    final hasLowConfidence = pass1Detections.any(
+      (d) => d.confidence < 0.70,
     );
-    if (hasBorderlineConfidence) return true;
+    if (hasLowConfidence) return true;
 
-    // Condition 3: If single detection has very high confidence (>= 0.90), skip pass 2
-    if (pass1Detections.length == 1 &&
-        pass1Detections.first.confidence >= 0.90) {
-      return false;
-    }
-
-    // Condition 4: Multiple detections, run enhancement to catch crowded details
-    return pass1Detections.length >= 2;
+    // Condition 3: All detections are already confident (>= 0.70) -> Skip enhancement!
+    return false;
   }
 
   /// Determines whether tiled/crop inference should be executed.
-  bool _shouldRunTiledPass(
-    List<MoneyDetection> pass1Detections,
-    Uint8List imageBytes,
-  ) {
-    // If Pass 1 found a single large banknote with high confidence (>= 0.90
-    // tiling is completely unnecessary and would waste processing time.
-    if (pass1Detections.length == 1 &&
-        pass1Detections.first.confidence >= 0.90 &&
-        (pass1Detections.first.normalizedBox.width > 0.40 ||
-            pass1Detections.first.normalizedBox.height > 0.40)) {
+  bool _shouldRunTiledPass(List<MoneyDetection> pass1Detections) {
+    // If Pass 1 found objects with high confidence (>= 0.72) and normal size, skip tiling
+    if (pass1Detections.isNotEmpty &&
+        pass1Detections.every((d) => d.confidence >= 0.72) &&
+        pass1Detections.every(
+          (d) =>
+              d.normalizedBox.width >= 0.20 || d.normalizedBox.height >= 0.20,
+        )) {
       return false;
     }
 
-    // Condition 1: Multi-money scene with 3+ objects (likely crowded
-    if (pass1Detections.length >= 3) return true;
-
-    // Condition 2: Any detected object is small relative to frame (< 0.25 normalized size
+    // Condition 1: Scene has small banknote candidates (< 0.20 normalized size)
     final hasSmallObjects = pass1Detections.any(
-      (d) => d.normalizedBox.width < 0.25 && d.normalizedBox.height < 0.25,
+      (d) => d.normalizedBox.width < 0.20 && d.normalizedBox.height < 0.20,
     );
     if (hasSmallObjects) return true;
 
-    // Condition 3: No detections found in Pass 1, check if bills are small in distance
+    // Condition 2: Still 0 detections found (might be distant money)
     if (pass1Detections.isEmpty) return true;
 
     return false;
   }
 
-  // IMAGE ENHANCEMENT (PASS 2
+  // IMAGE ENHANCEMENT (PASS 2)
 
-  /// Performs light contrast enhancement and normalization in pure Dart.
+  /// Performs light contrast enhancement and normalization in background isolate.
   Future<Uint8List?> _enhanceImage(Uint8List imageBytes) async {
     return compute(_enhanceImageWorker, imageBytes);
   }
@@ -309,28 +335,30 @@ class SmartMultiPassDetector {
       final img.Image? decoded = img.decodeImage(imageBytes);
       if (decoded == null) return null;
 
-      // 1. Moderate contrast enhancement (contrast: 1.20
-      final enhanced = img.contrast(decoded, contrast: 120);
+      // Moderate contrast enhancement (contrast: 118)
+      final enhanced = img.contrast(decoded, contrast: 118);
 
-      // 2. Encode to high-quality JPEG
-      return Uint8List.fromList(img.encodeJpg(enhanced, quality: 88));
+      // Encode to JPEG (quality: 85 for speed and low memory)
+      return Uint8List.fromList(img.encodeJpg(enhanced, quality: 85));
     } catch (e) {
       debugPrint('[MoneyAI] Image enhancement worker error: $e');
       return null;
     }
   }
 
-  // TILED / CROP INFERENCE (PASS 3
+  // TILED / CROP INFERENCE (PASS 3)
 
   /// Runs inference on 4 overlapping quadrants and maps detection coordinates
   /// back into the original image normalized coordinate space.
   Future<List<MoneyDetection>> _runTiledInference(
-    Uint8List originalBytes,
-    double candidateThreshold,
-  ) async {
+    Uint8List baseBytes,
+    double candidateThreshold, {
+    required int imageW,
+    required int imageH,
+  }) async {
     final List<MoneyDetection> tiledResults = [];
 
-    // Define 4 quadrants with 15% overlap to prevent cutting bills at boundaries
+    // Define 4 quadrants with 16% overlap to avoid cutting bills at borders
     const tiles = [
       Rect.fromLTWH(0.0, 0.0, 0.58, 0.58), // Top-Left
       Rect.fromLTWH(0.42, 0.0, 0.58, 0.58), // Top-Right
@@ -339,19 +367,15 @@ class SmartMultiPassDetector {
     ];
 
     try {
-      final payload = await compute(_generateTileBytesWorker, originalBytes);
+      final payload = await compute(_generateTileBytesWorker, baseBytes);
       if (payload == null || payload.tileBytes.length != tiles.length) {
         return tiledResults;
       }
-
-      final int imageW = payload.imageW;
-      final int imageH = payload.imageH;
 
       for (int i = 0; i < tiles.length; i++) {
         final tileNorm = tiles[i];
         final tileBytes = payload.tileBytes[i];
 
-        // Inference on tile
         final Map<String, dynamic> result = await yolo.predict(
           tileBytes,
           confidenceThreshold: candidateThreshold,
@@ -424,10 +448,10 @@ class SmartMultiPassDetector {
       final int imageH = decoded.height;
 
       const tiles = [
-        Rect.fromLTWH(0.0, 0.0, 0.58, 0.58), // Top-Left
-        Rect.fromLTWH(0.42, 0.0, 0.58, 0.58), // Top-Right
-        Rect.fromLTWH(0.0, 0.42, 0.58, 0.58), // Bottom-Left
-        Rect.fromLTWH(0.42, 0.42, 0.58, 0.58), // Bottom-Right
+        Rect.fromLTWH(0.0, 0.0, 0.58, 0.58),
+        Rect.fromLTWH(0.42, 0.0, 0.58, 0.58),
+        Rect.fromLTWH(0.0, 0.42, 0.58, 0.58),
+        Rect.fromLTWH(0.42, 0.42, 0.58, 0.58),
       ];
 
       final List<Uint8List> tileBytes = [];
@@ -452,7 +476,7 @@ class SmartMultiPassDetector {
           height: cropH,
         );
 
-        tileBytes.add(Uint8List.fromList(img.encodeJpg(cropped, quality: 85)));
+        tileBytes.add(Uint8List.fromList(img.encodeJpg(cropped, quality: 82)));
       }
       return _TiledCropPayload(imageW, imageH, tileBytes);
     } catch (e) {
@@ -461,23 +485,20 @@ class SmartMultiPassDetector {
     }
   }
 
-  // MERGE & CROSS-PASS DEDUPLICATION
+  // MERGE, CROSS-PASS DEDUPLICATION & CONFLICT RESOLUTION
 
-  /// Merges detections from multiple passes
-  /// Identifies detections of the SAME physical object (same currency + same class + IoU >= [iouThreshold]).
-  /// Preserves the best confidence score and box for that physical object.
-  /// Real physical duplicate objects (e.g. two separate 5 Riyal bills at different positions
-  /// have IoU < [iouThreshold] and are NEVER merged.
-  /// Candidates with confidence >= [finalThreshold] are included directly.
-  /// Intermediate candidates with confidence >= [candidateThreshold] that were confirmed
-  /// by at least 2 independent passes receive a confidence boost.
+  /// Merges detections from multiple passes.
+  /// 1. Clustered matches of the SAME class receive confirmation boost (+0.12).
+  /// 2. Conflicting denominations on the SAME physical banknote (high IoU >= [conflictIoUThreshold])
+  ///    are suppressed, keeping strictly the higher-confidence detection to eliminate double-counting.
+  /// 3. Size and geometry sanity filtering rejects background noise artifacts.
   static List<MoneyDetection> mergeCrossPassDetections(
     List<List<MoneyDetection>> passResults, {
-    double finalThreshold = 0.65,
-    double candidateThreshold = 0.50,
-    double iouThreshold = 0.50,
+    double finalThreshold = 0.58,
+    double candidateThreshold = 0.42,
+    double iouThreshold = 0.45,
+    double conflictIoUThreshold = 0.48,
   }) {
-    // 1. Flatten all candidate detections across all passes
     final List<MoneyDetection> allCandidates = [];
     for (final list in passResults) {
       allCandidates.addAll(list);
@@ -485,54 +506,87 @@ class SmartMultiPassDetector {
 
     if (allCandidates.isEmpty) return [];
 
-    // 2. Sort by confidence descending so highest confidence detections lead clusters
+    // Sort descending by confidence so highest-confidence detections lead clustering
     allCandidates.sort((a, b) => b.confidence.compareTo(a.confidence));
 
-    // 3. Cluster detections representing the same physical object
     final List<MoneyDetection> clusters = [];
     final List<int> clusterMatchCounts = [];
 
     for (final candidate in allCandidates) {
-      int matchedClusterIndex = -1;
+      // Noise rejection: tiny boxes that are not coins
+      final normArea =
+          candidate.normalizedBox.width * candidate.normalizedBox.height;
+      if (!candidate.isCoin && normArea < 0.005) {
+        continue;
+      }
+
+      // Aspect ratio sanity check: real banknotes are elongated rectangles
+      if (!candidate.isCoin) {
+        final aspect =
+            candidate.normalizedBox.width / candidate.normalizedBox.height;
+        if (aspect < 0.22 || aspect > 4.5) {
+          continue;
+        }
+      }
+
+      int matchedSameClassIndex = -1;
 
       for (int i = 0; i < clusters.length; i++) {
         final existing = clusters[i];
 
-        // Must be the same currency and denomination/class
-        if (existing.currency != candidate.currency ||
-            existing.className.toLowerCase() !=
-                candidate.className.toLowerCase()) {
-          continue;
-        }
-
-        // Must have high overlap to be considered the same physical object
         final double iou = calculateIoU(
           existing.normalizedBox,
           candidate.normalizedBox,
         );
 
-        if (iou >= iouThreshold) {
-          matchedClusterIndex = i;
-          break;
+        // Check A: Same physical bill of the SAME class/currency
+        if (existing.currency == candidate.currency &&
+            existing.className.toLowerCase() ==
+                candidate.className.toLowerCase()) {
+          if (iou >= iouThreshold) {
+            matchedSameClassIndex = i;
+            break;
+          }
         }
       }
 
-      if (matchedClusterIndex >= 0) {
+      if (matchedSameClassIndex >= 0) {
         // Increment confirmation count across passes
-        clusterMatchCounts[matchedClusterIndex]++;
+        clusterMatchCounts[matchedSameClassIndex]++;
 
-        // Keep the detection with the higher confidence
-        if (candidate.confidence > clusters[matchedClusterIndex].confidence) {
-          clusters[matchedClusterIndex] = candidate;
+        // Keep the detection with the higher confidence or better bounding box
+        if (candidate.confidence >
+            clusters[matchedSameClassIndex].confidence) {
+          clusters[matchedSameClassIndex] = candidate;
         }
       } else {
-        // New physical object
-        clusters.add(candidate);
-        clusterMatchCounts.add(1);
+        // Check B: Conflict check with existing clusters!
+        // If candidate overlaps heavily with an already accepted cluster of a DIFFERENT class/currency,
+        // it is a competing hypothesis on the SAME physical banknote.
+        // Because allCandidates is sorted descending, the existing cluster has higher confidence.
+        // We suppress the lower-confidence candidate to prevent double-counting.
+        bool isConflicting = false;
+        for (int i = 0; i < clusters.length; i++) {
+          final existing = clusters[i];
+          final double iou = calculateIoU(
+            existing.normalizedBox,
+            candidate.normalizedBox,
+          );
+          if (iou >= conflictIoUThreshold) {
+            isConflicting = true;
+            break;
+          }
+        }
+
+        if (!isConflicting) {
+          // New genuine physical object
+          clusters.add(candidate);
+          clusterMatchCounts.add(1);
+        }
       }
     }
 
-    // 4. Final Thresholding and Cross-Pass Confirmation
+    // Final Thresholding & Multi-pass Confidence Boost
     final List<MoneyDetection> finalValidList = [];
 
     for (int i = 0; i < clusters.length; i++) {
@@ -540,11 +594,10 @@ class SmartMultiPassDetector {
       final matchCount = clusterMatchCounts[i];
 
       if (item.confidence >= finalThreshold) {
-        // Directly qualifies with high confidence
         finalValidList.add(item);
       } else if (item.confidence >= candidateThreshold && matchCount >= 2) {
         // Confirmed across multiple passes: boost confidence
-        final boostedConfidence = math.min(1.0, item.confidence + 0.10);
+        final boostedConfidence = math.min(1.0, item.confidence + 0.12);
         if (boostedConfidence >= finalThreshold) {
           finalValidList.add(item.copyWith(confidence: boostedConfidence));
         }
@@ -579,4 +632,86 @@ class _TiledCropPayload {
   final List<Uint8List> tileBytes;
 
   const _TiledCropPayload(this.imageW, this.imageH, this.tileBytes);
+}
+
+/// Payload returned by [optimizeImageForInference].
+class OptimizedImagePayload {
+  final Uint8List bytes;
+  final int width;
+  final int height;
+
+  const OptimizedImagePayload({
+    required this.bytes,
+    required this.width,
+    required this.height,
+  });
+}
+
+class _OptimizationParams {
+  final Uint8List bytes;
+  final int maxDimension;
+
+  const _OptimizationParams(this.bytes, this.maxDimension);
+}
+
+/// Optimizes raw camera/gallery image bytes before running multi-pass inference.
+/// Downscales large photos (e.g. 12MP-48MP) to [maxDimension] in an isolate to save memory and CPU.
+Future<OptimizedImagePayload> optimizeImageForInference(
+  Uint8List rawBytes, {
+  int maxDimension = 1280,
+}) {
+  return compute(_optimizeImageWorker, _OptimizationParams(rawBytes, maxDimension));
+}
+
+OptimizedImagePayload _optimizeImageWorker(_OptimizationParams params) {
+  try {
+    final img.Image? decoded = img.decodeImage(params.bytes);
+    if (decoded == null) {
+      return OptimizedImagePayload(
+        bytes: params.bytes,
+        width: 1080,
+        height: 1920,
+      );
+    }
+
+    final int origW = decoded.width;
+    final int origH = decoded.height;
+    final int maxDim = math.max(origW, origH);
+
+    if (maxDim <= params.maxDimension) {
+      return OptimizedImagePayload(
+        bytes: params.bytes,
+        width: origW,
+        height: origH,
+      );
+    }
+
+    // Downscale preserving aspect ratio
+    final double scale = params.maxDimension / maxDim;
+    final int targetW = (origW * scale).round();
+    final int targetH = (origH * scale).round();
+
+    final resized = img.copyResize(
+      decoded,
+      width: targetW,
+      height: targetH,
+      interpolation: img.Interpolation.linear,
+    );
+
+    final optimizedBytes = Uint8List.fromList(
+      img.encodeJpg(resized, quality: 85),
+    );
+    return OptimizedImagePayload(
+      bytes: optimizedBytes,
+      width: origW,
+      height: origH,
+    );
+  } catch (e) {
+    debugPrint('[MoneyAI] optimizeImageWorker error: $e');
+    return OptimizedImagePayload(
+      bytes: params.bytes,
+      width: 1080,
+      height: 1920,
+    );
+  }
 }

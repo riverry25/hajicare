@@ -49,7 +49,7 @@ class SignLanguageController extends GetxController {
     BisindoClassifierService? classifierService,
     BisindoSegmenter? segmenter,
     this.onPredictionAccepted,
-    this.minContinuousMargin = 0.15,
+    this.minContinuousMargin = 0.08,
   }) : classifierService = classifierService ?? BisindoClassifierService(),
        segmenter = segmenter ?? BisindoSegmenter();
 
@@ -304,7 +304,7 @@ class SignLanguageController extends GetxController {
     try {
       await _classifyFrames(
         segment.frames,
-        minMargin: minContinuousMargin,
+        minMargin: math.min(minContinuousMargin, 0.08),
         source: 'auto/${segment.reason.name}',
       );
     } finally {
@@ -332,14 +332,15 @@ class SignLanguageController extends GetxController {
     }
 
     final activeFrames = segmenter.activeFrames;
-    // Lower threshold from 8 to 5 so low-spec (15-20 FPS) phones respond immediately (~250-300ms
-    if (activeFrames.length < 5) return;
+    // Minimum 8 frames ensures stable gesture trajectory and saves CPU on initial noise
+    if (activeFrames.length < 8) return;
 
     final now = DateTime.now();
-    // Adaptive throttle: on fast phones, 130ms; on slower phones, adapts to prevent UI lag
-    final minInterval = _lastInferenceDurationMs > 75
-        ? math.min(220, _lastInferenceDurationMs + 45)
-        : 130;
+    // Relaxed adaptive throttle (280ms - 400ms): keeps camera and UI at steady 60 FPS
+    final minInterval = math.max(
+      280,
+      _lastInferenceDurationMs > 50 ? _lastInferenceDurationMs + 90 : 280,
+    );
     if (now.difference(_lastPreviewTime).inMilliseconds < minInterval) return;
     _lastPreviewTime = now;
 
@@ -365,15 +366,14 @@ class SignLanguageController extends GetxController {
         return;
       }
 
-      final candidateThreshold = math.max(
-        0.50,
-        (classifierService.confidenceThreshold * 0.58).clamp(0.35, 0.52),
-      );
+      final isSibi = currentModel.value == SignLanguageModel.sibi;
+      final candidateThreshold = isSibi
+          ? 0.35
+          : (classifierService.confidenceThreshold * 0.58).clamp(0.35, 0.52);
 
       if (prediction.isRecognized &&
           prediction.label.isNotEmpty &&
-          prediction.confidence >= candidateThreshold &&
-          prediction.confidence >= 0.50) {
+          prediction.confidence >= candidateThreshold) {
         confidenceScore.value = prediction.confidence;
         topCandidates.assignAll(prediction.candidates);
 
@@ -427,24 +427,28 @@ class SignLanguageController extends GetxController {
             ? DateTime.now().difference(_segmentStartDateTime!).inMilliseconds
             : (frames.length * 50);
 
-        final streakFactor = (_candidateStreak / 4.0).clamp(0.0, 1.0);
-        final timeFactor = (elapsedMs / 700.0).clamp(0.0, 1.0);
+        final streakFactor = (_candidateStreak / 2.0).clamp(0.0, 1.0);
+        final timeFactor = (elapsedMs / 450.0).clamp(0.0, 1.0);
         final combinedProgress = math
             .max(streakFactor * 0.55 + timeFactor * 0.45, streakFactor * 0.75)
             .clamp(0.0, 1.0);
 
         suggestionProgress.value = combinedProgress;
 
-        if (combinedProgress >= 0.92 &&
-            prediction.confidence >= classifierService.confidenceThreshold &&
+        final targetCommitConfidence = isSibi
+            ? classifierService.confidenceThreshold
+            : math.min(classifierService.confidenceThreshold, 0.58);
+
+        if (combinedProgress >= 0.85 &&
+            prediction.confidence >= targetCommitConfidence &&
             !_isCommittedForCurrentSegment) {
           _confirmAndCommitCandidate(prediction);
         }
       } else {
-        // Soft decay on low-confidence frames (e.g. slight motion blur on low-spec camera
+        // Soft decay on low-confidence frames (e.g. slight motion blur on low-spec camera)
         if (_candidateStreak > 0) {
           _candidateStreak = math.max(0, _candidateStreak - 1);
-          suggestionProgress.value = (_candidateStreak / 4.0).clamp(0.0, 1.0);
+          suggestionProgress.value = (_candidateStreak / 2.0).clamp(0.0, 1.0);
         }
       }
     } catch (e) {
@@ -621,15 +625,15 @@ class SignLanguageController extends GetxController {
       confidenceScore.value = prediction.confidence;
       topCandidates.assignAll(prediction.candidates);
 
-      // Batalkan dan beri feedback gagal jika keyakinan di bawah 50%
-      if (prediction.confidence < 0.50) {
+      // Batalkan dan beri feedback gagal jika keyakinan di bawah 45%
+      if (prediction.confidence < 0.45) {
         if (kDebugMode) {
           debugPrint(
-            '[BISINDO_LIVE] Dibatalkan karena keyakinan rendah (< 50%): ${prediction.label} ${(prediction.confidence * 100).toStringAsFixed(1)}%',
+            '[BISINDO_LIVE] Dibatalkan karena keyakinan rendah (< 45%): ${prediction.label} ${(prediction.confidence * 100).toStringAsFixed(1)}%',
           );
         }
         _reject(
-          'Gagal mendeteksi gestur (Keyakinan ${(prediction.confidence * 100).toStringAsFixed(0)}% < 50%). Silakan ulangi gerakan.',
+          'Gagal mendeteksi gestur (Keyakinan ${(prediction.confidence * 100).toStringAsFixed(0)}% < 45%). Silakan ulangi gerakan.',
         );
         return;
       }

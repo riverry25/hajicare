@@ -332,11 +332,11 @@ class SmartbandBleTestScreen extends GetView<SmartbandBleTestController> {
             ),
             const SizedBox(height: AppSpacing.sm),
 
-            // 6. LCD 16x2 + I2C Backpack: Layar Pergelangan Tangan
+            // 6. Layar OLED 0.96 Inci (SSD1306): Layar Pergelangan Tangan
             _buildLcdMirrorTile(
               context,
-              line1: data?.displayLcdLine1 ?? 'HR: --  SpO2: --%',
-              line2: data?.displayLcdLine2 ?? 'STATUS: STANDBY ',
+              line1: data?.displayOledLine1 ?? 'HR: --  SpO2: --%',
+              line2: data?.displayOledLine2 ?? 'STATUS: STANDBY ',
             ),
             const SizedBox(height: AppSpacing.sm),
 
@@ -415,22 +415,22 @@ class SmartbandBleTestScreen extends GetView<SmartbandBleTestController> {
                     vertical: 2,
                   ),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF10B981).withValues(alpha: 0.2),
+                    color: const Color(0xFF0284C7).withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(4),
                     border: Border.all(
-                      color: const Color(0xFF10B981),
+                      color: const Color(0xFF0284C7),
                       width: 0.8,
                     ),
                   ),
                   child: const FittedBox(
                     fit: BoxFit.scaleDown,
                     child: Text(
-                      'I2C 0x27 • 16x2 LCD',
+                      'SSD1306 • OLED 0.96"',
                       style: TextStyle(
                         fontFamily: 'monospace',
                         fontSize: 9.5,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF34D399),
+                        color: Color(0xFF38BDF8),
                         letterSpacing: 0.5,
                       ),
                     ),
@@ -443,7 +443,7 @@ class SmartbandBleTestScreen extends GetView<SmartbandBleTestController> {
                   fit: BoxFit.scaleDown,
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    'LCD 16x2 / OLED Layar Gelang',
+                    'Layar OLED 0.96 Inci Gelang',
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
