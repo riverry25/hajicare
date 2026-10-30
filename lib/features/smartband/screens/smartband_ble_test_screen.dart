@@ -270,88 +270,98 @@ class SmartbandBleTestScreen extends GetView<SmartbandBleTestController> {
             ),
             const SizedBox(height: AppSpacing.sm),
 
-            // 2. MAX30102: Detak Jantung & Kadar Oksigen SpO2
+            // 2. MAX30102: Detak Jantung BPM & Kontak Kulit
             _buildTelemetryTile(
               context,
               icon: Icons.favorite_rounded,
               iconColor: const Color(0xFFFF2E63),
-              label: 'MAX30102 Detak Jantung & SpO2',
-              value: data != null
-                  ? '${data.heartRate} BPM • ${data.spo2 != null ? "${data.spo2}% SpO2" : "--% SpO2"}'
-                  : '--',
-              helper: data != null && data.heartRate == 0
-                  ? 'Sensor sedang mengukur...'
-                  : (data != null
-                        ? 'Denyut nadi & kadar oksigen aktif'
-                        : 'Menunggu payload...'),
+              label: 'MAX30102 Detak Jantung & Kontak Kulit',
+              value: isConnected && data != null && data.heartRate > 0
+                  ? '${data.heartRate} BPM'
+                  : (isConnected && (data?.fingerDetected ?? false) ? 'Mendeteksi detak...' : '-- BPM'),
+              helper: !isConnected
+                  ? 'Menunggu koneksi BLE...'
+                  : ((data?.fingerDetected ?? false)
+                        ? 'Kulit/Jari terdeteksi aktif'
+                        : 'Tempelkan kulit/jari pada sensor MAX30102'),
             ),
             const SizedBox(height: AppSpacing.sm),
 
-            // 3. Sensor Suhu Tubuh (MLX90614 / MCP9808
+            // 3. DFRobot MCP9808: Suhu Sensor Presisi
             _buildTelemetryTile(
               context,
               icon: Icons.device_thermostat_rounded,
               iconColor: const Color(0xFFD4A857),
-              label: 'MLX90614 / Suhu Tubuh Presisi',
-              value: data?.temperature != null
+              label: 'DFRobot MCP9808 Suhu Sensor',
+              value: isConnected && data?.temperature != null
                   ? '${data!.temperature!.toStringAsFixed(1)} °C'
-                  : '-- °C',
-              helper: 'Presisi tinggi sensor I2C digital',
+                  : '--.- °C',
+              helper: !isConnected
+                  ? 'Menunggu koneksi BLE...'
+                  : (data?.temperature != null
+                        ? 'Presisi digital 0.125°C (I2C 0x1F)'
+                        : 'Membaca suhu...'),
             ),
             const SizedBox(height: AppSpacing.sm),
 
-            // 4. MPU6050: Aktivitas Langkah & Deteksi Jatuh
+            // 4. MPU6050: Motion G & Monitor Jatuh
             _buildTelemetryTile(
               context,
-              icon: Icons.directions_walk_rounded,
+              icon: Icons.directions_run_rounded,
               iconColor: const Color(0xFF10B981),
-              label: 'MPU6050 Langkah & Deteksi Jatuh',
-              value: (data?.fallDetected ?? false)
-                  ? 'JATUH TERDETEKSI!'
-                  : '${data?.stepCount ?? 0} Langkah • Tegak (${data?.accelG?.toStringAsFixed(2) ?? "1.02"} G)',
-              helper:
-                  'Roll: ${data?.roll?.toStringAsFixed(1) ?? "0.0"}° • Pitch: ${data?.pitch?.toStringAsFixed(1) ?? "0.0"}°',
+              label: 'MPU6050 Motion & Monitor Jatuh',
+              value: isConnected && data?.accelG != null
+                  ? '${data!.accelG!.toStringAsFixed(2)} g • ${data.fallStatus}'
+                  : '-- g',
+              helper: !isConnected
+                  ? 'Menunggu koneksi BLE...'
+                  : 'Total percepatan gravitasi & status analisa jatuh',
             ),
             const SizedBox(height: AppSpacing.sm),
 
-            // 5. GPS NEO-6M: Koordinat Satelit Realtime
+            // 5. GPS ATGM336H: Satelit & Koordinat
             _buildTelemetryTile(
               context,
               icon: Icons.satellite_alt_rounded,
               iconColor: const Color(0xFF0284C7),
-              label: 'GPS NEO-6M Satelit Realtime',
-              value:
-                  (data?.isValidLocation ?? false) &&
+              label: 'GPS ATGM336H Satelit & Koordinat',
+              value: isConnected &&
+                      (data?.isValidLocation ?? false) &&
                       data?.latitude != null &&
                       data?.longitude != null
                   ? '${data!.latitude!.toStringAsFixed(6)}, ${data.longitude!.toStringAsFixed(6)}'
-                  : 'Mencari Sinyal Satelit...',
-              helper: (data?.isValidLocation ?? false)
-                  ? 'Sinyal GPS FIX (${data?.satellites ?? 0} Satelit Terkunci)'
-                  : 'Belum FIX (Menunggu akuisisi satelit)',
+                  : (isConnected ? 'Mencari Sinyal Satelit (${data?.satellites ?? 0} Sats)' : '--'),
+              helper: isConnected && (data?.isValidLocation ?? false)
+                  ? 'GPS FIX (${data?.satellites ?? 0} Satelit Terkunci)'
+                  : 'Memerlukan area terbuka langit untuk akuisisi satelit',
             ),
             const SizedBox(height: AppSpacing.sm),
 
-            // 6. Layar OLED 0.96 Inci (SSD1306): Layar Pergelangan Tangan
-            _buildLcdMirrorTile(
-              context,
-              line1: data?.displayOledLine1 ?? 'HR: --  SpO2: --%',
-              line2: data?.displayOledLine2 ?? 'STATUS: STANDBY ',
-            ),
-            const SizedBox(height: AppSpacing.sm),
-
-            // 7. Baterai LiPo 3.7V
+            // 6. Dynamic Safe Radius
             _buildTelemetryTile(
               context,
-              icon: Icons.battery_charging_full_rounded,
-              iconColor: const Color(0xFF16A34A),
-              label: 'Baterai LiPo 3.7V',
-              value: data?.batteryLevel != null
-                  ? '${data!.batteryLevel}% (${data.batteryVoltage?.toStringAsFixed(2) ?? "3.96"}V)'
-                  : '--',
-              helper: (data?.isCharging ?? false)
-                  ? 'Sedang Mengisi'
-                  : 'Siap Pakai',
+              icon: Icons.radar_rounded,
+              iconColor: const Color(0xFF0D9488),
+              label: 'Dynamic Safe Radius',
+              value: isConnected && data?.distanceM != null
+                  ? '${data!.distanceM!.toStringAsFixed(1)} m (Batas: ${data.safeRadius.round()} m)'
+                  : (isConnected ? 'Batas: ${data?.safeRadius.round() ?? 50} m' : '--'),
+              helper: isConnected
+                  ? (data?.radiusAlert ?? false
+                        ? '🚨 DI LUAR BATAS AMAN PENDAMPING!'
+                        : 'Berada dalam batas aman')
+                  : 'Menunggu koneksi BLE...',
+            ),
+            const SizedBox(height: AppSpacing.sm),
+
+            // 7. Tombol Action / SOS Fisik (GPIO13)
+            _buildTelemetryTile(
+              context,
+              icon: Icons.touch_app_rounded,
+              iconColor: const Color(0xFFEF4444),
+              label: 'Tombol Action / SOS (GPIO13)',
+              value: (data?.isSos ?? false) ? '🚨 DARURAT SOS AKTIF' : 'NORMAL / STANDBY',
+              helper: '1x Klik: Pindah OLED / Batal Alarm • Tahan 3s: Manual SOS',
             ),
 
             if (data?.rawJson.isNotEmpty ?? false) ...[
@@ -382,132 +392,6 @@ class SmartbandBleTestScreen extends GetView<SmartbandBleTestController> {
         ),
       );
     });
-  }
-
-  Widget _buildLcdMirrorTile(
-    BuildContext context, {
-    required String line1,
-    required String line2,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0xFF0F172A),
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: const Color(0xFF1E293B), width: 1.5),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.25),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Flexible(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 6,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF0284C7).withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(4),
-                    border: Border.all(
-                      color: const Color(0xFF0284C7),
-                      width: 0.8,
-                    ),
-                  ),
-                  child: const FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Text(
-                      'SSD1306 • OLED 0.96"',
-                      style: TextStyle(
-                        fontFamily: 'monospace',
-                        fontSize: 9.5,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF38BDF8),
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    'Layar OLED 0.96 Inci Gelang',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white.withValues(alpha: 0.85),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: BoxDecoration(
-              color: const Color(0xFF042F2E),
-              borderRadius: BorderRadius.circular(6),
-              border: Border.all(color: const Color(0xFF0D9488), width: 1.2),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF0D9488).withValues(alpha: 0.2),
-                  blurRadius: 6,
-                  spreadRadius: 1,
-                ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    line1.padRight(16).substring(0, 16),
-                    style: const TextStyle(
-                      fontFamily: 'monospace',
-                      fontSize: 14.5,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 2.2,
-                      color: Color(0xFF5EEAD4),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 4),
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    line2.padRight(16).substring(0, 16),
-                    style: const TextStyle(
-                      fontFamily: 'monospace',
-                      fontSize: 14.5,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 2.2,
-                      color: Color(0xFF5EEAD4),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
   }
 
   Widget _buildTelemetryTile(

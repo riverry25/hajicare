@@ -15,6 +15,8 @@ class SmartbandBleService {
   static const String serviceUuid = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
   static const String dataCharacteristicUuid =
       '6e400003-b5a3-f393-e0a9-e50e24dcca9e';
+  static const String rxCharacteristicUuid =
+      '6e400002-b5a3-f393-e0a9-e50e24dcca9e';
 
   // Perangkat aktif & characteristic
   BluetoothDevice? _connectedDevice;
@@ -39,6 +41,11 @@ class SmartbandBleService {
   SmartbandBleStatus _currentStatus = SmartbandBleStatus.disconnected;
   SmartbandData? _lastData;
   bool _isDisposed = false;
+
+  // Buffer untuk reassembly fragment (~%02X%02X%02X:)
+  int? _lastSeq;
+  final Map<int, String> _fragmentParts = {};
+  int _expectedTotal = 0;
 
   // Getters publik
   SmartbandBleStatus get currentStatus => _currentStatus;
@@ -87,7 +94,7 @@ class SmartbandBleService {
         return false;
       }
 
-      // Tunggu hingga adapter state bernilai definitif (bukan unknown
+      // Tunggu hingga adapter state bernilai definitif (bukan unknown)
       BluetoothAdapterState state = FlutterBluePlus.adapterStateNow;
       if (state == BluetoothAdapterState.unknown) {
         state = await FlutterBluePlus.adapterState
@@ -140,7 +147,6 @@ class SmartbandBleService {
   }
 
   /// 1. Pindai (Scan) Smartband BLE
-  /// Mencari perangkat dengan nama "HajiCare-Gelang-001" atau Service UUID target
   Future<void> scanSmartband({
     Duration timeout = const Duration(seconds: 15),
     bool autoConnect = false,
@@ -322,7 +328,7 @@ class SmartbandBleService {
       _log('CONNECT SUCCESS');
       _log('CONNECTION STATE:\nCONNECTED');
 
-      // 2.5 Negosiasi MTU 247 (Diperlukan Android agar notifikasi JSON tidak terpotong
+      // Negosiasi MTU 247
       if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
         try {
           _log('REQUEST MTU 247');
@@ -377,27 +383,28 @@ class SmartbandBleService {
 
     _log('TARGET SERVICE MATCHED: ${targetService.uuid}');
 
-    // 4. Discover Characteristic
+    // 4. Discover Characteristic (TX & RX)
     final targetCharUuidNormalized = dataCharacteristicUuid
         .toLowerCase()
         .replaceAll('-', '');
+    final rxCharUuidNormalized = rxCharacteristicUuid
+        .toLowerCase()
+        .replaceAll('-', '');
+
     BluetoothCharacteristic? targetChar;
     for (final char in targetService.characteristics) {
       final cUuid = char.uuid.toString().toLowerCase().replaceAll('-', '');
       final p = char.properties;
 
-      _log('CHARACTERISTIC FOUND');
-      _log('UUID: ${char.uuid}');
+      _log('CHARACTERISTIC FOUND: ${char.uuid}');
       _log(
         'properties: read=${p.read}, write=${p.write}, notify=${p.notify}, indicate=${p.indicate}',
       );
-      _log('canRead: ${p.read}');
-      _log('canNotify: ${p.notify || p.indicate}');
 
       if (cUuid == targetCharUuidNormalized) {
         targetChar = char;
       }
-      if (p.write || p.writeWithoutResponse) {
+      if (cUuid == rxCharUuidNormalized || p.write || p.writeWithoutResponse) {
         _writeCharacteristic = char;
       }
     }
@@ -418,7 +425,7 @@ class SmartbandBleService {
   /// Indikator apakah characteristic penulisan perintah BLE tersedia
   bool get canWriteCommand => _writeCharacteristic != null;
 
-  /// Kirim perintah teks (misal: "BUZZ", "TEST_OLED", "PING") ke ESP32
+  /// Kirim perintah teks (misal: "PING", "CANCEL", "PAGE:1", "RADIUS:50") ke ESP32
   Future<bool> sendCommand(String cmd) async {
     final char = _writeCharacteristic;
     if (char == null) {
@@ -438,6 +445,36 @@ class SmartbandBleService {
       _log('COMMAND FAILED: $e');
       return false;
     }
+  }
+
+  /// Ubah batas Safe Radius pada gelang (meter)
+  Future<bool> setSafeRadius(double radiusMeters) async {
+    return sendCommand('RADIUS:${radiusMeters.round()}');
+  }
+
+  /// Kirim jarak jemaah ke pendamping (meter)
+  Future<bool> sendDistance(double distanceM, [double? safeRadius]) async {
+    if (safeRadius != null) {
+      return sendCommand(
+        'DIST:${distanceM.toStringAsFixed(1)},${safeRadius.round()}',
+      );
+    }
+    return sendCommand('DIST:${distanceM.toStringAsFixed(1)}');
+  }
+
+  /// Pindah halaman OLED pada gelang (0:HR, 1:GPS, 2:Temp, 3:Motion, 4:Safe Radius)
+  Future<bool> setOledPage(int page) async {
+    return sendCommand('PAGE:$page');
+  }
+
+  /// Batalkan alarm/getaran lokal pada gelang
+  Future<bool> cancelAlarm() async {
+    return sendCommand('CANCEL');
+  }
+
+  /// Ping perangkat untuk meminta paket telemetri segera
+  Future<bool> ping() async {
+    return sendCommand('PING');
   }
 
   /// 4. Subscribe ke BLE Notification data karakteristik
@@ -481,16 +518,42 @@ class SmartbandBleService {
     if (_isDisposed || bytes.isEmpty) return;
 
     try {
-      // 1. Decode UTF-8
       final rawString = utf8.decode(bytes, allowMalformed: true).trim();
       if (rawString.isEmpty) return;
 
-      _log('RAW BLE DATA:\n$rawString');
+      String jsonToParse = rawString;
 
-      // 2. Parse JSON
-      final parsedData = SmartbandData.fromRawJson(rawString);
+      // Cek apakah paket adalah fragment (~%02X%02X%02X:payload)
+      if (rawString.startsWith('~') &&
+          rawString.length >= 8 &&
+          rawString[7] == ':') {
+        final seq = int.tryParse(rawString.substring(1, 3), radix: 16) ?? -1;
+        final idx = int.tryParse(rawString.substring(3, 5), radix: 16) ?? -1;
+        final tot = int.tryParse(rawString.substring(5, 7), radix: 16) ?? -1;
+        final payload = rawString.substring(8);
 
-      // 3. Simpan dan pancarkan ke Stream
+        if (seq != _lastSeq) {
+          _lastSeq = seq;
+          _fragmentParts.clear();
+          _expectedTotal = tot;
+        }
+
+        _fragmentParts[idx] = payload;
+        if (_fragmentParts.length < _expectedTotal) {
+          return;
+        }
+
+        final sb = StringBuffer();
+        for (int i = 0; i < _expectedTotal; i++) {
+          sb.write(_fragmentParts[i] ?? '');
+        }
+        jsonToParse = sb.toString();
+        _fragmentParts.clear();
+      }
+
+      _log('RAW BLE DATA:\n$jsonToParse');
+
+      final parsedData = SmartbandData.fromRawJson(jsonToParse);
       _lastData = parsedData;
       if (!_smartbandDataController.isClosed) {
         _smartbandDataController.add(parsedData);
@@ -498,16 +561,19 @@ class SmartbandBleService {
 
       _log('PARSED BLE DATA');
       _log('braceletId: ${parsedData.braceletId}');
-      _log('latitude: ${parsedData.latitude ?? "-"}');
-      _log('longitude: ${parsedData.longitude ?? "-"}');
       _log('heartRate: ${parsedData.heartRate}');
+      _log('contact: ${parsedData.fingerDetected}');
+      _log('temp: ${parsedData.temperature}');
+      _log('motionG: ${parsedData.accelG}');
+      _log('fallStatus: ${parsedData.fallStatus}');
+      _log('gps: ${parsedData.latitude}, ${parsedData.longitude}');
     } catch (e) {
       final raw = utf8.decode(bytes, allowMalformed: true);
       _log('JSON PARSE ERROR\nraw data: $raw\nerror: $e');
     }
   }
 
-  /// 6. Tangani koneksi terputus dengan aman (Safe Disconnection
+  /// 6. Tangani koneksi terputus dengan aman (Safe Disconnection)
   void _handleSafeDisconnection(String reason) {
     if (_currentStatus == SmartbandBleStatus.disconnected) return;
 
@@ -533,6 +599,7 @@ class SmartbandBleService {
     _dataCharacteristic = null;
     _writeCharacteristic = null;
     _connectedDevice = null;
+    _fragmentParts.clear();
   }
 
   /// 7. Putuskan koneksi Smartband secara manual dan aman
