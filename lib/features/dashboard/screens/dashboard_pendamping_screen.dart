@@ -21,6 +21,7 @@ import '../../prayer/screens/prayer_times_screen.dart';
 import '../../profile/screens/profile_screen.dart';
 import '../../room/widgets/active_room_card.dart';
 import '../../room/widgets/add_jamaah_dialog.dart';
+import '../../ai_assistant/widgets/hajicare_ai_widget.dart';
 import '../controllers/dashboard_controller.dart';
 import '../widgets/pendamping_radar_card.dart';
 import '../widgets/pendamping_sos_banner.dart';
@@ -65,6 +66,15 @@ class DashboardPendampingScreen extends StatelessWidget {
               else
                 const SizedBox.shrink(),
             ],
+          );
+        }),
+        floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+        floatingActionButton: Obx(() {
+          final currentIdx = dashboardCtrl.currentIndex.value;
+          if (currentIdx != 0) return const SizedBox.shrink();
+          return const Padding(
+            padding: EdgeInsets.only(bottom: 4),
+            child: HajiCareAiFabButton(heroTag: 'pendamping_dashboard_ai_fab'),
           );
         }),
         bottomNavigationBar: Obx(() {
