@@ -1362,7 +1362,7 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
                   // OLED Footer Dots (5 Halaman)
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(5, (i) {
+                    children: List.generate(6, (i) {
                       final active = (i == page);
                       return Container(
                         margin: const EdgeInsets.symmetric(horizontal: 3),
@@ -1402,7 +1402,9 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
                   const SizedBox(width: 6),
                   _buildOledPageButton('3: Jatuh', 3, page, () => ctrl.setOledPage(3)),
                   const SizedBox(width: 6),
-                  _buildOledPageButton('4: Radius', 4, page, () => ctrl.setOledPage(4)),
+                  _buildOledPageButton('4: Langkah', 4, page, () => ctrl.setOledPage(4)),
+                  const SizedBox(width: 6),
+                  _buildOledPageButton('5: Radius', 5, page, () => ctrl.setOledPage(5)),
                 ],
               ),
             ),
@@ -1520,7 +1522,41 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
           ],
         );
 
-      case 4: // Safe Radius
+      case 4: // Langkah Jalan (Pedometer MPU6050)
+        final steps = ctrl.sessionSteps.value > 0 ? ctrl.sessionSteps.value : ctrl.stepCount.value;
+        final stepDist = steps * 0.70;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'LANGKAH JALAN',
+              style: TextStyle(
+                fontFamily: 'monospace',
+                fontSize: 11,
+                color: Colors.white,
+              ),
+            ),
+            Text(
+              '$steps',
+              style: const TextStyle(
+                fontFamily: 'monospace',
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+            Text(
+              'Jarak: ${stepDist.toStringAsFixed(1)} m',
+              style: const TextStyle(
+                fontFamily: 'monospace',
+                fontSize: 10,
+                color: Color(0xFF94A3B8),
+              ),
+            ),
+          ],
+        );
+
+      case 5: // Safe Radius
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
