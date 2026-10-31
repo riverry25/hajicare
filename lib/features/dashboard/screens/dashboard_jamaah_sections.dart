@@ -2229,27 +2229,6 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                                             overflow: TextOverflow.ellipsis,
                                           ),
                                         ),
-                                        if (isConnected)
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 7,
-                                              vertical: 2,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color: context.hc.success
-                                                  .withValues(alpha: 0.12),
-                                              borderRadius:
-                                                  BorderRadius.circular(6),
-                                            ),
-                                            child: Text(
-                                              '${ldrCtrl.batteryPercent.value}%',
-                                              style: TextStyle(
-                                                fontSize: 10.5,
-                                                fontWeight: FontWeight.bold,
-                                                color: context.hc.success,
-                                              ),
-                                            ),
-                                          ),
                                       ],
                                     ),
                                     const SizedBox(height: 2),
