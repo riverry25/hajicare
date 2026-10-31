@@ -26,6 +26,7 @@ import '../../room/services/room_query_service.dart';
 import '../../room/widgets/active_room_card.dart';
 import '../../communication/widgets/communication_gesture_dialog.dart';
 import '../../smartband/controllers/smartband_ldr_controller.dart';
+import '../../ai_assistant/widgets/hajicare_ai_widget.dart';
 import '../controllers/dashboard_controller.dart';
 import '../widgets/distance_sparkline_widget.dart';
 import '../widgets/companion_contact_sheet.dart';
@@ -86,6 +87,15 @@ class DashboardJamaahScreen extends StatelessWidget {
               else
                 const SizedBox.shrink(),
             ],
+          );
+        }),
+        floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+        floatingActionButton: Obx(() {
+          final currentIdx = dashboardCtrl.currentIndex.value;
+          if (currentIdx != 0) return const SizedBox.shrink();
+          return const Padding(
+            padding: EdgeInsets.only(bottom: 4),
+            child: HajiCareAiFabButton(heroTag: 'jamaah_dashboard_ai_fab'),
           );
         }),
         bottomNavigationBar: Obx(() {

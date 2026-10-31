@@ -17,6 +17,8 @@ import '../../../core/services/app_alert_service.dart';
 import '../../../core/widgets/haji_transparent_dialog.dart';
 import '../../../core/widgets/haji_dialog_hero_header.dart';
 import '../../../core/widgets/haji_dialog_ribbon_button.dart';
+import '../../ai_assistant/bindings/hajicare_ai_binding.dart';
+import '../../ai_assistant/widgets/hajicare_ai_widget.dart';
 
 part 'profile_screen_sections.dart';
 part 'profile_screen_components.dart';
@@ -29,6 +31,7 @@ class ProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final settings = Get.find<AppSettingsController>();
     final profileCtrl = Get.find<ProfileController>();
+    final aiCtrl = HajiCareAiBinding.ensureRegistered();
     final state = Get.isRegistered<HajiCareController>()
         ? Get.find<HajiCareController>()
         : null;
@@ -162,6 +165,44 @@ class ProfileScreen extends StatelessWidget {
                         headingColor: headingColor,
                         bodyColor: bodyColor,
                         onTap: () => _showThemePicker(context, settings),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.md),
+
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.screenEdgeGutter,
+                  ),
+                  child: _SettingsGroup(
+                    title: 'ASISTEN PINTAR & SERVER AI',
+                    titleColor: colors.textSecondary,
+                    cardBg: cardBg,
+                    children: [
+                      _SettingsTile(
+                        icon: Icons.auto_awesome_rounded,
+                        label: 'HajiCare AI Voice Assistant',
+                        trailingLabel: aiCtrl.serverStatus.value.label,
+                        cardBg: cardBg,
+                        headingColor: headingColor,
+                        bodyColor: bodyColor,
+                        onTap: () => Get.toNamed(AppRoutes.aiAssistant),
+                      ),
+                      _DividerThin(),
+                      _SettingsTile(
+                        icon: Icons.settings_ethernet_rounded,
+                        label: 'Pengaturan Server AI (Ngrok/IP)',
+                        trailingLabel: aiCtrl.serverConfig.value.isPlaceholder
+                            ? 'Atur URL'
+                            : (Uri.tryParse(
+                                    aiCtrl.serverConfig.value.baseUrl,
+                                  )?.host ??
+                                  'Tersimpan'),
+                        cardBg: cardBg,
+                        headingColor: headingColor,
+                        bodyColor: bodyColor,
+                        onTap: () => AiServerSettingsDialog.show(context),
                       ),
                     ],
                   ),

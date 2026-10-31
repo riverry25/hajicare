@@ -43,6 +43,8 @@ import '../../features/sign_language/bindings/sign_language_binding.dart';
 import '../../features/sign_language/screens/text_to_sign_screen.dart';
 import '../../features/sign_language/bindings/text_to_sign_binding.dart';
 import '../../features/hajj_dua/presentation/screens/hajj_dua_screen.dart';
+import '../../features/ai_assistant/bindings/hajicare_ai_binding.dart';
+import '../../features/ai_assistant/widgets/hajicare_ai_widget.dart';
 import 'role_and_room_guard.dart';
 
 class AppRoutes {
@@ -80,6 +82,7 @@ class AppRoutes {
   static const String editRoom = '/edit_room';
   static const String sosAlertDetail = '/sos_alert_detail';
   static const String sosScanning = '/sos_scanning';
+  static const String aiAssistant = '/ai_assistant';
 
   static List<GetPage> get pages => [
     GetPage(name: splash, page: () => const SplashScreen()),
@@ -238,5 +241,10 @@ class AppRoutes {
     ),
     GetPage(name: sosAlertDetail, page: () => const SosAlertDetailScreen()),
     GetPage(name: sosScanning, page: () => const SosCompanionScanningScreen()),
+    GetPage(
+      name: aiAssistant,
+      page: () => const HajiCareAiAssistantPage(),
+      binding: HajiCareAiBinding(),
+    ),
   ];
 }

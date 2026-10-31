@@ -15,6 +15,9 @@ class SmartbandBleService {
   static const String serviceUuid = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
   static const String dataCharacteristicUuid =
       '6e400003-b5a3-f393-e0a9-e50e24dcca9e';
+  static const String txCharacteristicUuid = dataCharacteristicUuid;
+  static const String rxCharacteristicUuid =
+      '6e400002-b5a3-f393-e0a9-e50e24dcca9e';
 
   // Perangkat aktif & characteristic
   BluetoothDevice? _connectedDevice;
@@ -377,11 +380,16 @@ class SmartbandBleService {
 
     _log('TARGET SERVICE MATCHED: ${targetService.uuid}');
 
-    // 4. Discover Characteristic
+    // 4. Discover Characteristic (TX Notify 6e400003 & RX Write 6e400002)
     final targetCharUuidNormalized = dataCharacteristicUuid
         .toLowerCase()
         .replaceAll('-', '');
+    final targetRxUuidNormalized = rxCharacteristicUuid
+        .toLowerCase()
+        .replaceAll('-', '');
     BluetoothCharacteristic? targetChar;
+    BluetoothCharacteristic? exactRxChar;
+    BluetoothCharacteristic? fallbackWriteChar;
     for (final char in targetService.characteristics) {
       final cUuid = char.uuid.toString().toLowerCase().replaceAll('-', '');
       final p = char.properties;
@@ -397,10 +405,14 @@ class SmartbandBleService {
       if (cUuid == targetCharUuidNormalized) {
         targetChar = char;
       }
-      if (p.write || p.writeWithoutResponse) {
-        _writeCharacteristic = char;
+      if (cUuid == targetRxUuidNormalized &&
+          (p.write || p.writeWithoutResponse)) {
+        exactRxChar = char;
+      } else if (p.write || p.writeWithoutResponse) {
+        fallbackWriteChar = char;
       }
     }
+    _writeCharacteristic = exactRxChar ?? fallbackWriteChar;
 
     if (targetChar == null) {
       _log('CHARACTERISTIC NOT FOUND\nexpected:\n$dataCharacteristicUuid');
@@ -418,7 +430,7 @@ class SmartbandBleService {
   /// Indikator apakah characteristic penulisan perintah BLE tersedia
   bool get canWriteCommand => _writeCharacteristic != null;
 
-  /// Kirim perintah teks (misal: "BUZZ", "TEST_OLED", "PING") ke ESP32
+  /// Kirim perintah teks (misal: "BUZZ", "TEST_OLED", "PING", atau `"AI:<teks>"`) ke ESP32
   Future<bool> sendCommand(String cmd) async {
     final char = _writeCharacteristic;
     if (char == null) {
@@ -436,6 +448,29 @@ class SmartbandBleService {
       return true;
     } catch (e) {
       _log('COMMAND FAILED: $e');
+      return false;
+    }
+  }
+
+  /// Kirim payload AI OLED (`"AI:<teks>"`) maksimal 55 karakter ASCII tanpa newline
+  /// ke BLE RX Characteristic (6e400002-b5a3-f393-e0a9-e50e24dcca9e).
+  Future<bool> sendAiOledPayload(String payload) async {
+    final char = _writeCharacteristic;
+    if (char == null) {
+      _log('BLE RX Characteristic ($rxCharacteristicUuid) belum terhubung');
+      return false;
+    }
+    try {
+      _log('SEND AI OLED PAYLOAD: $payload');
+      await char.write(
+        utf8.encode(payload),
+        withoutResponse:
+            char.properties.writeWithoutResponse && !char.properties.write,
+      );
+      _log('AI OLED PAYLOAD SENT: $payload');
+      return true;
+    } catch (e) {
+      _log('AI OLED PAYLOAD FAILED: $e');
       return false;
     }
   }

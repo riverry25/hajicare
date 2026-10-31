@@ -9,6 +9,7 @@ import '../../map/controllers/map_controller.dart';
 import '../../prayer/controllers/prayer_times_controller.dart';
 import '../../profile/controllers/profile_controller.dart';
 import '../../smartband/controllers/smartband_ldr_controller.dart';
+import '../../ai_assistant/bindings/hajicare_ai_binding.dart';
 import '../controllers/dashboard_controller.dart';
 
 class DashboardBinding extends Bindings {
@@ -47,6 +48,7 @@ class DashboardBinding extends Bindings {
     Get.lazyPut<ProfileController>(() => ProfileController());
     Get.lazyPut<SmartbandLdrController>(() => SmartbandLdrController());
     Get.lazyPut<CommunicationController>(() => CommunicationController());
+    HajiCareAiBinding().dependencies();
   }
 }
 
