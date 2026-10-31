@@ -1140,11 +1140,13 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
             ),
             const SizedBox(height: 12),
 
-            // Preset Buttons: 25m, 50m, 100m, 200m
+            // Preset Buttons: 1m, 25m, 50m, 100m, 200m
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
                 children: [
+                  _buildRadiusChip(1, currentRadius, () => ctrl.setSafeRadius(1)),
+                  const SizedBox(width: 8),
                   _buildRadiusChip(25, currentRadius, () => ctrl.setSafeRadius(25)),
                   const SizedBox(width: 8),
                   _buildRadiusChip(50, currentRadius, () => ctrl.setSafeRadius(50)),
