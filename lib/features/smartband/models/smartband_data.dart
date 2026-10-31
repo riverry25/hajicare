@@ -352,7 +352,7 @@ class SmartbandData {
     final double sRadius =
         parseDouble(json['safeRadius'] ?? json['radius']) ?? 50.0;
     final double? distM = parseDouble(
-      json['distanceM'] ?? json['dist'] ?? json['distance'] ?? json['stepDistanceM'],
+      json['distanceM'] ?? json['dist'] ?? json['distance'],
     );
     final bool radAlert = parseBool(json['radiusAlert'] ?? json['outOfRange']);
 

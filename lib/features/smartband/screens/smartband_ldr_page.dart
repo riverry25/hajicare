@@ -654,7 +654,7 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
         case 4: // Dynamic Safe Radius
           heroTitle = 'Dynamic Safe Radius (Batas Aman)';
           final dist = ctrl.currentDistanceM.value ?? (isConn ? 0.0 : null);
-          final steps = ctrl.sessionSteps.value > 0 ? ctrl.sessionSteps.value : ctrl.stepCount.value;
+          final steps = ctrl.effectiveSteps;
           heroValue = dist != null ? dist.toStringAsFixed(1) : '--';
           heroUnit = 'Meter ($steps Langkah)';
           final rad = ctrl.safeRadiusMeters.value;
@@ -937,7 +937,7 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
                     subtitle: isConn
                         ? (ctrl.radiusAlertActive.value
                               ? 'Di Luar Batas!'
-                              : '${ctrl.sessionSteps.value > 0 ? ctrl.sessionSteps.value : ctrl.stepCount.value} Langkah • Batas ${rad.round()}m')
+                              : '${ctrl.effectiveSteps} Langkah • Batas ${rad.round()}m')
                         : 'Menunggu BLE',
                     onTap: () => ctrl.selectSensor(4),
                   ),
@@ -1190,7 +1190,7 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
                   Expanded(
                     child: Text(
                       dist != null
-                          ? 'Jarak saat ini: ${dist.toStringAsFixed(1)} m (${ctrl.sessionSteps.value > 0 ? ctrl.sessionSteps.value : ctrl.stepCount.value} langkah • 0.7m/langkah) • Batas: ${currentRadius.round()} m'
+                          ? 'Jarak saat ini: ${dist.toStringAsFixed(1)} m (${ctrl.effectiveSteps} langkah • 0.7m/langkah) • Batas: ${currentRadius.round()} m'
                           : (isConn
                               ? 'Jarak saat ini: 0.0 m (0 langkah • Titik Awal)'
                               : 'Menunggu Smartband Terhubung...'),
@@ -1523,7 +1523,7 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
         );
 
       case 4: // Langkah Jalan (Pedometer MPU6050)
-        final steps = ctrl.sessionSteps.value > 0 ? ctrl.sessionSteps.value : ctrl.stepCount.value;
+        final steps = ctrl.effectiveSteps;
         final stepDist = steps * 0.70;
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,

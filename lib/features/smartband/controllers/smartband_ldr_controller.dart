@@ -89,9 +89,21 @@ class SmartbandLdrController extends GetxController {
 
   /// Jumlah langkah sesi aktif (dihitung sejak gelang tersambung / reset)
   final RxInt sessionSteps = 0.obs;
+  int _stepBaseline = 0;
+  double _lastSentDistance = -1.0;
+
+  /// Hitungan langkah efektif (menghitung dari titik awal / reset)
+  int get effectiveSteps {
+    if (sessionSteps.value > 0) return sessionSteps.value;
+    final total = stepCount.value;
+    if (_stepBaseline > 0 && total >= _stepBaseline) {
+      return total - _stepBaseline;
+    }
+    return total;
+  }
 
   DateTime _lastStepAt = DateTime.now();
-  bool _stepPeak = false;
+  bool _stepPeak = false;
 
   // 6. Action Button / SOS & Haptic
   final RxBool isSosButtonPressed = false.obs;
@@ -322,8 +334,13 @@ class SmartbandLdrController extends GetxController {
       if (status == SmartbandBleStatus.connected) {
         errorMessage.value = '';
         statusMessage.value = 'Gelang Terhubung';
+        _lastSentDistance = -1.0;
+        _recalculateDistance();
       } else if (status == SmartbandBleStatus.disconnected) {
         statusMessage.value = 'Gelang Belum Terhubung';
+        _lastSentDistance = -1.0;
+        _stepBaseline = 0;
+        sessionSteps.value = 0;
         // Reset nilai telemetri langsung saat terputus
         heartRate.value = null;
         fingerDetected.value = false;
@@ -459,26 +476,11 @@ class SmartbandLdrController extends GetxController {
       longitude.value = null;
     }
 
-    // 5. Dynamic Safe Radius & Jarak Per Langkah
-    safeRadiusMeters.value = data.safeRadius;
-    if (data.distanceM != null && data.distanceM! > 0) {
-      currentDistanceM.value = data.distanceM;
-      _evaluateRadiusAlert(data.distanceM!);
-    } else {
-      _recalculateDistance();
-    }
-
-    // 6. Action Button / SOS & Fall Alerts
-    if (data.isSos) {
-      triggerSosButtonAlert();
-    } else if (isSosButtonPressed.value) {
-      cancelSosButtonAlert();
-    } else if (data.fallDetected) {
-      triggerFallAlert();
-    }
-
-    // 7. Baterai & Langkah
+    // 5. Langkah (MPU6050) & Baterai
     if (data.stepCount != null) {
+      if (data.stepCount! < _stepBaseline) {
+        _stepBaseline = 0;
+      }
       stepCount.value = data.stepCount!;
       stepHistory.add(data.stepCount!.toDouble());
       if (stepHistory.length > 25) stepHistory.removeAt(0);
@@ -492,6 +494,19 @@ class SmartbandLdrController extends GetxController {
       batteryVoltage.value = data.batteryVoltage!;
     }
     isCharging.value = data.isCharging;
+
+    // 6. Dynamic Safe Radius & Jarak Per Langkah Realtime
+    safeRadiusMeters.value = data.safeRadius;
+    _recalculateDistance();
+
+    // 7. Action Button / SOS & Fall Alerts
+    if (data.isSos) {
+      triggerSosButtonAlert();
+    } else if (isSosButtonPressed.value) {
+      cancelSosButtonAlert();
+    } else if (data.fallDetected) {
+      triggerFallAlert();
+    }
 
     // Update Baris OLED
     lcdLine1.value = data.displayOledLine1;
@@ -518,6 +533,8 @@ class SmartbandLdrController extends GetxController {
   Future<void> setSafeRadius(double radiusMeters) async {
     safeRadiusMeters.value = radiusMeters;
     await bleService.setSafeRadius(radiusMeters);
+    _lastSentDistance = -1.0;
+    _recalculateDistance();
   }
 
   /// Batalkan alarm/getaran lokal pada gelang
@@ -738,11 +755,11 @@ class SmartbandLdrController extends GetxController {
 
   /// Deteksi langkah kaki dinamis dari fluktuasi akselerometer MPU6050
   void _detectStepFromAccel(double g) {
+    if (stepCount.value > 0) return;
     final now = DateTime.now();
     if (g > 1.25 && !_stepPeak && now.difference(_lastStepAt).inMilliseconds > 300) {
       _stepPeak = true;
       _lastStepAt = now;
-      stepCount.value++;
       sessionSteps.value++;
       _recalculateDistance();
     } else if (g < 1.05) {
@@ -771,7 +788,7 @@ class SmartbandLdrController extends GetxController {
     }
 
     // 2. Jika GPS belum fix (indoor / 0 satelit), hitung jarak per langkah (0.7m/langkah)
-    final steps = sessionSteps.value > 0 ? sessionSteps.value : stepCount.value;
+    final steps = effectiveSteps;
     final dist = steps * strideLengthMeters;
     currentDistanceM.value = dist;
     _evaluateRadiusAlert(dist);
@@ -791,20 +808,27 @@ class SmartbandLdrController extends GetxController {
         bleService.sendCommand('VIBRATE');
       }
     }
-    // Kirim sinkronisasi jarak ke gelang
-    bleService.sendDistance(dist, rad);
+    // Kirim sinkronisasi jarak ke gelang jika berubah >= 0.5m atau status alert berubah
+    if ((dist - _lastSentDistance).abs() >= 0.5 || isOut != radiusAlertActive.value) {
+      _lastSentDistance = dist;
+      bleService.sendDistance(dist, rad);
+    }
   }
 
   /// Tambah langkah (untuk pengetesan cepat jarak per langkah)
   void addStep([int count = 1]) {
-    sessionSteps.value += count;
-    stepCount.value += count;
+    sessionSteps.value = effectiveSteps + count;
     _recalculateDistance();
   }
 
   /// Reset titik awal jarak (kembali ke 0 meter & 0 langkah)
   void resetStepDistance() {
+    _stepBaseline = stepCount.value;
     sessionSteps.value = 0;
+    _lastSentDistance = 0.0;
+    currentDistanceM.value = 0.0;
+    _evaluateRadiusAlert(0.0);
+    bleService.sendCommand('RESET_STEPS');
     _recalculateDistance();
   }
 
