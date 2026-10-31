@@ -256,14 +256,10 @@ class SmartbandLdrController extends GetxController {
   /// Inisialisasi storage
   Future<void> _initStorage() async {
     await _storage.init();
+    // Bersihkan cache koordinat lama agar tidak menampilkan lokasi statis sebelum GPS FIX
+    await _storage.clearGpsCache();
     final snapshot = _storage.loadStoredData();
     if (snapshot.hasAnyData) {
-      if (snapshot.lastKnownLatitude != null) {
-        lastKnownLatitude.value = snapshot.lastKnownLatitude;
-      }
-      if (snapshot.lastKnownLongitude != null) {
-        lastKnownLongitude.value = snapshot.lastKnownLongitude;
-      }
       if (snapshot.stepCount != null) {
         stepCount.value = snapshot.stepCount!;
       }
@@ -322,6 +318,8 @@ class SmartbandLdrController extends GetxController {
         accelG.value = null;
         latitude.value = null;
         longitude.value = null;
+        lastKnownLatitude.value = null;
+        lastKnownLongitude.value = null;
         isGpsFix.value = false;
         gpsSatellites.value = null;
         fallStatus.value = 'UNAVAILABLE';
@@ -665,25 +663,26 @@ class SmartbandLdrController extends GetxController {
 
   /// Buka tampilan Peta dan pusatkan ke lokasi Smartband
   void navigateToMap(BuildContext context) {
-    final lat = latitude.value ?? lastKnownLatitude.value;
-    final lng = longitude.value ?? lastKnownLongitude.value;
-
-    if (lat != null && lng != null) {
-      if (Get.isRegistered<MapController>()) {
-        final mapCtrl = Get.find<MapController>();
-        mapCtrl.focusCoordinate(LatLng(lat, lng), destZoom: 17.0);
-      }
-      Get.toNamed(AppRoutes.interactiveMap);
-    } else {
+    if (!isConnected || !isGpsFix.value || latitude.value == null || longitude.value == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-            'Koordinat GPS Smartband belum tersedia. Menunggu sinyal GPS FIX.',
+            'Lokasi realtime belum tersedia. Menunggu Smartband berhasil mengunci sinyal GPS FIX di area terbuka.',
           ),
-          duration: Duration(seconds: 2),
+          duration: Duration(seconds: 3),
         ),
       );
+      return;
     }
+
+    final lat = latitude.value!;
+    final lng = longitude.value!;
+
+    if (Get.isRegistered<MapController>()) {
+      final mapCtrl = Get.find<MapController>();
+      mapCtrl.focusCoordinate(LatLng(lat, lng), destZoom: 17.0);
+    }
+    Get.toNamed(AppRoutes.interactiveMap);
   }
 
   void _startRelativeTimeTicker() {

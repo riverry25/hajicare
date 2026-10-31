@@ -1718,11 +1718,17 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
   ) {
     final headingColor = AppColors.textHeadingColor(context);
     final bodyColor = AppColors.textBodyColor(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Obx(() {
-      final isFix = ctrl.isGpsFix.value;
-      final lat = ctrl.latitude.value ?? ctrl.lastKnownLatitude.value;
-      final lng = ctrl.longitude.value ?? ctrl.lastKnownLongitude.value;
+      final isConnected = ctrl.isConnected;
+      final isFix = isConnected &&
+          ctrl.isGpsFix.value &&
+          ctrl.latitude.value != null &&
+          ctrl.longitude.value != null &&
+          (ctrl.latitude.value!.abs() > 0.0001 || ctrl.longitude.value!.abs() > 0.0001);
+      final lat = isFix ? ctrl.latitude.value! : null;
+      final lng = isFix ? ctrl.longitude.value! : null;
       final target = (lat != null && lng != null) ? LatLng(lat, lng) : null;
       final sats = ctrl.gpsSatellites.value ?? 0;
 
@@ -1751,11 +1757,13 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
                         ),
                       ),
                       Text(
-                        isFix
-                            ? 'Sinyal Terkunci ($sats Satelit Aktif)'
-                            : (sats > 0
-                                  ? 'Sinkronisasi ($sats Satelit Terdeteksi)'
-                                  : 'Mencari sinyal satelit GPS...'),
+                        !isConnected
+                            ? 'Menunggu koneksi Smartband...'
+                            : (isFix
+                                ? 'Sinyal Terkunci ($sats Satelit Aktif)'
+                                : (sats > 0
+                                    ? 'Sinkronisasi ($sats Satelit Terdeteksi)...'
+                                    : 'Mencari sinyal satelit GPS...')),
                         style: AppTypography.captionSmall.copyWith(
                           color: isFix ? AppColors.statusSafe : bodyColor,
                           fontWeight: FontWeight.bold,
@@ -1773,11 +1781,15 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
                     borderRadius: BorderRadius.circular(AppRadius.chip),
                   ),
                   child: Text(
-                    isFix ? 'GPS FIX' : 'MENCARI FIX',
+                    !isConnected
+                        ? 'OFFLINE'
+                        : (isFix ? 'GPS FIX' : 'MENCARI FIX'),
                     style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
-                      color: isFix ? AppColors.statusSafe : AppColors.primaryGold,
+                      color: isFix
+                          ? AppColors.statusSafe
+                          : (isConnected ? AppColors.primaryGold : Colors.grey),
                     ),
                   ),
                 ),
@@ -1823,24 +1835,84 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
                         ],
                       )
                     : Container(
-                        color: const Color(0xFFF1F5F9),
+                        color: isDark
+                            ? Colors.white.withValues(alpha: 0.05)
+                            : const Color(0xFFF1F5F9),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                         alignment: Alignment.center,
-                        child: Text(
-                          'Koordinat GPS Satelit Belum Tersedia\n(Memerlukan area terbuka langit untuk GPS FIX)',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(fontSize: 11, color: bodyColor),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              !isConnected
+                                  ? Icons.bluetooth_disabled_rounded
+                                  : Icons.satellite_alt_rounded,
+                              size: 32,
+                              color: isConnected
+                                  ? AppColors.primaryGold
+                                  : Colors.grey,
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              !isConnected
+                                  ? 'Smartband Belum Terhubung'
+                                  : (sats > 0
+                                      ? 'Menunggu Kuncian ($sats Satelit)...'
+                                      : 'Menunggu Sinyal GPS Terkunci (GPS FIX)...'),
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: headingColor,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              !isConnected
+                                  ? 'Hubungkan gelang via Bluetooth untuk membaca koordinat GPS realtime.'
+                                  : 'Peta lokasi hanya akan tampil saat Smartband berhasil mengunci koordinat GPS di area terbuka langit.',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(fontSize: 10, color: bodyColor),
+                            ),
+                          ],
                         ),
                       ),
               ),
             ),
             const SizedBox(height: 10),
+
+            if (target != null) ...[
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Text(
+                  'Koordinat Terkunci: ${lat!.toStringAsFixed(6)}, ${lng!.toStringAsFixed(6)}',
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.statusSafe,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 6),
+            ],
+
             ElevatedButton.icon(
               onPressed: target != null ? () => ctrl.navigateToMap(context) : null,
               icon: const Icon(Icons.fullscreen_rounded, size: 18),
-              label: const Text('Buka Peta Navigasi Lengkap'),
+              label: Text(
+                target != null
+                    ? 'Buka Peta Navigasi Lengkap'
+                    : 'Menunggu GPS Satelit Fix...',
+              ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primaryGold,
-                foregroundColor: Colors.black,
+                backgroundColor: target != null
+                    ? AppColors.primaryGold
+                    : (isDark
+                        ? Colors.white.withValues(alpha: 0.1)
+                        : Colors.black.withValues(alpha: 0.08)),
+                foregroundColor: target != null
+                    ? Colors.black
+                    : (isDark ? Colors.white38 : Colors.black38),
                 minimumSize: const Size(double.infinity, 42),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(AppRadius.button),

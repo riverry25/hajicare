@@ -153,6 +153,21 @@ class SmartbandStorageService {
     }
   }
 
+  /// Hapus cache lokasi GPS lama agar tidak menampilkan koordinat statis/palsu
+  Future<void> clearGpsCache() async {
+    try {
+      final p = _prefs;
+      if (p == null) return;
+      await Future.wait([
+        p.remove(_keyLastLat),
+        p.remove(_keyLastLng),
+        p.remove(_keyIsGpsFix),
+      ]);
+    } catch (e) {
+      debugPrint('[SmartbandStorage] Gagal menghapus cache GPS: $e');
+    }
+  }
+
   /// Hapus semua data tersimpan (untuk logout atau reset
   Future<void> clearAll() async {
     try {

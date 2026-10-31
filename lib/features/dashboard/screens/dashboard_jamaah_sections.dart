@@ -2048,18 +2048,19 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                 ),
                 child: Obx(() {
                   final isConnected = ldrCtrl.isConnected;
+                  final isFix = ldrCtrl.isGpsFix.value;
                   final hr = ldrCtrl.heartRate.value;
                   final lat = ldrCtrl.latitude.value;
                   final lng = ldrCtrl.longitude.value;
-                  final lastLat = ldrCtrl.lastKnownLatitude.value;
-                  final lastLng = ldrCtrl.lastKnownLongitude.value;
                   final relativeTime = ldrCtrl.relativeTimeText.value;
-                  // hasLocation: koordinat satelit GPS aktif atau lokasi terakhir
-                  final hasLocation =
-                      (isConnected && lat != null && lng != null) ||
-                      (lastLat != null && lastLng != null);
+                  // hasLocation: HANYA tampil jika Smartband terhubung dan koordinat GPS realtime FIX
+                  final hasLocation = isConnected &&
+                      isFix &&
+                      lat != null &&
+                      lng != null &&
+                      (lat.abs() > 0.0001 || lng.abs() > 0.0001);
                   final LatLng? activeTarget = hasLocation
-                      ? LatLng(lat ?? lastLat!, lng ?? lastLng!)
+                      ? LatLng(lat, lng)
                       : null;
 
                   return SingleChildScrollView(
