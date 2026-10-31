@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math';
 
 /// Model representasi data telemetri dari ESP32-S3 Smartband Pro v2.0
 /// Dilengkapi modul & sensor spesifik:
@@ -282,8 +283,29 @@ class SmartbandData {
     final double? rollVal = parseDouble(json['roll'] ?? json['gyroRoll']);
     final double? pitchVal = parseDouble(json['pitch'] ?? json['gyroPitch']);
     final double? gForce = parseDouble(
-      json['motionG'] ?? json['accelG'] ?? json['gForce'] ?? json['accel'],
+      json['motionG'] ??
+          json['motion'] ??
+          json['accelG'] ??
+          json['accel'] ??
+          json['gForce'] ??
+          json['totalG'] ??
+          json['total_g'] ??
+          json['gravity'] ??
+          json['g'] ??
+          json['mpu'] ??
+          json['mpu6050'] ??
+          json['accel_g'],
     );
+
+    double? resolvedG = gForce;
+    if (resolvedG == null) {
+      final ax = parseDouble(json['ax'] ?? json['accelX'] ?? json['acc_x']);
+      final ay = parseDouble(json['ay'] ?? json['accelY'] ?? json['acc_y']);
+      final az = parseDouble(json['az'] ?? json['accelZ'] ?? json['acc_z']);
+      if (ax != null && ay != null && az != null) {
+        resolvedG = sqrt(ax * ax + ay * ay + az * az);
+      }
+    }
 
     // 4. GPS ATGM336H: Koordinat & Satelit & Fix
     final double? lat = parseDouble(json['latitude'] ?? json['lat']);
@@ -357,7 +379,7 @@ class SmartbandData {
       stepCount: steps,
       roll: rollVal,
       pitch: pitchVal,
-      accelG: gForce,
+      accelG: resolvedG,
       batteryLevel: bat,
       batteryVoltage: batVolt,
       isCharging: charging,
