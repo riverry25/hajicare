@@ -219,8 +219,10 @@ class SmartbandData {
     double? parseDouble(dynamic val) {
       if (val == null) return null;
       if (val is num) return val.toDouble();
-      final str = val.toString().trim().toLowerCase();
+      String str = val.toString().trim().toLowerCase();
       if (str.isEmpty || str == 'null' || str == 'nan') return null;
+      str = str.replaceAll(RegExp(r'[^\d.-]'), '');
+      if (str.isEmpty || str == '-' || str == '.') return null;
       return double.tryParse(str);
     }
 

@@ -653,9 +653,10 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
 
         case 4: // Dynamic Safe Radius
           heroTitle = 'Dynamic Safe Radius (Batas Aman)';
-          final dist = ctrl.currentDistanceM.value;
+          final dist = ctrl.currentDistanceM.value ?? (isConn ? 0.0 : null);
+          final steps = ctrl.sessionSteps.value > 0 ? ctrl.sessionSteps.value : ctrl.stepCount.value;
           heroValue = dist != null ? dist.toStringAsFixed(1) : '--';
-          heroUnit = 'Meter ke Pendamping';
+          heroUnit = 'Meter ($steps Langkah)';
           final rad = ctrl.safeRadiusMeters.value;
           arcPercent = dist != null ? (dist / (rad * 1.5)).clamp(0.05, 1.0) : 0.0;
           arcColor = ctrl.radiusAlertActive.value
@@ -664,7 +665,7 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
           statusPillText = !isConn
               ? 'MENUNGGU BLE'
               : (ctrl.radiusAlertActive.value
-                    ? 'DI LUAR RADIUS ($dist m > $rad m)'
+                    ? 'DI LUAR RADIUS (${dist?.toStringAsFixed(1)} m > $rad m)'
                     : 'DALAM RADIUS AMAN (Batas $rad m)');
           statusPillBg = ctrl.radiusAlertActive.value
               ? AppColors.statusDanger.withValues(alpha: 0.15)
@@ -928,15 +929,15 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
                     isSelected: selected == 4,
                     icon: Icons.radar_rounded,
                     iconColor: const Color(0xFF0D9488),
-                    valueText: isConn && dist != null
-                        ? dist.toStringAsFixed(1)
+                    valueText: isConn
+                        ? (dist != null ? dist.toStringAsFixed(1) : '0.0')
                         : '--',
                     unit: 'Meter',
                     title: 'Safe Radius',
                     subtitle: isConn
                         ? (ctrl.radiusAlertActive.value
                               ? 'Di Luar Batas!'
-                              : 'Batas: ${rad.round()}m')
+                              : '${ctrl.sessionSteps.value > 0 ? ctrl.sessionSteps.value : ctrl.stepCount.value} Langkah • Batas ${rad.round()}m')
                         : 'Menunggu BLE',
                     onTap: () => ctrl.selectSensor(4),
                   ),
@@ -1091,6 +1092,7 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
     final bodyColor = AppColors.textBodyColor(context);
 
     return Obx(() {
+      final isConn = ctrl.isConnected;
       final currentRadius = ctrl.safeRadiusMeters.value;
       final dist = ctrl.currentDistanceM.value;
 
@@ -1188,8 +1190,10 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
                   Expanded(
                     child: Text(
                       dist != null
-                          ? 'Jarak saat ini: ${dist.toStringAsFixed(1)} m (Batas: ${currentRadius.round()} m)'
-                          : 'Jarak ke pendamping: Menghitung koordinat GPS...',
+                          ? 'Jarak saat ini: ${dist.toStringAsFixed(1)} m (${ctrl.sessionSteps.value > 0 ? ctrl.sessionSteps.value : ctrl.stepCount.value} langkah • 0.7m/langkah) • Batas: ${currentRadius.round()} m'
+                          : (isConn
+                              ? 'Jarak saat ini: 0.0 m (0 langkah • Titik Awal)'
+                              : 'Menunggu Smartband Terhubung...'),
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
@@ -1201,6 +1205,44 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
                   ),
                 ],
               ),
+            ),
+            const SizedBox(height: 10),
+
+            // Tombol Uji Langkah Cepat (Pedometer Stride Distance)
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => ctrl.addStep(1),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFF0D9488),
+                      side: const BorderSide(color: Color(0xFF0D9488)),
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.button),
+                      ),
+                    ),
+                    icon: const Icon(Icons.directions_walk_rounded, size: 16),
+                    label: const Text('+1 Langkah (+0.7m)', style: TextStyle(fontSize: 11)),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => ctrl.resetStepDistance(),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.grey.shade700,
+                      side: BorderSide(color: Colors.grey.shade400),
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.button),
+                      ),
+                    ),
+                    icon: const Icon(Icons.restart_alt_rounded, size: 16),
+                    label: const Text('Reset 0 m', style: TextStyle(fontSize: 11)),
+                  ),
+                ),
+              ],
             ),
           ],
         ),

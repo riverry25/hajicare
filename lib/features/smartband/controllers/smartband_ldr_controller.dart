@@ -84,6 +84,15 @@ class SmartbandLdrController extends GetxController {
   final RxString safeRadiusStatusLabel = 'Di Dalam Radius Aman'.obs;
   final RxBool radiusAlertActive = false.obs;
 
+  /// Panjang rata-rata per langkah jamaah dewasa: 0.70 meter (70 cm)
+  static const double strideLengthMeters = 0.70;
+
+  /// Jumlah langkah sesi aktif (dihitung sejak gelang tersambung / reset)
+  final RxInt sessionSteps = 0.obs;
+
+  DateTime _lastStepAt = DateTime.now();
+  bool _stepPeak = false;
+
   // 6. Action Button / SOS & Haptic
   final RxBool isSosButtonPressed = false.obs;
   final RxBool isSosTransmitted = false.obs;
@@ -411,6 +420,11 @@ class SmartbandLdrController extends GetxController {
       accelG.value = data.accelG;
       motionHistory.add(data.accelG!);
       if (motionHistory.length > 25) motionHistory.removeAt(0);
+      _detectStepFromAccel(data.accelG!);
+    } else if (accelG.value == null && isConnected && data.fallStatus != 'UNAVAILABLE') {
+      // Inisialisasi baseline 1.00g (gravitasi bumi) saat MPU aktif
+      accelG.value = 1.0;
+      motionHistory.add(1.0);
     }
     fallStatus.value = data.fallStatus;
     if (data.roll != null) gyroRoll.value = data.roll!;
@@ -445,10 +459,14 @@ class SmartbandLdrController extends GetxController {
       longitude.value = null;
     }
 
-    // 5. Dynamic Safe Radius
+    // 5. Dynamic Safe Radius & Jarak Per Langkah
     safeRadiusMeters.value = data.safeRadius;
-    currentDistanceM.value = data.distanceM;
-    radiusAlertActive.value = data.radiusAlert;
+    if (data.distanceM != null && data.distanceM! > 0) {
+      currentDistanceM.value = data.distanceM;
+      _evaluateRadiusAlert(data.distanceM!);
+    } else {
+      _recalculateDistance();
+    }
 
     // 6. Action Button / SOS & Fall Alerts
     if (data.isSos) {
@@ -716,6 +734,78 @@ class SmartbandLdrController extends GetxController {
       relativeTimeText.value = ' jam lalu';
     }
     relativeTimeStr.value = relativeTimeText.value;
+  }
+
+  /// Deteksi langkah kaki dinamis dari fluktuasi akselerometer MPU6050
+  void _detectStepFromAccel(double g) {
+    final now = DateTime.now();
+    if (g > 1.25 && !_stepPeak && now.difference(_lastStepAt).inMilliseconds > 300) {
+      _stepPeak = true;
+      _lastStepAt = now;
+      stepCount.value++;
+      sessionSteps.value++;
+      _recalculateDistance();
+    } else if (g < 1.05) {
+      _stepPeak = false;
+    }
+  }
+
+  /// Hitung jarak riil jemaah ke HP (per-langkah jika GPS belum fix)
+  void _recalculateDistance() {
+    if (!isConnected) {
+      currentDistanceM.value = null;
+      return;
+    }
+
+    // 1. Prioritas GPS jika satelit fix
+    if (isGpsFix.value && latitude.value != null && longitude.value != null) {
+      if (Get.isRegistered<HajiCareController>()) {
+        final hajiCtrl = Get.find<HajiCareController>();
+        final dist = hajiCtrl.calculatedDistance.value;
+        if (dist != null && dist > 0) {
+          currentDistanceM.value = dist;
+          _evaluateRadiusAlert(dist);
+          return;
+        }
+      }
+    }
+
+    // 2. Jika GPS belum fix (indoor / 0 satelit), hitung jarak per langkah (0.7m/langkah)
+    final steps = sessionSteps.value > 0 ? sessionSteps.value : stepCount.value;
+    final dist = steps * strideLengthMeters;
+    currentDistanceM.value = dist;
+    _evaluateRadiusAlert(dist);
+  }
+
+  void _evaluateRadiusAlert(double dist) {
+    final rad = safeRadiusMeters.value;
+    final isOut = rad > 0 && dist > rad;
+
+    if (isOut != radiusAlertActive.value) {
+      radiusAlertActive.value = isOut;
+      isOutsideSafeRadius.value = isOut;
+      safeRadiusStatusLabel.value = isOut ? 'Di Luar Radius Aman' : 'Di Dalam Radius Aman';
+      lcdLine2.value = isOut ? '!LUAR RADIUS !' : 'STATUS: NORMAL  ';
+      bleService.sendCommand(isOut ? 'RADIUS_ALERT:1' : 'RADIUS_ALERT:0');
+      if (isOut) {
+        bleService.sendCommand('VIBRATE');
+      }
+    }
+    // Kirim sinkronisasi jarak ke gelang
+    bleService.sendDistance(dist, rad);
+  }
+
+  /// Tambah langkah (untuk pengetesan cepat jarak per langkah)
+  void addStep([int count = 1]) {
+    sessionSteps.value += count;
+    stepCount.value += count;
+    _recalculateDistance();
+  }
+
+  /// Reset titik awal jarak (kembali ke 0 meter & 0 langkah)
+  void resetStepDistance() {
+    sessionSteps.value = 0;
+    _recalculateDistance();
   }
 
   @override
