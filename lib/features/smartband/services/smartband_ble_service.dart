@@ -15,10 +15,7 @@ class SmartbandBleService {
   static const String serviceUuid = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
   static const String dataCharacteristicUuid =
       '6e400003-b5a3-f393-e0a9-e50e24dcca9e';
-<<<<<<< HEAD
-=======
   static const String txCharacteristicUuid = dataCharacteristicUuid;
->>>>>>> ee230035922be1f9c37e5e9c4b4a255879093bd3
   static const String rxCharacteristicUuid =
       '6e400002-b5a3-f393-e0a9-e50e24dcca9e';
 
@@ -387,16 +384,6 @@ class SmartbandBleService {
 
     _log('TARGET SERVICE MATCHED: ${targetService.uuid}');
 
-<<<<<<< HEAD
-    // 4. Discover Characteristic (TX & RX)
-    final targetCharUuidNormalized = dataCharacteristicUuid
-        .toLowerCase()
-        .replaceAll('-', '');
-    final rxCharUuidNormalized = rxCharacteristicUuid
-        .toLowerCase()
-        .replaceAll('-', '');
-
-=======
     // 4. Discover Characteristic (TX Notify 6e400003 & RX Write 6e400002)
     final targetCharUuidNormalized = dataCharacteristicUuid
         .toLowerCase()
@@ -404,7 +391,6 @@ class SmartbandBleService {
     final targetRxUuidNormalized = rxCharacteristicUuid
         .toLowerCase()
         .replaceAll('-', '');
->>>>>>> ee230035922be1f9c37e5e9c4b4a255879093bd3
     BluetoothCharacteristic? targetChar;
     BluetoothCharacteristic? exactRxChar;
     BluetoothCharacteristic? fallbackWriteChar;
@@ -420,16 +406,11 @@ class SmartbandBleService {
       if (cUuid == targetCharUuidNormalized) {
         targetChar = char;
       }
-<<<<<<< HEAD
-      if (cUuid == rxCharUuidNormalized || p.write || p.writeWithoutResponse) {
-        _writeCharacteristic = char;
-=======
       if (cUuid == targetRxUuidNormalized &&
           (p.write || p.writeWithoutResponse)) {
         exactRxChar = char;
       } else if (p.write || p.writeWithoutResponse) {
         fallbackWriteChar = char;
->>>>>>> ee230035922be1f9c37e5e9c4b4a255879093bd3
       }
     }
     _writeCharacteristic = exactRxChar ?? fallbackWriteChar;
@@ -450,11 +431,7 @@ class SmartbandBleService {
   /// Indikator apakah characteristic penulisan perintah BLE tersedia
   bool get canWriteCommand => _writeCharacteristic != null;
 
-<<<<<<< HEAD
-  /// Kirim perintah teks (misal: "PING", "CANCEL", "PAGE:1", "RADIUS:50") ke ESP32
-=======
-  /// Kirim perintah teks (misal: "BUZZ", "TEST_OLED", "PING", atau `"AI:<teks>"`) ke ESP32
->>>>>>> ee230035922be1f9c37e5e9c4b4a255879093bd3
+  /// Kirim perintah teks (misal: "PING", "CANCEL", "PAGE:1", "RADIUS:50", atau `"AI:<teks>"`) ke ESP32
   Future<bool> sendCommand(String cmd) async {
     final char = _writeCharacteristic;
     if (char == null) {
@@ -476,7 +453,6 @@ class SmartbandBleService {
     }
   }
 
-<<<<<<< HEAD
   /// Ubah batas Safe Radius pada gelang (meter)
   Future<bool> setSafeRadius(double radiusMeters) async {
     return sendCommand('RADIUS:${radiusMeters.round()}');
@@ -505,7 +481,8 @@ class SmartbandBleService {
   /// Ping perangkat untuk meminta paket telemetri segera
   Future<bool> ping() async {
     return sendCommand('PING');
-=======
+  }
+
   /// Kirim payload AI OLED (`"AI:<teks>"`) maksimal 55 karakter ASCII tanpa newline
   /// ke BLE RX Characteristic (6e400002-b5a3-f393-e0a9-e50e24dcca9e).
   Future<bool> sendAiOledPayload(String payload) async {
@@ -527,7 +504,6 @@ class SmartbandBleService {
       _log('AI OLED PAYLOAD FAILED: $e');
       return false;
     }
->>>>>>> ee230035922be1f9c37e5e9c4b4a255879093bd3
   }
 
   /// 4. Subscribe ke BLE Notification data karakteristik

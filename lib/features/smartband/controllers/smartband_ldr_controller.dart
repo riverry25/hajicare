@@ -122,6 +122,11 @@ class SmartbandLdrController extends GetxController {
   final RxInt selectedSensorIndex = 0.obs;
   final RxString trendPeriod = 'today'.obs;
 
+  /// Metode kompatibilitas simulasi (diabaikan karena mode dinamis hardware penuh aktif)
+  void toggleSimulation([bool? enable]) {
+    AppLogger.debug('toggleSimulation ignored - hardware full dynamic mode active');
+  }
+
   RxList<double> get heartRateHistory => hrHistory;
   RxList<double> get temperatureHistory => tempHistory;
   RxList<double> get trendData {
