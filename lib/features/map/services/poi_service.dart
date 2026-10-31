@@ -28,9 +28,11 @@ class _PoiCacheEntry {
 class PoiService {
   static const _cacheLifetime = Duration(minutes: 5);
   static const _endpoints = <String>[
+    'https://overpass.openstreetmap.fr/api/interpreter',
+    'https://overpass.kumi.systems/api/interpreter',
+    'https://overpass.osm.ch/api/interpreter',
     'https://overpass-api.de/api/interpreter',
-    'https://overpass.private.coffee/api/interpreter',
-    'https://maps.mail.ru/osm/tools/overpass/api/interpreter',
+    'https://lz4.overpass-api.de/api/interpreter',
   ];
 
   final http.Client _client;
@@ -76,7 +78,7 @@ class PoiService {
               },
               body: {'data': query},
             )
-            .timeout(const Duration(seconds: 12));
+            .timeout(const Duration(seconds: 7));
 
         if (response.statusCode != 200) {
           continue;
@@ -183,6 +185,16 @@ class PoiService {
         : 'Jam: $openingHours';
 
     final detailTags = <String>[
+      if (category == PoiCategory.toilet) 'Toilet Umum',
+      if (category == PoiCategory.wudhu) 'Tempat Wudhu',
+      if (category == PoiCategory.ibadah ||
+          tags['religion'] == 'muslim' ||
+          name.toLowerCase().contains('masjid') ||
+          name.toLowerCase().contains('mushola') ||
+          name.toLowerCase().contains('surau')) ...[
+        'Tempat Wudhu',
+        'Fasilitas Toilet / Bersuci',
+      ],
       if (tags['stars'] case final stars? when stars.trim().isNotEmpty)
         'Bintang ${stars.trim()}',
       if (tags['rooms'] case final rooms? when rooms.trim().isNotEmpty)
@@ -197,6 +209,16 @@ class PoiService {
       if (tags['fee'] == 'no') 'Gratis',
     ];
 
+    final isMosque = category == PoiCategory.ibadah ||
+        tags['religion'] == 'muslim' ||
+        name.toLowerCase().contains('masjid') ||
+        name.toLowerCase().contains('mushola') ||
+        name.toLowerCase().contains('surau');
+    final resolvedSubtitle = address ??
+        (isMosque
+            ? 'Masjid • Fasilitas Wudhu & Toilet'
+            : _subtitleFor(tags, category));
+
     return MapPoi(
       id: 'osm_${type}_${rawId.toInt()}',
       name: name,
@@ -204,7 +226,7 @@ class PoiService {
       coordinate: coordinate,
       statusLabel: status,
       isAccessible: tags['wheelchair'] == 'yes',
-      subtitle: address ?? _subtitleFor(tags, category),
+      subtitle: resolvedSubtitle,
       tags: detailTags,
       address: address,
       phone: _firstNotBlank([tags['contact:phone'], tags['phone']]),
@@ -218,16 +240,22 @@ class PoiService {
   static String _buildQuery(LatLng center, int radius) {
     final around = '$radius,${center.latitude},${center.longitude}';
     return '''
-[out:json][timeout:15];
+[out:json][timeout:10];
 (
-  nwr(around:$around)[tourism~"^(hotel|hostel|guest_house|motel|apartment|camp_site|attraction|museum|viewpoint)\$"];
-  nwr(around:$around)[amenity~"^(restaurant|fast_food|food_court|cafe|pharmacy|hospital|clinic|doctors|toilets|drinking_water|water_point|place_of_worship|atm|bank|police|bus_station|parking|fuel)\$"];
-  nwr(around:$around)[shop~"^(supermarket|convenience|mall|department_store|chemist)\$"];
-  nwr(around:$around)[healthcare~"^(hospital|clinic|doctor|pharmacy|first_aid)\$"];
-  nwr(around:$around)[aeroway~"^(aerodrome|terminal)\$"];
-  nwr(around:$around)[railway~"^(station|halt)\$"];
+  node(around:$around)[amenity~"^(toilets|drinking_water|water_point|place_of_worship|hospital|clinic|doctors|pharmacy|fuel|police|restaurant|fast_food|food_court|cafe|atm|bank|bus_station|parking)\$"];
+  way(around:$around)[amenity~"^(toilets|drinking_water|water_point|place_of_worship|hospital|clinic|doctors|pharmacy|fuel|police|restaurant|fast_food|food_court|cafe|atm|bank|bus_station|parking)\$"];
+  node(around:$around)[shop~"^(supermarket|convenience|mall|department_store|chemist)\$"];
+  way(around:$around)[shop~"^(supermarket|convenience|mall|department_store|chemist)\$"];
+  node(around:$around)[tourism~"^(hotel|hostel|guest_house|motel|apartment|camp_site|attraction|museum|viewpoint)\$"];
+  way(around:$around)[tourism~"^(hotel|hostel|guest_house|motel|apartment|camp_site|attraction|museum|viewpoint)\$"];
+  node(around:$around)[healthcare~"^(hospital|clinic|doctor|pharmacy|first_aid)\$"];
+  way(around:$around)[healthcare~"^(hospital|clinic|doctor|pharmacy|first_aid)\$"];
+  node(around:$around)[toilets=yes];
+  way(around:$around)[toilets=yes];
+  node(around:$around)[wudhu=yes];
+  way(around:$around)[wudhu=yes];
 );
-out center 250;
+out center 200;
 ''';
   }
 
@@ -273,8 +301,20 @@ out center 250;
     }
 
     // 3. Toilets & Wudhu
-    if (amenity == 'toilets') return PoiCategory.toilet;
-    if ({'drinking_water', 'water_point'}.contains(amenity)) {
+    if (amenity == 'toilets' ||
+        tags['toilets'] == 'yes' ||
+        tags['toilet'] == 'yes' ||
+        name.contains('toilet') ||
+        name.contains('wc ') ||
+        name.endsWith('wc') ||
+        name.contains('kamar mandi')) {
+      return PoiCategory.toilet;
+    }
+    if ({'drinking_water', 'water_point'}.contains(amenity) ||
+        tags['wudhu'] == 'yes' ||
+        amenity == 'wudhu' ||
+        name.contains('wudhu') ||
+        name.contains('air minum')) {
       return PoiCategory.wudhu;
     }
 
@@ -282,7 +322,15 @@ out center 250;
     if (amenity == 'police') return PoiCategory.posPantau;
 
     // 5. Worship / Mosque
-    if (amenity == 'place_of_worship') return PoiCategory.ibadah;
+    if (amenity == 'place_of_worship' ||
+        name.contains('masjid') ||
+        name.contains('mushola') ||
+        name.contains('mushalla') ||
+        name.contains('mosque') ||
+        name.contains('surau') ||
+        name.contains('baitul')) {
+      return PoiCategory.ibadah;
+    }
 
     // 6. Food & Drink
     if ({'restaurant', 'fast_food', 'food_court'}.contains(amenity)) {

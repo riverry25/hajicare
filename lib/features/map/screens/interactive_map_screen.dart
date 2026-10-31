@@ -20,6 +20,7 @@ import '../../../core/widgets/bottom_nav_bar.dart';
 import '../../dashboard/models/assistance_request_model.dart';
 import '../../dashboard/services/assistance_request_service.dart';
 import '../controllers/map_controller.dart';
+import '../models/map_poi.dart';
 import '../models/map_search_result.dart';
 import '../widgets/gps_user_puck.dart';
 import '../widgets/location_detail_sheet.dart';
@@ -1701,6 +1702,18 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
               mapCtrl.calculateDistanceMeters(userPos, poi.coordinate),
             );
 
+      final isToiletFilter = mapCtrl.selectedFilter.value == 4;
+      final displayIcon = isToiletFilter
+          ? (poi.category == PoiCategory.wudhu
+              ? Icons.water_drop_rounded
+              : Icons.wc_rounded)
+          : poi.icon;
+      final displayColor = isToiletFilter
+          ? (poi.category == PoiCategory.wudhu
+              ? const Color(0xFF00ACC1)
+              : const Color(0xFF0288D1))
+          : poi.color;
+
       return fmap.Marker(
         point: poi.coordinate,
         width: 130,
@@ -1735,7 +1748,7 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
                             height: 44 + (_pulseController.value * 12),
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color: poi.color.withValues(
+                              color: displayColor.withValues(
                                 alpha: 0.40 - (_pulseController.value * 0.25),
                               ),
                             ),
@@ -1756,8 +1769,8 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
                               colors: [
-                                Color.lerp(poi.color, Colors.white, 0.18)!,
-                                poi.color,
+                                Color.lerp(displayColor, Colors.white, 0.18)!,
+                                displayColor,
                               ],
                             ),
                             shape: BoxShape.circle,
@@ -1767,7 +1780,7 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: poi.color.withValues(
+                                color: displayColor.withValues(
                                   alpha: isSelected ? 0.55 : 0.35,
                                 ),
                                 blurRadius: isSelected ? 12 : 8,
@@ -1783,7 +1796,7 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
                           ),
                           child: Center(
                             child: Icon(
-                              poi.icon,
+                              displayIcon,
                               color: Colors.white,
                               size: isSelected ? 21 : 18,
                             ),
@@ -1796,7 +1809,7 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
                           child: CustomPaint(
                             size: const Size(10, 6),
                             painter: _TrianglePointerPainter(
-                              color: poi.color,
+                              color: displayColor,
                               borderColor: Colors.white,
                             ),
                           ),
@@ -1819,7 +1832,7 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
                       color: hc.surface.withValues(alpha: 0.95),
                       borderRadius: BorderRadius.circular(AppRadius.pill),
                       border: Border.all(
-                        color: isSelected ? poi.color : hc.border,
+                        color: isSelected ? displayColor : hc.border,
                         width: isSelected ? 1.5 : 0.8,
                       ),
                       boxShadow: [
@@ -1837,7 +1850,7 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
                           width: 5,
                           height: 5,
                           decoration: BoxDecoration(
-                            color: poi.color,
+                            color: displayColor,
                             shape: BoxShape.circle,
                           ),
                         ),
@@ -1862,7 +1875,7 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
                           Text(
                             '· $distText',
                             style: context.text.labelSmall.copyWith(
-                              color: isSelected ? poi.color : hc.textMuted,
+                              color: isSelected ? displayColor : hc.textMuted,
                               fontSize: 8.5,
                               fontWeight: FontWeight.w600,
                             ),

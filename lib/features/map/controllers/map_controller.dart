@@ -465,10 +465,10 @@ class MapController extends GetxController
   }
 
   static int _radiusForZoom(double zoom) {
-    if (zoom >= 17) return 1000;
-    if (zoom >= 15) return 2500;
-    if (zoom >= 13) return 5000;
-    return 8000;
+    if (zoom >= 17) return 2000;
+    if (zoom >= 15) return 3500;
+    if (zoom >= 13) return 6000;
+    return 10000;
   }
 
   static double _searchAreaThresholdForZoom(double zoom) {
@@ -1018,6 +1018,12 @@ class MapController extends GetxController
         clearSelection();
       }
       isBottomSheetOpen.value = false;
+
+      // Otomatis muat / cari jika data POI belum ada atau hasil filter untuk kategori ini masih kosong
+      final center = mapCameraCenter.value ?? currentUserLocation.value;
+      if (center != null && (pois.isEmpty || filteredPois.isEmpty)) {
+        refreshNearbyPois(center, radiusMeters: 4000);
+      }
     }
   }
 
@@ -1067,7 +1073,10 @@ class MapController extends GetxController
             .where(
               (p) =>
                   p.category == PoiCategory.toilet ||
-                  p.category == PoiCategory.wudhu,
+                  p.category == PoiCategory.wudhu ||
+                  p.category == PoiCategory.ibadah ||
+                  (p.category == PoiCategory.fuel &&
+                      p.tags.any((t) => t.toLowerCase().contains('toilet'))),
             )
             .toList();
         break;
