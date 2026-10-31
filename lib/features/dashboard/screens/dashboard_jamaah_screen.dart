@@ -70,32 +70,33 @@ class DashboardJamaahScreen extends StatelessWidget {
         body: Obx(() {
           final currentIdx = dashboardCtrl.currentIndex.value;
           settings?.rxLocale.value;
-          return IndexedStack(
-            index: currentIdx,
+          final showAiButton =
+              currentIdx == 0 || currentIdx == 2 || currentIdx == 3;
+          return Stack(
             children: [
-              _buildJamaahHome(context, state, dashboardCtrl, prayerCtrl),
-              if (dashboardCtrl.visitedTabs.contains(1))
-                const InteractiveMapScreen(showBottomNav: false)
-              else
-                const SizedBox.shrink(),
-              if (dashboardCtrl.visitedTabs.contains(2))
-                const PrayerTimesScreen(showBottomNav: false)
-              else
-                const SizedBox.shrink(),
-              if (dashboardCtrl.visitedTabs.contains(3))
-                const ProfileScreen(showBottomNav: false)
-              else
-                const SizedBox.shrink(),
+              IndexedStack(
+                index: currentIdx,
+                children: [
+                  _buildJamaahHome(context, state, dashboardCtrl, prayerCtrl),
+                  if (dashboardCtrl.visitedTabs.contains(1))
+                    const InteractiveMapScreen(showBottomNav: false)
+                  else
+                    const SizedBox.shrink(),
+                  if (dashboardCtrl.visitedTabs.contains(2))
+                    const PrayerTimesScreen(showBottomNav: false)
+                  else
+                    const SizedBox.shrink(),
+                  if (dashboardCtrl.visitedTabs.contains(3))
+                    const ProfileScreen(showBottomNav: false)
+                  else
+                    const SizedBox.shrink(),
+                ],
+              ),
+              if (showAiButton)
+                const Positioned.fill(
+                  child: HajiCareDraggableAiOverlay(bottomClearance: 114),
+                ),
             ],
-          );
-        }),
-        floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-        floatingActionButton: Obx(() {
-          final currentIdx = dashboardCtrl.currentIndex.value;
-          if (currentIdx != 0) return const SizedBox.shrink();
-          return const Padding(
-            padding: EdgeInsets.only(bottom: 4),
-            child: HajiCareAiFabButton(heroTag: 'jamaah_dashboard_ai_fab'),
           );
         }),
         bottomNavigationBar: Obx(() {

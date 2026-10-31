@@ -1,14 +1,17 @@
 import 'dart:async';
 
 import 'package:flutter_tts/flutter_tts.dart';
+import 'package:get/get.dart';
 import 'package:speech_to_text/speech_recognition_result.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 
+import '../../../core/locales/app_translations.dart';
 import '../../../core/services/app_tts_service.dart';
+import '../../../core/state/app_settings_controller.dart';
 import '../../../core/utils/app_logger.dart';
 
 /// Service terpadu untuk **Text-to-Speech (`flutter_tts`)** dan
-/// **Speech-to-Text (`speech_to_text` bahasa `id_ID`)** pada HajiCare AI Assistant.
+/// **Speech-to-Text (`speech_to_text`)** multi-bahasa pada HajiCare AI Assistant.
 class AiVoiceService {
   AiVoiceService({FlutterTts? tts, SpeechToText? speechToText})
     : _tts = tts ?? FlutterTts(),
@@ -18,6 +21,7 @@ class AiVoiceService {
   final SpeechToText _speechToText;
 
   bool _ttsInitialized = false;
+  String? _lastConfiguredTtsLang;
   bool _sttInitialized = false;
   bool _hasSttPermission = false;
   bool _isDisposed = false;
@@ -29,17 +33,39 @@ class AiVoiceService {
 
   bool get isListening => _speechToText.isListening;
 
-  /// Inisialisasi engine `FlutterTts` berbahasa Indonesia (`id-ID`).
+  static String _resolveActiveLangCode() {
+    if (Get.isRegistered<AppSettingsController>()) {
+      return Get.find<AppSettingsController>()
+          .currentLocale
+          .languageCode
+          .toLowerCase();
+    }
+    return (Get.locale?.languageCode ?? 'id').toLowerCase();
+  }
+
+  static String _resolveActiveTtsCode() {
+    final code = _resolveActiveLangCode();
+    return code == 'en' ? 'en' : 'id';
+  }
+
+  static String _resolveActiveSttLocaleId() {
+    final code = _resolveActiveLangCode();
+    return code == 'en' ? 'en_US' : 'id_ID';
+  }
+
+  /// Inisialisasi engine `FlutterTts` sesuai bahasa aktif aplikasi.
   Future<void> initTts() async {
     if (_isDisposed || _ttsInitialized) return;
     try {
+      final ttsLang = _resolveActiveTtsCode();
       await AppTtsService.configureEngine(
         _tts,
-        explicitCode: 'id',
+        explicitCode: ttsLang,
         speechRate: 0.48,
         volume: 1.0,
         pitch: 1.0,
       );
+      _lastConfiguredTtsLang = ttsLang;
 
       _tts.setStartHandler(() {
         if (!_isDisposed) onSpeakingChanged?.call(true);
@@ -61,7 +87,7 @@ class AiVoiceService {
     }
   }
 
-  /// Bacakan kalimat penjelasan berbahasa Indonesia menggunakan `flutter_tts`.
+  /// Bacakan kalimat penjelasan menggunakan `flutter_tts` sesuai bahasa aktif.
   Future<void> speak(String text) async {
     if (_isDisposed) return;
     final clean = text.trim();
@@ -71,13 +97,17 @@ class AiVoiceService {
     try {
       await _tts.stop();
       onSpeakingChanged?.call(true);
-      await AppTtsService.configureEngine(
-        _tts,
-        explicitCode: 'id',
-        speechRate: 0.48,
-        volume: 1.0,
-        pitch: 1.0,
-      );
+      final ttsLang = _resolveActiveTtsCode();
+      if (_lastConfiguredTtsLang != ttsLang) {
+        await AppTtsService.configureEngine(
+          _tts,
+          explicitCode: ttsLang,
+          speechRate: 0.48,
+          volume: 1.0,
+          pitch: 1.0,
+        );
+        _lastConfiguredTtsLang = ttsLang;
+      }
       await _tts.speak(clean);
     } catch (e) {
       AppLogger.warn('Gagal menjalankan TTS speak: $e', tag: 'AiVoiceService');
@@ -123,9 +153,9 @@ class AiVoiceService {
     if (_isDisposed) return;
     final lower = status.toLowerCase();
     if (lower == 'listening') {
-      onListeningChanged?.call(true, 'Mendengarkan... Silakan bicara');
+      onListeningChanged?.call(true, AppTranslations.tr('ai.voiceListeningStatus'));
     } else if (lower == 'notlistening' || lower == 'done') {
-      onListeningChanged?.call(false, 'Siap mendengarkan');
+      onListeningChanged?.call(false, AppTranslations.tr('ai.voiceTapToAskStatus'));
     }
   }
 
@@ -136,21 +166,18 @@ class AiVoiceService {
     if (errMsg.contains('permission')) {
       onListeningChanged?.call(
         false,
-        'Izin mikrofon belum diberikan. Aktifkan izin mikrofon di pengaturan HP.',
-      );
-    } else if (errMsg.contains('no_match') || errMsg.contains('speech_timeout')) {
-      onListeningChanged?.call(
-        false,
-        'Suara belum terdengar jelas. Silakan tekan mikrofon dan bicara lagi.',
+        AppTranslations.tr('sign.micPermissionRequired'),
       );
     } else {
-      onListeningChanged?.call(false, 'Perekaman suara selesai.');
+      onListeningChanged?.call(false, AppTranslations.tr('ai.voiceTapToAskStatus'));
     }
   }
 
-  /// Mulai mendengarkan suara pengguna melalui mikrofon HP (`id_ID`).
-  Future<bool> startListening({String localeId = 'id_ID'}) async {
+  /// Mulai mendengarkan suara pengguna melalui mikrofon HP sesuai bahasa aktif.
+  Future<bool> startListening({String? localeId}) async {
     if (_isDisposed) return false;
+    final targetLocale = localeId ?? _resolveActiveSttLocaleId();
+    final isEnglish = targetLocale.toLowerCase().startsWith('en');
 
     // Hentikan TTS terlebih dahulu agar suara asisten tidak ikut terekam mikrofon
     await stopSpeaking();
@@ -160,7 +187,7 @@ class AiVoiceService {
       if (!ready) {
         onListeningChanged?.call(
           false,
-          'Mikrofon belum tersedia atau izin mikrofon ditolak.',
+          AppTranslations.tr('sign.micPermissionRequired'),
         );
         return false;
       }
@@ -170,19 +197,26 @@ class AiVoiceService {
     }
 
     try {
-      String resolvedLocale = localeId;
+      String resolvedLocale = targetLocale;
       try {
         final locales = await _speechToText.locales();
         for (final loc in locales) {
           final id = loc.localeId.toLowerCase();
-          if (id == 'id_id' || id == 'id-id' || id.startsWith('id')) {
-            resolvedLocale = loc.localeId;
-            break;
+          if (isEnglish) {
+            if (id == 'en_us' || id == 'en-us' || id.startsWith('en')) {
+              resolvedLocale = loc.localeId;
+              break;
+            }
+          } else {
+            if (id == 'id_id' || id == 'id-id' || id.startsWith('id')) {
+              resolvedLocale = loc.localeId;
+              break;
+            }
           }
         }
       } catch (_) {}
 
-      onListeningChanged?.call(true, 'Mendengarkan suara Anda (Bahasa Indonesia)...');
+      onListeningChanged?.call(true, AppTranslations.tr('ai.voiceListeningStatus'));
 
       await _speechToText.listen(
         onResult: (SpeechRecognitionResult result) {
@@ -205,7 +239,7 @@ class AiVoiceService {
       AppLogger.warn('Gagal memulai STT listen: $e', tag: 'AiVoiceService');
       onListeningChanged?.call(
         false,
-        'Gagal mengakses mikrofon. Silakan coba lagi atau ketik pertanyaan.',
+        AppTranslations.tr('ai.voiceTapToAskStatus'),
       );
       return false;
     }
@@ -217,7 +251,7 @@ class AiVoiceService {
       await _speechToText.stop();
     } catch (_) {}
     if (!_isDisposed) {
-      onListeningChanged?.call(false, 'Siap mendengarkan');
+      onListeningChanged?.call(false, AppTranslations.tr('ai.voiceTapToAskStatus'));
     }
   }
 

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/locales/app_localizations.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/theme_context.dart';
@@ -30,7 +31,7 @@ class OledSmartbandPreviewCard extends StatelessWidget {
     final payload =
         oledState.payload ?? OledTextFormatter.buildPayload(cleanText);
     final lines = OledTextFormatter.wrap(
-      cleanText.isEmpty ? 'Siap bantu jamaah' : cleanText,
+      cleanText.isEmpty ? context.tr('ai.oledReadyDefault') : cleanText,
       width: OledTextFormatter.charsPerLine,
     );
     final isBleConnected = bleStatus == SmartbandLinkStatus.connected;
@@ -56,7 +57,7 @@ class OledSmartbandPreviewCard extends StatelessWidget {
                 const SizedBox(width: AppSpacing.xs),
                 Expanded(
                   child: Text(
-                    'Layar Gelang OLED 0.96" (128x64)',
+                    context.tr('ai.oledCardTitle'),
                     style: context.text.labelLarge.copyWith(
                       fontWeight: FontWeight.w800,
                       color: hc.textPrimary,
@@ -104,7 +105,9 @@ class OledSmartbandPreviewCard extends StatelessWidget {
                     children: [
                       Flexible(
                         child: Text(
-                          'HCG-001 ${isBleConnected ? "BLE:ON" : "SIM"} HR:${heartRateBpm > 0 ? heartRateBpm : 78}',
+                          isBleConnected
+                              ? 'HCG-001 BLE:ON HR:${heartRateBpm > 0 ? heartRateBpm : "--"}'
+                              : 'HCG-001 BLE:OFF HR:--',
                           style: const TextStyle(
                             fontFamily: 'monospace',
                             fontSize: 11,
@@ -204,8 +207,8 @@ class OledSmartbandPreviewCard extends StatelessWidget {
                   ),
                   child: Text(
                     oledState.isDeliveredToBand
-                        ? 'Terkirim BLE'
-                        : 'Simulasi OLED',
+                        ? context.tr('ai.oledDeliveredBle')
+                        : context.tr('ai.oledDisconnectedBle'),
                     style: context.text.labelSmall.copyWith(
                       fontSize: 10.5,
                       fontWeight: FontWeight.w800,

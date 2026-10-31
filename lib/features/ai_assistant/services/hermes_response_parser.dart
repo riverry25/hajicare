@@ -31,16 +31,20 @@ class HermesResponseParser {
     caseSensitive: false,
   );
   static final RegExp _trailingComma = RegExp(r',\s*([}\]])');
+  static final RegExp _bracketAnnotations = RegExp(r'\[[^\]]*\]');
   static final RegExp _speechMarkdown = RegExp(r'[*_`#~]+');
   static final RegExp _multiSpaces = RegExp(r'[ \t]{2,}');
 
   /// Parse body HTTP mentah dari `/v1/chat/completions`.
+  ///
+  /// Melempar [FormatException] apabila respons merupakan amplop API OpenAI
+  /// yang terpotong (`content: null` / `finish_reason: length`) atau error JSON,
+  /// sehingga layer service/repository dapat melakukan retry atau beralih ke
+  /// asisten lokal berbasis data nyata (tidak pernah membocorkan JSON mentah ke UI).
   static AiReply parseHttpBody(String rawBody) {
     final trimmed = rawBody.trim();
     if (trimmed.isEmpty) {
-      return _fallbackReply(
-        'Maaf, asisten belum menerima jawaban. Silakan coba lagi.',
-      );
+      throw const FormatException('Body HTTP dari server AI kosong.');
     }
 
     // 1. Coba decode sebagai JSON amplop OpenAI atau JSON langsung {speech, oled}
@@ -51,14 +55,37 @@ class HermesResponseParser {
         return _fromReplyMap(decoded);
       }
 
-      // Caso B: Amplop OpenAI choices[0].message.content / choices[0].text
-      final content = _extractEnvelopeContent(decoded);
-      if (content != null && content.trim().isNotEmpty) {
-        return parseModelContent(content);
+      // Caso B: Amplop standar OpenAI / 9Router (choices / chat.completion / error)
+      if (_isOpenAiEnvelope(decoded)) {
+        final content = _extractEnvelopeContent(decoded);
+        if (content != null && content.trim().isNotEmpty) {
+          return parseModelContent(content);
+        }
+
+        // Cek apakah model menaruh JSON {"speech": ..., "oled": ...} di dalam field reasoning
+        final reasoning = _extractEnvelopeReasoning(decoded);
+        if (reasoning != null && reasoning.trim().isNotEmpty) {
+          final structuredFromReasoning = _tryExtractStructuredOnly(reasoning);
+          if (structuredFromReasoning != null) {
+            return structuredFromReasoning;
+          }
+        }
+
+        // JANGAN PERNAH jatuh ke parseModelContent(trimmed) jika amplop memiliki content: null!
+        throw const FormatException(
+          'Respons model pada amplop chat.completion memiliki content kosong/null (terpotong oleh batas token/provider).',
+        );
       }
     }
 
-    // 2. Jika body bukan amplop standar, parse langsung sebagai konten LLM
+    // 2. Cegah kebocoran apabila string mentah merupakan fragmen amplop OpenAI yang terpotong
+    if (_looksLikeRawApiEnvelope(trimmed)) {
+      throw const FormatException(
+        'Respons mentah terdeteksi sebagai amplop API teknis, bukan pesan asisten.',
+      );
+    }
+
+    // 3. Jika body bukan amplop standar, parse langsung sebagai konten LLM
     return parseModelContent(trimmed);
   }
 
@@ -71,7 +98,21 @@ class HermesResponseParser {
         .trim();
 
     if (cleaned.isEmpty) {
-      cleaned = rawContent.trim();
+      // Jika seluruh output model hanya berisi blok <think> yang belum ditutup,
+      // cek apakah ada objek {"speech": ..., "oled": ...} di dalamnya.
+      final structuredInThink = _tryExtractStructuredOnly(rawContent);
+      if (structuredInThink != null) return structuredInThink;
+      throw const FormatException(
+        'Konten model hanya berisi blok penalaran <think> yang belum selesai.',
+      );
+    }
+
+    if (_looksLikeRawApiEnvelope(cleaned)) {
+      final structuredInEnvelope = _tryExtractStructuredOnly(cleaned);
+      if (structuredInEnvelope != null) return structuredInEnvelope;
+      throw const FormatException(
+        'Konten model terdeteksi sebagai amplop JSON teknis API.',
+      );
     }
 
     // 2. Jika dibungkus ```json ... ```, ekstrak isi di dalamnya terlebih dahulu
@@ -106,6 +147,75 @@ class HermesResponseParser {
   static bool _hasReplyFields(Map<String, dynamic> map) {
     final lowerKeys = map.keys.map((k) => k.toLowerCase()).toSet();
     return lowerKeys.contains('speech') || lowerKeys.contains('oled');
+  }
+
+  /// Deteksi apakah Map merupakan amplop teknis OpenAI / 9Router (`/v1/chat/completions`).
+  static bool _isOpenAiEnvelope(Map<String, dynamic> map) {
+    final lowerKeys = map.keys.map((k) => k.toLowerCase()).toSet();
+    if (lowerKeys.contains('choices') || lowerKeys.contains('error')) {
+      return true;
+    }
+    final obj = map['object']?.toString().toLowerCase() ?? '';
+    return obj.startsWith('chat.completion') || obj == 'list';
+  }
+
+  /// Deteksi apakah teks mentah merupakan dump JSON amplop API (`{"id":"gen-...","object":"chat.completion"...}`).
+  static bool _looksLikeRawApiEnvelope(String text) {
+    final lower = text.toLowerCase();
+    return (lower.contains('"object"') &&
+            lower.contains('chat.completion')) ||
+        (lower.contains('"choices"') &&
+            (lower.contains('"finish_reason"') ||
+                lower.contains('"finishreason"') ||
+                lower.contains('"native_finish_reason"') ||
+                lower.contains('"system_fingerprint"'))) ||
+        (lower.startsWith('{') &&
+            lower.contains('"model"') &&
+            lower.contains('"reasoning"') &&
+            lower.contains('"content":null'));
+  }
+
+  /// Coba ekstrak HANYA jika terdapat objek JSON `{"speech": ..., "oled": ...}` yang valid.
+  static AiReply? _tryExtractStructuredOnly(String text) {
+    final fenceMatch = _codeFence.firstMatch(text);
+    if (fenceMatch != null) {
+      final fenced = _tryParseReplyObject(fenceMatch.group(1)?.trim() ?? '');
+      if (fenced != null && fenced.isStructured) return fenced;
+    }
+    for (final candidate in _extractJsonObjectCandidates(text)) {
+      final parsed = _tryParseReplyObject(candidate);
+      if (parsed != null && parsed.isStructured) return parsed;
+    }
+    final regexFallback = _tryRegexFieldExtraction(text);
+    if (regexFallback != null && regexFallback.isStructured) {
+      return regexFallback;
+    }
+    return null;
+  }
+
+  static String? _extractEnvelopeReasoning(Map<String, dynamic> envelope) {
+    final choices = envelope['choices'];
+    if (choices is List && choices.isNotEmpty) {
+      final first = choices.first;
+      if (first is Map) {
+        final message = first['message'];
+        if (message is Map) {
+          for (final key in const [
+            'reasoning',
+            'reasoning_content',
+            'thought',
+          ]) {
+            final val = message[key];
+            if (val is String && val.trim().isNotEmpty) return val;
+          }
+        }
+        for (final key in const ['reasoning', 'reasoning_content']) {
+          final val = first[key];
+          if (val is String && val.trim().isNotEmpty) return val;
+        }
+      }
+    }
+    return null;
   }
 
   static String? _extractEnvelopeContent(Map<String, dynamic> envelope) {
@@ -300,9 +410,13 @@ class HermesResponseParser {
     );
   }
 
-  /// Bersihkan teks speech dari simbol markdown agar nyaman dibacakan TTS.
+  /// Bersihkan teks speech dari simbol markdown dan anotasi kurung siku `[...]`
+  /// (seperti timestamp subtitle `[0.0:]`, `[3.8:]`, `[26.2:29.5]`) agar nyaman dibacakan TTS.
   static String cleanSpeechText(String input) {
     return input
+        .replaceAll(_bracketAnnotations, ' ')
+        .replaceAll('[', '')
+        .replaceAll(']', '')
         .replaceAll(_speechMarkdown, '')
         .replaceAll(RegExp(r'[\r\n]+'), ' ')
         .replaceAll(_multiSpaces, ' ')

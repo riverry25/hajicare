@@ -486,7 +486,11 @@ extension _AdminDashboardActivitySheets on _AdminDashboardHome {
                               size: 18,
                               color: bodyColor.withValues(alpha: 0.7),
                             ),
+                            filled: false,
+                            fillColor: Colors.transparent,
                             border: InputBorder.none,
+                            enabledBorder: InputBorder.none,
+                            focusedBorder: InputBorder.none,
                             contentPadding: const EdgeInsets.symmetric(
                               horizontal: AppSpacing.md,
                               vertical: 12,

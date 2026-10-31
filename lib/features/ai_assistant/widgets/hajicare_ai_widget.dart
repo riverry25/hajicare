@@ -1,18 +1,20 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
+import '../../../core/locales/app_localizations.dart';
+import '../../../core/locales/app_translations.dart';
 import '../../../core/routes/app_routes.dart';
+import '../../../core/state/app_settings_controller.dart';
 import '../../../core/theme/app_breakpoints.dart';
 import '../../../core/theme/app_radius.dart';
-import '../../../core/theme/app_sizes.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/theme_context.dart';
 import '../bindings/hajicare_ai_binding.dart';
 import '../controllers/hajicare_ai_controller.dart';
 import '../models/ai_chat_message.dart';
-import '../models/ai_server_status.dart';
-import '../models/sensor_context.dart';
 import 'ai_server_settings_dialog.dart';
 import 'oled_smartband_preview_card.dart';
 import 'sensor_context_live_card.dart';
@@ -23,15 +25,15 @@ export 'sensor_context_live_card.dart';
 
 /// Halaman utama **HajiCare AI Voice Assistant (Powered by Hermes Agent)**.
 ///
-/// Mendukung dua mode tampilan:
-/// 1. Halaman penuh (`HajiCareAiAssistantPage(isBottomSheet: false)`) via rute
-///    `AppRoutes.aiAssistant` atau tombol FAB **"Tanya AI"**.
-/// 2. Floating Bottom Sheet (`HajiCareAiAssistantPage.showFloatingSheet(context)`).
-///
-/// Mengadaptasi tata letak secara otomatis menggunakan `LayoutBuilder`:
-/// - Layar Compact (`< 600dp`): Susunan vertikal dengan kartu sensor collapsible.
-/// - Layar Medium/Expanded (`>= 600dp`, Tablet/Foldable/Landscape): Split-view
-///   2 kolom (panel kiri: Sensor Live + OLED 128x64, panel kanan: Chat + Input).
+/// Dirancang minimalis, bersih, dan ramah lansia mengikuti pola AI Chat modern:
+/// - **Mode Chat Bersih:** Fokus pada percakapan dengan animasi kata demi kata
+///   (*word-by-word streaming*), toolbar ikon ringkas (`Salin`, `Suara 🔊`, `OLED ⌚`,
+///   `Ulangi ↻`), dan input kapsul tunggal.
+/// - **Mode Suara Penuh (*Voice Orb Mode*):** Tampilan bola gelombang suara
+///   interaktif dengan teks besar terpusat untuk jamaah lansia.
+/// - **Panel Smartband & OLED 128x64 Ringkas:** Bar 1-baris di bagian atas yang
+///   dapat diketuk kapan saja untuk membuka pratinjau penuh layar OLED 128x64
+///   dan simulator sensor tanpa memenuhi ruang chat.
 class HajiCareAiAssistantPage extends StatefulWidget {
   const HajiCareAiAssistantPage({
     super.key,
@@ -60,6 +62,34 @@ class HajiCareAiAssistantPage extends StatefulWidget {
     );
   }
 
+  /// Buka sheet detail Sensor Gelang & Layar OLED 128x64.
+  static Future<void> showSmartbandOledSheet(
+    BuildContext context,
+    HajiCareAiController controller,
+  ) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _SmartbandAndOledModalSheet(controller: controller),
+    );
+  }
+
+  /// Buka sheet daftar Pertanyaan Cepat (Quick Prompts) untuk jamaah.
+  static Future<void> showQuickPromptsSheet(
+    BuildContext context,
+    HajiCareAiController controller,
+  ) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _QuickPromptsModalSheet(controller: controller),
+    );
+  }
+
   @override
   State<HajiCareAiAssistantPage> createState() =>
       _HajiCareAiAssistantPageState();
@@ -69,36 +99,67 @@ class _HajiCareAiAssistantPageState extends State<HajiCareAiAssistantPage> {
   late final HajiCareAiController _controller;
   late final TextEditingController _textController;
   late final ScrollController _scrollController;
+  final ValueNotifier<bool> _hasTypedText = ValueNotifier<bool>(false);
   Worker? _messagesWorker;
+  int _lastMessageCount = 0;
+  bool _scrollScheduled = false;
 
   @override
   void initState() {
     super.initState();
     _controller = HajiCareAiBinding.ensureRegistered();
     _textController = TextEditingController();
+    _textController.addListener(_onTextChanged);
     _scrollController = ScrollController();
+    _lastMessageCount = _controller.messages.length;
 
-    _messagesWorker = ever<List<AiChatMessage>>(_controller.messages, (_) {
-      _scrollToBottom();
+    _messagesWorker = ever<List<AiChatMessage>>(_controller.messages, (msgs) {
+      final isNewMessageAdded = msgs.length != _lastMessageCount;
+      _lastMessageCount = msgs.length;
+      final isStreamingTick =
+          !isNewMessageAdded && msgs.isNotEmpty && msgs.last.isStreaming;
+      _scrollToBottom(immediate: isStreamingTick);
     });
+  }
+
+  void _onTextChanged() {
+    final nonEmpty = _textController.text.trim().isNotEmpty;
+    if (_hasTypedText.value != nonEmpty) {
+      _hasTypedText.value = nonEmpty;
+    }
   }
 
   @override
   void dispose() {
     _messagesWorker?.dispose();
+    _textController.removeListener(_onTextChanged);
     _textController.dispose();
     _scrollController.dispose();
+    _hasTypedText.dispose();
     super.dispose();
   }
 
-  void _scrollToBottom() {
+  void _scrollToBottom({bool immediate = false}) {
+    if (_scrollScheduled) return;
+    _scrollScheduled = true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      _scrollScheduled = false;
       if (!mounted || !_scrollController.hasClients) return;
-      _scrollController.animateTo(
-        _scrollController.position.maxScrollExtent,
-        duration: const Duration(milliseconds: 250),
-        curve: Curves.easeOutCubic,
-      );
+      final maxExtent = _scrollController.position.maxScrollExtent;
+      final currentOffset = _scrollController.offset;
+      if ((maxExtent - currentOffset).abs() < 2.0) return;
+
+      if (immediate) {
+        // Saat streaming kata demi kata aktif, gunakan jumpTo agar tidak memicu
+        // puluhan animasi bertabrakan per detik (mencegah lag/jank pada frame budget <16ms).
+        _scrollController.jumpTo(maxExtent);
+      } else {
+        _scrollController.animateTo(
+          maxExtent,
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOutCubic,
+        );
+      }
     });
   }
 
@@ -124,63 +185,61 @@ class _HajiCareAiAssistantPageState extends State<HajiCareAiAssistantPage> {
             children: [
               if (widget.isBottomSheet) const _SheetDragHandle(),
 
-              // 1. Header & Status Bar (Hermes /health + BLE Gelang + ⚙️ Settings)
-              _AiAssistantHeader(
+              // 1. Minimalist Top Header (seperti referensi desain)
+              _MinimalAiHeader(
                 controller: _controller,
                 isBottomSheet: widget.isBottomSheet,
               ),
 
-              // 2. Body Adaptif (Compact 1-kolom vs Tablet/Landscape 2-kolom)
+              // 2. Body: Beralih mulus antara Mode Suara Penuh vs Ruang Chat Bersih
               Expanded(
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    final isWide = constraints.maxWidth >= 680;
-                    if (isWide) {
-                      return Row(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          SizedBox(
-                            width: 310,
-                            child: SingleChildScrollView(
-                              padding: const EdgeInsets.fromLTRB(
-                                AppSpacing.md,
-                                AppSpacing.sm,
-                                AppSpacing.sm,
-                                AppSpacing.md,
-                              ),
-                              child: _TelemetryAndOledPanel(
-                                controller: _controller,
-                              ),
-                            ),
-                          ),
-                          VerticalDivider(width: 1, color: hc.border),
-                          Expanded(
-                            child: _ConversationAndInputColumn(
-                              controller: _controller,
-                              scrollController: _scrollController,
-                              textController: _textController,
-                              onSubmitText: _handleSubmitText,
-                            ),
-                          ),
-                        ],
-                      );
-                    }
+                child: Obx(() {
+                  if (_controller.isVoiceModeOpen.value) {
+                    return _ImmersiveVoiceModeView(controller: _controller);
+                  }
 
-                    return _ConversationAndInputColumn(
-                      controller: _controller,
-                      scrollController: _scrollController,
-                      textController: _textController,
-                      onSubmitText: _handleSubmitText,
-                      topPanel: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.md,
-                          vertical: AppSpacing.xs,
-                        ),
-                        child: _TelemetryAndOledPanel(controller: _controller),
-                      ),
-                    );
-                  },
-                ),
+                  return LayoutBuilder(
+                    builder: (context, constraints) {
+                      final isTabletWide = constraints.maxWidth >= 720;
+                      if (isTabletWide) {
+                        return Row(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            SizedBox(
+                              width: 300,
+                              child: SingleChildScrollView(
+                                padding: const EdgeInsets.all(AppSpacing.md),
+                                child: _SidePanelTelemetryAndOled(
+                                  controller: _controller,
+                                ),
+                              ),
+                            ),
+                            VerticalDivider(width: 1, color: hc.border),
+                            Expanded(
+                              child: _CleanChatView(
+                                controller: _controller,
+                                scrollController: _scrollController,
+                                textController: _textController,
+                                hasTypedText: _hasTypedText,
+                                onSubmitText: _handleSubmitText,
+                                showCompactStrip: false,
+                              ),
+                            ),
+                          ],
+                        );
+                      }
+
+                      return _CleanChatView(
+                        controller: _controller,
+                        scrollController: _scrollController,
+                        textController: _textController,
+                        hasTypedText: _hasTypedText,
+                        onSubmitText: _handleSubmitText,
+                        showCompactStrip: true,
+                      );
+                    },
+                  );
+                }),
               ),
             ],
           ),
@@ -199,8 +258,8 @@ class _SheetDragHandle extends StatelessWidget {
       padding: const EdgeInsets.only(top: 10, bottom: 2),
       child: Center(
         child: Container(
-          width: 44,
-          height: 5,
+          width: 40,
+          height: 4,
           decoration: BoxDecoration(
             color: context.hc.border,
             borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -211,13 +270,10 @@ class _SheetDragHandle extends StatelessWidget {
   }
 }
 
-/// Header & Status Bar:
-/// - Judul asisten AI
-/// - Tombol ikon Settings (⚙️) di pojok kanan atas
-/// - Indikator status koneksi Server Hermes (`Online`/`Offline` via `/health`)
-///   dan status koneksi BLE Gelang.
-class _AiAssistantHeader extends StatelessWidget {
-  const _AiAssistantHeader({
+/// Header minimalis terinspirasi referensi desain:
+/// `<` • Avatar Bintang AI • `HajiCare AI Assistant` + subtitel sensor ringkas • `⌚` • `⚙️` • `⋮`
+class _MinimalAiHeader extends StatelessWidget {
+  const _MinimalAiHeader({
     required this.controller,
     required this.isBottomSheet,
   });
@@ -230,505 +286,303 @@ class _AiAssistantHeader extends StatelessWidget {
     final hc = context.hc;
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.md,
-        AppSpacing.sm,
-        AppSpacing.md,
-        AppSpacing.sm,
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: AppSpacing.xs,
       ),
       decoration: BoxDecoration(
-        color: hc.surface,
-        border: Border(bottom: BorderSide(color: hc.border)),
+        color: hc.canvas,
+        border: Border(
+          bottom: BorderSide(color: hc.border.withValues(alpha: 0.6)),
+        ),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Row(
-            children: [
-              IconButton(
-                onPressed: () => Navigator.of(context).maybePop(),
-                icon: Icon(
-                  isBottomSheet
-                      ? Icons.keyboard_arrow_down_rounded
-                      : Icons.arrow_back_rounded,
-                  color: hc.textPrimary,
-                ),
-                tooltip: 'Kembali',
+          IconButton(
+            onPressed: () {
+              if (controller.isVoiceModeOpen.value) {
+                controller.closeVoiceMode();
+              } else {
+                Navigator.of(context).maybePop();
+              }
+            },
+            icon: Icon(
+              isBottomSheet
+                  ? Icons.keyboard_arrow_down_rounded
+                  : Icons.chevron_left_rounded,
+              color: hc.textPrimary,
+              size: 28,
+            ),
+            tooltip: context.tr('ai.backTooltip'),
+          ),
+          const _AiSparkleAvatar(size: 36),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: InkWell(
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              onTap: () => HajiCareAiAssistantPage.showSmartbandOledSheet(
+                context,
+                controller,
               ),
-              Container(
-                width: 38,
-                height: 38,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [hc.primary, hc.accent],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.auto_awesome_rounded,
-                  color: Colors.white,
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: AppSpacing.sm),
-              Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 2),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'HajiCare AI Assistant',
-                      style: context.text.titleMedium.copyWith(
+                      context.tr('ai.title'),
+                      style: context.text.titleSmall.copyWith(
                         fontWeight: FontWeight.w800,
                         color: hc.textPrimary,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    Text(
-                      'Powered by Hermes Agent • Suara & Smartband OLED',
-                      style: context.text.labelSmall.copyWith(
-                        color: hc.textSecondary,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
+                    Obx(() {
+                      if (Get.isRegistered<AppSettingsController>()) {
+                        Get.find<AppSettingsController>().rxLocale.value;
+                      }
+                      final s = controller.sensorContext.value;
+                      final srv = controller.serverStatus.value;
+                      final srvDot = srv.isOnline
+                          ? AppTranslations.tr('ai.statusOnline')
+                          : AppTranslations.tr('ai.statusReady');
+                      final bandOrAppStr = s.isSmartbandConnected
+                          ? (s.heartRateBpm > 0
+                                ? '${s.heartRateBpm} BPM • ${s.temperatureLabel}°C'
+                                : AppTranslations.tr('ai.bandBleActive'))
+                          : (s.distanceToCompanionMeters != null
+                                ? AppTranslations.tr(
+                                    'ai.distanceMetersShort',
+                                    {
+                                      'meters':
+                                          '${s.distanceToCompanionMeters!.round()}',
+                                    },
+                                  )
+                                : (s.locationCityName ??
+                                      AppTranslations.tr(
+                                        'ai.appAndGpsActive',
+                                      )));
+                      return Text(
+                        '$srvDot • $bandOrAppStr',
+                        style: context.text.labelSmall.copyWith(
+                          color: (s.isSmartbandConnected && s.isFallDetected)
+                              ? hc.danger
+                              : hc.textSecondary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      );
+                    }),
                   ],
                 ),
               ),
-              IconButton(
-                onPressed: controller.clearConversation,
-                tooltip: 'Bersihkan Percakapan',
-                icon: Icon(
-                  Icons.refresh_rounded,
-                  color: hc.textSecondary,
-                  size: 21,
+            ),
+          ),
+
+          // Tombol Mode Suara Penuh (Voice Orb)
+          Obx(() {
+            if (Get.isRegistered<AppSettingsController>()) {
+              Get.find<AppSettingsController>().rxLocale.value;
+            }
+            final voiceOpen = controller.isVoiceModeOpen.value;
+            return IconButton(
+              onPressed: () {
+                HapticFeedback.selectionClick();
+                if (voiceOpen) {
+                  controller.closeVoiceMode();
+                } else {
+                  controller.openVoiceMode(autoStartListening: false);
+                }
+              },
+              tooltip: voiceOpen
+                  ? AppTranslations.tr('ai.textChatModeTooltip')
+                  : AppTranslations.tr('ai.fullVoiceModeTooltip'),
+              icon: Icon(
+                voiceOpen
+                    ? Icons.chat_bubble_outline_rounded
+                    : Icons.graphic_eq_rounded,
+                color: voiceOpen ? hc.accent : hc.textPrimary,
+                size: 22,
+              ),
+            );
+          }),
+
+          // Tombol ikon Settings (⚙️) untuk mengubah URL Ngrok / IP Server
+          IconButton(
+            key: const Key('ai_settings_gear_button'),
+            onPressed: () => AiServerSettingsDialog.show(context),
+            tooltip: context.tr('ai.settingsTitle'),
+            icon: Icon(
+              Icons.settings_outlined,
+              color: hc.textPrimary,
+              size: 22,
+            ),
+          ),
+
+          // Menu Opsi Lainnya (⋮) seperti referensi foto ke-4
+          PopupMenuButton<String>(
+            icon: Icon(
+              Icons.more_vert_rounded,
+              color: hc.textPrimary,
+              size: 22,
+            ),
+            tooltip: context.tr('ai.moreMenuTooltip'),
+            onSelected: (value) {
+              if (value == 'oled') {
+                HajiCareAiAssistantPage.showSmartbandOledSheet(
+                  context,
+                  controller,
+                );
+              } else if (value == 'settings') {
+                AiServerSettingsDialog.show(context);
+              } else if (value == 'clear') {
+                controller.clearConversation();
+              }
+            },
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: 'oled',
+                child: ListTile(
+                  dense: true,
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.watch_rounded),
+                  title: Text(context.tr('ai.menuOledAndSensor')),
                 ),
               ),
-              // Tombol ikon Settings (⚙️) di pojok kanan atas
-              IconButton(
-                key: const Key('ai_settings_gear_button'),
-                onPressed: () => AiServerSettingsDialog.show(context),
-                tooltip: 'Pengaturan Server AI (⚙️)',
-                icon: Icon(
-                  Icons.settings_rounded,
-                  color: hc.primary,
-                  size: 23,
+              PopupMenuItem(
+                value: 'settings',
+                child: ListTile(
+                  dense: true,
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.dns_rounded),
+                  title: Text(context.tr('ai.menuServerSettings')),
+                ),
+              ),
+              PopupMenuItem(
+                value: 'clear',
+                child: ListTile(
+                  dense: true,
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.refresh_rounded),
+                  title: Text(context.tr('ai.menuNewChat')),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: AppSpacing.xs),
-
-          // Baris Indikator Status Server Hermes & BLE Gelang
-          Obx(() {
-            final srv = controller.serverStatus.value;
-            final ble = controller.bleLinkStatus.value;
-            final sim = controller.isSimulationMode.value;
-
-            final Color srvColor = switch (srv.health) {
-              AiServerHealth.online => hc.success,
-              AiServerHealth.checking => hc.info,
-              AiServerHealth.notConfigured => hc.warning,
-              AiServerHealth.unauthorized => hc.danger,
-              AiServerHealth.offline => hc.danger,
-              AiServerHealth.unknown => hc.textSecondary,
-            };
-
-            final bool bleConnected = ble == SmartbandLinkStatus.connected;
-            final Color bleColor = bleConnected
-                ? hc.success
-                : (sim ? hc.info : hc.warning);
-            final String bleLabel = bleConnected
-                ? 'BLE Gelang: Terhubung'
-                : (sim ? 'Gelang: Simulasi Aktif' : 'BLE Gelang: Terputus');
-
-            return Wrap(
-              spacing: AppSpacing.sm,
-              runSpacing: 6,
-              children: [
-                _StatusPillChip(
-                  dotColor: srvColor,
-                  isLoading: srv.isChecking,
-                  label: 'Hermes: ${srv.label}',
-                  onTap: () => AiServerSettingsDialog.show(context),
-                ),
-                _StatusPillChip(
-                  dotColor: bleColor,
-                  icon: bleConnected
-                      ? Icons.bluetooth_connected_rounded
-                      : Icons.watch_rounded,
-                  label: bleLabel,
-                  onTap: bleConnected
-                      ? null
-                      : () => controller.connectSmartbandBle(),
-                ),
-              ],
-            );
-          }),
         ],
       ),
     );
   }
 }
 
-class _StatusPillChip extends StatelessWidget {
-  const _StatusPillChip({
-    required this.dotColor,
-    required this.label,
-    this.icon,
-    this.isLoading = false,
-    this.onTap,
-  });
+/// Avatar ikon bintang/sparkle khas AI modern (seperti referensi Foto 4).
+class _AiSparkleAvatar extends StatelessWidget {
+  const _AiSparkleAvatar({this.size = 32});
 
-  final Color dotColor;
-  final String label;
-  final IconData? icon;
-  final bool isLoading;
-  final VoidCallback? onTap;
+  final double size;
 
   @override
   Widget build(BuildContext context) {
     final hc = context.hc;
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(AppRadius.pill),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-        decoration: BoxDecoration(
-          color: dotColor.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(AppRadius.pill),
-          border: Border.all(color: dotColor.withValues(alpha: 0.35)),
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: const Color(0xFF1F1813),
+        shape: BoxShape.circle,
+        border: Border.all(
+          color: hc.accent.withValues(alpha: 0.65),
+          width: 1.4,
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (isLoading)
-              SizedBox(
-                width: 11,
-                height: 11,
-                child: CircularProgressIndicator(
-                  strokeWidth: 1.8,
-                  color: dotColor,
-                ),
-              )
-            else if (icon != null)
-              Icon(icon, size: 13, color: dotColor)
-            else
-              Container(
-                width: 8,
-                height: 8,
-                decoration: BoxDecoration(
-                  color: dotColor,
-                  shape: BoxShape.circle,
-                ),
-              ),
-            const SizedBox(width: 6),
-            Flexible(
-              child: Text(
-                label,
-                style: context.text.labelSmall.copyWith(
-                  color: hc.textPrimary,
-                  fontWeight: FontWeight.w700,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ],
-        ),
+        boxShadow: [
+          BoxShadow(
+            color: hc.accent.withValues(alpha: 0.2),
+            blurRadius: 8,
+          ),
+        ],
+      ),
+      child: Icon(
+        Icons.auto_awesome_rounded,
+        color: hc.accent,
+        size: size * 0.52,
       ),
     );
   }
 }
 
-class _TelemetryAndOledPanel extends StatelessWidget {
-  const _TelemetryAndOledPanel({required this.controller});
+/// Bar status 1-baris yang sangat ringkas di atas ruang chat ponsel.
+/// Menampilkan status sensor & layar OLED tanpa memenuhi ruang percakapan.
+class _CompactSmartbandOledStrip extends StatelessWidget {
+  const _CompactSmartbandOledStrip({required this.controller});
 
   final HajiCareAiController controller;
 
   @override
   Widget build(BuildContext context) {
+    final hc = context.hc;
+
     return Obx(() {
       final sensor = controller.sensorContext.value;
-      final isExpanded = controller.isSensorCardExpanded.value;
-      final isSim = controller.isSimulationMode.value;
       final oled = controller.oledState.value;
-      final ledActive = controller.isOledLedActive.value;
-      final ble = controller.bleLinkStatus.value;
+      final ledOn = controller.isOledLedActive.value;
+      final bandConnected = sensor.isSmartbandConnected;
 
-      return Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          SensorContextLiveCard(
-            sensor: sensor,
-            isExpanded: isExpanded,
-            isSimulationMode: isSim,
-            onToggleExpand: controller.toggleSensorCardExpanded,
-            onToggleSimulation: controller.toggleSimulationMode,
-            onToggleFallSimulation: controller.toggleSimulatedFall,
-            onRefreshTap: controller.refreshSensorsNow,
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          OledSmartbandPreviewCard(
-            oledState: oled,
-            isLedActive: ledActive,
-            bleStatus: ble,
-            heartRateBpm: sensor.heartRateBpm,
-          ),
-        ],
-      );
-    });
-  }
-}
-
-class _ConversationAndInputColumn extends StatelessWidget {
-  const _ConversationAndInputColumn({
-    required this.controller,
-    required this.scrollController,
-    required this.textController,
-    required this.onSubmitText,
-    this.topPanel,
-  });
-
-  final HajiCareAiController controller;
-  final ScrollController scrollController;
-  final TextEditingController textController;
-  final VoidCallback onSubmitText;
-  final Widget? topPanel;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        // Area Scrollable: Top Panel (pada layar ponsel) + Daftar Gelembung Chat
-        Expanded(
-          child: Obx(() {
-            final msgs = controller.messages;
-            final speakingId = controller.activeSpeakingMessageId.value;
-            final isSpeaking = controller.isSpeaking.value;
-            final bannerMsg = controller.statusBannerMessage.value;
-
-            return CustomScrollView(
-              controller: scrollController,
-              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-              physics: const BouncingScrollPhysics(),
-              slivers: [
-                if (topPanel != null) SliverToBoxAdapter(child: topPanel),
-                if (bannerMsg != null && bannerMsg.isNotEmpty)
-                  SliverToBoxAdapter(
-                    child: _OfflineNoticeBanner(
-                      message: bannerMsg,
-                      onOpenSettings: () => AiServerSettingsDialog.show(context),
-                    ),
-                  ),
-                SliverPadding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.md,
-                    vertical: AppSpacing.sm,
-                  ),
-                  sliver: SliverList.separated(
-                    itemCount: msgs.length,
-                    separatorBuilder: (_, _) =>
-                        const SizedBox(height: AppSpacing.sm),
-                    itemBuilder: (context, index) {
-                      final message = msgs[index];
-                      final isMsgSpeaking =
-                          isSpeaking && speakingId == message.id;
-                      return _AiChatBubble(
-                        message: message,
-                        isCurrentlySpeaking: isMsgSpeaking,
-                        onSpeakTap: () => controller.speakMessage(message),
-                        onSendToOledTap: () =>
-                            controller.resendOledFromMessage(message),
-                        onRetryTap: message.retryPrompt != null
-                            ? () => controller.sendQuestion(
-                                message.retryPrompt!,
-                              )
-                            : null,
-                      );
-                    },
-                  ),
-                ),
-              ],
-            );
-          }),
-        ),
-
-        // Deretan Tombol Cepat (Quick Prompts) Sekali Sentuh
-        _QuickPromptChipsBar(
-          onSelectPrompt: (prompt) =>
-              controller.sendQuestion(prompt, autoSpeak: true),
-        ),
-
-        // Kontrol Input Bawah (Banner Stop TTS + Push-to-Talk Mic + Text Input)
-        _BottomVoiceAndTextBar(
-          controller: controller,
-          textController: textController,
-          onSubmitText: onSubmitText,
-        ),
-      ],
-    );
-  }
-}
-
-class _OfflineNoticeBanner extends StatelessWidget {
-  const _OfflineNoticeBanner({
-    required this.message,
-    required this.onOpenSettings,
-  });
-
-  final String message;
-  final VoidCallback onOpenSettings;
-
-  @override
-  Widget build(BuildContext context) {
-    final hc = context.hc;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.md,
-        AppSpacing.xs,
-        AppSpacing.md,
-        0,
-      ),
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.md,
-          vertical: AppSpacing.xs,
-        ),
-        decoration: BoxDecoration(
-          color: hc.warning.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(AppRadius.md),
-          border: Border.all(color: hc.warning.withValues(alpha: 0.4)),
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.md,
+          AppSpacing.xs,
+          AppSpacing.md,
+          4,
         ),
         child: Row(
           children: [
-            Icon(Icons.info_outline_rounded, size: 17, color: hc.warning),
-            const SizedBox(width: AppSpacing.sm),
+            // Pill Kiri: Status Nyata Gelang BLE
             Expanded(
-              child: Text(
-                message,
-                style: context.text.labelSmall.copyWith(
-                  color: hc.textPrimary,
-                  fontWeight: FontWeight.w600,
+              child: InkWell(
+                key: const Key('compact_smartband_oled_strip'),
+                borderRadius: BorderRadius.circular(AppRadius.pill),
+                onTap: () => HajiCareAiAssistantPage.showSmartbandOledSheet(
+                  context,
+                  controller,
                 ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            TextButton(
-              onPressed: onOpenSettings,
-              style: TextButton.styleFrom(
-                visualDensity: VisualDensity.compact,
-              ),
-              child: const Text('Atur URL'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _AiChatBubble extends StatelessWidget {
-  const _AiChatBubble({
-    required this.message,
-    required this.isCurrentlySpeaking,
-    required this.onSpeakTap,
-    required this.onSendToOledTap,
-    this.onRetryTap,
-  });
-
-  final AiChatMessage message;
-  final bool isCurrentlySpeaking;
-  final VoidCallback onSpeakTap;
-  final VoidCallback onSendToOledTap;
-  final VoidCallback? onRetryTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final hc = context.hc;
-    final isUser = message.isUser;
-
-    if (message.isPending) {
-      return Align(
-        alignment: Alignment.centerLeft,
-        child: Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.md,
-            vertical: AppSpacing.md,
-          ),
-          decoration: BoxDecoration(
-            color: hc.surface,
-            borderRadius: BorderRadius.circular(AppRadius.card),
-            border: Border.all(color: hc.border),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              SizedBox(
-                width: 18,
-                height: 18,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2.2,
-                  color: hc.primary,
-                ),
-              ),
-              const SizedBox(width: AppSpacing.sm),
-              Flexible(
-                child: Text(
-                  'Hermes sedang menganalisis sensor & menyiapkan jawaban...',
-                  style: context.text.bodySmall.copyWith(
-                    color: hc.textSecondary,
-                    fontWeight: FontWeight.w600,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 7,
                   ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    return Align(
-      alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 520),
-        child: Container(
-          padding: const EdgeInsets.all(AppSpacing.md),
-          decoration: BoxDecoration(
-            color: isUser ? hc.primary : hc.surface,
-            borderRadius: BorderRadius.only(
-              topLeft: const Radius.circular(AppRadius.card),
-              topRight: const Radius.circular(AppRadius.card),
-              bottomLeft: Radius.circular(isUser ? AppRadius.card : 4),
-              bottomRight: Radius.circular(isUser ? 4 : AppRadius.card),
-            ),
-            border: isUser ? null : Border.all(color: hc.border),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (!isUser)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 6),
+                  decoration: BoxDecoration(
+                    color: hc.surface,
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                    border: Border.all(
+                      color: (bandConnected && sensor.isFallDetected)
+                          ? hc.danger
+                          : hc.border,
+                    ),
+                  ),
                   child: Row(
                     children: [
                       Icon(
-                        Icons.auto_awesome_rounded,
-                        size: 15,
-                        color: hc.accent,
+                        bandConnected
+                            ? Icons.favorite_rounded
+                            : Icons.bluetooth_disabled_rounded,
+                        size: 14,
+                        color: bandConnected
+                            ? (sensor.isFallDetected
+                                  ? hc.danger
+                                  : const Color(0xFFE11D48))
+                            : hc.warning,
                       ),
-                      const SizedBox(width: 5),
+                      const SizedBox(width: 6),
                       Expanded(
                         child: Text(
-                          message.isOfflineFallback
-                              ? 'Hermes AI (Asisten Sensor Lokal)'
-                              : 'Hermes AI Assistant',
+                          bandConnected
+                              ? '${AppTranslations.tr('ai.sensorContextTitle')} • ${sensor.heartRateBpm > 0 ? "${sensor.heartRateBpm} BPM" : AppTranslations.tr('ai.bandBleActive')}'
+                              : AppTranslations.tr('ai.bandDisconnectedCompact'),
                           style: context.text.labelSmall.copyWith(
-                            fontWeight: FontWeight.w800,
-                            color: hc.primary,
+                            color: hc.textPrimary,
+                            fontWeight: FontWeight.w700,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -737,155 +591,599 @@ class _AiChatBubble extends StatelessWidget {
                     ],
                   ),
                 ),
-
-              // Isi kalimat penjelasan ramah
-              Text(
-                message.text,
-                style: context.text.bodyMedium.copyWith(
-                  color: isUser ? hc.onPrimary : hc.textPrimary,
-                  height: 1.45,
-                  fontSize: 15,
-                ),
               ),
+            ),
+            const SizedBox(width: AppSpacing.xs),
 
-              // Ringkasan OLED + Tombol 🔊 Speak pada balasan AI
-              if (!isUser && message.isSpeakable) ...[
-                if (message.oledText != null &&
-                    message.oledText!.isNotEmpty) ...[
-                  const SizedBox(height: AppSpacing.sm),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.sm,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF0B1116),
-                      borderRadius: BorderRadius.circular(AppRadius.sm),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(
-                          Icons.watch_outlined,
-                          size: 14,
-                          color: Color(0xFF22C55E),
-                        ),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            'AI:${message.oledText}',
-                            style: const TextStyle(
-                              fontFamily: 'monospace',
-                              fontSize: 11.5,
-                              color: Color(0xFFE2E8F0),
-                              fontWeight: FontWeight.w700,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
+            // Pill Kanan: Layar Gelang OLED 0.96" (128x64) + Indikator LED Hijau
+            Expanded(
+              child: InkWell(
+                borderRadius: BorderRadius.circular(AppRadius.pill),
+                onTap: () => HajiCareAiAssistantPage.showSmartbandOledSheet(
+                  context,
+                  controller,
+                ),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 7,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF0A0F14),
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                    border: Border.all(
+                      color: ledOn
+                          ? const Color(0xFF22C55E)
+                          : hc.border,
                     ),
                   ),
-                ],
-                const SizedBox(height: AppSpacing.sm),
-                Wrap(
-                  spacing: AppSpacing.sm,
-                  runSpacing: 6,
-                  children: [
-                    // Tombol 🔊 Speak / Hentikan
-                    InkWell(
-                      onTap: onSpeakTap,
-                      borderRadius: BorderRadius.circular(AppRadius.pill),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 8,
+                        height: 8,
                         decoration: BoxDecoration(
-                          color: isCurrentlySpeaking
-                              ? hc.danger.withValues(alpha: 0.12)
-                              : hc.primary.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(AppRadius.pill),
-                          border: Border.all(
-                            color: isCurrentlySpeaking
-                                ? hc.danger.withValues(alpha: 0.4)
-                                : hc.primary.withValues(alpha: 0.3),
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              isCurrentlySpeaking
-                                  ? Icons.stop_circle_rounded
-                                  : Icons.volume_up_rounded,
-                              size: 16,
-                              color: isCurrentlySpeaking
-                                  ? hc.danger
-                                  : hc.primary,
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              isCurrentlySpeaking
-                                  ? 'Hentikan Suara'
-                                  : '🔊 Dengarkan Suara',
-                              style: context.text.labelSmall.copyWith(
-                                fontWeight: FontWeight.w800,
-                                color: isCurrentlySpeaking
-                                    ? hc.danger
-                                    : hc.primary,
+                          color: ledOn
+                              ? const Color(0xFF22C55E)
+                              : const Color(0xFF64748B),
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            if (ledOn)
+                              const BoxShadow(
+                                color: Color(0xFF22C55E),
+                                blurRadius: 6,
+                                spreadRadius: 1,
                               ),
-                            ),
                           ],
                         ),
                       ),
-                    ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          'OLED: ${oled.text}',
+                          style: const TextStyle(
+                            fontFamily: 'monospace',
+                            fontSize: 11,
+                            color: Color(0xFFF8FAFC),
+                            fontWeight: FontWeight.w700,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    });
+  }
+}
 
-                    // Tombol Kirim Ulang ke OLED Gelang
-                    InkWell(
-                      onTap: onSendToOledTap,
-                      borderRadius: BorderRadius.circular(AppRadius.pill),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 6,
+class _SidePanelTelemetryAndOled extends StatelessWidget {
+  const _SidePanelTelemetryAndOled({required this.controller});
+
+  final HajiCareAiController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() {
+      final sensor = controller.sensorContext.value;
+      final oled = controller.oledState.value;
+      final ledActive = controller.isOledLedActive.value;
+      final ble = controller.bleLinkStatus.value;
+
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          OledSmartbandPreviewCard(
+            oledState: oled,
+            isLedActive: ledActive,
+            bleStatus: ble,
+            heartRateBpm: sensor.heartRateBpm,
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          SensorContextLiveCard(
+            sensor: sensor,
+            isExpanded: true,
+            onToggleExpand: controller.toggleSensorCardExpanded,
+            onRefreshTap: controller.refreshSensorsNow,
+            onConnectSmartbandTap: controller.connectSmartbandBle,
+          ),
+        ],
+      );
+    });
+  }
+}
+
+/// Ruang Chat Bersih mengikuti referensi foto ke-4.
+class _CleanChatView extends StatelessWidget {
+  const _CleanChatView({
+    required this.controller,
+    required this.scrollController,
+    required this.textController,
+    required this.hasTypedText,
+    required this.onSubmitText,
+    required this.showCompactStrip,
+  });
+
+  final HajiCareAiController controller;
+  final ScrollController scrollController;
+  final TextEditingController textController;
+  final ValueNotifier<bool> hasTypedText;
+  final VoidCallback onSubmitText;
+  final bool showCompactStrip;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        if (showCompactStrip)
+          _CompactSmartbandOledStrip(controller: controller),
+
+        // Area Percakapan Utama
+        Expanded(
+          child: Obx(() {
+            final msgs = controller.messages;
+            final speakingId = controller.activeSpeakingMessageId.value;
+            final isSpeaking = controller.isSpeaking.value;
+            final showWelcomeCards = msgs.length <= 1;
+
+            return CustomScrollView(
+              controller: scrollController,
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+              physics: const BouncingScrollPhysics(),
+              slivers: [
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.md,
+                    AppSpacing.sm,
+                    AppSpacing.md,
+                    AppSpacing.sm,
+                  ),
+                  sliver: SliverList.separated(
+                    itemCount: msgs.length,
+                    separatorBuilder: (_, _) =>
+                        const SizedBox(height: AppSpacing.md),
+                    itemBuilder: (context, index) {
+                      final message = msgs[index];
+                      final isMsgSpeaking =
+                          isSpeaking && speakingId == message.id;
+                      return RepaintBoundary(
+                        child: _ModernAiChatBubble(
+                          message: message,
+                          isCurrentlySpeaking: isMsgSpeaking,
+                          onTapStreamingBubble:
+                              controller.completeActiveStreamImmediately,
+                          onSpeakTap: () => controller.speakMessage(message),
+                          onSendToOledTap: () {
+                            controller.resendOledFromMessage(message);
+                            HajiCareAiAssistantPage.showSmartbandOledSheet(
+                              context,
+                              controller,
+                            );
+                          },
+                          onRegenerateTap: () =>
+                              controller.regenerateMessage(message),
                         ),
-                        decoration: BoxDecoration(
-                          color: hc.surfaceSubtle,
-                          borderRadius: BorderRadius.circular(AppRadius.pill),
-                          border: Border.all(color: hc.border),
+                      );
+                    },
+                  ),
+                ),
+
+                // Kartu Topik Bantuan Jamaah pada tampilan awal (seperti layar kiri Foto 4)
+                if (showWelcomeCards)
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSpacing.md,
+                      AppSpacing.xs,
+                      AppSpacing.md,
+                      AppSpacing.md,
+                    ),
+                    sliver: SliverToBoxAdapter(
+                      child: _WelcomeTopicGrid(
+                        onSelectPrompt: (p) =>
+                            controller.sendQuestion(p, autoSpeak: true),
+                      ),
+                    ),
+                  ),
+              ],
+            );
+          }),
+        ),
+
+        // Deretan Quick Prompt Chips yang ramping dan rapi
+        _SlimQuickPromptsRow(
+          onSelectPrompt: (prompt) =>
+              controller.sendQuestion(prompt, autoSpeak: true),
+        ),
+
+        // Kontrol Input Kapsul Minimalis (seperti layar tengah Foto 4)
+        _MinimalPillInputBar(
+          controller: controller,
+          textController: textController,
+          hasTypedText: hasTypedText,
+          onSubmitText: onSubmitText,
+        ),
+      ],
+    );
+  }
+}
+
+/// Grid 2x2 Kartu Topik Bantuan Jamaah bergaya modern seperti layar pertama Foto 4.
+class _WelcomeTopicGrid extends StatelessWidget {
+  const _WelcomeTopicGrid({required this.onSelectPrompt});
+
+  final ValueChanged<String> onSelectPrompt;
+
+  @override
+  Widget build(BuildContext context) {
+    final hc = context.hc;
+    final topics = HajiCareAiController.localizedFeaturedTopics;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: AppSpacing.xs),
+          child: Text(
+            context.tr('ai.welcomeTopicsHeader'),
+            style: context.text.labelMedium.copyWith(
+              color: hc.textSecondary,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: topics.length,
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            mainAxisSpacing: AppSpacing.sm,
+            crossAxisSpacing: AppSpacing.sm,
+            mainAxisExtent: 96,
+          ),
+          itemBuilder: (context, index) {
+            final item = topics[index];
+            return InkWell(
+              borderRadius: BorderRadius.circular(AppRadius.card),
+              onTap: () {
+                HapticFeedback.selectionClick();
+                onSelectPrompt(item.prompt);
+              },
+              child: Container(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                decoration: BoxDecoration(
+                  color: hc.surface,
+                  borderRadius: BorderRadius.circular(AppRadius.card),
+                  border: Border.all(color: hc.border),
+                ),
+                child: Stack(
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          item.title,
+                          style: context.text.titleSmall.copyWith(
+                            fontWeight: FontWeight.w800,
+                            color: hc.textPrimary,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.send_to_mobile_rounded,
-                              size: 14,
-                              color: hc.textSecondary,
-                            ),
-                            const SizedBox(width: 5),
-                            Text(
-                              'Kirim ke OLED',
-                              style: context.text.labelSmall.copyWith(
-                                fontWeight: FontWeight.w700,
-                                color: hc.textSecondary,
-                              ),
-                            ),
-                          ],
+                        const SizedBox(height: 4),
+                        Text(
+                          item.subtitle,
+                          style: context.text.labelSmall.copyWith(
+                            color: hc.textSecondary,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                         ),
+                      ],
+                    ),
+                    Positioned(
+                      right: 0,
+                      bottom: 0,
+                      child: Icon(
+                        Icons.north_east_rounded,
+                        size: 16,
+                        color: hc.accent,
                       ),
                     ),
                   ],
                 ),
-              ],
+              ),
+            );
+          },
+        ),
+      ],
+    );
+  }
+}
 
-              if (message.isError && onRetryTap != null) ...[
-                const SizedBox(height: AppSpacing.xs),
-                TextButton.icon(
-                  onPressed: onRetryTap,
-                  icon: const Icon(Icons.refresh_rounded, size: 16),
-                  label: const Text('Coba Lagi'),
+/// Gelembung Chat Modern mengikuti referensi Foto 4:
+/// - Gelembung Pengguna (kanan): Gradien hangat kontras tinggi + avatar kecil di kanan bawah.
+/// - Gelembung AI (kiri): Kartu bersih, teks kata demi kata (*streaming*), aksi kontekstual
+///   jamaah, serta deretan ikon `[📋 Salin, 🔊 Suara, ⌚ OLED, ↻ Ulangi]` di bawah.
+class _ModernAiChatBubble extends StatelessWidget {
+  const _ModernAiChatBubble({
+    required this.message,
+    required this.isCurrentlySpeaking,
+    required this.onTapStreamingBubble,
+    required this.onSpeakTap,
+    required this.onSendToOledTap,
+    required this.onRegenerateTap,
+  });
+
+  final AiChatMessage message;
+  final bool isCurrentlySpeaking;
+  final VoidCallback onTapStreamingBubble;
+  final VoidCallback onSpeakTap;
+  final VoidCallback onSendToOledTap;
+  final VoidCallback onRegenerateTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final hc = context.hc;
+
+    // State Menunggu Balasan: Avatar AI + titik-titik •••• seperti referensi Foto 4
+    if (message.isPending) {
+      return const _AiTypingDotsRow();
+    }
+
+    if (message.isUser) {
+      return Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Flexible(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 460),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.md,
+                  vertical: 12,
+                ),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF9C723C), Color(0xFF6E4B23)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(20),
+                    topRight: Radius.circular(20),
+                    bottomLeft: Radius.circular(20),
+                    bottomRight: Radius.circular(6),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.12),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Text(
+                  message.text,
+                  style: context.text.bodyMedium.copyWith(
+                    color: Colors.white,
+                    fontSize: 15,
+                    height: 1.45,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Container(
+            width: 26,
+            height: 26,
+            decoration: BoxDecoration(
+              color: hc.surfaceSubtle,
+              shape: BoxShape.circle,
+              border: Border.all(color: hc.accent, width: 1.2),
+            ),
+            child: Icon(
+              Icons.person_rounded,
+              size: 15,
+              color: hc.textPrimary,
+            ),
+          ),
+        ],
+      );
+    }
+
+    // Gelembung Balasan Hermes AI (Kiri)
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        const _AiSparkleAvatar(size: 28),
+        const SizedBox(width: 8),
+        Flexible(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 500),
+            child: GestureDetector(
+              onTap: message.isStreaming ? onTapStreamingBubble : null,
+              child: Container(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.md,
+                  AppSpacing.md,
+                  AppSpacing.md,
+                  10,
+                ),
+                decoration: BoxDecoration(
+                  color: hc.surface,
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(20),
+                    topRight: Radius.circular(20),
+                    bottomLeft: Radius.circular(6),
+                    bottomRight: Radius.circular(20),
+                  ),
+                  border: Border.all(color: hc.border),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Teks Jawaban (Streaming Kata Demi Kata)
+                    Text(
+                      message.isStreaming
+                          ? '${message.text} ▍'
+                          : message.text,
+                      style: context.text.bodyMedium.copyWith(
+                        color: hc.textPrimary,
+                        fontSize: 15.2,
+                        height: 1.5,
+                      ),
+                    ),
+
+                    // Tombol Aksi Kontekstual Pintar untuk Membantu Jamaah
+                    if (!message.isStreaming &&
+                        message.contextualActions.isNotEmpty) ...[
+                      const SizedBox(height: AppSpacing.sm),
+                      _ContextualActionRow(
+                        actions: message.contextualActions,
+                        onOpenOledTap: onSendToOledTap,
+                      ),
+                    ],
+
+                    const SizedBox(height: AppSpacing.sm),
+                    Divider(
+                      height: 1,
+                      color: hc.border.withValues(alpha: 0.5),
+                    ),
+                    const SizedBox(height: 6),
+
+                    // Baris Ikon Aksi Bawah Gelembung AI (seperti referensi Foto 4)
+                    Row(
+                      children: [
+                        // 1. Copy Text
+                        _BubbleIconAction(
+                          icon: Icons.content_copy_rounded,
+                          tooltip: context.tr('ai.copyReplyTooltip'),
+                          onTap: () async {
+                            HapticFeedback.selectionClick();
+                            final copiedMsg = context.tr('ai.replyCopied');
+                            await Clipboard.setData(
+                              ClipboardData(text: message.effectiveFullText),
+                            );
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(copiedMsg),
+                                  duration: const Duration(seconds: 1),
+                                  behavior: SnackBarBehavior.floating,
+                                ),
+                              );
+                            }
+                          },
+                        ),
+                        const SizedBox(width: 4),
+
+                        // 2. Speak / Stop TTS (🔊)
+                        _BubbleIconAction(
+                          icon: isCurrentlySpeaking
+                              ? Icons.stop_circle_rounded
+                              : Icons.volume_up_rounded,
+                          tooltip: isCurrentlySpeaking
+                              ? context.tr('ai.stopTtsButton')
+                              : context.tr('ai.speakReplyTooltip'),
+                          isActive: isCurrentlySpeaking,
+                          activeColor: hc.danger,
+                          label: isCurrentlySpeaking
+                              ? context.tr('ai.stopLabel')
+                              : context.tr('ai.voiceLabel'),
+                          onTap: () {
+                            HapticFeedback.selectionClick();
+                            onSpeakTap();
+                          },
+                        ),
+                        const SizedBox(width: 4),
+
+                        // 3. Tampilkan / Kirim ke OLED Gelang (⌚)
+                        _BubbleIconAction(
+                          icon: Icons.watch_rounded,
+                          tooltip: context.tr('ai.viewOnOledTooltip'),
+                          label: 'OLED',
+                          onTap: () {
+                            HapticFeedback.selectionClick();
+                            onSendToOledTap();
+                          },
+                        ),
+
+                        const Spacer(),
+
+                        // 4. Regenerate / Ulangi Jawaban (↻)
+                        _BubbleIconAction(
+                          icon: Icons.refresh_rounded,
+                          tooltip: context.tr('ai.regenerateTooltip'),
+                          onTap: () {
+                            HapticFeedback.lightImpact();
+                            onRegenerateTap();
+                          },
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _BubbleIconAction extends StatelessWidget {
+  const _BubbleIconAction({
+    required this.icon,
+    required this.tooltip,
+    required this.onTap,
+    this.label,
+    this.isActive = false,
+    this.activeColor,
+  });
+
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onTap;
+  final String? label;
+  final bool isActive;
+  final Color? activeColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final hc = context.hc;
+    final color = isActive ? (activeColor ?? hc.accent) : hc.textSecondary;
+
+    return Tooltip(
+      message: tooltip,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 17, color: color),
+              if (label != null) ...[
+                const SizedBox(width: 4),
+                Text(
+                  label!,
+                  style: context.text.labelSmall.copyWith(
+                    color: color,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 11,
+                  ),
                 ),
               ],
             ],
@@ -896,56 +1194,94 @@ class _AiChatBubble extends StatelessWidget {
   }
 }
 
-/// Deretan tombol cepat (Quick Prompts) sekali sentuh untuk demo cepat.
-class _QuickPromptChipsBar extends StatelessWidget {
-  const _QuickPromptChipsBar({required this.onSelectPrompt});
+/// Deretan tombol aksi cepat kontekstual untuk membantu jamaah langsung dari chat.
+class _ContextualActionRow extends StatelessWidget {
+  const _ContextualActionRow({
+    required this.actions,
+    required this.onOpenOledTap,
+  });
 
-  final ValueChanged<String> onSelectPrompt;
+  final List<AiContextualAction> actions;
+  final VoidCallback onOpenOledTap;
 
   @override
   Widget build(BuildContext context) {
     final hc = context.hc;
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      decoration: BoxDecoration(
-        color: hc.surface,
-        border: Border(top: BorderSide(color: hc.border)),
-      ),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-        physics: const BouncingScrollPhysics(),
+    return Wrap(
+      spacing: 6,
+      runSpacing: 6,
+      children: [
+        for (final action in actions)
+          _buildActionChip(context, hc, action),
+      ],
+    );
+  }
+
+  Widget _buildActionChip(
+    BuildContext context,
+    HajiColors hc,
+    AiContextualAction action,
+  ) {
+    final (IconData icon, String label, Color color, VoidCallback onTap) =
+        switch (action) {
+          AiContextualAction.openSos => (
+            Icons.emergency_rounded,
+            context.tr('ai.action.sos'),
+            hc.danger,
+            () => Get.toNamed(AppRoutes.modalSos),
+          ),
+          AiContextualAction.openMap => (
+            Icons.map_rounded,
+            context.tr('ai.action.map'),
+            hc.info,
+            () => Get.toNamed(AppRoutes.interactiveMap),
+          ),
+          AiContextualAction.openDua => (
+            Icons.menu_book_rounded,
+            context.tr('ai.action.dua'),
+            hc.accent,
+            () => Get.toNamed(AppRoutes.hajjDua),
+          ),
+          AiContextualAction.openPrayer => (
+            Icons.mosque_rounded,
+            context.tr('ai.action.prayer'),
+            hc.success,
+            () => Get.toNamed(AppRoutes.prayerTimes),
+          ),
+          AiContextualAction.openSmartbandSheet => (
+            Icons.watch_rounded,
+            context.tr('ai.action.oled'),
+            hc.accent,
+            onOpenOledTap,
+          ),
+        };
+
+    return InkWell(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        onTap();
+      },
+      borderRadius: BorderRadius.circular(AppRadius.pill),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(AppRadius.pill),
+          border: Border.all(color: color.withValues(alpha: 0.35)),
+        ),
         child: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            for (final prompt in HajiCareAiController.quickPrompts)
-              Padding(
-                padding: const EdgeInsets.only(right: AppSpacing.sm),
-                child: ActionChip(
-                  avatar: Icon(
-                    Icons.bolt_rounded,
-                    size: 16,
-                    color: hc.primary,
-                  ),
-                  label: Text(
-                    prompt,
-                    style: context.text.labelMedium.copyWith(
-                      color: hc.textPrimary,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  backgroundColor: hc.surfaceSubtle,
-                  side: BorderSide(color: hc.border),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.pill),
-                  ),
-                  onPressed: () {
-                    HapticFeedback.selectionClick();
-                    onSelectPrompt(prompt);
-                  },
-                ),
+            Icon(icon, size: 14, color: color),
+            const SizedBox(width: 5),
+            Text(
+              label,
+              style: context.text.labelSmall.copyWith(
+                color: hc.textPrimary,
+                fontWeight: FontWeight.w700,
               ),
+            ),
           ],
         ),
       ),
@@ -953,55 +1289,147 @@ class _QuickPromptChipsBar extends StatelessWidget {
   }
 }
 
-/// Kontrol Input Bawah:
-/// - Banner & tombol hentikan suara (`flutter_tts.stop()`) saat AI sedang berbicara
-/// - Pratinjau transkripsi suara langsung saat mikrofon merekam
-/// - Tombol mikrofon besar beranimasi pulse (`speech_to_text` bahasa `id_ID`)
-/// - Kolom ketik teks manual dan tombol kirim
-class _BottomVoiceAndTextBar extends StatelessWidget {
-  const _BottomVoiceAndTextBar({
+/// Indikator mengetik `✨ • • • •` seperti referensi Foto 4.
+class _AiTypingDotsRow extends StatelessWidget {
+  const _AiTypingDotsRow();
+
+  @override
+  Widget build(BuildContext context) {
+    final hc = context.hc;
+    return Row(
+      children: [
+        const _AiSparkleAvatar(size: 28),
+        const SizedBox(width: 10),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(
+            color: hc.surface,
+            borderRadius: BorderRadius.circular(AppRadius.pill),
+            border: Border.all(color: hc.border),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (var i = 0; i < 4; i++)
+                Padding(
+                  padding: EdgeInsets.only(right: i < 3 ? 5 : 0),
+                  child: Container(
+                    width: 6,
+                    height: 6,
+                    decoration: BoxDecoration(
+                      color: hc.accent.withValues(alpha: 1.0 - (i * 0.2)),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Deretan tombol cepat (Quick Prompts) sekali sentuh yang ramping.
+class _SlimQuickPromptsRow extends StatelessWidget {
+  const _SlimQuickPromptsRow({required this.onSelectPrompt});
+
+  final ValueChanged<String> onSelectPrompt;
+
+  @override
+  Widget build(BuildContext context) {
+    final hc = context.hc;
+    final prompts = HajiCareAiController.localizedQuickPrompts;
+
+    return SizedBox(
+      height: 40,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+        physics: const BouncingScrollPhysics(),
+        itemCount: prompts.length,
+        separatorBuilder: (_, _) => const SizedBox(width: 8),
+        itemBuilder: (context, index) {
+          final prompt = prompts[index];
+          return Center(
+            child: InkWell(
+              onTap: () {
+                HapticFeedback.selectionClick();
+                onSelectPrompt(prompt);
+              },
+              borderRadius: BorderRadius.circular(AppRadius.pill),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: hc.surface,
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                  border: Border.all(color: hc.border),
+                ),
+                child: Text(
+                  prompt,
+                  style: context.text.labelSmall.copyWith(
+                    color: hc.textPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+/// Input Bar Kapsul Minimalis mengikuti layar tengah Foto 4:
+/// `[ Send message...                        🎙️  ⊕ / ➤ ]`
+class _MinimalPillInputBar extends StatelessWidget {
+  const _MinimalPillInputBar({
     required this.controller,
     required this.textController,
+    required this.hasTypedText,
     required this.onSubmitText,
   });
 
   final HajiCareAiController controller;
   final TextEditingController textController;
+  final ValueNotifier<bool> hasTypedText;
   final VoidCallback onSubmitText;
 
   @override
   Widget build(BuildContext context) {
     final hc = context.hc;
 
-    return Container(
+    return Padding(
       padding: const EdgeInsets.fromLTRB(
         AppSpacing.md,
-        AppSpacing.xs,
+        6,
         AppSpacing.md,
         AppSpacing.md,
-      ),
-      decoration: BoxDecoration(
-        color: hc.surface,
-        border: Border(top: BorderSide(color: hc.border)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Tombol Hentikan Suara (flutter_tts.stop()) saat AI sedang berbicara
+          // Tombol Hentikan Suara (Stop TTS) saat AI sedang berbicara
           Obx(() {
             if (!controller.isSpeaking.value) return const SizedBox.shrink();
             return Padding(
-              padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+              padding: const EdgeInsets.only(bottom: 8),
               child: SizedBox(
-                width: double.infinity,
-                height: 42,
+                height: 38,
                 child: ElevatedButton.icon(
                   key: const Key('stop_tts_button'),
                   onPressed: controller.stopSpeaking,
-                  icon: const Icon(Icons.stop_circle_rounded, size: 20),
-                  label: const Text(
-                    'Hentikan Suara Asisten (Stop TTS)',
-                    style: TextStyle(fontWeight: FontWeight.w800),
+                  icon: const Icon(Icons.stop_circle_rounded, size: 18),
+                  label: Text(
+                    context.tr('ai.stopTtsButton'),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 12.5,
+                    ),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: hc.danger,
@@ -1015,122 +1443,200 @@ class _BottomVoiceAndTextBar extends StatelessWidget {
             );
           }),
 
-          // Banner transkripsi suara aktif saat mikrofon merekam
+          // Banner transkripsi suara jika sedang mendikte di ruang chat
           Obx(() {
             final listening = controller.isListening.value;
             final partial = controller.recognizedText.value;
-            final statusMsg = controller.voiceStatusMessage.value;
             if (!listening && partial.isEmpty) return const SizedBox.shrink();
 
             return Container(
               width: double.infinity,
-              margin: const EdgeInsets.only(bottom: AppSpacing.xs),
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.md,
-                vertical: AppSpacing.xs,
-              ),
+              margin: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               decoration: BoxDecoration(
-                color: hc.primary.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(AppRadius.md),
-                border: Border.all(color: hc.primary.withValues(alpha: 0.3)),
+                color: hc.surface,
+                borderRadius: BorderRadius.circular(AppRadius.pill),
+                border: Border.all(color: hc.accent),
               ),
               child: Row(
                 children: [
-                  Icon(
-                    Icons.graphic_eq_rounded,
-                    color: hc.primary,
-                    size: 18,
-                  ),
-                  const SizedBox(width: AppSpacing.sm),
+                  Icon(Icons.mic_rounded, size: 16, color: hc.danger),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      partial.isNotEmpty ? '"$partial"' : statusMsg,
-                      style: context.text.bodySmall.copyWith(
+                      partial.isNotEmpty
+                          ? '"$partial"'
+                          : controller.voiceStatusMessage.value,
+                      style: context.text.labelMedium.copyWith(
                         color: hc.textPrimary,
                         fontWeight: FontWeight.w700,
                       ),
-                      maxLines: 2,
+                      maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  if (listening)
-                    TextButton(
-                      onPressed: controller.stopListeningAndSendIfAny,
-                      child: const Text('Selesai'),
+                  InkWell(
+                    onTap: controller.stopListeningAndSendIfAny,
+                    child: Text(
+                      context.tr('ai.sendButton'),
+                      style: context.text.labelMedium.copyWith(
+                        color: hc.accent,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
+                  ),
                 ],
               ),
             );
           }),
 
-          // Baris Input: Tombol Mikrofon Pulse Besar + TextField + Tombol Kirim
-          Row(
-            children: [
-              Obx(() {
-                final listening = controller.isListening.value;
-                return _PulsingMicButton(
-                  isListening: listening,
-                  onTap: () {
-                    HapticFeedback.mediumImpact();
-                    controller.toggleVoiceRecording();
-                  },
-                );
-              }),
-              const SizedBox(width: AppSpacing.sm),
-              Expanded(
-                child: TextField(
-                  controller: textController,
-                  textInputAction: TextInputAction.send,
-                  onSubmitted: (_) => onSubmitText(),
-                  minLines: 1,
-                  maxLines: 3,
-                  decoration: InputDecoration(
-                    hintText: 'Ketik atau tekan 🎙️ untuk bicara...',
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.md,
-                      vertical: 12,
-                    ),
-                    filled: true,
-                    fillColor: hc.surfaceSubtle,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.pill),
-                      borderSide: BorderSide(color: hc.border),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.pill),
-                      borderSide: BorderSide(color: hc.border),
-                    ),
-                  ),
+          // Kapsul Tunggal Input Pesan seperti Referensi Foto 4 (Seragam Tanpa Belang)
+          Container(
+            constraints: const BoxConstraints(minHeight: 54),
+            padding: const EdgeInsets.only(left: 18, right: 6),
+            decoration: BoxDecoration(
+              color: hc.surface,
+              borderRadius: BorderRadius.circular(AppRadius.pill),
+              border: Border.all(color: hc.borderStrong, width: 1.2),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.14),
+                  blurRadius: 10,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Theme(
+              data: Theme.of(context).copyWith(
+                inputDecorationTheme: const InputDecorationTheme(
+                  filled: false,
+                  fillColor: Colors.transparent,
+                  border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  errorBorder: InputBorder.none,
+                  disabledBorder: InputBorder.none,
                 ),
               ),
-              const SizedBox(width: AppSpacing.sm),
-              Obx(() {
-                final busy = controller.isSending.value;
-                return SizedBox(
-                  width: AppSizes.touchTargetMin,
-                  height: AppSizes.touchTargetMin,
-                  child: IconButton.filled(
-                    key: const Key('send_ai_question_button'),
-                    onPressed: busy ? null : onSubmitText,
-                    style: IconButton.styleFrom(
-                      backgroundColor: hc.primary,
-                      foregroundColor: hc.onPrimary,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: textController,
+                      cursorColor: hc.accent,
+                      textInputAction: TextInputAction.send,
+                      onSubmitted: (_) => onSubmitText(),
+                      minLines: 1,
+                      maxLines: 3,
+                      style: context.text.bodyMedium.copyWith(
+                        color: hc.textPrimary,
+                      ),
+                      decoration: InputDecoration(
+                        hintText: context.tr('ai.inputHint'),
+                        hintStyle: context.text.bodyMedium.copyWith(
+                          color: hc.textSecondary,
+                        ),
+                        filled: false,
+                        fillColor: Colors.transparent,
+                        hoverColor: Colors.transparent,
+                        focusColor: Colors.transparent,
+                        border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        errorBorder: InputBorder.none,
+                        disabledBorder: InputBorder.none,
+                        isDense: true,
+                        contentPadding: const EdgeInsets.symmetric(
+                          vertical: 12,
+                        ),
+                      ),
                     ),
-                    icon: busy
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : const Icon(Icons.send_rounded, size: 20),
-                    tooltip: 'Kirim Pertanyaan',
                   ),
-                );
-              }),
-            ],
+
+                  // Tombol Mikrofon (Ketuk: rekam suara, Tekan lama: buka Mode Suara Penuh)
+                  Obx(() {
+                    final listening = controller.isListening.value;
+                    return IconButton(
+                      key: const Key('voice_orb_mode_button'),
+                      onPressed: () {
+                        HapticFeedback.mediumImpact();
+                        controller.openVoiceMode(autoStartListening: true);
+                      },
+                      tooltip: context.tr('ai.speakWithVoiceTooltip'),
+                      icon: Icon(
+                        listening ? Icons.mic_rounded : Icons.mic_none_rounded,
+                        color: listening ? hc.danger : hc.textPrimary,
+                        size: 23,
+                      ),
+                    );
+                  }),
+
+                  // Tombol Kirim (➤) atau Tombol Pertanyaan Cepat (+) seperti Foto 4
+                  ValueListenableBuilder<bool>(
+                    valueListenable: hasTypedText,
+                    builder: (context, hasText, _) {
+                      return Obx(() {
+                        final busy = controller.isSending.value;
+                        if (busy) {
+                          return Padding(
+                            padding: const EdgeInsets.all(10),
+                            child: SizedBox(
+                              width: 22,
+                              height: 22,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.2,
+                                color: hc.accent,
+                              ),
+                            ),
+                          );
+                        }
+
+                        if (hasText) {
+                          return IconButton(
+                            key: const Key('send_ai_question_button'),
+                            onPressed: onSubmitText,
+                            tooltip: context.tr('ai.sendMessageTooltip'),
+                            icon: Container(
+                              width: 36,
+                              height: 36,
+                              decoration: const BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    Color(0xFF9C723C),
+                                    Color(0xFF6E4B23),
+                                  ],
+                                ),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.arrow_upward_rounded,
+                                color: Colors.white,
+                                size: 20,
+                              ),
+                            ),
+                          );
+                        }
+
+                        return IconButton(
+                          key: const Key('send_ai_question_button'),
+                          onPressed: () =>
+                              HajiCareAiAssistantPage.showQuickPromptsSheet(
+                                context,
+                                controller,
+                              ),
+                          tooltip: context.tr('ai.quickPromptsTooltip'),
+                          icon: Icon(
+                            Icons.add_circle_outline_rounded,
+                            color: hc.textPrimary,
+                            size: 24,
+                          ),
+                        );
+                      });
+                    },
+                  ),
+                ],
+              ),
+            ),
           ),
         ],
       ),
@@ -1138,102 +1644,239 @@ class _BottomVoiceAndTextBar extends StatelessWidget {
   }
 }
 
-/// Tombol mikrofon besar beranimasi pulse saat merekam suara (`RepaintBoundary`).
-class _PulsingMicButton extends StatefulWidget {
-  const _PulsingMicButton({
-    required this.isListening,
-    required this.onTap,
-  });
+/// **Mode Suara Penuh (*Immersive Voice Mode*)** mengikuti layar kanan Foto 4:
+/// - Visualisasi bola gelombang bercahaya (*Glowing Particle/Wave Orb*) di tengah.
+/// - Teks transkripsi besar terpusat dengan penyorotan kata aktif & kata berikutnya.
+/// - 3 tombol bundar ergonomis di bawah: `↺` (Ulangi), `🎙️` (Mikrofon Besar), `✕` (Tutup).
+class _ImmersiveVoiceModeView extends StatelessWidget {
+  const _ImmersiveVoiceModeView({required this.controller});
 
-  final bool isListening;
-  final VoidCallback onTap;
-
-  @override
-  State<_PulsingMicButton> createState() => _PulsingMicButtonState();
-}
-
-class _PulsingMicButtonState extends State<_PulsingMicButton>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _pulseController;
-
-  @override
-  void initState() {
-    super.initState();
-    _pulseController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 900),
-    );
-    if (widget.isListening) {
-      _pulseController.repeat(reverse: true);
-    }
-  }
-
-  @override
-  void didUpdateWidget(covariant _PulsingMicButton oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.isListening && !_pulseController.isAnimating) {
-      _pulseController.repeat(reverse: true);
-    } else if (!widget.isListening && _pulseController.isAnimating) {
-      _pulseController.stop();
-      _pulseController.value = 0.0;
-    }
-  }
-
-  @override
-  void dispose() {
-    _pulseController.dispose();
-    super.dispose();
-  }
+  final HajiCareAiController controller;
 
   @override
   Widget build(BuildContext context) {
     final hc = context.hc;
-    final activeColor = widget.isListening ? hc.danger : hc.primary;
 
-    return RepaintBoundary(
-      child: Semantics(
-        button: true,
-        label: widget.isListening
-            ? 'Hentikan rekaman mikrofon'
-            : 'Rekam pertanyaan suara Bahasa Indonesia',
-        child: GestureDetector(
-          onTap: widget.onTap,
-          child: AnimatedBuilder(
-            animation: _pulseController,
-            builder: (context, child) {
-              final scale = 1.0 + (_pulseController.value * 0.14);
-              return Transform.scale(
-                scale: widget.isListening ? scale : 1.0,
-                child: Container(
-                  width: 54,
-                  height: 54,
-                  decoration: BoxDecoration(
-                    color: activeColor,
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: widget.isListening ? Colors.white : hc.accent,
-                      width: 2,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: activeColor.withValues(
-                          alpha: widget.isListening ? 0.45 : 0.22,
-                        ),
-                        blurRadius: widget.isListening ? 16 : 8,
-                        spreadRadius: widget.isListening ? 3 : 0,
+    return Obx(() {
+      final listening = controller.isListening.value;
+      final speaking = controller.isSpeaking.value;
+      final recognized = controller.recognizedText.value.trim();
+      final lastReply = controller.lastSpokenOrReplyText.value.trim();
+
+      final String displayText = listening
+          ? (recognized.isNotEmpty
+                ? recognized
+                : context.tr('ai.voiceListeningPrompt'))
+          : (lastReply.isNotEmpty
+                ? lastReply
+                : context.tr('ai.voiceTapMicPrompt'));
+
+      return Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.xl,
+          vertical: AppSpacing.lg,
+        ),
+        child: Column(
+          children: [
+            const Spacer(),
+
+            // Glowing Animated Wave Orb (seperti layar kanan Foto 4)
+            RepaintBoundary(
+              child: _GlowingVoiceOrb(
+                isActive: listening || speaking,
+                isListening: listening,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.xxl),
+
+            // Teks Transkripsi Besar Terpusat dengan Dua Gradasi Kontras Kata
+            _HighlightedVoiceTranscript(
+              text: displayText,
+              isListening: listening,
+            ),
+            const SizedBox(height: AppSpacing.sm),
+
+            Text(
+              listening
+                  ? context.tr('ai.voiceListeningStatus')
+                  : (speaking
+                        ? context.tr('ai.voiceSpeakingStatus')
+                        : context.tr('ai.voiceTapToAskStatus')),
+              style: context.text.labelMedium.copyWith(
+                color: hc.textSecondary,
+              ),
+            ),
+
+            const Spacer(),
+
+            // 3 Tombol Bundar Bawah: [ ↺ Ulangi ]  [ 🎙️ Mic ]  [ ✕ Tutup ]
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                // Kiri: Ulangi Suara Terakhir (↺)
+                _VoiceCircleActionButton(
+                  icon: Icons.replay_rounded,
+                  tooltip: context.tr('ai.voiceReplayTooltip'),
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    controller.replayLastAssistantReply();
+                  },
+                ),
+
+                // Tengah: Tombol Mikrofon Bercahaya Besar (🎙️)
+                GestureDetector(
+                  key: const Key('voice_orb_mic_button'),
+                  onTap: () {
+                    HapticFeedback.mediumImpact();
+                    if (speaking) {
+                      controller.stopSpeaking();
+                    } else {
+                      controller.toggleVoiceRecording();
+                    }
+                  },
+                  child: Container(
+                    width: 72,
+                    height: 72,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: LinearGradient(
+                        colors: listening
+                            ? [hc.danger, const Color(0xFF991B1B)]
+                            : [
+                                const Color(0xFFC89B57),
+                                const Color(0xFF785124),
+                              ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
                       ),
-                    ],
-                  ),
-                  child: Icon(
-                    widget.isListening
-                        ? Icons.mic_rounded
-                        : Icons.mic_none_rounded,
-                    color: Colors.white,
-                    size: 26,
+                      boxShadow: [
+                        BoxShadow(
+                          color: (listening
+                                  ? hc.danger
+                                  : const Color(0xFFC89B57))
+                              .withValues(alpha: 0.4),
+                          blurRadius: 20,
+                          spreadRadius: 2,
+                        ),
+                      ],
+                    ),
+                    child: Icon(
+                      speaking
+                          ? Icons.stop_rounded
+                          : (listening
+                                ? Icons.mic_rounded
+                                : Icons.mic_none_rounded),
+                      color: Colors.white,
+                      size: 32,
+                    ),
                   ),
                 ),
-              );
-            },
+
+                // Kanan: Tutup Mode Suara (✕)
+                _VoiceCircleActionButton(
+                  key: const Key('voice_orb_close_button'),
+                  icon: Icons.close_rounded,
+                  tooltip: context.tr('ai.voiceCloseTooltip'),
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    controller.closeVoiceMode();
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.md),
+          ],
+        ),
+      );
+    });
+  }
+}
+
+class _VoiceCircleActionButton extends StatelessWidget {
+  const _VoiceCircleActionButton({
+    super.key,
+    required this.icon,
+    required this.tooltip,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final hc = context.hc;
+    return Tooltip(
+      message: tooltip,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+        child: Container(
+          width: 50,
+          height: 50,
+          decoration: BoxDecoration(
+            color: hc.surface,
+            shape: BoxShape.circle,
+            border: Border.all(color: hc.border),
+          ),
+          child: Icon(icon, color: hc.textPrimary, size: 22),
+        ),
+      ),
+    );
+  }
+}
+
+/// Teks transkripsi besar dengan penyorotan kata aktif (putih/terang) dan
+/// kelanjutan kalimat (redup) persis seperti layar kanan Foto 4.
+class _HighlightedVoiceTranscript extends StatelessWidget {
+  const _HighlightedVoiceTranscript({
+    required this.text,
+    required this.isListening,
+  });
+
+  final String text;
+  final bool isListening;
+
+  @override
+  Widget build(BuildContext context) {
+    final hc = context.hc;
+    final words = text.split(RegExp(r'\s+')).where((w) => w.isNotEmpty).toList();
+    final clipped = words.length > 26 ? words.take(26).toList() : words;
+    final splitIndex = (clipped.length * 0.65).ceil();
+
+    final highlightedPart = clipped.take(splitIndex).join(' ');
+    final trailingPart = clipped.skip(splitIndex).join(' ');
+
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxHeight: 160),
+      child: SingleChildScrollView(
+        child: RichText(
+          textAlign: TextAlign.center,
+          text: TextSpan(
+            style: context.text.titleLarge.copyWith(
+              fontSize: 21,
+              fontWeight: FontWeight.w800,
+              height: 1.38,
+            ),
+            children: [
+              TextSpan(
+                text: highlightedPart,
+                style: TextStyle(color: hc.textPrimary),
+              ),
+              if (isListening)
+                TextSpan(
+                  text: ' | ',
+                  style: TextStyle(color: hc.accent),
+                ),
+              if (trailingPart.isNotEmpty)
+                TextSpan(
+                  text: isListening ? trailingPart : ' $trailingPart',
+                  style: TextStyle(
+                    color: hc.textSecondary.withValues(alpha: 0.55),
+                  ),
+                ),
+            ],
           ),
         ),
       ),
@@ -1241,11 +1884,576 @@ class _PulsingMicButtonState extends State<_PulsingMicButton>
   }
 }
 
-/// **Floating Action Button (FAB) "Tanya AI"** yang ramah lansia dan mudah
-/// diakses dari dashboard utama aplikasi `hajicare`.
+/// Visualisasi Bola Gelombang Suara Bercahaya (*Glowing 3D Wave Orb*) seperti Foto 4.
+class _GlowingVoiceOrb extends StatefulWidget {
+  const _GlowingVoiceOrb({
+    required this.isActive,
+    required this.isListening,
+  });
+
+  final bool isActive;
+  final bool isListening;
+
+  @override
+  State<_GlowingVoiceOrb> createState() => _GlowingVoiceOrbState();
+}
+
+class _GlowingVoiceOrbState extends State<_GlowingVoiceOrb>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2400),
+    );
+    if (widget.isActive) {
+      _controller.repeat();
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant _GlowingVoiceOrb oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isActive && !_controller.isAnimating) {
+      _controller.repeat();
+    } else if (!widget.isActive && _controller.isAnimating) {
+      _controller.stop();
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, _) {
+        return CustomPaint(
+          size: const Size(200, 200),
+          painter: _VoiceOrbPainter(
+            phase: _controller.value * 2 * math.pi,
+            isActive: widget.isActive,
+            isListening: widget.isListening,
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _VoiceOrbPainter extends CustomPainter {
+  const _VoiceOrbPainter({
+    required this.phase,
+    required this.isActive,
+    required this.isListening,
+  });
+
+  final double phase;
+  final bool isActive;
+  final bool isListening;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final baseRadius = size.width * 0.34;
+
+    final primaryGlow = isListening
+        ? const Color(0xFFE11D48)
+        : const Color(0xFFD4AF37);
+    const secondaryGlow = Color(0xFF8B5E34);
+
+    // 1. Ambient Outer Glow
+    final glowPaint = Paint()
+      ..shader = RadialGradient(
+        colors: [
+          primaryGlow.withValues(alpha: isActive ? 0.35 : 0.18),
+          secondaryGlow.withValues(alpha: 0.08),
+          Colors.transparent,
+        ],
+      ).createShader(Rect.fromCircle(center: center, radius: size.width * 0.5));
+    canvas.drawCircle(center, size.width * 0.5, glowPaint);
+
+    // 2. Layered Organic Wave Rings (seperti jaring gelombang 3D pada Foto 4)
+    for (var ring = 0; ring < 5; ring++) {
+      final path = Path();
+      final ringFactor = 1.0 - (ring * 0.09);
+      const steps = 64;
+      for (var i = 0; i <= steps; i++) {
+        final angle = (i / steps) * 2 * math.pi;
+        final waveAmp = isActive ? 9.0 : 3.5;
+        final offset =
+            waveAmp *
+            math.sin(angle * 3 + phase + ring * 0.7) *
+            math.cos(angle * 2 - phase * 0.8);
+        final r = (baseRadius * ringFactor) + offset;
+        final x = center.dx + r * math.cos(angle);
+        final y = center.dy + r * math.sin(angle);
+        if (i == 0) {
+          path.moveTo(x, y);
+        } else {
+          path.lineTo(x, y);
+        }
+      }
+      path.close();
+
+      final strokePaint = Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.5
+        ..color = Color.lerp(
+          primaryGlow,
+          Colors.white,
+          ring * 0.18,
+        )!.withValues(alpha: 0.75 - (ring * 0.1));
+      canvas.drawPath(path, strokePaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _VoiceOrbPainter oldDelegate) {
+    return oldDelegate.phase != phase ||
+        oldDelegate.isActive != isActive ||
+        oldDelegate.isListening != isListening;
+  }
+}
+
+/// Bottom Sheet untuk menampilkan **Layar OLED 0.96" (128x64)** & **Simulator Sensor Gelang**.
+class _SmartbandAndOledModalSheet extends StatelessWidget {
+  const _SmartbandAndOledModalSheet({required this.controller});
+
+  final HajiCareAiController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final hc = context.hc;
+
+    return ResponsiveCenter(
+      maxWidth: AppBreakpoints.maxSheetWidth,
+      alignment: Alignment.bottomCenter,
+      child: Container(
+        decoration: BoxDecoration(
+          color: hc.canvas,
+          borderRadius: const BorderRadius.vertical(
+            top: Radius.circular(AppRadius.sheet),
+          ),
+          border: Border.all(color: hc.border),
+        ),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.lg,
+            AppSpacing.md,
+            AppSpacing.lg,
+            AppSpacing.xxl,
+          ),
+          child: Obx(() {
+            final sensor = controller.sensorContext.value;
+            final oled = controller.oledState.value;
+            final ledActive = controller.isOledLedActive.value;
+            final ble = controller.bleLinkStatus.value;
+
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const _SheetDragHandle(),
+                const SizedBox(height: AppSpacing.sm),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        context.tr('ai.sheetOledTitle'),
+                        style: context.text.titleMedium.copyWith(
+                          fontWeight: FontWeight.w800,
+                          color: hc.textPrimary,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      icon: Icon(Icons.close_rounded, color: hc.textSecondary),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                OledSmartbandPreviewCard(
+                  oledState: oled,
+                  isLedActive: ledActive,
+                  bleStatus: ble,
+                  heartRateBpm: sensor.heartRateBpm,
+                ),
+                const SizedBox(height: AppSpacing.md),
+                SensorContextLiveCard(
+                  sensor: sensor,
+                  isExpanded: true,
+                  onToggleExpand: () {},
+                  onRefreshTap: controller.refreshSensorsNow,
+                  onConnectSmartbandTap: controller.connectSmartbandBle,
+                ),
+              ],
+            );
+          }),
+        ),
+      ),
+    );
+  }
+}
+
+/// Bottom Sheet daftar Pertanyaan Cepat (Quick Prompts) untuk Jamaah.
+class _QuickPromptsModalSheet extends StatelessWidget {
+  const _QuickPromptsModalSheet({required this.controller});
+
+  final HajiCareAiController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final hc = context.hc;
+
+    return ResponsiveCenter(
+      maxWidth: AppBreakpoints.maxSheetWidth,
+      alignment: Alignment.bottomCenter,
+      child: Container(
+        decoration: BoxDecoration(
+          color: hc.surface,
+          borderRadius: const BorderRadius.vertical(
+            top: Radius.circular(AppRadius.sheet),
+          ),
+          border: Border.all(color: hc.border),
+        ),
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.lg,
+          AppSpacing.md,
+          AppSpacing.lg,
+          AppSpacing.xxl,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const _SheetDragHandle(),
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              context.tr('ai.sheetQuickPromptsTitle'),
+              style: context.text.titleMedium.copyWith(
+                fontWeight: FontWeight.w800,
+                color: hc.textPrimary,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            for (final prompt in HajiCareAiController.localizedQuickPrompts)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    Navigator.of(context).pop();
+                    controller.sendQuestion(prompt, autoSpeak: true);
+                  },
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.md,
+                      vertical: 12,
+                    ),
+                    decoration: BoxDecoration(
+                      color: hc.surfaceSubtle,
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                      border: Border.all(color: hc.border),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.auto_awesome_rounded,
+                          size: 16,
+                          color: hc.accent,
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            prompt,
+                            style: context.text.bodyMedium.copyWith(
+                              color: hc.textPrimary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                        Icon(
+                          Icons.chevron_right_rounded,
+                          size: 18,
+                          color: hc.textSecondary,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// **Overlay Tombol Floating AI yang Dapat Digeser, Menempel di Tepi Kiri/Kanan,
+/// & Mengecil Otomatis Saat Digeser ke Sudut Layar (`HajiCareDraggableAiOverlay`)**.
 ///
-/// - Ketuk sekali: Membuka halaman penuh `HajiCareAiAssistantPage`.
-/// - Tekan lama: Membuka `HajiCareAiAssistantPage` sebagai Floating Bottom Sheet.
+/// Dirancang sesuai preferensi pengguna:
+/// - **Bulat Kompak (48dp):** Tidak memakan ruang layar dan mudah digeser ke mana saja.
+/// - **Auto-Snap Kiri / Kanan:** Saat dilepas, otomatis menempel rapi ke tepi kiri atau kanan layar.
+/// - **Auto-Shrink di Sudut / Tepi:** Jika digeser ke sudut atas/bawah layar atau merapat ke tepi,
+///   otomatis mengecil menjadi tab tipis setengah-tersembunyi agar tidak pernah mengganggu pengguna.
+/// - **Sekali Ketuk (`onTap`):** Langsung membuka `HajiCareAiAssistantPage`.
+class HajiCareDraggableAiOverlay extends StatefulWidget {
+  const HajiCareDraggableAiOverlay({
+    super.key,
+    this.bottomClearance = 114.0,
+    this.openAsBottomSheet = false,
+  });
+
+  final double bottomClearance;
+  final bool openAsBottomSheet;
+
+  @override
+  State<HajiCareDraggableAiOverlay> createState() =>
+      _HajiCareDraggableAiOverlayState();
+}
+
+class _HajiCareDraggableAiOverlayState
+    extends State<HajiCareDraggableAiOverlay> {
+  static const double _expandedWidth = 140.0;
+  static const double _expandedHeight = 44.0;
+  static const double _miniWidth = 40.0;
+  static const double _miniHeight = 42.0;
+  static const double _edgePadding = 12.0;
+
+  late final HajiCareAiController _controller;
+  final ValueNotifier<Offset?> _dragPosNotifier = ValueNotifier<Offset?>(null);
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = HajiCareAiBinding.ensureRegistered();
+  }
+
+  @override
+  void dispose() {
+    _dragPosNotifier.dispose();
+    super.dispose();
+  }
+
+  void _openAiPage(BuildContext context) {
+    HapticFeedback.lightImpact();
+    if (widget.openAsBottomSheet) {
+      HajiCareAiAssistantPage.showFloatingSheet(context);
+    } else {
+      Get.toNamed(AppRoutes.aiAssistant);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final topSafe = MediaQuery.paddingOf(context).top + 12.0;
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final maxW = constraints.maxWidth;
+        final maxH = constraints.maxHeight;
+        final minY = topSafe;
+        final maxY = math.max(
+          minY + 40.0,
+          maxH - widget.bottomClearance - _expandedHeight,
+        );
+        final usableHeight = math.max(1.0, maxY - minY);
+
+        return Obx(() {
+          if (Get.isRegistered<AppSettingsController>()) {
+            Get.find<AppSettingsController>().rxLocale.value;
+          }
+          final dockedRight = _controller.fabDockedRight.value;
+          final vFrac = _controller.fabVerticalFraction.value.clamp(0.0, 1.0);
+          final cornerMinimized = _controller.fabCornerMinimized.value;
+
+          return ValueListenableBuilder<Offset?>(
+            valueListenable: _dragPosNotifier,
+            builder: (context, dragPos, _) {
+              final isDragging = dragPos != null;
+              // Di awal (!cornerMinimized) tampil kapsul "✨ AI Assistant".
+              // Ketika sudah di-snap ke samping (cornerMinimized == true), tulisan hilang dan menyisakan ikon ✨.
+              final isMinimized = !isDragging && cornerMinimized;
+              final showLabel = !isMinimized && !cornerMinimized;
+
+              final btnW = showLabel ? _expandedWidth : _miniWidth;
+              final btnH = showLabel ? _expandedHeight : _miniHeight;
+
+              final double targetX;
+              final double targetY;
+
+              if (dragPos != null) {
+                targetX = dragPos.dx.clamp(0.0, math.max(0.0, maxW - btnW));
+                targetY = dragPos.dy.clamp(minY, maxY);
+              } else {
+                targetY = minY + (vFrac * usableHeight);
+                if (isMinimized) {
+                  targetX = dockedRight ? (maxW - btnW) : 0.0;
+                } else {
+                  targetX = dockedRight
+                      ? (maxW - btnW - _edgePadding)
+                      : _edgePadding;
+                }
+              }
+
+              final BorderRadius borderRadius;
+              if (isMinimized) {
+                borderRadius = dockedRight
+                    ? const BorderRadius.horizontal(left: Radius.circular(22))
+                    : const BorderRadius.horizontal(right: Radius.circular(22));
+              } else {
+                borderRadius = BorderRadius.circular(AppRadius.pill);
+              }
+
+              return Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  AnimatedPositioned(
+                    duration: isDragging
+                        ? Duration.zero
+                        : const Duration(milliseconds: 240),
+                    curve: Curves.easeOutCubic,
+                    left: targetX,
+                    top: targetY,
+                    width: btnW,
+                    height: btnH,
+                    child: RepaintBoundary(
+                      child: GestureDetector(
+                        key: const Key('tanya_ai_fab_button'),
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () => _openAiPage(context),
+                        onLongPress: () {
+                          HapticFeedback.mediumImpact();
+                          HajiCareAiAssistantPage.showFloatingSheet(context);
+                        },
+                        onPanStart: (_) {
+                          _dragPosNotifier.value = Offset(targetX, targetY);
+                        },
+                        onPanUpdate: (details) {
+                          final cur =
+                              _dragPosNotifier.value ?? Offset(targetX, targetY);
+                          _dragPosNotifier.value = Offset(
+                            (cur.dx + details.delta.dx).clamp(
+                              0.0,
+                              math.max(0.0, maxW - btnW),
+                            ),
+                            (cur.dy + details.delta.dy).clamp(minY, maxY),
+                          );
+                        },
+                        onPanEnd: (_) {
+                          final finalPos =
+                              _dragPosNotifier.value ?? Offset(targetX, targetY);
+                          final centerX = finalPos.dx + (btnW / 2);
+                          final nextDockedRight = centerX >= (maxW / 2);
+                          final nextVFrac = ((finalPos.dy - minY) / usableHeight)
+                              .clamp(0.0, 1.0);
+
+                          // Begitu pengguna menggeser dan men-snap tombol ke samping kiri/kanan,
+                          // tulisan "AI Assistant" otomatis hilang (cornerMinimized: true)
+                          // agar ringkas dan tidak menghalangi layar.
+                          const nextMinimized = true;
+
+                          HapticFeedback.selectionClick();
+                          _dragPosNotifier.value = null;
+                          _controller.updateFloatingButtonPosition(
+                            dockedRight: nextDockedRight,
+                            verticalFraction: nextVFrac,
+                            cornerMinimized: nextMinimized,
+                          );
+                        },
+                        child: AnimatedOpacity(
+                          duration: const Duration(milliseconds: 200),
+                          opacity: isMinimized ? 0.88 : 1.0,
+                          child: Tooltip(
+                            message: context.tr('ai.fabTooltip'),
+                            child: Container(
+                              padding: showLabel
+                                  ? const EdgeInsets.symmetric(horizontal: 14)
+                                  : EdgeInsets.zero,
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(
+                                  colors: [Color(0xFF2B1E16), Color(0xFF1A120D)],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
+                                borderRadius: borderRadius,
+                                border: Border.all(
+                                  color: const Color(0xFFD4AF37),
+                                  width: isMinimized ? 1.2 : 1.5,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(
+                                      alpha: isMinimized ? 0.25 : 0.42,
+                                    ),
+                                    blurRadius: isMinimized ? 6 : 12,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: Center(
+                                child: showLabel
+                                    ? Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          const Icon(
+                                            Icons.auto_awesome_rounded,
+                                            color: Color(0xFFD4AF37),
+                                            size: 18,
+                                          ),
+                                          const SizedBox(width: 7),
+                                          Flexible(
+                                            child: Text(
+                                              context.tr('ai.fabLabel'),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: const TextStyle(
+                                                color: Color(0xFFF5E6C8),
+                                                fontWeight: FontWeight.w800,
+                                                fontSize: 12.5,
+                                                letterSpacing: 0.2,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      )
+                                    : const Icon(
+                                        Icons.auto_awesome_rounded,
+                                        color: Color(0xFFD4AF37),
+                                        size: 19,
+                                      ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
+          );
+        });
+      },
+    );
+  }
+}
+
+/// Komponen tombol kapsul kompak **AI Assistant** untuk kompatibilitas langsung jika dipakai di luar Stack.
 class HajiCareAiFabButton extends StatelessWidget {
   const HajiCareAiFabButton({
     super.key,
@@ -1258,18 +2466,16 @@ class HajiCareAiFabButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hc = context.hc;
-
     return RepaintBoundary(
       child: Semantics(
         button: true,
-        label: 'Tanya AI HajiCare Assistant',
+        label: context.tr('ai.fabTooltip'),
         child: Tooltip(
-          message: 'Tanya AI HajiCare (Hermes Voice Assistant)',
+          message: context.tr('ai.fabTooltip'),
           child: Material(
             color: Colors.transparent,
-            elevation: 6,
-            shadowColor: hc.shadow,
+            elevation: 8,
+            shadowColor: Colors.black.withValues(alpha: 0.42),
             borderRadius: BorderRadius.circular(AppRadius.pill),
             child: InkWell(
               key: const Key('tanya_ai_fab_button'),
@@ -1287,40 +2493,36 @@ class HajiCareAiFabButton extends StatelessWidget {
                 HajiCareAiAssistantPage.showFloatingSheet(context);
               },
               child: Ink(
-                height: 52,
-                padding: const EdgeInsets.symmetric(horizontal: 18),
+                height: 44,
+                padding: const EdgeInsets.symmetric(horizontal: 14),
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [hc.primary, const Color(0xFF5A3E28)],
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF2B1E16), Color(0xFF1A120D)],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
-                  borderRadius: BorderRadius.circular(AppRadius.pill),
-                  border: Border.all(color: hc.accent, width: 1.6),
+                  border: Border.all(
+                    color: const Color(0xFFD4AF37),
+                    width: 1.5,
+                  ),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Container(
-                      width: 30,
-                      height: 30,
-                      decoration: BoxDecoration(
-                        color: hc.accent.withValues(alpha: 0.22),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        Icons.auto_awesome_rounded,
-                        color: hc.accent,
-                        size: 18,
-                      ),
+                    const Icon(
+                      Icons.auto_awesome_rounded,
+                      color: Color(0xFFD4AF37),
+                      size: 18,
                     ),
-                    const SizedBox(width: 10),
+                    const SizedBox(width: 7),
                     Text(
-                      'Tanya AI',
-                      style: context.text.labelLarge.copyWith(
-                        color: Colors.white,
+                      context.tr('ai.fabLabel'),
+                      style: const TextStyle(
+                        color: Color(0xFFF5E6C8),
                         fontWeight: FontWeight.w800,
-                        letterSpacing: 0.3,
+                        fontSize: 12.5,
+                        letterSpacing: 0.2,
                       ),
                     ),
                   ],
@@ -1333,4 +2535,3 @@ class HajiCareAiFabButton extends StatelessWidget {
     );
   }
 }
-

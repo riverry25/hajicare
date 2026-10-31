@@ -17,15 +17,15 @@ class AiServerConfig {
 
   static const String defaultBaseUrl = String.fromEnvironment(
     'HERMES_BASE_URL',
-    defaultValue: 'https://DOMAIN_STATIC_NGROK_KAMU.ngrok-free.app',
+    defaultValue: 'https://unbalance-compile-chariot.ngrok-free.dev',
   );
   static const String defaultApiKey = String.fromEnvironment(
     'HERMES_API_KEY',
-    defaultValue: 'rahasia_hajicare_2026',
+    defaultValue: 'sk-675b8dd28e37e08f-jrv5r5-49d88117',
   );
   static const String defaultModel = String.fromEnvironment(
     'HERMES_MODEL',
-    defaultValue: 'hermes',
+    defaultValue: 'ngoding-combo',
   );
 
   /// Path endpoint OpenAI-compatible chat completions.
@@ -34,8 +34,10 @@ class AiServerConfig {
   /// Path endpoint health-check server Hermes.
   static const String healthPath = '/health';
 
-  /// Penanda domain placeholder bawaan yang belum diganti pengguna.
+  /// Penanda domain placeholder lama yang otomatis dimigrasikan ke URL produksi.
   static const String _placeholderMarker = 'DOMAIN_STATIC_NGROK_KAMU';
+  static const String legacyDefaultApiKey = 'rahasia_hajicare_2026';
+  static const String legacyDefaultModel = 'hermes';
 
   static const AiServerConfig defaults = AiServerConfig(
     baseUrl: defaultBaseUrl,

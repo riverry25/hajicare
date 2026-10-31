@@ -47,6 +47,7 @@ class OledTextFormatter {
   };
 
   static final RegExp _lineBreaks = RegExp(r'[\r\n\t\f\v]+');
+  static final RegExp _bracketAnnotations = RegExp(r'\[[^\]]*\]');
   static final RegExp _nonPrintableAscii = RegExp(r'[^\x20-\x7E]');
   static final RegExp _markdown = RegExp(r'[*_`#~|]');
   static final RegExp _whitespace = RegExp(r'\s+');
@@ -55,13 +56,16 @@ class OledTextFormatter {
     caseSensitive: false,
   );
 
-  /// Bersihkan teks agar aman untuk OLED: ASCII-only, satu baris, ≤ [limit].
+  /// Bersihkan teks agar aman untuk OLED: ASCII-only, tanpa kurung siku `[...]`, satu baris, ≤ [limit].
   static String sanitize(String input, {int limit = maxLength}) {
     if (input.isEmpty || limit <= 0) return '';
 
     var text = input;
     _transliteration.forEach((from, to) => text = text.replaceAll(from, to));
     text = text
+        .replaceAll(_bracketAnnotations, ' ')
+        .replaceAll('[', '')
+        .replaceAll(']', '')
         .replaceAll(_lineBreaks, ' ')
         .replaceAll(_nonPrintableAscii, '')
         .replaceAll(_markdown, '')

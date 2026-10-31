@@ -13,6 +13,15 @@ enum AiChatStatus {
   error,
 }
 
+/// Jenis tombol aksi cepat kontekstual yang membantu jamaah langsung dari chat.
+enum AiContextualAction {
+  openMap,
+  openDua,
+  openPrayer,
+  openSos,
+  openSmartbandSheet,
+}
+
 /// Satu gelembung percakapan pada asisten AI.
 @immutable
 class AiChatMessage {
@@ -21,30 +30,45 @@ class AiChatMessage {
     required this.role,
     required this.text,
     required this.createdAt,
+    this.fullText,
+    this.isStreaming = false,
     this.status = AiChatStatus.done,
     this.oledText,
     this.isOfflineFallback = false,
     this.retryPrompt,
+    this.promptQuestion,
+    this.contextualActions = const <AiContextualAction>[],
   });
 
   factory AiChatMessage.user(String text) => AiChatMessage(
     id: _nextId(),
     role: AiChatRole.user,
     text: text,
+    fullText: text,
     createdAt: DateTime.now(),
   );
 
-  factory AiChatMessage.pending() => AiChatMessage(
+  factory AiChatMessage.pending({String? promptQuestion}) => AiChatMessage(
     id: _nextId(),
     role: AiChatRole.assistant,
     text: '',
     createdAt: DateTime.now(),
     status: AiChatStatus.pending,
+    promptQuestion: promptQuestion,
   );
 
   final String id;
   final AiChatRole role;
+
+  /// Teks yang sedang ditampilkan di layar (bertambah kata demi kata saat streaming).
   final String text;
+
+  /// Teks utuh untuk dibacakan oleh `flutter_tts` dan disalin ke clipboard.
+  final String? fullText;
+
+  /// True ketika efek pengetikan kata demi kata sedang berlangsung.
+  final bool isStreaming;
+
   final DateTime createdAt;
   final AiChatStatus status;
 
@@ -57,30 +81,50 @@ class AiChatMessage {
   /// Pertanyaan asal yang dapat dikirim ulang bila [status] == error.
   final String? retryPrompt;
 
+  /// Pertanyaan pengguna yang menghasilkan balasan ini (untuk tombol Regenerate ↻).
+  final String? promptQuestion;
+
+  /// Tombol aksi cepat kontekstual di bawah pesan asisten.
+  final List<AiContextualAction> contextualActions;
+
+  String get effectiveFullText =>
+      (fullText != null && fullText!.isNotEmpty) ? fullText! : text;
+
   bool get isUser => role == AiChatRole.user;
   bool get isAssistant => role == AiChatRole.assistant;
   bool get isPending => status == AiChatStatus.pending;
   bool get isError => status == AiChatStatus.error;
 
   /// Hanya pesan final non-error yang layak dibacakan ulang / jadi histori.
-  bool get isSpeakable => isAssistant && status == AiChatStatus.done && text.isNotEmpty;
+  bool get isSpeakable =>
+      isAssistant &&
+      status == AiChatStatus.done &&
+      effectiveFullText.isNotEmpty;
 
   AiChatMessage copyWith({
     String? text,
+    String? fullText,
+    bool? isStreaming,
     AiChatStatus? status,
     String? oledText,
     bool? isOfflineFallback,
     String? retryPrompt,
+    String? promptQuestion,
+    List<AiContextualAction>? contextualActions,
   }) {
     return AiChatMessage(
       id: id,
       role: role,
       text: text ?? this.text,
+      fullText: fullText ?? this.fullText,
+      isStreaming: isStreaming ?? this.isStreaming,
       createdAt: createdAt,
       status: status ?? this.status,
       oledText: oledText ?? this.oledText,
       isOfflineFallback: isOfflineFallback ?? this.isOfflineFallback,
       retryPrompt: retryPrompt ?? this.retryPrompt,
+      promptQuestion: promptQuestion ?? this.promptQuestion,
+      contextualActions: contextualActions ?? this.contextualActions,
     );
   }
 
@@ -95,20 +139,26 @@ class AiChatMessage {
           other.id == id &&
           other.role == role &&
           other.text == text &&
+          other.fullText == fullText &&
+          other.isStreaming == isStreaming &&
           other.status == status &&
           other.oledText == oledText &&
           other.isOfflineFallback == isOfflineFallback &&
-          other.retryPrompt == retryPrompt;
+          other.retryPrompt == retryPrompt &&
+          other.promptQuestion == promptQuestion &&
+          listEquals(other.contextualActions, contextualActions);
 
   @override
   int get hashCode => Object.hash(
     id,
     role,
     text,
+    fullText,
+    isStreaming,
     status,
     oledText,
     isOfflineFallback,
     retryPrompt,
+    promptQuestion,
   );
 }
-

@@ -12,6 +12,7 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/theme_context.dart';
 import '../../../core/widgets/app_card.dart';
 import '../../../core/widgets/bottom_nav_bar.dart';
+import '../../ai_assistant/widgets/hajicare_ai_widget.dart';
 import '../controllers/prayer_times_controller.dart';
 import '../widgets/next_prayer_luxury_hero.dart';
 import '../widgets/qibla_astrolabe_compass.dart';
@@ -37,22 +38,24 @@ class PrayerTimesScreen extends StatelessWidget {
       return Scaffold(
         backgroundColor: colors.canvas,
         extendBody: true,
-        body: RefreshIndicator(
-          onRefresh: () => controller.refreshLocation(),
-          color: colors.accent,
-          backgroundColor: colors.surface,
-          child: ResponsiveCenter(
-            maxWidth: AppBreakpoints.maxTabletContentWidth,
-            child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: EdgeInsets.fromLTRB(
-                AppSpacing.screenEdgeGutter,
-                MediaQuery.paddingOf(context).top,
-                AppSpacing.screenEdgeGutter,
-                100,
-              ),
-              child: Column(
-                children: [
+        body: Stack(
+          children: [
+            RefreshIndicator(
+              onRefresh: () => controller.refreshLocation(),
+              color: colors.accent,
+              backgroundColor: colors.surface,
+              child: ResponsiveCenter(
+                maxWidth: AppBreakpoints.maxTabletContentWidth,
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: EdgeInsets.fromLTRB(
+                    AppSpacing.screenEdgeGutter,
+                    MediaQuery.paddingOf(context).top,
+                    AppSpacing.screenEdgeGutter,
+                    156,
+                  ),
+                  child: Column(
+                    children: [
                   // Custom Page Header (replaces AppBar
                   _buildPageHeader(context, headingColor, isDark),
 
@@ -416,6 +419,12 @@ class PrayerTimesScreen extends StatelessWidget {
               ),
             ),
           ),
+        ),
+            if (showBottomNav)
+              const Positioned.fill(
+                child: HajiCareDraggableAiOverlay(bottomClearance: 114),
+              ),
+          ],
         ),
         bottomNavigationBar: showBottomNav
             ? const HajiCareBottomNavBar(currentIndex: 2)

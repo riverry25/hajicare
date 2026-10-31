@@ -50,15 +50,17 @@ class ProfileScreen extends StatelessWidget {
         return Scaffold(
           backgroundColor: scaffoldBg,
           extendBody: true,
-          body: ResponsiveCenter(
-            maxWidth: AppBreakpoints.maxTabletContentWidth,
-            child: ListView(
-              physics: const BouncingScrollPhysics(),
-              padding: EdgeInsets.only(
-                top: MediaQuery.paddingOf(context).top,
-                bottom: 100,
-              ),
-              children: [
+          body: Stack(
+            children: [
+              ResponsiveCenter(
+                maxWidth: AppBreakpoints.maxTabletContentWidth,
+                child: ListView(
+                  physics: const BouncingScrollPhysics(),
+                  padding: EdgeInsets.only(
+                    top: MediaQuery.paddingOf(context).top,
+                    bottom: 156,
+                  ),
+                  children: [
                 // Custom Page Header (replaces AppBar
                 _buildPageHeader(context, headingColor, isDark),
 
@@ -250,6 +252,12 @@ class ProfileScreen extends StatelessWidget {
                 const SizedBox(height: AppSpacing.md),
               ],
             ),
+          ),
+              if (showBottomNav)
+                const Positioned.fill(
+                  child: HajiCareDraggableAiOverlay(bottomClearance: 114),
+                ),
+            ],
           ),
           bottomNavigationBar: showBottomNav
               ? const HajiCareBottomNavBar(currentIndex: 3)

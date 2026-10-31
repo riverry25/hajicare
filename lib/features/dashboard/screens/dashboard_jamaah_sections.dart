@@ -22,7 +22,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
           ),
         ],
       ),
-      padding: const EdgeInsets.fromLTRB(20, 24, 20, 110),
+      padding: const EdgeInsets.fromLTRB(20, 24, 20, 168),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
