@@ -24,12 +24,41 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   late int _activeTabIndex;
   late final ScrollController _scrollController;
+  late LoginController _loginController;
+  late RegisterController _registerController;
 
   @override
   void initState() {
     super.initState();
     _activeTabIndex = widget.initialTab.clamp(0, 1);
     _scrollController = ScrollController();
+    _initControllers();
+  }
+
+  void _initControllers() {
+    if (Get.isRegistered<LoginController>()) {
+      final existing = Get.find<LoginController>();
+      if (existing.isClosed) {
+        Get.delete<LoginController>(force: true);
+        _loginController = Get.put(LoginController());
+      } else {
+        _loginController = existing;
+      }
+    } else {
+      _loginController = Get.put(LoginController());
+    }
+
+    if (Get.isRegistered<RegisterController>()) {
+      final existing = Get.find<RegisterController>();
+      if (existing.isClosed) {
+        Get.delete<RegisterController>(force: true);
+        _registerController = Get.put(RegisterController());
+      } else {
+        _registerController = existing;
+      }
+    } else {
+      _registerController = Get.put(RegisterController());
+    }
   }
 
   @override
@@ -55,8 +84,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final loginController = Get.find<LoginController>();
-    final registerController = Get.find<RegisterController>();
+    _initControllers();
+    final loginController = _loginController;
+    final registerController = _registerController;
     final colors = context.hc;
 
     return Scaffold(

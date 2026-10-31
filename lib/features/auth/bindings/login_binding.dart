@@ -5,7 +5,7 @@ import '../controllers/register_controller.dart';
 class LoginBinding extends Bindings {
   @override
   void dependencies() {
-    Get.lazyPut<LoginController>(() => LoginController());
-    Get.lazyPut<RegisterController>(() => RegisterController());
+    Get.lazyPut<LoginController>(() => LoginController(), fenix: true);
+    Get.lazyPut<RegisterController>(() => RegisterController(), fenix: true);
   }
 }

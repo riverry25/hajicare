@@ -29,8 +29,41 @@ class LoginController extends GetxController {
   final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
   Future<void>? _googleInitialization;
 
-  final emailController = TextEditingController();
-  final passwordController = TextEditingController();
+  TextEditingController _emailController = TextEditingController();
+  TextEditingController _passwordController = TextEditingController();
+
+  TextEditingController get emailController {
+    if (_isControllerDisposed(_emailController)) {
+      _emailController = TextEditingController();
+    }
+    return _emailController;
+  }
+
+  set emailController(TextEditingController value) {
+    _emailController = value;
+  }
+
+  TextEditingController get passwordController {
+    if (_isControllerDisposed(_passwordController)) {
+      _passwordController = TextEditingController();
+    }
+    return _passwordController;
+  }
+
+  set passwordController(TextEditingController value) {
+    _passwordController = value;
+  }
+
+  static bool _isControllerDisposed(TextEditingController c) {
+    try {
+      void dummy() {}
+      c.addListener(dummy);
+      c.removeListener(dummy);
+      return false;
+    } catch (_) {
+      return true;
+    }
+  }
 
   @override
   void onInit() {
@@ -781,11 +814,5 @@ class LoginController extends GetxController {
     );
   }
 
-  @override
-  void onClose() {
-    emailController.dispose();
-    passwordController.dispose();
 
-    super.onClose();
-  }
 }

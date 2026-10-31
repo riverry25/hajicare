@@ -15,11 +15,67 @@ class RegisterController extends GetxController {
   final isLoading = false.obs;
   final errorMessage = RxnString();
 
-  final fullNameController = TextEditingController();
-  final nikController = TextEditingController();
+  TextEditingController _fullNameController = TextEditingController();
+  TextEditingController _nikController = TextEditingController();
+  TextEditingController _emailController = TextEditingController();
+  TextEditingController _passwordController = TextEditingController();
+
+  TextEditingController get fullNameController {
+    if (_isControllerDisposed(_fullNameController)) {
+      _fullNameController = TextEditingController();
+    }
+    return _fullNameController;
+  }
+
+  set fullNameController(TextEditingController value) {
+    _fullNameController = value;
+  }
+
+  TextEditingController get nikController {
+    if (_isControllerDisposed(_nikController)) {
+      _nikController = TextEditingController();
+    }
+    return _nikController;
+  }
+
+  set nikController(TextEditingController value) {
+    _nikController = value;
+  }
+
   TextEditingController get porsiController => nikController;
-  final emailController = TextEditingController();
-  final passwordController = TextEditingController();
+
+  TextEditingController get emailController {
+    if (_isControllerDisposed(_emailController)) {
+      _emailController = TextEditingController();
+    }
+    return _emailController;
+  }
+
+  set emailController(TextEditingController value) {
+    _emailController = value;
+  }
+
+  TextEditingController get passwordController {
+    if (_isControllerDisposed(_passwordController)) {
+      _passwordController = TextEditingController();
+    }
+    return _passwordController;
+  }
+
+  set passwordController(TextEditingController value) {
+    _passwordController = value;
+  }
+
+  static bool _isControllerDisposed(TextEditingController c) {
+    try {
+      void dummy() {}
+      c.addListener(dummy);
+      c.removeListener(dummy);
+      return false;
+    } catch (_) {
+      return true;
+    }
+  }
 
   final selectedRole = 'jamaah'.obs;
 
@@ -182,12 +238,5 @@ class RegisterController extends GetxController {
     );
   }
 
-  @override
-  void onClose() {
-    fullNameController.dispose();
-    nikController.dispose();
-    emailController.dispose();
-    passwordController.dispose();
-    super.onClose();
-  }
+
 }
