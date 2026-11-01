@@ -22,19 +22,30 @@ class AiServerConfig {
 
   // 2. Endpoint Cadangan: OpenRouter Cloud (Jaring pengaman auto-fallback)
   static const String openRouterBaseUrl = 'https://openrouter.ai/api';
-  static const String openRouterModel = 'meta-llama/llama-3.3-70b-instruct:free';
+  static const String openRouterModel = 'dots-studio/dots-3-note-preview:free';
+
+  /// Penanda kunci sistem yang terenkripsi di vault lokal (tidak pernah dibocorkan ke UI).
+  static const String systemVaultMarker = '[TERLINDUNGI_SISTEM_VAULT]';
+
+  /// True jika menggunakan kunci bawaan sistem yang terproteksi aman.
+  static bool isSystemKey(String? key) {
+    if (key == null || key.trim().isEmpty) return true;
+    final k = key.trim();
+    return k == systemVaultMarker ||
+        k == AiSecretVault.groqApiKey ||
+        k == AiSecretVault.openRouterApiKey ||
+        k == legacyDefaultApiKey;
+  }
 
   static String get defaultBaseUrl => const String.fromEnvironment(
     'HERMES_BASE_URL',
     defaultValue: groqBaseUrl,
   );
 
-  static String get defaultApiKey => AiSecretVault.groqApiKey;
+  static String get defaultApiKey => systemVaultMarker;
 
-  static String get defaultModel => const String.fromEnvironment(
-    'HERMES_MODEL',
-    defaultValue: groqModel,
-  );
+  static String get defaultModel =>
+      const String.fromEnvironment('HERMES_MODEL', defaultValue: groqModel);
 
   /// Path endpoint OpenAI-compatible chat completions.
   static const String chatCompletionsPath = '/v1/chat/completions';
@@ -50,15 +61,15 @@ class AiServerConfig {
   static const String legacyDefaultApiKey = 'rahasia_hajicare_2026';
   static const String legacyDefaultModel = 'hermes';
 
-  static AiServerConfig get groqDefault => const AiServerConfig(
+  static AiServerConfig get groqDefault => AiServerConfig(
     baseUrl: groqBaseUrl,
-    apiKey: '',
+    apiKey: AiSecretVault.groqApiKey,
     model: groqModel,
   );
 
-  static AiServerConfig get openRouterFallback => const AiServerConfig(
+  static AiServerConfig get openRouterFallback => AiServerConfig(
     baseUrl: openRouterBaseUrl,
-    apiKey: '',
+    apiKey: AiSecretVault.openRouterApiKey,
     model: openRouterModel,
   );
 
@@ -105,7 +116,9 @@ class AiServerConfig {
     if (trimmed.isNotEmpty && trimmed != legacyDefaultApiKey) {
       return trimmed;
     }
-    return isOpenRouter ? AiSecretVault.openRouterApiKey : AiSecretVault.groqApiKey;
+    return isOpenRouter
+        ? AiSecretVault.openRouterApiKey
+        : AiSecretVault.groqApiKey;
   }
 
   Uri get chatCompletionsUri => Uri.parse('$baseUrl$chatCompletionsPath');
@@ -164,10 +177,20 @@ class AiServerConfig {
     return null;
   }
 
+  /// Kunci API riil yang digunakan untuk memanggil endpoint AI (diamankan via AiSecretVault jika memakai kunci sistem).
+  String get resolvedApiKey {
+    if (isSystemKey(apiKey)) {
+      if (isOpenRouter) {
+        return AiSecretVault.openRouterApiKey;
+      }
+      return AiSecretVault.groqApiKey;
+    }
+    return apiKey.trim();
+  }
+
   static String? validateApiKey(String raw) {
     final key = raw.trim();
-    if (key.isEmpty) return null;
-    if (key.length < 8) return 'API key kustom terlalu pendek (minimal 8 karakter).';
+    if (key.isEmpty) return 'API key wajib diisi.';
     if (key.contains(RegExp(r'\s'))) return 'API key tidak boleh berisi spasi.';
     return null;
   }
@@ -179,10 +202,8 @@ class AiServerConfig {
 
   /// API key yang disamarkan untuk ditampilkan di UI, mis. `gsk•••••SoX`.
   String get maskedApiKey {
-    if (!isCustomApiKey) return '●●●●●●●● (Protected Cloud)';
-    final trimmed = apiKey.trim();
-    if (trimmed.length <= 6) return '•' * trimmed.length;
-    return '${trimmed.substring(0, 3)}•••••${trimmed.substring(trimmed.length - 3)}';
+    if (apiKey.length <= 6) return '•' * apiKey.length;
+    return '${apiKey.substring(0, 3)}•••••${apiKey.substring(apiKey.length - 3)}';
   }
 
   AiServerConfig copyWith({String? baseUrl, String? apiKey, String? model}) {
