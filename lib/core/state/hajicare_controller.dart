@@ -1,6 +1,7 @@
 // ignore_for_file: use_null_aware_elements
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:geolocator/geolocator.dart';
@@ -112,6 +113,7 @@ class HajiCareController extends GetxController {
   StreamSubscription<Position>? _gpsStreamSub;
   int _sessionGeneration = 0;
   DateTime? _lastLocationBroadcastTime;
+  bool _lastHadCriticalAnomaly = false;
   Position? _lastBroadcastPosition;
 
   // Realtime SOS Events from Firestore
@@ -767,6 +769,16 @@ class HajiCareController extends GetxController {
           j.sosActive = effectiveSosActive;
           j.refresh();
         }
+        // Update live smartband fields
+        j.isSmartbandConnected = member.isSmartbandConnected;
+        j.heartRate = member.heartRate;
+        j.temperature = member.temperature;
+        j.spo2 = member.spo2;
+        j.fallDetected = member.fallDetected;
+        j.fallStatus = member.fallStatus;
+        j.batteryLevel = member.batteryLevel;
+        j.braceletId = member.braceletId;
+        j.smartbandUpdatedAt = member.smartbandUpdatedAt;
       } else {
         final newJ = JamaahData(
           id: member.uid,
@@ -779,11 +791,26 @@ class HajiCareController extends GetxController {
           onlineStatus: true,
           activeRoomId: activeRoomId.value,
           sosActive: isMemberActiveInSos && member.sosActive,
+          isSmartbandConnected: member.isSmartbandConnected,
+          heartRate: member.heartRate,
+          temperature: member.temperature,
+          spo2: member.spo2,
+          fallDetected: member.fallDetected,
+          fallStatus: member.fallStatus,
+          batteryLevel: member.batteryLevel,
+          braceletId: member.braceletId,
+          smartbandUpdatedAt: member.smartbandUpdatedAt,
         );
         jamaahList.add(newJ);
       }
     }
     _recalculateRealDistance();
+    final hasCriticalNow = jamaahList.any((j) => j.hasCriticalAnomaly);
+    if (hasCriticalNow && !_lastHadCriticalAnomaly) {
+      HapticFeedback.heavyImpact();
+    }
+    _lastHadCriticalAnomaly = hasCriticalNow;
+    jamaahList.refresh();
   }
 
   void _listenToSelf(String uid) {
@@ -1631,6 +1658,14 @@ class HajiCareController extends GetxController {
         (j) =>
             j.sosActive && (activeSosEvents.isNotEmpty || currentUid == null),
       );
+
+  List<JamaahData> get criticalAnomalyJamaahList =>
+      jamaahList.where((j) => j.hasCriticalAnomaly).toList();
+
+  List<JamaahData> get allAnomalyJamaahList =>
+      jamaahList.where((j) => j.hasAnyWarningOrAnomaly).toList();
+
+  bool get anyJamaahCriticalAnomaly => criticalAnomalyJamaahList.isNotEmpty;
 
   List<JamaahData> get separatedJamaahList {
     final maxRadius = safeRadiusMeters.value;

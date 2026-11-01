@@ -8,11 +8,17 @@ import '../../../core/state/app_settings_controller.dart';
 import '../models/ai_chat_message.dart';
 import '../models/ai_server_config.dart';
 import '../models/ai_server_status.dart';
+import '../models/ai_stream_event.dart';
+import '../models/ai_voice_phase.dart';
 import '../models/oled_display_state.dart';
 import '../models/sensor_context.dart';
 import '../repositories/ai_assistant_repository.dart';
 import '../services/ai_voice_service.dart';
 import '../services/hermes_ai_service.dart';
+import 'dart:typed_data';
+import '../../../core/utils/app_logger.dart';
+import '../../smartband/services/smartband_ble_service.dart';
+import '../services/audio_transcription_service.dart';
 import '../services/smartband_ai_bridge_service.dart';
 
 /// Item topik bantuan cepat untuk pengguna pada tampilan awal & quick chips.
@@ -166,6 +172,17 @@ class HajiCareAiController extends GetxController {
   final RxnString statusBannerMessage = RxnString();
   final RxString lastSpokenOrReplyText = ''.obs;
 
+  // State Fase Suara, Streaming Turn, & Mute Sesi
+  final Rx<AiVoicePhase> voicePhase = AiVoicePhase.idle.obs;
+  final RxString currentTurnQuestion = ''.obs;
+  final RxString currentTurnReply = ''.obs;
+  final RxBool isMuted = false.obs;
+
+  int _turnGeneration = 0;
+  StreamSubscription<AiTurnEvent>? _currentTurnSubscription;
+  StreamSubscription<bool>? _smartbandAiListeningSub;
+  StreamSubscription<Uint8List>? _smartbandAudioSub;
+
   // State Posisi & Pengecilan Tombol Floating AI (Sinkron di Beranda, Jadwal Salat, & Profil)
   final RxBool fabDockedRight = true.obs;
   final RxDouble fabVerticalFraction = 0.76.obs;
@@ -176,6 +193,11 @@ class HajiCareAiController extends GetxController {
   Timer? _streamingTimer;
   Worker? _localeWorker;
   String? _activeStreamingMessageId;
+  String _streamingTargetText = '';
+  String _streamingDisplayedText = '';
+  bool _streamingTargetDone = false;
+  AiTurnDone? _pendingTurnDone;
+  String? _currentTurnPromptQuestion;
 
   AiAssistantRepository get repository => _repository;
 
@@ -201,6 +223,7 @@ class HajiCareAiController extends GetxController {
     if (_autoInitPlatformServices) {
       unawaited(_initializeAsync());
       _startSensorSyncTimer();
+      _bindSmartbandAiVoiceStream();
     }
   }
 
@@ -273,12 +296,91 @@ class HajiCareAiController extends GetxController {
     );
   }
 
+  void _recomputeVoicePhase() {
+    if (isListening.value) {
+      voicePhase.value = AiVoicePhase.listening;
+    } else if (isSending.value) {
+      if (currentTurnReply.value.trim().isEmpty) {
+        voicePhase.value = AiVoicePhase.thinking;
+      } else {
+        voicePhase.value = AiVoicePhase.answering;
+      }
+    } else if (isSpeaking.value) {
+      voicePhase.value = AiVoicePhase.answering;
+    } else {
+      voicePhase.value = AiVoicePhase.idle;
+    }
+  }
+
+
+  /// Kaitkan aliran perekaman audio INMP441 & status mic dari gelang fisik ESP32-S3
+  void _bindSmartbandAiVoiceStream() {
+    try {
+      final bleService = Get.isRegistered<SmartbandBleService>()
+          ? Get.find<SmartbandBleService>()
+          : null;
+      if (bleService == null) return;
+
+      _smartbandAiListeningSub?.cancel();
+      _smartbandAiListeningSub = bleService.smartbandAiListeningStream.listen(
+        (isListeningFromBand) {
+          if (isListeningFromBand) {
+            voicePhase.value = AiVoicePhase.listening;
+            voiceStatusMessage.value = 'Mendengarkan suara dari Smartband (INMP441)...';
+          } else {
+            if (voicePhase.value == AiVoicePhase.listening) {
+              voicePhase.value = AiVoicePhase.thinking;
+              voiceStatusMessage.value = 'Memproses rekaman suara gelang...';
+            }
+          }
+        },
+      );
+
+      _smartbandAudioSub?.cancel();
+      _smartbandAudioSub = bleService.completePcmAudioRecordingStream.listen(
+        (pcmBytes) async {
+          await _handleSmartbandAudioRecording(pcmBytes);
+        },
+      );
+    } catch (e) {
+      AppLogger.warn('Gagal mengaitkan aliran suara Smartband BLE: $e', tag: 'HajiCareAi');
+    }
+  }
+
+  /// Memproses rekaman audio PCM mentah dari gelang via AudioTranscriptionService lalu menjalankan AI
+  Future<void> _handleSmartbandAudioRecording(Uint8List pcmBytes) async {
+    try {
+      voicePhase.value = AiVoicePhase.thinking;
+      voiceStatusMessage.value = 'Mentranskripsi suara dari gelang...';
+      unawaited(_repository.smartbandBridge.streamTokenToSmartbandOled('Memproses suara...'));
+
+      final text = await AudioTranscriptionService.instance.transcribePcm(pcmBytes);
+      if (text.trim().isEmpty) {
+        voiceStatusMessage.value = 'Suara tidak terdengar jelas';
+        unawaited(_repository.smartbandBridge.streamTokenToSmartbandOled('Suara tidak jelas. Coba lagi.', isFinal: true));
+        voicePhase.value = AiVoicePhase.idle;
+        return;
+      }
+
+      voiceStatusMessage.value = text;
+      recognizedText.value = text;
+
+      // Jalankan proses tanya-jawab AI streaming otomatis & bacakan via TTS
+      await sendQuestion(text);
+    } catch (e) {
+      AppLogger.error('Gagal memproses audio dari smartband: $e', tag: 'HajiCareAi');
+      unawaited(_repository.smartbandBridge.streamTokenToSmartbandOled('Gagal proses audio', isFinal: true));
+      voicePhase.value = AiVoicePhase.idle;
+    }
+  }
+
   void _bindVoiceCallbacks() {
     _voiceService.onSpeakingChanged = (speaking) {
       isSpeaking.value = speaking;
       if (!speaking) {
         activeSpeakingMessageId.value = null;
       }
+      _recomputeVoicePhase();
     };
 
     _voiceService.onListeningChanged = (listening, statusMsg) {
@@ -287,6 +389,7 @@ class HajiCareAiController extends GetxController {
       if (!listening) {
         soundLevel.value = 0.0;
       }
+      _recomputeVoicePhase();
     };
 
     _voiceService.onSpeechResult = (words, isFinal) {
@@ -295,7 +398,11 @@ class HajiCareAiController extends GetxController {
         isListening.value = false;
         final finalQuery = words.trim();
         recognizedText.value = '';
-        unawaited(sendQuestion(finalQuery, autoSpeak: true));
+        currentTurnQuestion.value = finalQuery;
+        currentTurnReply.value = '';
+        isSending.value = true;
+        _recomputeVoicePhase();
+        unawaited(sendQuestion(finalQuery, autoSpeak: !isMuted.value));
       }
     };
 
@@ -388,20 +495,44 @@ class HajiCareAiController extends GetxController {
 
   /// Tutup Mode Suara Penuh dan kembali ke ruang chat.
   Future<void> closeVoiceMode() async {
+    isVoiceModeOpen.value = false;
     if (isListening.value) {
       await _voiceService.stopListening();
       isListening.value = false;
     }
-    isVoiceModeOpen.value = false;
+    await cancelCurrentTurn();
   }
 
-  /// Kirim pertanyaan pengguna ke Hermes Agent, tampilkan dengan efek
-  /// pengetikan kata demi kata (*word-by-word*), kirim ringkasan ke OLED gelang,
-  /// dan bacakan dengan TTS.
+  /// Aktifkan / nonaktifkan suara AI untuk sesi saat ini (mute suara).
+  void toggleMute() {
+    isMuted.value = !isMuted.value;
+    if (isMuted.value) {
+      stopSpeaking();
+    }
+  }
+
+  /// Batalkan permintaan tanya-jawab yang sedang berjalan dan hentikan suara TTS.
+  Future<void> cancelCurrentTurn() async {
+    _turnGeneration++;
+    await _currentTurnSubscription?.cancel();
+    _currentTurnSubscription = null;
+    isSending.value = false;
+    await stopSpeaking();
+    _recomputeVoicePhase();
+  }
+
+  /// Kirim pertanyaan pengguna ke Hermes Agent, tampilkan secara streaming
+  /// langsung dari token pertama, kirim ringkasan ke OLED gelang,
+  /// dan bacakan beruntun per kalimat dengan TTS.
   Future<void> sendQuestion(String rawQuestion, {bool autoSpeak = true}) async {
     final question = rawQuestion.trim();
-    if (question.isEmpty || isSending.value) return;
+    if (question.isEmpty) return;
 
+    // Batalkan turn streaming sebelumnya jika masih berjalan
+    _turnGeneration++;
+    final currentGen = _turnGeneration;
+    await _currentTurnSubscription?.cancel();
+    _currentTurnSubscription = null;
     completeActiveStreamImmediately();
 
     if (isListening.value) {
@@ -409,6 +540,10 @@ class HajiCareAiController extends GetxController {
       isListening.value = false;
     }
     await _voiceService.stopSpeaking();
+
+    // Hapus balasan lama dan simpan pertanyaan turn saat ini agar UI tidak menampilkan jawaban lama
+    currentTurnQuestion.value = question;
+    currentTurnReply.value = '';
 
     final historySnapshot = List<AiChatMessage>.from(messages);
     final userMsg = AiChatMessage.user(question);
@@ -418,67 +553,104 @@ class HajiCareAiController extends GetxController {
     isSending.value = true;
     statusBannerMessage.value = null;
     _refreshSensorSnapshot();
+    _recomputeVoicePhase(); // Otomatis beralih ke AiVoicePhase.thinking
+
+    final effectiveAutoSpeak = autoSpeak && !isMuted.value;
+    _streamingTargetText = '';
+    _streamingDisplayedText = '';
+    _streamingTargetDone = false;
+    _pendingTurnDone = null;
+    _activeStreamingMessageId = pendingMsg.id;
+    _currentTurnPromptQuestion = question;
 
     try {
-      final outcome = await _repository.askQuestion(
+      final stream = _repository.askQuestionStream(
         question: question,
         history: historySnapshot,
+        concise: isVoiceModeOpen.value,
       );
 
-      final fullSpeech = outcome.reply.speech;
-      final actions = HermesAiService.inferContextualActions(
-        question: question,
-        replySpeech: fullSpeech,
-        sensor: outcome.sensorSnapshot,
+      _currentTurnSubscription = stream.listen(
+        (event) {
+          if (_turnGeneration != currentGen) return;
+
+          if (event is AiTurnDelta) {
+            currentTurnReply.value = event.speechSoFar;
+            _recomputeVoicePhase(); // Beralih ke AiVoicePhase.answering
+
+            _feedStreamingText(
+              messageId: pendingMsg.id,
+              promptQuestion: question,
+              targetText: event.speechSoFar,
+              currentGen: currentGen,
+            );
+
+            if (effectiveAutoSpeak) {
+              _voiceService.feedStreamingSpeech(event.speechSoFar);
+            }
+            unawaited(_repository.smartbandBridge.streamTokenToSmartbandOled(event.speechSoFar));
+          } else if (event is AiTurnDone) {
+            final fullSpeech = event.reply.speech;
+
+            currentTurnReply.value = fullSpeech;
+            lastSpokenOrReplyText.value = fullSpeech;
+            oledState.value = event.oledState;
+            _triggerOledLedPulse();
+
+            if (!event.reply.isOfflineFallback) {
+              serverStatus.value = AiServerStatus(
+                health: AiServerHealth.online,
+                message: 'Terhubung ke Hermes Agent',
+                checkedAt: DateTime.now(),
+              );
+            }
+
+            isSending.value = false;
+            _recomputeVoicePhase();
+
+            if (effectiveAutoSpeak) {
+              _voiceService.finishStreamingSpeech(fullSpeech);
+            }
+            unawaited(_repository.smartbandBridge.streamTokenToSmartbandOled(fullSpeech, isFinal: true));
+
+            _streamingTargetText = fullSpeech;
+            _streamingTargetDone = true;
+            _pendingTurnDone = event;
+
+            _feedStreamingText(
+              messageId: pendingMsg.id,
+              promptQuestion: question,
+              targetText: fullSpeech,
+              currentGen: currentGen,
+            );
+          }
+        },
+        onError: (err) {
+          if (_turnGeneration != currentGen) return;
+          isSending.value = false;
+          _recomputeVoicePhase();
+          final errText = AppTranslations.tr('ai.errorProcessingQuestion');
+          final errMsg = pendingMsg.copyWith(
+            text: errText,
+            fullText: errText,
+            isStreaming: false,
+            status: AiChatStatus.error,
+            retryPrompt: question,
+            promptQuestion: question,
+          );
+          _replaceMessage(pendingMsg.id, errMsg);
+        },
+        onDone: () {
+          if (_turnGeneration == currentGen) {
+            isSending.value = false;
+            _recomputeVoicePhase();
+          }
+        },
       );
-
-      lastSpokenOrReplyText.value = fullSpeech;
-      oledState.value = outcome.oledState;
-      _triggerOledLedPulse();
-
-      if (!outcome.reply.isOfflineFallback) {
-        serverStatus.value = AiServerStatus(
-          health: AiServerHealth.online,
-          message: 'Terhubung ke Hermes Agent',
-          checkedAt: DateTime.now(),
-        );
-      }
-
-      if (_autoInitPlatformServices) {
-        final initialMsg = pendingMsg.copyWith(
-          text: _takeFirstWords(fullSpeech, 3),
-          fullText: fullSpeech,
-          isStreaming: true,
-          oledText: outcome.oledState.text,
-          status: AiChatStatus.done,
-          isOfflineFallback: outcome.reply.isOfflineFallback,
-          promptQuestion: question,
-          contextualActions: actions,
-        );
-        _replaceMessage(pendingMsg.id, initialMsg);
-        isSending.value = false;
-        _startWordByWordStream(initialMsg.id, fullSpeech);
-        if (autoSpeak) {
-          unawaited(speakMessage(initialMsg));
-        }
-      } else {
-        final doneMsg = pendingMsg.copyWith(
-          text: fullSpeech,
-          fullText: fullSpeech,
-          isStreaming: false,
-          oledText: outcome.oledState.text,
-          status: AiChatStatus.done,
-          isOfflineFallback: outcome.reply.isOfflineFallback,
-          promptQuestion: question,
-          contextualActions: actions,
-        );
-        _replaceMessage(pendingMsg.id, doneMsg);
-        isSending.value = false;
-        if (autoSpeak) {
-          await speakMessage(doneMsg);
-        }
-      }
     } catch (_) {
+      if (_turnGeneration != currentGen) return;
+      isSending.value = false;
+      _recomputeVoicePhase();
       final errText = AppTranslations.tr('ai.errorProcessingQuestion');
       final errMsg = pendingMsg.copyWith(
         text: errText,
@@ -489,8 +661,6 @@ class HajiCareAiController extends GetxController {
         promptQuestion: question,
       );
       _replaceMessage(pendingMsg.id, errMsg);
-    } finally {
-      isSending.value = false;
     }
   }
 
@@ -519,70 +689,170 @@ class HajiCareAiController extends GetxController {
     }
   }
 
-  static String _takeFirstWords(String text, int count) {
-    final words = text
-        .split(RegExp(r'\s+'))
-        .where((w) => w.isNotEmpty)
-        .toList();
-    if (words.length <= count) return text;
-    return words.take(count).join(' ');
+  void _feedStreamingText({
+    required String messageId,
+    required String promptQuestion,
+    required String targetText,
+    required int currentGen,
+  }) {
+    if (_turnGeneration != currentGen) return;
+    _activeStreamingMessageId = messageId;
+    _currentTurnPromptQuestion = promptQuestion;
+    _streamingTargetText = targetText;
+
+    if (_streamingTimer == null) {
+      _stepStreamingPacer(currentGen);
+    }
   }
 
-  /// Efek pengetikan kata demi kata (*word-by-word typewriter streaming*)
-  /// yang dioptimasi (50ms per 4 kata) agar mulus 60fps tanpa membebani main thread.
-  void _startWordByWordStream(String messageId, String fullText) {
+  void _scheduleNextPacerTick(int currentGen) {
     _streamingTimer?.cancel();
-    _activeStreamingMessageId = messageId;
-
-    final words = fullText
-        .split(RegExp(r'\s+'))
-        .where((w) => w.isNotEmpty)
-        .toList();
-    if (words.length <= 3) {
-      completeActiveStreamImmediately();
-      return;
-    }
-
-    var currentWordCount = 3;
-    _streamingTimer = Timer.periodic(const Duration(milliseconds: 50), (timer) {
-      final idx = messages.indexWhere((m) => m.id == messageId);
-      if (idx < 0) {
-        timer.cancel();
-        _activeStreamingMessageId = null;
-        return;
-      }
-
-      currentWordCount += 4;
-      if (currentWordCount >= words.length) {
-        messages[idx] = messages[idx].copyWith(
-          text: fullText,
-          isStreaming: false,
-        );
-        timer.cancel();
-        _activeStreamingMessageId = null;
-      } else {
-        messages[idx] = messages[idx].copyWith(
-          text: words.take(currentWordCount).join(' '),
-          isStreaming: true,
-        );
-      }
+    if (_activeStreamingMessageId == null || _turnGeneration != currentGen) return;
+    _streamingTimer = Timer(const Duration(milliseconds: 25), () {
+      _stepStreamingPacer(currentGen);
     });
   }
 
-  /// Selesaikan animasi ketik kata demi kata secara instan (misal saat diketuk).
+  void _stepStreamingPacer(int currentGen) {
+    if (_turnGeneration != currentGen) {
+      _streamingTimer?.cancel();
+      _streamingTimer = null;
+      return;
+    }
+
+    final messageId = _activeStreamingMessageId;
+    if (messageId == null) {
+      _streamingTimer?.cancel();
+      _streamingTimer = null;
+      return;
+    }
+
+    if (_streamingDisplayedText.length < _streamingTargetText.length) {
+      final remaining = _streamingTargetText.substring(_streamingDisplayedText.length);
+      final lag = remaining.length;
+
+      // Adaptive word pacing:
+      // - Normal: ambil 1 kata
+      // - Sedang (lag > 40): ambil 2 kata
+      // - Cepat (lag > 120): ambil 3-4 kata agar tidak tertinggal jauh
+      final int minStep;
+      if (lag > 120) {
+        minStep = 28;
+      } else if (lag > 40) {
+        minStep = 14;
+      } else {
+        minStep = 4;
+      }
+
+      final charsToTake = _findWordBoundary(remaining, minStep);
+      _streamingDisplayedText = _streamingTargetText.substring(
+        0,
+        _streamingDisplayedText.length + charsToTake,
+      );
+
+      final idx = messages.indexWhere((m) => m.id == messageId);
+      if (idx >= 0) {
+        final currentMsg = messages[idx];
+        messages[idx] = currentMsg.copyWith(
+          text: _streamingDisplayedText,
+          fullText: _streamingTargetText,
+          isStreaming: true,
+          status: AiChatStatus.done,
+          promptQuestion: _currentTurnPromptQuestion,
+        );
+      }
+    }
+
+    if (_streamingDisplayedText.length < _streamingTargetText.length) {
+      _scheduleNextPacerTick(currentGen);
+    } else if (_streamingTargetDone) {
+      _finalizeStreaming(messageId, currentGen);
+    } else {
+      _streamingTimer?.cancel();
+      _streamingTimer = null;
+    }
+  }
+
+  int _findWordBoundary(String text, int minLength) {
+    if (text.length <= minLength) return text.length;
+    for (var i = minLength; i < text.length; i++) {
+      final c = text[i];
+      if (c == ' ' || c == '\n' || c == '\t' || c == '.' || c == ',' || c == '!' || c == '?') {
+        return i + 1;
+      }
+    }
+    return text.length;
+  }
+
+  void _finalizeStreaming(String messageId, int currentGen) {
+    if (_turnGeneration != currentGen) return;
+    _streamingTimer?.cancel();
+    _streamingTimer = null;
+    _activeStreamingMessageId = null;
+
+    final doneEvent = _pendingTurnDone;
+    _pendingTurnDone = null;
+    _streamingTargetDone = false;
+
+    final idx = messages.indexWhere((m) => m.id == messageId);
+    if (idx >= 0) {
+      final currentMsg = messages[idx];
+      final fullSpeech = doneEvent?.reply.speech ?? _streamingTargetText;
+      final actions = doneEvent != null
+          ? HermesAiService.inferContextualActions(
+              question: currentMsg.promptQuestion ?? '',
+              replySpeech: fullSpeech,
+              sensor: doneEvent.sensorSnapshot,
+            )
+          : currentMsg.contextualActions;
+
+      messages[idx] = currentMsg.copyWith(
+        text: fullSpeech,
+        fullText: fullSpeech,
+        isStreaming: false,
+        oledText: doneEvent?.reply.oled ?? currentMsg.oledText,
+        status: AiChatStatus.done,
+        isOfflineFallback: doneEvent?.reply.isOfflineFallback ?? currentMsg.isOfflineFallback,
+        promptQuestion: currentMsg.promptQuestion,
+        contextualActions: actions,
+      );
+    }
+  }
+
+  /// Selesaikan animasi ketik kata demi kata secara instan (misal saat gelembung diketuk).
   void completeActiveStreamImmediately() {
     _streamingTimer?.cancel();
     _streamingTimer = null;
     final id = _activeStreamingMessageId;
-    _activeStreamingMessageId = null;
-    if (id == null) return;
+    final doneEvent = _pendingTurnDone;
+    final target = _streamingTargetText;
 
+    _activeStreamingMessageId = null;
+    _streamingTargetDone = false;
+    _pendingTurnDone = null;
+
+    if (id == null) return;
     final idx = messages.indexWhere((m) => m.id == id);
     if (idx >= 0) {
-      final msg = messages[idx];
-      messages[idx] = msg.copyWith(
-        text: msg.effectiveFullText,
+      final currentMsg = messages[idx];
+      final fullSpeech = doneEvent?.reply.speech ?? (target.isNotEmpty ? target : currentMsg.effectiveFullText);
+      final actions = doneEvent != null
+          ? HermesAiService.inferContextualActions(
+              question: currentMsg.promptQuestion ?? '',
+              replySpeech: fullSpeech,
+              sensor: doneEvent.sensorSnapshot,
+            )
+          : currentMsg.contextualActions;
+
+      messages[idx] = currentMsg.copyWith(
+        text: fullSpeech,
+        fullText: fullSpeech,
         isStreaming: false,
+        oledText: doneEvent?.reply.oled ?? currentMsg.oledText,
+        status: AiChatStatus.done,
+        isOfflineFallback: doneEvent?.reply.isOfflineFallback ?? currentMsg.isOfflineFallback,
+        promptQuestion: currentMsg.promptQuestion,
+        contextualActions: actions,
       );
     }
   }
@@ -650,7 +920,7 @@ class HajiCareAiController extends GetxController {
     isListening.value = false;
     if (captured.isNotEmpty) {
       recognizedText.value = '';
-      await sendQuestion(captured, autoSpeak: true);
+      await sendQuestion(captured, autoSpeak: !isMuted.value);
     }
   }
 
@@ -665,6 +935,9 @@ class HajiCareAiController extends GetxController {
 
   @override
   void onClose() {
+    _currentTurnSubscription?.cancel();
+    _smartbandAiListeningSub?.cancel();
+    _smartbandAudioSub?.cancel();
     _localeWorker?.dispose();
     _sensorSyncTimer?.cancel();
     _ledPulseTimer?.cancel();

@@ -61,9 +61,33 @@ class AdminDashboardScreen extends StatelessWidget {
                 controller: controller,
                 dashboardCtrl: dashboardCtrl,
               ),
-              const InteractiveMapScreen(showBottomNav: false),
-              const PrayerTimesScreen(showBottomNav: false),
-              const ProfileScreen(showBottomNav: false),
+              if (dashboardCtrl.visitedTabs.contains(1))
+                TickerMode(
+                  enabled: dashboardCtrl.currentIndex.value == 1,
+                  child: const RepaintBoundary(
+                    child: InteractiveMapScreen(showBottomNav: false),
+                  ),
+                )
+              else
+                const SizedBox.shrink(),
+              if (dashboardCtrl.visitedTabs.contains(2))
+                TickerMode(
+                  enabled: dashboardCtrl.currentIndex.value == 2,
+                  child: const RepaintBoundary(
+                    child: PrayerTimesScreen(showBottomNav: false),
+                  ),
+                )
+              else
+                const SizedBox.shrink(),
+              if (dashboardCtrl.visitedTabs.contains(3))
+                TickerMode(
+                  enabled: dashboardCtrl.currentIndex.value == 3,
+                  child: const RepaintBoundary(
+                    child: ProfileScreen(showBottomNav: false),
+                  ),
+                )
+              else
+                const SizedBox.shrink(),
             ],
           ),
         ),

@@ -250,6 +250,9 @@ class _DistanceWavePainter extends CustomPainter {
     _drawDistanceLabel(canvas, size);
   }
 
+  static TextPainter? _cachedValuePainter;
+  static String? _cachedValueKey;
+
   void _drawDistanceLabel(Canvas canvas, Size size) {
     final w = size.width;
 
@@ -267,7 +270,9 @@ class _DistanceWavePainter extends CustomPainter {
       unitText = ' m';
     }
 
-    final valuePainter = TextPainter(
+    final cacheKey = '$valueText|$unitText|${waveColor.toARGB32()}';
+    var valuePainter = _cachedValueKey == cacheKey ? _cachedValuePainter : null;
+    valuePainter ??= TextPainter(
       text: TextSpan(
         children: [
           TextSpan(
@@ -292,6 +297,8 @@ class _DistanceWavePainter extends CustomPainter {
       ),
       textDirection: TextDirection.ltr,
     )..layout();
+    _cachedValueKey = cacheKey;
+    _cachedValuePainter = valuePainter;
 
     final xPos = w - valuePainter.width - 8;
     const yPos = 6.0;

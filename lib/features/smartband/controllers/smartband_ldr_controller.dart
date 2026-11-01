@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:latlong2/latlong.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/services/location_service.dart';
@@ -38,6 +40,8 @@ class SmartbandLdrController extends GetxController {
 
   /// Service penyimpanan data ke local storage
   final SmartbandStorageService _storage = SmartbandStorageService.instance;
+  DateTime? _lastCloudSyncTime;
+  bool _lastEmergencyState = false;
 
   /// Flag bahwa data riwayat pernah dimuat dari storage
   final RxBool hasRestoredData = false.obs;
@@ -132,6 +136,12 @@ class SmartbandLdrController extends GetxController {
   final Rxn<int> batteryPercent = Rxn<int>();
   final Rxn<double> batteryVoltage = Rxn<double>();
   final RxBool isCharging = false.obs;
+
+  // 9. AI Voice Assistant & Step Counter MPU6050 ESP32-S3 v2.3
+  final RxBool isSmartbandRecordingVoice = false.obs;
+  final RxDouble smartbandStepDistanceM = 0.0.obs;
+  StreamSubscription<bool>? _aiListeningSub;
+  StreamSubscription<DocumentSnapshot>? _commandSub;
 
   // 9. Riwayat Telemetri Dinamis untuk Grafik Tren
   final RxList<double> hrHistory = <double>[].obs;
@@ -278,6 +288,37 @@ class SmartbandLdrController extends GetxController {
     _subscribeToBleService();
     _startRelativeTimeTicker();
     _startSafeRadiusWatcher();
+    _listenForCompanionCommands();
+  }
+
+  /// Mendengarkan perintah kendali jarak jauh dari Pendamping via Firestore (mis. Buzzer / Getar OLED)
+  void _listenForCompanionCommands() {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) return;
+      _commandSub?.cancel();
+      _commandSub = FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .snapshots()
+          .listen((doc) {
+            if (!doc.exists) return;
+            final data = doc.data();
+            if (data == null) return;
+            final cmd = data['smartbandCommand'] as Map<String, dynamic>?;
+            if (cmd != null && cmd['type'] == 'ALERT_BUZZER') {
+              final msg = (cmd['message'] as String?) ?? 'Panggilan Pendamping';
+              AppLogger.info('Menerima perintah buzzer/getar dari pendamping: $msg', tag: 'SmartbandLdr');
+              bleService.showAiReplyOnOled(msg);
+              bleService.triggerRadiusAlert(true);
+              FirebaseFirestore.instance.collection('users').doc(user.uid).update({
+                'smartbandCommand': FieldValue.delete(),
+              });
+            }
+          });
+    } catch (e) {
+      debugPrint('[SmartbandLdr] Error setting up companion commands listener: $e');
+    }
   }
 
   /// Inisialisasi storage
@@ -296,17 +337,17 @@ class SmartbandLdrController extends GetxController {
 
   void _startSafeRadiusWatcher() {
     _safeRadiusWatcherTimer?.cancel();
-    _safeRadiusWatcherTimer = Timer.periodic(const Duration(milliseconds: 300), (_) {
+    _safeRadiusWatcherTimer = Timer.periodic(const Duration(milliseconds: 1000), (_) {
       if (Get.isRegistered<HajiCareController>()) {
         final hajiCtrl = Get.find<HajiCareController>();
         final radius = hajiCtrl.safeRadiusMeters.value;
-        activeSafeRadius.value = radius;
-        safeRadiusMeters.value = radius;
+        if (activeSafeRadius.value != radius) activeSafeRadius.value = radius;
+        if (safeRadiusMeters.value != radius) safeRadiusMeters.value = radius;
         final dist = hajiCtrl.calculatedDistance.value;
 
         if (dist != null) {
-          currentDistanceToPosko.value = dist;
-          currentDistanceM.value = dist;
+          if (currentDistanceToPosko.value != dist) currentDistanceToPosko.value = dist;
+          if (currentDistanceM.value != dist) currentDistanceM.value = dist;
           _evaluateRadiusAlert(dist);
         } else {
           _recalculateDistance();
@@ -367,6 +408,17 @@ class SmartbandLdrController extends GetxController {
     _bleMessageSub = bleService.statusMessageStream.listen((msg) {
       AppLogger.debug(msg, tag: 'SmartbandLdr');
     });
+
+    _aiListeningSub?.cancel();
+    _commandSub?.cancel();
+    _aiListeningSub = bleService.smartbandAiListeningStream.listen((isListening) {
+      isSmartbandRecordingVoice.value = isListening;
+      if (isListening) {
+        statusMessage.value = 'Mendengarkan Suara Jamaah (INMP441)...';
+      } else {
+        statusMessage.value = 'Gelang Terhubung';
+      }
+    });
   }
 
   void _syncLegacyState(SmartbandBleStatus status) {
@@ -386,6 +438,7 @@ class SmartbandLdrController extends GetxController {
       case SmartbandBleStatus.disconnected:
         isWatchConnected.value = false;
         connectionState.value = SmartbandConnectionState.disconnected;
+        _notifyDisconnectToCloud();
         break;
     }
   }
@@ -477,6 +530,10 @@ class SmartbandLdrController extends GetxController {
       stepHistory.add(data.stepCount!.toDouble());
       if (stepHistory.length > 25) stepHistory.removeAt(0);
     }
+    if (data.stepDistanceM != null) {
+      smartbandStepDistanceM.value = data.stepDistanceM!;
+    }
+    isSmartbandRecordingVoice.value = data.isAiListening;
     if (data.batteryLevel != null) {
       batteryPercent.value = data.batteryLevel!;
       batteryHistory.add(data.batteryLevel!.toDouble());
@@ -513,6 +570,113 @@ class SmartbandLdrController extends GetxController {
     _updateRelativeTime();
 
     _storage.saveSmartbandData(data);
+    _syncTelemetryToCloud(data);
+  }
+
+  /// Sinkronisasi telemetri smartband ke Firestore secara hemat daya (5s normal),
+  /// namun INSTAN 0-DETIK SEKETIKA saat kondisi darurat (Jatuh, SOS, atau Anomali Kritis).
+  Future<void> _syncTelemetryToCloud(SmartbandData data) async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) return;
+
+      final isEmergency = data.isSos ||
+          data.fallDetected ||
+          data.fallStatus.toUpperCase() == 'FALLEN' ||
+          (data.heartRate > 0 && (data.heartRate < 45 || data.heartRate > 120)) ||
+          (data.temperature != null &&
+              (data.temperature! > 38.5 || data.temperature! < 35.0)) ||
+          (data.spo2 != null && data.spo2! > 0 && data.spo2! < 90);
+
+      final emergencyStateChanged = isEmergency != _lastEmergencyState;
+      _lastEmergencyState = isEmergency;
+
+      final now = DateTime.now();
+      // Jika BUKAN darurat dan status tidak berubah, lakukan throttle 5 detik hemat baterai
+      if (!isEmergency && !emergencyStateChanged && _lastCloudSyncTime != null) {
+        if (now.difference(_lastCloudSyncTime!).inSeconds < 5) {
+          return;
+        }
+      }
+
+      _lastCloudSyncTime = now;
+
+      final smartbandPayload = <String, dynamic>{
+        'connected': isConnected,
+        'braceletId': data.braceletId,
+        'heartRate': data.heartRate,
+        if (data.temperature != null) 'temperature': data.temperature,
+        if (data.spo2 != null) 'spo2': data.spo2,
+        'fallDetected': data.fallDetected,
+        'fallStatus': data.fallStatus,
+        if (data.accelG != null) 'accelG': data.accelG,
+        'isSos': data.isSos,
+        if (data.batteryLevel != null) 'batteryLevel': data.batteryLevel,
+        'steps': data.steps,
+        if (data.stepDistanceM != null) 'stepDistanceM': data.stepDistanceM,
+        'updatedAt': FieldValue.serverTimestamp(),
+      };
+
+      // 1. Update ke users/{uid}
+      await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+        'smartband': smartbandPayload,
+        'isSmartbandConnected': isConnected,
+        if (data.isSos) 'sosActive': true,
+        'fallDetected': data.fallDetected,
+      }, SetOptions(merge: true));
+
+      // 2. Update ke rooms/{roomId}/members/{uid} jika aktif di dalam room
+      if (Get.isRegistered<HajiCareController>()) {
+        final roomId = Get.find<HajiCareController>().activeRoomId.value;
+        if (roomId != null && roomId.isNotEmpty) {
+          await FirebaseFirestore.instance
+              .collection('rooms')
+              .doc(roomId)
+              .collection('members')
+              .doc(user.uid)
+              .set({
+            'smartband': smartbandPayload,
+            'isSmartbandConnected': isConnected,
+            if (data.isSos) 'sosActive': true,
+            'fallDetected': data.fallDetected,
+          }, SetOptions(merge: true));
+        }
+      }
+    } catch (e) {
+      debugPrint('[SmartbandCloudSync] Error syncing to cloud: $e');
+    }
+  }
+
+  void _notifyDisconnectToCloud() {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) return;
+      FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+        'smartband': {
+          'connected': false,
+          'updatedAt': FieldValue.serverTimestamp(),
+        },
+        'isSmartbandConnected': false,
+      }, SetOptions(merge: true)).catchError((_) {});
+
+      if (Get.isRegistered<HajiCareController>()) {
+        final roomId = Get.find<HajiCareController>().activeRoomId.value;
+        if (roomId != null && roomId.isNotEmpty) {
+          FirebaseFirestore.instance
+              .collection('rooms')
+              .doc(roomId)
+              .collection('members')
+              .doc(user.uid)
+              .set({
+            'smartband': {
+              'connected': false,
+              'updatedAt': FieldValue.serverTimestamp(),
+            },
+            'isSmartbandConnected': false,
+          }, SetOptions(merge: true)).catchError((_) {});
+        }
+      }
+    } catch (_) {}
   }
 
   /// Pindah halaman OLED gelang dari HP (0:HR, 1:GPS, 2:Temp, 3:Motion, 4:Safe Radius)
@@ -727,22 +891,22 @@ class SmartbandLdrController extends GetxController {
   void _updateRelativeTime() {
     final timestamp = lastDataReceivedAt.value;
     if (timestamp == null) {
-      relativeTimeText.value = 'Belum menerima data';
-      relativeTimeStr.value = '';
+      if (relativeTimeText.value != 'Belum menerima data') relativeTimeText.value = 'Belum menerima data';
+      if (relativeTimeStr.value != '') relativeTimeStr.value = '';
       return;
     }
 
     final diff = DateTime.now().difference(timestamp);
     if (diff.inSeconds < 5) {
-      relativeTimeText.value = 'Baru saja';
+      if (relativeTimeText.value != 'Baru saja') relativeTimeText.value = 'Baru saja';
     } else if (diff.inSeconds < 60) {
-      relativeTimeText.value = ' detik lalu';
+      if (relativeTimeText.value != ' detik lalu') relativeTimeText.value = ' detik lalu';
     } else if (diff.inMinutes < 60) {
-      relativeTimeText.value = ' menit lalu';
+      if (relativeTimeText.value != ' menit lalu') relativeTimeText.value = ' menit lalu';
     } else {
-      relativeTimeText.value = ' jam lalu';
+      if (relativeTimeText.value != ' jam lalu') relativeTimeText.value = ' jam lalu';
     }
-    relativeTimeStr.value = relativeTimeText.value;
+    if (relativeTimeStr.value != relativeTimeText.value) relativeTimeStr.value = relativeTimeText.value;
   }
 
   /// Deteksi langkah kaki dinamis dari fluktuasi akselerometer MPU6050
@@ -832,8 +996,15 @@ class SmartbandLdrController extends GetxController {
   void resetStepDistance() {
     _stepBaseline = stepCount.value;
     sessionSteps.value = 0;
-    bleService.sendCommand('RESET_STEPS');
+    smartbandStepDistanceM.value = 0.0;
+    bleService.resetSteps();
   }
+
+  /// Aktifkan mode perekaman suara mikrofon INMP441 pada gelang
+  Future<bool> startSmartbandMic() => bleService.startSmartbandAiListening();
+
+  /// Selesaikan/hentikan perekaman suara mikrofon INMP441 pada gelang
+  Future<bool> stopSmartbandMic() => bleService.stopSmartbandAiListening();
 
   @override
   void onClose() {
@@ -844,6 +1015,8 @@ class SmartbandLdrController extends GetxController {
     _bleStatusSub?.cancel();
     _bleDataSub?.cancel();
     _bleMessageSub?.cancel();
+    _aiListeningSub?.cancel();
+    _commandSub?.cancel();
     super.onClose();
   }
 

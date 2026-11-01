@@ -353,6 +353,9 @@ class _SparklineWavePainter extends CustomPainter {
     _drawMetricLabel(canvas, size);
   }
 
+  static TextPainter? _cachedMetricPainter;
+  static String? _cachedMetricKey;
+
   void _drawMetricLabel(Canvas canvas, Size size) {
     final w = size.width;
 
@@ -379,7 +382,9 @@ class _SparklineWavePainter extends CustomPainter {
       }
     }
 
-    final textPainter = TextPainter(
+    final cacheKey = '$primaryText|$secondaryText|${effectiveColor.toARGB32()}';
+    var textPainter = _cachedMetricKey == cacheKey ? _cachedMetricPainter : null;
+    textPainter ??= TextPainter(
       text: TextSpan(
         children: [
           TextSpan(
@@ -404,6 +409,8 @@ class _SparklineWavePainter extends CustomPainter {
       ),
       textDirection: TextDirection.ltr,
     )..layout();
+    _cachedMetricKey = cacheKey;
+    _cachedMetricPainter = textPainter;
 
     final xPos = w - textPainter.width - 8;
     const yPos = 6.0;

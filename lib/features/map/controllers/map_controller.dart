@@ -329,6 +329,13 @@ class MapController extends GetxController
     try {
       _compassSub = stream.listen(
         (event) {
+          if (_injectedCompassStream == null &&
+              !isNavigatingRx.value &&
+              Get.isRegistered<DashboardController>() &&
+              Get.find<DashboardController>().currentIndex.value != 1 &&
+              Get.currentRoute != AppRoutes.interactiveMap) {
+            return;
+          }
           final rawHeading = event.heading;
           if (rawHeading == null || rawHeading.isNaN || !rawHeading.isFinite) {
             return;

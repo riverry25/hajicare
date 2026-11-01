@@ -77,7 +77,10 @@ class HajiCareBottomNavBar extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) =>
+      RepaintBoundary(child: _buildDock(context));
+
+  Widget _buildDock(BuildContext context) {
     final hc = context.hc;
 
     return SafeArea(

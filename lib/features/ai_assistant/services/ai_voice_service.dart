@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:speech_to_text/speech_recognition_result.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 
+import 'sentence_speech_queue.dart';
 import '../../../core/locales/app_translations.dart';
 import '../../../core/services/app_tts_service.dart';
 import '../../../core/state/app_settings_controller.dart';
@@ -25,6 +26,19 @@ class AiVoiceService {
   bool _sttInitialized = false;
   bool _hasSttPermission = false;
   bool _isDisposed = false;
+
+  late final SentenceSpeechQueue _speechQueue = SentenceSpeechQueue(
+    speakFunction: (sentence) => _speakDirect(sentence),
+    stopFunction: () async {
+      try {
+        await _tts.stop();
+      } catch (_) {}
+    },
+  )..onSpeakingStateChanged = (speaking) {
+      if (!_isDisposed) {
+        onSpeakingChanged?.call(speaking);
+      }
+    };
 
   void Function(bool isSpeaking)? onSpeakingChanged;
   void Function(bool isListening, String statusMessage)? onListeningChanged;
@@ -66,6 +80,9 @@ class AiVoiceService {
         pitch: 1.0,
       );
       _lastConfiguredTtsLang = ttsLang;
+      try {
+        await _tts.awaitSpeakCompletion(true);
+      } catch (_) {}
 
       _tts.setStartHandler(() {
         if (!_isDisposed) onSpeakingChanged?.call(true);
@@ -87,16 +104,37 @@ class AiVoiceService {
     }
   }
 
-  /// Bacakan kalimat penjelasan menggunakan `flutter_tts` sesuai bahasa aktif.
+  /// Bacakan kalimat penjelasan menggunakan antrean `flutter_tts` sesuai bahasa aktif.
   Future<void> speak(String text) async {
+    if (_isDisposed) return;
+    final clean = text.trim();
+    if (clean.isEmpty) return;
+
+    await _speechQueue.stop();
+    _speechQueue.feed(clean);
+    _speechQueue.finish();
+  }
+
+  /// Masukkan teks streaming kumulatif ke dalam antrean pemecah kalimat TTS.
+  void feedStreamingSpeech(String speechSoFar) {
+    if (_isDisposed) return;
+    _speechQueue.feed(speechSoFar);
+  }
+
+  /// Selesaikan antrean kalimat TTS untuk streaming saat ini.
+  void finishStreamingSpeech([String? finalSpeech]) {
+    if (_isDisposed) return;
+    _speechQueue.finish(finalSpeech);
+  }
+
+  /// Eksekusi langsung pembacaan satu kalimat oleh engine FlutterTts.
+  Future<void> _speakDirect(String text) async {
     if (_isDisposed) return;
     final clean = text.trim();
     if (clean.isEmpty) return;
 
     await initTts();
     try {
-      await _tts.stop();
-      onSpeakingChanged?.call(true);
       final ttsLang = _resolveActiveTtsCode();
       if (_lastConfiguredTtsLang != ttsLang) {
         await AppTtsService.configureEngine(
@@ -111,13 +149,13 @@ class AiVoiceService {
       await _tts.speak(clean);
     } catch (e) {
       AppLogger.warn('Gagal menjalankan TTS speak: $e', tag: 'AiVoiceService');
-      onSpeakingChanged?.call(false);
     }
   }
 
-  /// Hentikan pembacaan suara (`flutter_tts.stop()`).
+  /// Hentikan pembacaan suara dan kosongkan antrean (`flutter_tts.stop()`).
   Future<void> stopSpeaking() async {
     try {
+      await _speechQueue.stop();
       await _tts.stop();
     } catch (_) {}
     if (!_isDisposed) {

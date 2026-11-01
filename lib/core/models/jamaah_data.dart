@@ -77,6 +77,17 @@ class JamaahData {
   final String? email;
   final String? role;
 
+  int? heartRate;
+  double? temperature;
+  int? spo2;
+  bool fallDetected;
+  String? fallStatus;
+  int? batteryLevel;
+  String? braceletId;
+  DateTime? smartbandUpdatedAt;
+  int? steps;
+  double? stepDistanceM;
+
   JamaahData({
     required this.id,
     required this.name,
@@ -101,6 +112,16 @@ class JamaahData {
     this.nik,
     this.email,
     this.role,
+    this.heartRate,
+    this.temperature,
+    this.spo2,
+    this.fallDetected = false,
+    this.fallStatus,
+    this.batteryLevel,
+    this.braceletId,
+    this.smartbandUpdatedAt,
+    this.steps,
+    this.stepDistanceM,
   }) : tier = _calcTier(distance);
 
   bool get hasMedicalData =>
@@ -113,6 +134,61 @@ class JamaahData {
       (porsi != null && porsi!.trim().isNotEmpty) ||
       (passportNumber != null && passportNumber!.trim().isNotEmpty) ||
       (nik != null && nik!.trim().isNotEmpty);
+
+  bool get hasSmartbandData =>
+      isSmartbandConnected || heartRate != null || temperature != null || spo2 != null;
+
+  /// Kritis jika detak jantung < 45 BPM atau > 120 BPM
+  bool get isHeartRateCritical =>
+      heartRate != null && heartRate! > 0 && (heartRate! < 45 || heartRate! > 120);
+
+  /// Waspada jika detak jantung 45-49 BPM atau 101-120 BPM
+  bool get isHeartRateWarning =>
+      heartRate != null &&
+      heartRate! > 0 &&
+      ((heartRate! >= 45 && heartRate! < 50) ||
+          (heartRate! > 100 && heartRate! <= 120));
+
+  /// Kritis jika suhu > 38.5°C (Heatstroke) atau < 35.0°C (Hipotermia)
+  bool get isTemperatureCritical =>
+      temperature != null && (temperature! > 38.5 || temperature! < 35.0);
+
+  /// Waspada jika suhu demam ringan 37.6 - 38.5°C
+  bool get isTemperatureWarning =>
+      temperature != null && (temperature! >= 37.6 && temperature! <= 38.5);
+
+  /// Kritis jika SpO2 < 90%
+  bool get isSpo2Critical => spo2 != null && spo2! > 0 && spo2! < 90;
+
+  /// Waspada jika SpO2 90% - 94%
+  bool get isSpo2Warning => spo2 != null && spo2! >= 90 && spo2! < 95;
+
+  /// Terjatuh jika fallDetected true atau fallStatus == 'FALLEN'
+  bool get isFallen =>
+      fallDetected ||
+      (fallStatus != null && fallStatus!.toUpperCase() == 'FALLEN');
+
+  /// Di luar radius aman rombongan
+  bool get isOutOfSafeRadius =>
+      (distance > 0 && distance > 50.0) ||
+      tier == DistanceTier.terlalujJauh ||
+      separatedMode;
+
+  /// Memiliki anomali kritis (Darurat / Danger)
+  bool get hasCriticalAnomaly =>
+      sosActive ||
+      isFallen ||
+      isHeartRateCritical ||
+      isTemperatureCritical ||
+      isSpo2Critical;
+
+  /// Memiliki peringatan atau anomali
+  bool get hasAnyWarningOrAnomaly =>
+      hasCriticalAnomaly ||
+      isOutOfSafeRadius ||
+      isHeartRateWarning ||
+      isTemperatureWarning ||
+      isSpo2Warning;
 
   factory JamaahData.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>?;
@@ -178,10 +254,53 @@ class JamaahData {
 
     final isGps = (data['isGpsActive'] as bool?) ?? (loc != null);
     final isOnline = (data['onlineStatus'] as bool?) ?? true;
+
+    int? hr;
+    double? temp;
+    int? oxygen;
+    bool fall = false;
+    String? fStatus;
+    int? battery;
+    String? bId;
+    DateTime? bandTime;
+    int? stepsCount;
+    double? stepDist;
+
+    final smartbandMap = data['smartband'] as Map<String, dynamic>?;
+    if (smartbandMap != null) {
+      hr = (smartbandMap['heartRate'] as num?)?.toInt() ??
+          (smartbandMap['bpm'] as num?)?.toInt();
+      temp = (smartbandMap['temperature'] as num?)?.toDouble();
+      oxygen = (smartbandMap['spo2'] as num?)?.toInt();
+      fall = (smartbandMap['fallDetected'] as bool?) ?? false;
+      fStatus = smartbandMap['fallStatus'] as String?;
+      battery = (smartbandMap['batteryLevel'] as num?)?.toInt();
+      bId = smartbandMap['braceletId'] as String?;
+      stepsCount = (smartbandMap['steps'] as num?)?.toInt();
+      stepDist = (smartbandMap['stepDistanceM'] as num?)?.toDouble();
+      if (smartbandMap['updatedAt'] is Timestamp) {
+        bandTime = (smartbandMap['updatedAt'] as Timestamp).toDate();
+      }
+    } else {
+      hr = (data['heartRate'] as num?)?.toInt() ?? (data['bpm'] as num?)?.toInt();
+      temp = (data['temperature'] as num?)?.toDouble();
+      oxygen = (data['spo2'] as num?)?.toInt();
+      fall = (data['fallDetected'] as bool?) ?? false;
+      fStatus = data['fallStatus'] as String?;
+      battery = (data['batteryLevel'] as num?)?.toInt();
+      bId = data['braceletId'] as String?;
+      stepsCount = (data['steps'] as num?)?.toInt();
+      stepDist = (data['stepDistanceM'] as num?)?.toDouble();
+      if (data['smartbandUpdatedAt'] is Timestamp) {
+        bandTime = (data['smartbandUpdatedAt'] as Timestamp).toDate();
+      }
+    }
+
     final isSmartband = (data['isSmartbandConnected'] as bool?) ??
         (data['smartbandConnected'] as bool?) ??
         (data['isSmartbandActive'] as bool?) ??
-        false;
+        (smartbandMap?['connected'] as bool?) ??
+        (hr != null || temp != null);
 
     return JamaahData(
       id: doc.id,
@@ -207,6 +326,16 @@ class JamaahData {
       nik: nik,
       email: email,
       role: role,
+      heartRate: hr,
+      temperature: temp,
+      spo2: oxygen,
+      fallDetected: fall,
+      fallStatus: fStatus,
+      batteryLevel: battery,
+      braceletId: bId,
+      smartbandUpdatedAt: bandTime,
+      steps: stepsCount,
+      stepDistanceM: stepDist,
     );
   }
 
@@ -223,6 +352,17 @@ class JamaahData {
       if (locationUpdatedAt != null)
         'locationUpdatedAt': Timestamp.fromDate(locationUpdatedAt!),
       'onlineStatus': onlineStatus,
+      if (heartRate != null) 'heartRate': heartRate,
+      if (temperature != null) 'temperature': temperature,
+      if (spo2 != null) 'spo2': spo2,
+      'fallDetected': fallDetected,
+      if (fallStatus != null) 'fallStatus': fallStatus,
+      if (batteryLevel != null) 'batteryLevel': batteryLevel,
+      if (braceletId != null) 'braceletId': braceletId,
+      if (smartbandUpdatedAt != null)
+        'smartbandUpdatedAt': Timestamp.fromDate(smartbandUpdatedAt!),
+      if (steps != null) 'steps': steps,
+      if (stepDistanceM != null) 'stepDistanceM': stepDistanceM,
       if (nik != null && nik!.isNotEmpty) 'nik': nik,
       if (porsi != null && porsi!.isNotEmpty) 'porsi': porsi,
       if (porsi != null && porsi!.isNotEmpty) 'nomorPorsi': porsi,

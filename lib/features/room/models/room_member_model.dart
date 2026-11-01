@@ -10,6 +10,14 @@ class RoomMemberModel {
   final GeoPoint? currentLocation;
   final DateTime? locationUpdatedAt;
   final bool isSmartbandConnected;
+  final int? heartRate;
+  final double? temperature;
+  final int? spo2;
+  final bool fallDetected;
+  final String? fallStatus;
+  final int? batteryLevel;
+  final String? braceletId;
+  final DateTime? smartbandUpdatedAt;
 
   const RoomMemberModel({
     required this.uid,
@@ -20,6 +28,14 @@ class RoomMemberModel {
     this.locationUpdatedAt,
     this.isSmartbandConnected = false,
     this.sosActive = false,
+    this.heartRate,
+    this.temperature,
+    this.spo2,
+    this.fallDetected = false,
+    this.fallStatus,
+    this.batteryLevel,
+    this.braceletId,
+    this.smartbandUpdatedAt,
   });
 
   final bool sosActive;
@@ -114,10 +130,46 @@ class RoomMemberModel {
       }
     }
 
+    int? hr;
+    double? temp;
+    int? oxygen;
+    bool fall = false;
+    String? fStatus;
+    int? battery;
+    String? bId;
+    DateTime? bandTime;
+
+    final smartbandMap = data['smartband'] as Map<String, dynamic>?;
+    if (smartbandMap != null) {
+      hr = (smartbandMap['heartRate'] as num?)?.toInt() ??
+          (smartbandMap['bpm'] as num?)?.toInt();
+      temp = (smartbandMap['temperature'] as num?)?.toDouble();
+      oxygen = (smartbandMap['spo2'] as num?)?.toInt();
+      fall = (smartbandMap['fallDetected'] as bool?) ?? false;
+      fStatus = smartbandMap['fallStatus'] as String?;
+      battery = (smartbandMap['batteryLevel'] as num?)?.toInt();
+      bId = smartbandMap['braceletId'] as String?;
+      if (smartbandMap['updatedAt'] is Timestamp) {
+        bandTime = (smartbandMap['updatedAt'] as Timestamp).toDate();
+      }
+    } else {
+      hr = (data['heartRate'] as num?)?.toInt() ?? (data['bpm'] as num?)?.toInt();
+      temp = (data['temperature'] as num?)?.toDouble();
+      oxygen = (data['spo2'] as num?)?.toInt();
+      fall = (data['fallDetected'] as bool?) ?? false;
+      fStatus = data['fallStatus'] as String?;
+      battery = (data['batteryLevel'] as num?)?.toInt();
+      bId = data['braceletId'] as String?;
+      if (data['smartbandUpdatedAt'] is Timestamp) {
+        bandTime = (data['smartbandUpdatedAt'] as Timestamp).toDate();
+      }
+    }
+
     final isSmartband = (data['isSmartbandConnected'] as bool?) ??
         (data['smartbandConnected'] as bool?) ??
         (data['isSmartbandActive'] as bool?) ??
-        false;
+        (smartbandMap?['connected'] as bool?) ??
+        (hr != null || temp != null);
 
     return RoomMemberModel(
       uid: doc.id,
@@ -128,6 +180,14 @@ class RoomMemberModel {
       locationUpdatedAt: locationUpdatedAt,
       isSmartbandConnected: isSmartband,
       sosActive: (data['sosActive'] as bool?) ?? false,
+      heartRate: hr,
+      temperature: temp,
+      spo2: oxygen,
+      fallDetected: fall,
+      fallStatus: fStatus,
+      batteryLevel: battery,
+      braceletId: bId,
+      smartbandUpdatedAt: bandTime,
     );
   }
 

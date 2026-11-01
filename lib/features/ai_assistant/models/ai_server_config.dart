@@ -22,7 +22,7 @@ class AiServerConfig {
 
   // 2. Endpoint Cadangan: OpenRouter Cloud (Jaring pengaman auto-fallback)
   static const String openRouterBaseUrl = 'https://openrouter.ai/api';
-  static const String openRouterModel = 'dots-studio/dots-3-note-preview:free';
+  static const String openRouterModel = 'meta-llama/llama-3.3-70b-instruct:free';
 
   static String get defaultBaseUrl => const String.fromEnvironment(
     'HERMES_BASE_URL',
@@ -39,6 +39,9 @@ class AiServerConfig {
   /// Path endpoint OpenAI-compatible chat completions.
   static const String chatCompletionsPath = '/v1/chat/completions';
 
+  /// Path endpoint OpenAI-compatible audio transcriptions.
+  static const String audioTranscriptionsPath = '/v1/audio/transcriptions';
+
   /// Path endpoint health-check server Hermes.
   static const String healthPath = '/health';
 
@@ -47,15 +50,15 @@ class AiServerConfig {
   static const String legacyDefaultApiKey = 'rahasia_hajicare_2026';
   static const String legacyDefaultModel = 'hermes';
 
-  static AiServerConfig get groqDefault => AiServerConfig(
+  static AiServerConfig get groqDefault => const AiServerConfig(
     baseUrl: groqBaseUrl,
-    apiKey: AiSecretVault.groqApiKey,
+    apiKey: '',
     model: groqModel,
   );
 
-  static AiServerConfig get openRouterFallback => AiServerConfig(
+  static AiServerConfig get openRouterFallback => const AiServerConfig(
     baseUrl: openRouterBaseUrl,
-    apiKey: AiSecretVault.openRouterApiKey,
+    apiKey: '',
     model: openRouterModel,
   );
 
@@ -85,7 +88,29 @@ class AiServerConfig {
   /// True jika menggunakan OpenRouter Cloud
   bool get isOpenRouter => baseUrl.toLowerCase().contains('openrouter.ai');
 
+  /// True jika pengguna memasukkan API key kustom pribadi (bukan kunci bawaan terproteksi).
+  bool get isCustomApiKey {
+    final trimmed = apiKey.trim();
+    return trimmed.isNotEmpty &&
+        trimmed != defaultApiKey &&
+        trimmed != legacyDefaultApiKey &&
+        trimmed != AiSecretVault.openRouterApiKey;
+  }
+
+  /// Kunci API aktif yang digunakan pada HTTP Bearer Authorization.
+  /// Jika pengguna tidak memasukkan API key kustom, otomatis mengambil kunci rahasia
+  /// terenkripsi dari [AiSecretVault] (Groq atau OpenRouter) secara dinamis di memori runtime.
+  String get effectiveApiKey {
+    final trimmed = apiKey.trim();
+    if (trimmed.isNotEmpty && trimmed != legacyDefaultApiKey) {
+      return trimmed;
+    }
+    return isOpenRouter ? AiSecretVault.openRouterApiKey : AiSecretVault.groqApiKey;
+  }
+
   Uri get chatCompletionsUri => Uri.parse('$baseUrl$chatCompletionsPath');
+  Uri get audioTranscriptionsUri =>
+      Uri.parse('$baseUrl$audioTranscriptionsPath');
   Uri get healthUri => Uri.parse('$baseUrl$healthPath');
   Uri get modelsUri => Uri.parse('$baseUrl/v1/models');
 
@@ -141,7 +166,8 @@ class AiServerConfig {
 
   static String? validateApiKey(String raw) {
     final key = raw.trim();
-    if (key.isEmpty) return 'API key wajib diisi.';
+    if (key.isEmpty) return null;
+    if (key.length < 8) return 'API key kustom terlalu pendek (minimal 8 karakter).';
     if (key.contains(RegExp(r'\s'))) return 'API key tidak boleh berisi spasi.';
     return null;
   }
@@ -153,8 +179,10 @@ class AiServerConfig {
 
   /// API key yang disamarkan untuk ditampilkan di UI, mis. `gsk•••••SoX`.
   String get maskedApiKey {
-    if (apiKey.length <= 6) return '•' * apiKey.length;
-    return '${apiKey.substring(0, 3)}•••••${apiKey.substring(apiKey.length - 3)}';
+    if (!isCustomApiKey) return '●●●●●●●● (Protected Cloud)';
+    final trimmed = apiKey.trim();
+    if (trimmed.length <= 6) return '•' * trimmed.length;
+    return '${trimmed.substring(0, 3)}•••••${trimmed.substring(trimmed.length - 3)}';
   }
 
   AiServerConfig copyWith({String? baseUrl, String? apiKey, String? model}) {

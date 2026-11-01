@@ -691,6 +691,47 @@ class SmartbandAiBridgeService {
     );
   }
 
+  DateTime? _lastOledStreamAt;
+  String? _lastSentOledText;
+
+  /// Kirim teks streaming respons AI ke layar OLED 0.96 inci ESP32-S3
+  /// secara bertahap (kata demi kata) dengan throttling (~200ms)
+  /// agar antrean BLE Write NR tidak meluap, dengan word-wrap otomatis.
+  Future<bool> streamTokenToSmartbandOled(
+    String accumulatedText, {
+    bool isFinal = false,
+  }) async {
+    final ble = _bleService;
+    if (ble == null || !ble.isConnected || !ble.canWriteCommand) {
+      return false;
+    }
+
+    final now = DateTime.now();
+    if (!isFinal && _lastOledStreamAt != null) {
+      if (now.difference(_lastOledStreamAt!).inMilliseconds < 190) {
+        return false;
+      }
+    }
+
+    var clean = OledTextFormatter.sanitize(accumulatedText).trim();
+    if (clean.isEmpty) return false;
+
+    // Maksimal 85 karakter agar nyaman dan pas di 4-5 baris OLED 128x64
+    if (clean.length > 85) {
+      clean = '${clean.substring(0, 82)}...';
+    }
+
+    if (clean == _lastSentOledText && !isFinal) {
+      return false;
+    }
+
+    _lastOledStreamAt = now;
+    _lastSentOledText = clean;
+
+    final payload = 'AI:$clean\n';
+    return ble.sendAiOledPayload(payload);
+  }
+
   /// Pindai & hubungkan gelang BLE fisik.
   Future<void> connectSmartband() async {
     final ldr = _ldrCtrl;

@@ -17,6 +17,8 @@ import '../../../core/services/timezone_service.dart';
 import '../../../core/services/adhan_audio_service.dart';
 import '../../../core/services/adhan_native_bridge.dart';
 import '../../../core/services/prayer_alarm_manager_service.dart';
+import '../../../core/routes/app_routes.dart';
+import '../../dashboard/controllers/dashboard_controller.dart';
 import '../models/prayer_location_data.dart';
 import '../models/prayer_schedule_item.dart';
 
@@ -530,9 +532,9 @@ class PrayerTimesController extends GetxController
     final minutes = diff.inMinutes % 60;
     final seconds = diff.inSeconds % 60;
 
-    countdownHours.value = hours;
-    countdownMinutes.value = minutes;
-    countdownSeconds.value = seconds;
+    if (countdownHours.value != hours) countdownHours.value = hours;
+    if (countdownMinutes.value != minutes) countdownMinutes.value = minutes;
+    if (countdownSeconds.value != seconds) countdownSeconds.value = seconds;
 
     if (hours > 0) {
       countdownText.value = '$hours Jam $minutes Menit $seconds Detik';
@@ -597,6 +599,11 @@ class PrayerTimesController extends GetxController
     try {
       _compassSubscription = FlutterCompass.events?.listen(
         (event) {
+          if (Get.isRegistered<DashboardController>() &&
+              Get.find<DashboardController>().currentIndex.value != 2 &&
+              Get.currentRoute != AppRoutes.prayerTimes) {
+            return;
+          }
           if (event.heading == null ||
               event.heading!.isNaN ||
               !event.heading!.isFinite) {

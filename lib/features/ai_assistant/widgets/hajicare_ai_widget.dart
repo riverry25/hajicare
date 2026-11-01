@@ -15,6 +15,7 @@ import '../../../core/theme/theme_context.dart';
 import '../bindings/hajicare_ai_binding.dart';
 import '../controllers/hajicare_ai_controller.dart';
 import '../models/ai_chat_message.dart';
+import '../models/ai_voice_phase.dart';
 import 'ai_server_settings_dialog.dart';
 import 'oled_smartband_preview_card.dart';
 import 'sensor_context_live_card.dart';
@@ -1044,93 +1045,95 @@ class _ModernAiChatBubble extends StatelessWidget {
                       ),
                     ),
 
-                    // Tombol Aksi Kontekstual Pintar untuk Membantu Jamaah
-                    if (!message.isStreaming &&
-                        message.contextualActions.isNotEmpty) ...[
-                      const SizedBox(height: AppSpacing.sm),
-                      _ContextualActionRow(
-                        actions: message.contextualActions,
-                        onOpenOledTap: onSendToOledTap,
-                      ),
-                    ],
-
-                    const SizedBox(height: AppSpacing.sm),
-                    Divider(
-                      height: 1,
-                      color: hc.border.withValues(alpha: 0.5),
-                    ),
-                    const SizedBox(height: 6),
-
-                    // Baris Ikon Aksi Bawah Gelembung AI (seperti referensi Foto 4)
-                    Row(
-                      children: [
-                        // 1. Copy Text
-                        _BubbleIconAction(
-                          icon: Icons.content_copy_rounded,
-                          tooltip: context.tr('ai.copyReplyTooltip'),
-                          onTap: () async {
-                            HapticFeedback.selectionClick();
-                            final copiedMsg = context.tr('ai.replyCopied');
-                            await Clipboard.setData(
-                              ClipboardData(text: message.effectiveFullText),
-                            );
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(copiedMsg),
-                                  duration: const Duration(seconds: 1),
-                                  behavior: SnackBarBehavior.floating,
-                                ),
-                              );
-                            }
-                          },
-                        ),
-                        const SizedBox(width: 4),
-
-                        // 2. Speak / Stop TTS (🔊)
-                        _BubbleIconAction(
-                          icon: isCurrentlySpeaking
-                              ? Icons.stop_circle_rounded
-                              : Icons.volume_up_rounded,
-                          tooltip: isCurrentlySpeaking
-                              ? context.tr('ai.stopTtsButton')
-                              : context.tr('ai.speakReplyTooltip'),
-                          isActive: isCurrentlySpeaking,
-                          activeColor: hc.danger,
-                          label: isCurrentlySpeaking
-                              ? context.tr('ai.stopLabel')
-                              : context.tr('ai.voiceLabel'),
-                          onTap: () {
-                            HapticFeedback.selectionClick();
-                            onSpeakTap();
-                          },
-                        ),
-                        const SizedBox(width: 4),
-
-                        // 3. Tampilkan / Kirim ke OLED Gelang (⌚)
-                        _BubbleIconAction(
-                          icon: Icons.watch_rounded,
-                          tooltip: context.tr('ai.viewOnOledTooltip'),
-                          label: 'OLED',
-                          onTap: () {
-                            HapticFeedback.selectionClick();
-                            onSendToOledTap();
-                          },
-                        ),
-
-                        const Spacer(),
-
-                        // 4. Regenerate / Ulangi Jawaban (↻)
-                        _BubbleIconAction(
-                          icon: Icons.refresh_rounded,
-                          tooltip: context.tr('ai.regenerateTooltip'),
-                          onTap: () {
-                            HapticFeedback.lightImpact();
-                            onRegenerateTap();
-                          },
+                    // Saat streaming berlangsung, sembunyikan tombol aksi agar pembacaan tetap bersih
+                    if (!message.isStreaming) ...[
+                      // Tombol Aksi Kontekstual Pintar untuk Membantu Jamaah
+                      if (message.contextualActions.isNotEmpty) ...[
+                        const SizedBox(height: AppSpacing.sm),
+                        _ContextualActionRow(
+                          actions: message.contextualActions,
+                          onOpenOledTap: onSendToOledTap,
                         ),
                       ],
-                    ),
+
+                      const SizedBox(height: AppSpacing.sm),
+                      Divider(
+                        height: 1,
+                        color: hc.border.withValues(alpha: 0.5),
+                      ),
+                      const SizedBox(height: 6),
+
+                      // Baris Ikon Aksi Bawah Gelembung AI (seperti referensi Foto 4)
+                      Row(
+                        children: [
+                          // 1. Copy Text
+                          _BubbleIconAction(
+                            icon: Icons.content_copy_rounded,
+                            tooltip: context.tr('ai.copyReplyTooltip'),
+                            onTap: () async {
+                              HapticFeedback.selectionClick();
+                              final copiedMsg = context.tr('ai.replyCopied');
+                              await Clipboard.setData(
+                                ClipboardData(text: message.effectiveFullText),
+                              );
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(copiedMsg),
+                                    duration: const Duration(seconds: 1),
+                                    behavior: SnackBarBehavior.floating,
+                                  ),
+                                );
+                              }
+                            },
+                          ),
+                          const SizedBox(width: 4),
+
+                          // 2. Speak / Stop TTS (🔊)
+                          _BubbleIconAction(
+                            icon: isCurrentlySpeaking
+                                ? Icons.stop_circle_rounded
+                                : Icons.volume_up_rounded,
+                            tooltip: isCurrentlySpeaking
+                                ? context.tr('ai.stopTtsButton')
+                                : context.tr('ai.speakReplyTooltip'),
+                            isActive: isCurrentlySpeaking,
+                            activeColor: hc.danger,
+                            label: isCurrentlySpeaking
+                                ? context.tr('ai.stopLabel')
+                                : context.tr('ai.voiceLabel'),
+                            onTap: () {
+                              HapticFeedback.selectionClick();
+                              onSpeakTap();
+                            },
+                          ),
+                          const SizedBox(width: 4),
+
+                          // 3. Tampilkan / Kirim ke OLED Gelang (⌚)
+                          _BubbleIconAction(
+                            icon: Icons.watch_rounded,
+                            tooltip: context.tr('ai.viewOnOledTooltip'),
+                            label: 'OLED',
+                            onTap: () {
+                              HapticFeedback.selectionClick();
+                              onSendToOledTap();
+                            },
+                          ),
+
+                          const Spacer(),
+
+                          // 4. Regenerate / Ulangi Jawaban (↻)
+                          _BubbleIconAction(
+                            icon: Icons.refresh_rounded,
+                            tooltip: context.tr('ai.regenerateTooltip'),
+                            onTap: () {
+                              HapticFeedback.lightImpact();
+                              onRegenerateTap();
+                            },
+                          ),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -1289,40 +1292,95 @@ class _ContextualActionRow extends StatelessWidget {
   }
 }
 
-/// Indikator mengetik `✨ • • • •` seperti referensi Foto 4.
-class _AiTypingDotsRow extends StatelessWidget {
+/// Indikator berpikir & mengetik AI (Avatar + Pill "Sedang berpikir..." + Titik Halus Berdenyut).
+class _AiTypingDotsRow extends StatefulWidget {
   const _AiTypingDotsRow();
+
+  @override
+  State<_AiTypingDotsRow> createState() => _AiTypingDotsRowState();
+}
+
+class _AiTypingDotsRowState extends State<_AiTypingDotsRow>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _animCtrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _animCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _animCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final hc = context.hc;
+
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         const _AiSparkleAvatar(size: 28),
         const SizedBox(width: 10),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          decoration: BoxDecoration(
-            color: hc.surface,
-            borderRadius: BorderRadius.circular(AppRadius.pill),
-            border: Border.all(color: hc.border),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              for (var i = 0; i < 4; i++)
-                Padding(
-                  padding: EdgeInsets.only(right: i < 3 ? 5 : 0),
-                  child: Container(
-                    width: 6,
-                    height: 6,
-                    decoration: BoxDecoration(
-                      color: hc.accent.withValues(alpha: 1.0 - (i * 0.2)),
-                      shape: BoxShape.circle,
-                    ),
+        RepaintBoundary(
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+            decoration: BoxDecoration(
+              color: hc.surface,
+              borderRadius: BorderRadius.circular(AppRadius.pill),
+              border: Border.all(color: hc.border.withValues(alpha: 0.8)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 4,
+                  offset: const Offset(0, 1),
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Titik-titik halus berdenyut
+                AnimatedBuilder(
+                  animation: _animCtrl,
+                  builder: (context, _) {
+                    return Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: List.generate(3, (index) {
+                        final phase = (_animCtrl.value - (index * 0.2)) % 1.0;
+                        final opacity = (0.3 + 0.7 * (1.0 - (phase - 0.5).abs() * 2)).clamp(0.2, 1.0);
+                        return Padding(
+                          padding: EdgeInsets.only(right: index < 2 ? 4.0 : 0.0),
+                          child: Container(
+                            width: 5.5,
+                            height: 5.5,
+                            decoration: BoxDecoration(
+                              color: hc.accent.withValues(alpha: opacity),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        );
+                      }),
+                    );
+                  },
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  context.tr('ai.thinkingStatus'),
+                  style: context.text.bodySmall.copyWith(
+                    color: hc.textSecondary,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
-            ],
+              ],
+            ),
           ),
         ),
       ],
@@ -1658,18 +1716,51 @@ class _ImmersiveVoiceModeView extends StatelessWidget {
     final hc = context.hc;
 
     return Obx(() {
-      final listening = controller.isListening.value;
-      final speaking = controller.isSpeaking.value;
+      final phase = controller.voicePhase.value;
+      final isMuted = controller.isMuted.value;
       final recognized = controller.recognizedText.value.trim();
+      final currentQuestion = controller.currentTurnQuestion.value.trim();
+      final currentReply = controller.currentTurnReply.value.trim();
       final lastReply = controller.lastSpokenOrReplyText.value.trim();
 
-      final String displayText = listening
-          ? (recognized.isNotEmpty
-                ? recognized
-                : context.tr('ai.voiceListeningPrompt'))
-          : (lastReply.isNotEmpty
-                ? lastReply
-                : context.tr('ai.voiceTapMicPrompt'));
+      final isListening = phase == AiVoicePhase.listening;
+      final isThinking = phase == AiVoicePhase.thinking;
+      final isAnswering = phase == AiVoicePhase.answering;
+
+      // Tentukan teks tampilan berdasarkan fase aktif
+      final String displayText;
+      if (isListening) {
+        displayText = recognized.isNotEmpty
+            ? recognized
+            : context.tr('ai.voiceListeningPrompt');
+      } else if (isThinking) {
+        displayText = currentQuestion.isNotEmpty
+            ? currentQuestion
+            : context.tr('ai.voiceThinkingStatus');
+      } else if (isAnswering) {
+        displayText = currentReply.isNotEmpty
+            ? currentReply
+            : lastReply;
+      } else {
+        displayText = lastReply.isNotEmpty
+            ? lastReply
+            : context.tr('ai.voiceTapMicPrompt');
+      }
+
+      final String statusText;
+      if (isListening) {
+        statusText = context.tr('ai.voiceListeningStatus');
+      } else if (isThinking) {
+        statusText = context.tr('ai.voiceThinkingStatus');
+      } else if (isAnswering) {
+        statusText = isMuted
+            ? context.tr('ai.voiceMutedStatus')
+            : context.tr('ai.voiceAnsweringStatus');
+      } else {
+        statusText = isMuted
+            ? context.tr('ai.voiceMutedStatus')
+            : context.tr('ai.voiceTapToAskStatus');
+      }
 
       return Padding(
         padding: const EdgeInsets.symmetric(
@@ -1678,38 +1769,103 @@ class _ImmersiveVoiceModeView extends StatelessWidget {
         ),
         child: Column(
           children: [
+            // Top Bar: Session Title Chip + Mute Toggle Button
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: hc.surface,
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                    border: Border.all(color: hc.border),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 7,
+                        height: 7,
+                        decoration: BoxDecoration(
+                          color: isListening
+                              ? hc.danger
+                              : (isThinking
+                                  ? const Color(0xFF38BDF8)
+                                  : const Color(0xFF22C55E)),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        'HajiCare Voice',
+                        style: context.text.labelSmall.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: hc.textPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // Tombol Mute Sesi (Suara Nyala / Mute)
+                _VoiceCircleActionButton(
+                  key: const Key('voice_mute_button'),
+                  icon: isMuted
+                      ? Icons.volume_off_rounded
+                      : Icons.volume_up_rounded,
+                  tooltip: isMuted
+                      ? context.tr('ai.voiceUnmuteTooltip')
+                      : context.tr('ai.voiceMuteTooltip'),
+                  size: 42,
+                  iconSize: 20,
+                  activeColor: isMuted ? hc.danger : hc.textPrimary,
+                  backgroundColor: isMuted
+                      ? hc.danger.withValues(alpha: 0.15)
+                      : hc.surface,
+                  borderColor: isMuted ? hc.danger : hc.border,
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    controller.toggleMute();
+                  },
+                ),
+              ],
+            ),
+
             const Spacer(),
 
-            // Glowing Animated Wave Orb (seperti layar kanan Foto 4)
+            // Glowing Animated Wave Orb
             RepaintBoundary(
               child: _GlowingVoiceOrb(
-                isActive: listening || speaking,
-                isListening: listening,
+                isActive: isListening || isAnswering,
+                isListening: isListening,
+                isThinking: isThinking,
               ),
             ),
             const SizedBox(height: AppSpacing.xxl),
 
-            // Teks Transkripsi Besar Terpusat dengan Dua Gradasi Kontras Kata
+            // Teks Transkripsi Besar Terpusat
             _HighlightedVoiceTranscript(
               text: displayText,
-              isListening: listening,
+              isListening: isListening,
+              isThinking: isThinking,
             ),
             const SizedBox(height: AppSpacing.sm),
 
             Text(
-              listening
-                  ? context.tr('ai.voiceListeningStatus')
-                  : (speaking
-                        ? context.tr('ai.voiceSpeakingStatus')
-                        : context.tr('ai.voiceTapToAskStatus')),
+              statusText,
               style: context.text.labelMedium.copyWith(
-                color: hc.textSecondary,
+                color: isThinking
+                    ? hc.accent
+                    : (isMuted ? hc.warning : hc.textSecondary),
+                fontWeight: isThinking ? FontWeight.w600 : FontWeight.normal,
               ),
             ),
 
             const Spacer(),
 
-            // 3 Tombol Bundar Bawah: [ ↺ Ulangi ]  [ 🎙️ Mic ]  [ ✕ Tutup ]
+            // 3 Tombol Bundar Bawah: [ ↺ Ulangi ]  [ 🎙️ / ⏹️ Mic/Stop ]  [ ✕ Tutup ]
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
@@ -1717,19 +1873,23 @@ class _ImmersiveVoiceModeView extends StatelessWidget {
                 _VoiceCircleActionButton(
                   icon: Icons.replay_rounded,
                   tooltip: context.tr('ai.voiceReplayTooltip'),
+                  activeColor: (isThinking || isListening)
+                      ? hc.textSecondary.withValues(alpha: 0.35)
+                      : hc.textPrimary,
                   onTap: () {
+                    if (isThinking || isListening) return;
                     HapticFeedback.selectionClick();
                     controller.replayLastAssistantReply();
                   },
                 ),
 
-                // Tengah: Tombol Mikrofon Bercahaya Besar (🎙️)
+                // Tengah: Tombol Mikrofon / Berhenti Bercahaya Besar
                 GestureDetector(
                   key: const Key('voice_orb_mic_button'),
                   onTap: () {
                     HapticFeedback.mediumImpact();
-                    if (speaking) {
-                      controller.stopSpeaking();
+                    if (isThinking || isAnswering) {
+                      controller.cancelCurrentTurn();
                     } else {
                       controller.toggleVoiceRecording();
                     }
@@ -1740,18 +1900,20 @@ class _ImmersiveVoiceModeView extends StatelessWidget {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       gradient: LinearGradient(
-                        colors: listening
+                        colors: (isThinking || isAnswering)
                             ? [hc.danger, const Color(0xFF991B1B)]
-                            : [
-                                const Color(0xFFC89B57),
-                                const Color(0xFF785124),
-                              ],
+                            : (isListening
+                                ? [hc.danger, const Color(0xFF991B1B)]
+                                : [
+                                    const Color(0xFFC89B57),
+                                    const Color(0xFF785124),
+                                  ]),
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: (listening
+                          color: ((isThinking || isAnswering || isListening)
                                   ? hc.danger
                                   : const Color(0xFFC89B57))
                               .withValues(alpha: 0.4),
@@ -1761,11 +1923,11 @@ class _ImmersiveVoiceModeView extends StatelessWidget {
                       ],
                     ),
                     child: Icon(
-                      speaking
+                      (isThinking || isAnswering)
                           ? Icons.stop_rounded
-                          : (listening
-                                ? Icons.mic_rounded
-                                : Icons.mic_none_rounded),
+                          : (isListening
+                              ? Icons.mic_rounded
+                              : Icons.mic_none_rounded),
                       color: Colors.white,
                       size: 32,
                     ),
@@ -1798,11 +1960,21 @@ class _VoiceCircleActionButton extends StatelessWidget {
     required this.icon,
     required this.tooltip,
     required this.onTap,
+    this.size = 50,
+    this.iconSize = 22,
+    this.activeColor,
+    this.backgroundColor,
+    this.borderColor,
   });
 
   final IconData icon;
   final String tooltip;
   final VoidCallback onTap;
+  final double size;
+  final double iconSize;
+  final Color? activeColor;
+  final Color? backgroundColor;
+  final Color? borderColor;
 
   @override
   Widget build(BuildContext context) {
@@ -1813,14 +1985,18 @@ class _VoiceCircleActionButton extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(AppRadius.pill),
         child: Container(
-          width: 50,
-          height: 50,
+          width: size,
+          height: size,
           decoration: BoxDecoration(
-            color: hc.surface,
+            color: backgroundColor ?? hc.surface,
             shape: BoxShape.circle,
-            border: Border.all(color: hc.border),
+            border: Border.all(color: borderColor ?? hc.border),
           ),
-          child: Icon(icon, color: hc.textPrimary, size: 22),
+          child: Icon(
+            icon,
+            color: activeColor ?? hc.textPrimary,
+            size: iconSize,
+          ),
         ),
       ),
     );
@@ -1833,14 +2009,62 @@ class _HighlightedVoiceTranscript extends StatelessWidget {
   const _HighlightedVoiceTranscript({
     required this.text,
     required this.isListening,
+    this.isThinking = false,
   });
 
   final String text;
   final bool isListening;
+  final bool isThinking;
 
   @override
   Widget build(BuildContext context) {
     final hc = context.hc;
+
+    if (isThinking) {
+      return ConstrainedBox(
+        constraints: const BoxConstraints(maxHeight: 160),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                text,
+                textAlign: TextAlign.center,
+                style: context.text.titleLarge.copyWith(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: hc.textPrimary,
+                  height: 1.35,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SizedBox(
+                    width: 14,
+                    height: 14,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(hc.accent),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    context.tr('ai.voiceThinkingStatus'),
+                    style: context.text.bodyMedium.copyWith(
+                      color: hc.accent,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     final words = text.split(RegExp(r'\s+')).where((w) => w.isNotEmpty).toList();
     final clipped = words.length > 26 ? words.take(26).toList() : words;
     final splitIndex = (clipped.length * 0.65).ceil();
@@ -1889,10 +2113,12 @@ class _GlowingVoiceOrb extends StatefulWidget {
   const _GlowingVoiceOrb({
     required this.isActive,
     required this.isListening,
+    this.isThinking = false,
   });
 
   final bool isActive;
   final bool isListening;
+  final bool isThinking;
 
   @override
   State<_GlowingVoiceOrb> createState() => _GlowingVoiceOrbState();
@@ -1909,7 +2135,7 @@ class _GlowingVoiceOrbState extends State<_GlowingVoiceOrb>
       vsync: this,
       duration: const Duration(milliseconds: 2400),
     );
-    if (widget.isActive) {
+    if (widget.isActive || widget.isThinking) {
       _controller.repeat();
     }
   }
@@ -1917,9 +2143,10 @@ class _GlowingVoiceOrbState extends State<_GlowingVoiceOrb>
   @override
   void didUpdateWidget(covariant _GlowingVoiceOrb oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.isActive && !_controller.isAnimating) {
+    final shouldAnimate = widget.isActive || widget.isThinking;
+    if (shouldAnimate && !_controller.isAnimating) {
       _controller.repeat();
-    } else if (!widget.isActive && _controller.isAnimating) {
+    } else if (!shouldAnimate && _controller.isAnimating) {
       _controller.stop();
     }
   }
@@ -1941,6 +2168,7 @@ class _GlowingVoiceOrbState extends State<_GlowingVoiceOrb>
             phase: _controller.value * 2 * math.pi,
             isActive: widget.isActive,
             isListening: widget.isListening,
+            isThinking: widget.isThinking,
           ),
         );
       },
@@ -1953,11 +2181,13 @@ class _VoiceOrbPainter extends CustomPainter {
     required this.phase,
     required this.isActive,
     required this.isListening,
+    this.isThinking = false,
   });
 
   final double phase;
   final bool isActive;
   final bool isListening;
+  final bool isThinking;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -1966,14 +2196,18 @@ class _VoiceOrbPainter extends CustomPainter {
 
     final primaryGlow = isListening
         ? const Color(0xFFE11D48)
-        : const Color(0xFFD4AF37);
-    const secondaryGlow = Color(0xFF8B5E34);
+        : (isThinking
+            ? const Color(0xFF38BDF8)
+            : const Color(0xFFD4AF37));
+    final secondaryGlow = isThinking
+        ? const Color(0xFF0369A1)
+        : const Color(0xFF8B5E34);
 
     // 1. Ambient Outer Glow
     final glowPaint = Paint()
       ..shader = RadialGradient(
         colors: [
-          primaryGlow.withValues(alpha: isActive ? 0.35 : 0.18),
+          primaryGlow.withValues(alpha: (isActive || isThinking) ? 0.35 : 0.18),
           secondaryGlow.withValues(alpha: 0.08),
           Colors.transparent,
         ],
@@ -1987,7 +2221,11 @@ class _VoiceOrbPainter extends CustomPainter {
       const steps = 64;
       for (var i = 0; i <= steps; i++) {
         final angle = (i / steps) * 2 * math.pi;
-        final waveAmp = isActive ? 9.0 : 3.5;
+        final waveAmp = isListening
+            ? 9.0
+            : (isThinking
+                ? 4.5
+                : (isActive ? 7.5 : 3.5));
         final offset =
             waveAmp *
             math.sin(angle * 3 + phase + ring * 0.7) *
@@ -2019,7 +2257,8 @@ class _VoiceOrbPainter extends CustomPainter {
   bool shouldRepaint(covariant _VoiceOrbPainter oldDelegate) {
     return oldDelegate.phase != phase ||
         oldDelegate.isActive != isActive ||
-        oldDelegate.isListening != isListening;
+        oldDelegate.isListening != isListening ||
+        oldDelegate.isThinking != isThinking;
   }
 }
 

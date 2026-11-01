@@ -54,7 +54,10 @@ class _AiServerSettingsDialogState extends State<AiServerSettingsDialog> {
     _urlController = TextEditingController(
       text: cfg.isPlaceholder ? '' : cfg.baseUrl,
     );
-    _apiKeyController = TextEditingController(text: cfg.apiKey);
+    // Zero-Leak: Kunci rahasia bawaan developer TIDAK PERNAH dimuat ke input teks controller!
+    _apiKeyController = TextEditingController(
+      text: cfg.isCustomApiKey ? cfg.apiKey : '',
+    );
     _modelController = TextEditingController(text: cfg.model);
   }
 
@@ -104,7 +107,7 @@ class _AiServerSettingsDialogState extends State<AiServerSettingsDialog> {
     try {
       final status = await widget.controller.saveServerConfiguration(
         baseUrl: _urlController.text,
-        apiKey: _apiKeyController.text,
+        apiKey: _apiKeyController.text.trim(),
         model: _modelController.text,
       );
       if (!mounted) return;
@@ -140,7 +143,7 @@ class _AiServerSettingsDialogState extends State<AiServerSettingsDialog> {
     if (!mounted) return;
     setState(() {
       _urlController.text = cfg.baseUrl;
-      _apiKeyController.text = cfg.apiKey;
+      _apiKeyController.text = cfg.isCustomApiKey ? cfg.apiKey : '';
       _modelController.text = cfg.model;
       _urlValidationError = null;
       _apiKeyValidationError = null;
@@ -264,7 +267,7 @@ class _AiServerSettingsDialogState extends State<AiServerSettingsDialog> {
                       onPressed: () {
                         setState(() {
                           _urlController.text = AiServerConfig.groqBaseUrl;
-                          _apiKeyController.text = AiServerConfig.groqDefault.apiKey;
+                          _apiKeyController.clear(); // Menggunakan kunci bawaan terproteksi
                           _modelController.text = AiServerConfig.groqModel;
                           _urlValidationError = null;
                           _apiKeyValidationError = null;
@@ -277,7 +280,7 @@ class _AiServerSettingsDialogState extends State<AiServerSettingsDialog> {
                       onPressed: () {
                         setState(() {
                           _urlController.text = AiServerConfig.openRouterBaseUrl;
-                          _apiKeyController.text = AiServerConfig.openRouterFallback.apiKey;
+                          _apiKeyController.clear(); // Menggunakan kunci bawaan terproteksi
                           _modelController.text = AiServerConfig.openRouterModel;
                           _urlValidationError = null;
                           _apiKeyValidationError = null;
@@ -400,12 +403,62 @@ class _AiServerSettingsDialogState extends State<AiServerSettingsDialog> {
 
                 if (_showAdvanced) ...[
                   const SizedBox(height: AppSpacing.xs),
-                  Text(
-                    context.tr('ai.settingsApiKeyLabel'),
-                    style: context.text.labelMedium.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: hc.textPrimary,
-                    ),
+                  // Header API Key + Status Badge Proteksi
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        context.tr('ai.settingsApiKeyLabel'),
+                        style: context.text.labelMedium.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: hc.textPrimary,
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          color: _apiKeyController.text.trim().isNotEmpty
+                              ? hc.accent.withValues(alpha: 0.12)
+                              : const Color(0xFF22C55E).withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(AppRadius.pill),
+                          border: Border.all(
+                            color: _apiKeyController.text.trim().isNotEmpty
+                                ? hc.accent.withValues(alpha: 0.3)
+                                : const Color(0xFF22C55E).withValues(alpha: 0.3),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              _apiKeyController.text.trim().isNotEmpty
+                                  ? Icons.person_rounded
+                                  : Icons.verified_user_rounded,
+                              size: 12,
+                              color: _apiKeyController.text.trim().isNotEmpty
+                                  ? hc.accent
+                                  : const Color(0xFF22C55E),
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              _apiKeyController.text.trim().isNotEmpty
+                                  ? context.tr('ai.settingsCustomKeyBadge')
+                                  : context.tr('ai.settingsDefaultKeyBadge'),
+                              style: context.text.labelSmall.copyWith(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                                color: _apiKeyController.text.trim().isNotEmpty
+                                    ? hc.accent
+                                    : const Color(0xFF22C55E),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 4),
                   TextField(
@@ -413,24 +466,59 @@ class _AiServerSettingsDialogState extends State<AiServerSettingsDialog> {
                     obscureText: _obscureApiKey,
                     autocorrect: false,
                     decoration: InputDecoration(
-                      hintText: AiServerConfig.defaultApiKey,
+                      hintText: context.tr('ai.settingsKeyProtectedHint'),
                       errorText: _apiKeyValidationError,
                       prefixIcon: const Icon(Icons.vpn_key_rounded, size: 18),
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _obscureApiKey
-                              ? Icons.visibility_rounded
-                              : Icons.visibility_off_rounded,
-                          size: 19,
-                        ),
-                        onPressed: () =>
-                            setState(() => _obscureApiKey = !_obscureApiKey),
-                      ),
+                      suffixIcon: _apiKeyController.text.trim().isNotEmpty
+                          ? Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  tooltip: context.tr('ai.settingsUseDefaultKeyBtn'),
+                                  icon: const Icon(
+                                    Icons.restore_rounded,
+                                    size: 18,
+                                  ),
+                                  onPressed: () {
+                                    _apiKeyController.clear();
+                                    setState(() {
+                                      _apiKeyValidationError = null;
+                                    });
+                                  },
+                                ),
+                                IconButton(
+                                  icon: Icon(
+                                    _obscureApiKey
+                                        ? Icons.visibility_rounded
+                                        : Icons.visibility_off_rounded,
+                                    size: 19,
+                                  ),
+                                  onPressed: () => setState(
+                                      () => _obscureApiKey = !_obscureApiKey),
+                                ),
+                              ],
+                            )
+                          : null,
                       filled: true,
                       fillColor: hc.surfaceSubtle,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(AppRadius.md),
                       ),
+                    ),
+                    onChanged: (_) {
+                      setState(() {
+                        if (_apiKeyValidationError != null) {
+                          _apiKeyValidationError = null;
+                        }
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    context.tr('ai.settingsDefaultKeyHelper'),
+                    style: context.text.labelSmall.copyWith(
+                      color: hc.textSecondary,
+                      fontSize: 10.5,
                     ),
                   ),
                   const SizedBox(height: AppSpacing.sm),

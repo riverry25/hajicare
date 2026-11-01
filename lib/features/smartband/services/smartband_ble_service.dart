@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import '../models/smartband_data.dart';
@@ -18,12 +19,15 @@ class SmartbandBleService {
   static const String txCharacteristicUuid = dataCharacteristicUuid;
   static const String rxCharacteristicUuid =
       '6e400002-b5a3-f393-e0a9-e50e24dcca9e';
+  static const String audioCharacteristicUuid =
+      '6e400004-b5a3-f393-e0a9-e50e24dcca9e';
 
   // Perangkat aktif & characteristic
   BluetoothDevice? _connectedDevice;
   BluetoothDevice? _foundDevice;
   BluetoothCharacteristic? _dataCharacteristic;
   BluetoothCharacteristic? _writeCharacteristic;
+  BluetoothCharacteristic? _audioCharacteristic;
 
   // Stream Controllers
   final _connectionStatusController =
@@ -31,11 +35,21 @@ class SmartbandBleService {
   final _smartbandDataController = StreamController<SmartbandData>.broadcast();
   final _foundDeviceController = StreamController<BluetoothDevice?>.broadcast();
   final _statusMessageController = StreamController<String>.broadcast();
+  final _audioStreamController = StreamController<Uint8List>.broadcast();
+  final _smartbandAiListeningController =
+      StreamController<bool>.broadcast();
+  final _completePcmRecordingController =
+      StreamController<Uint8List>.broadcast();
+
+  // Buffer akumulator audio PCM 16-bit 8000Hz dari INMP441
+  final BytesBuilder _pcmAudioBuffer = BytesBuilder(copy: false);
+  bool _isSmartbandRecordingVoice = false;
 
   // Subscriptions
   StreamSubscription<List<ScanResult>>? _scanSubscription;
   StreamSubscription<BluetoothConnectionState>? _deviceConnectionSubscription;
   StreamSubscription<List<int>>? _notificationSubscription;
+  StreamSubscription<List<int>>? _audioNotificationSubscription;
   Timer? _scanTimeoutTimer;
 
   // State internal
@@ -63,6 +77,12 @@ class SmartbandBleService {
   Stream<BluetoothDevice?> get foundDeviceStream =>
       _foundDeviceController.stream;
   Stream<String> get statusMessageStream => _statusMessageController.stream;
+  Stream<Uint8List> get audioStream => _audioStreamController.stream;
+  Stream<bool> get smartbandAiListeningStream =>
+      _smartbandAiListeningController.stream;
+  Stream<Uint8List> get completePcmAudioRecordingStream =>
+      _completePcmRecordingController.stream;
+  bool get isSmartbandRecordingVoice => _isSmartbandRecordingVoice;
 
   SmartbandBleService() {
     _emitStatus(SmartbandBleStatus.disconnected);
@@ -391,9 +411,13 @@ class SmartbandBleService {
     final targetRxUuidNormalized = rxCharacteristicUuid
         .toLowerCase()
         .replaceAll('-', '');
+    final targetAudioUuidNormalized = audioCharacteristicUuid
+        .toLowerCase()
+        .replaceAll('-', '');
     BluetoothCharacteristic? targetChar;
     BluetoothCharacteristic? exactRxChar;
     BluetoothCharacteristic? fallbackWriteChar;
+    BluetoothCharacteristic? audioChar;
     for (final char in targetService.characteristics) {
       final cUuid = char.uuid.toString().toLowerCase().replaceAll('-', '');
       final p = char.properties;
@@ -405,6 +429,9 @@ class SmartbandBleService {
 
       if (cUuid == targetCharUuidNormalized) {
         targetChar = char;
+      }
+      if (cUuid == targetAudioUuidNormalized) {
+        audioChar = char;
       }
       if (cUuid == targetRxUuidNormalized &&
           (p.write || p.writeWithoutResponse)) {
@@ -423,9 +450,15 @@ class SmartbandBleService {
     }
 
     _dataCharacteristic = targetChar;
+    _audioCharacteristic = audioChar;
 
-    // 5. Subscribe ke BLE Notification
+    // 5. Subscribe ke BLE Notification (Data Telemetri)
     await subscribeToDataNotification(targetChar);
+
+    // 6. Subscribe ke Karakteristik Audio (INMP441 PCM 8kHz) jika ada
+    if (audioChar != null) {
+      await subscribeToAudioNotification(audioChar);
+    }
   }
 
   /// Indikator apakah characteristic penulisan perintah BLE tersedia
@@ -481,6 +514,69 @@ class SmartbandBleService {
   /// Ping perangkat untuk meminta paket telemetri segera
   Future<bool> ping() async {
     return sendCommand('PING');
+  }
+
+  /// Aktifkan mode perekaman suara mikrofon INMP441 dari aplikasi
+  Future<bool> startSmartbandAiListening() async {
+    return sendCommand('AI_LISTEN:1');
+  }
+
+  /// Selesaikan/hentikan rekaman suara mikrofon INMP441 dari aplikasi
+  Future<bool> stopSmartbandAiListening() async {
+    return sendCommand('AI_LISTEN:0');
+  }
+
+  /// Reset hitungan langkah pada smartband MPU6050
+  Future<bool> resetSteps() async {
+    return sendCommand('RESET_STEPS');
+  }
+
+  /// Picu getaran peringatan radius atau buzzer pada gelang ("RADIUS_ALERT:1" / "RADIUS_ALERT:0")
+  Future<bool> triggerRadiusAlert(bool active) async {
+    return sendCommand(active ? 'RADIUS_ALERT:1' : 'RADIUS_ALERT:0');
+  }
+
+  /// Tampilkan pesan teks atau balasan pada layar OLED gelang via perintah `"AI:<teks>"`
+  Future<bool> showAiReplyOnOled(String message) async {
+    return sendAiOledPayload('AI:$message');
+  }
+
+  /// Subscribe ke notifikasi karakteristik audio (6e400004)
+  Future<void> subscribeToAudioNotification([
+    BluetoothCharacteristic? characteristic,
+  ]) async {
+    final char = characteristic ?? _audioCharacteristic;
+    if (char == null) return;
+
+    final dev = _connectedDevice;
+    if (dev == null) return;
+
+    _log('AUDIO NOTIFICATION START');
+    try {
+      await _audioNotificationSubscription?.cancel();
+      _audioNotificationSubscription = char.onValueReceived.listen(
+        (bytes) {
+          if (bytes.isNotEmpty) {
+            final uint8 = Uint8List.fromList(bytes);
+            if (_isSmartbandRecordingVoice) {
+              _pcmAudioBuffer.add(uint8);
+            }
+            if (!_audioStreamController.isClosed) {
+              _audioStreamController.add(uint8);
+            }
+          }
+        },
+        onError: (e) {
+          _log('Error audio notification stream: $e');
+        },
+      );
+
+      dev.cancelWhenDisconnected(_audioNotificationSubscription!);
+      await char.setNotifyValue(true);
+      _log('AUDIO NOTIFICATION ENABLED (6e400004)');
+    } catch (e) {
+      _log('AUDIO NOTIFICATION FAILED: $e');
+    }
   }
 
   /// Kirim payload AI OLED (`"AI:<teks>"`) maksimal 55 karakter ASCII tanpa newline
@@ -549,6 +645,40 @@ class SmartbandBleService {
     try {
       final rawString = utf8.decode(bytes, allowMalformed: true).trim();
       if (rawString.isEmpty) return;
+
+      // Cek apakah paket adalah event kontrol suara AI (AI_START / AI_END)
+      if (rawString.startsWith('{') && rawString.contains('"event"')) {
+        try {
+          final dynamic evtDecoded = jsonDecode(rawString);
+          if (evtDecoded is Map<String, dynamic> &&
+              evtDecoded.containsKey('event')) {
+            final evt = evtDecoded['event']?.toString().toUpperCase();
+            if (evt == 'AI_START') {
+              _isSmartbandRecordingVoice = true;
+              _pcmAudioBuffer.clear();
+              if (!_smartbandAiListeningController.isClosed) {
+                _smartbandAiListeningController.add(true);
+              }
+              _log('EVENT AI_START: Smartband mic INMP441 mulai merekam');
+              return;
+            } else if (evt == 'AI_END') {
+              _isSmartbandRecordingVoice = false;
+              if (!_smartbandAiListeningController.isClosed) {
+                _smartbandAiListeningController.add(false);
+              }
+              final completePcm = _pcmAudioBuffer.toBytes();
+              _pcmAudioBuffer.clear();
+              _log(
+                'EVENT AI_END: Smartband mic selesai (\${completePcm.length} bytes)',
+              );
+              if (!_completePcmRecordingController.isClosed) {
+                _completePcmRecordingController.add(completePcm);
+              }
+              return;
+            }
+          }
+        } catch (_) {}
+      }
 
       String jsonToParse = rawString;
 
@@ -622,11 +752,17 @@ class SmartbandBleService {
     _notificationSubscription?.cancel();
     _notificationSubscription = null;
 
+    _audioNotificationSubscription?.cancel();
+    _audioNotificationSubscription = null;
+
     _deviceConnectionSubscription?.cancel();
     _deviceConnectionSubscription = null;
 
     _dataCharacteristic = null;
     _writeCharacteristic = null;
+    _audioCharacteristic = null;
+    _isSmartbandRecordingVoice = false;
+    _pcmAudioBuffer.clear();
     _connectedDevice = null;
     _lastData = null;
     _fragmentParts.clear();
@@ -665,5 +801,8 @@ class SmartbandBleService {
     _smartbandDataController.close();
     _foundDeviceController.close();
     _statusMessageController.close();
+    _audioStreamController.close();
+    _smartbandAiListeningController.close();
+    _completePcmRecordingController.close();
   }
 }

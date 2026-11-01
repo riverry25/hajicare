@@ -77,17 +77,42 @@ class DashboardJamaahScreen extends StatelessWidget {
               IndexedStack(
                 index: currentIdx,
                 children: [
-                  _buildJamaahHome(context, state, dashboardCtrl, prayerCtrl),
+                  TickerMode(
+                    enabled: currentIdx == 0,
+                    child: RepaintBoundary(
+                      child: _buildJamaahHome(
+                        context,
+                        state,
+                        dashboardCtrl,
+                        prayerCtrl,
+                      ),
+                    ),
+                  ),
                   if (dashboardCtrl.visitedTabs.contains(1))
-                    const InteractiveMapScreen(showBottomNav: false)
+                    TickerMode(
+                      enabled: currentIdx == 1,
+                      child: const RepaintBoundary(
+                        child: InteractiveMapScreen(showBottomNav: false),
+                      ),
+                    )
                   else
                     const SizedBox.shrink(),
                   if (dashboardCtrl.visitedTabs.contains(2))
-                    const PrayerTimesScreen(showBottomNav: false)
+                    TickerMode(
+                      enabled: currentIdx == 2,
+                      child: const RepaintBoundary(
+                        child: PrayerTimesScreen(showBottomNav: false),
+                      ),
+                    )
                   else
                     const SizedBox.shrink(),
                   if (dashboardCtrl.visitedTabs.contains(3))
-                    const ProfileScreen(showBottomNav: false)
+                    TickerMode(
+                      enabled: currentIdx == 3,
+                      child: const RepaintBoundary(
+                        child: ProfileScreen(showBottomNav: false),
+                      ),
+                    )
                   else
                     const SizedBox.shrink(),
                 ],
@@ -138,21 +163,25 @@ class DashboardJamaahScreen extends StatelessWidget {
             child: Column(
               children: [
                 // Top Hero Card (Seamless Gradient Canvas - Extracted StatelessWidget)
-                DashboardJamaahHeroSection(
-                  state: state,
-                  dashboardCtrl: dashboardCtrl,
-                  prayerCtrl: prayerCtrl,
-                  isDark: isDark,
+                RepaintBoundary(
+                  child: DashboardJamaahHeroSection(
+                    state: state,
+                    dashboardCtrl: dashboardCtrl,
+                    prayerCtrl: prayerCtrl,
+                    isDark: isDark,
+                  ),
                 ),
 
                 // Curved White/Cream Canvas Sheet
-                _buildCurvedBody(
-                  context: context,
-                  jamaah: state.self,
-                  state: state,
-                  dashboardCtrl: dashboardCtrl,
-                  isDark: isDark,
-                  headingColor: headingColor,
+                RepaintBoundary(
+                  child: _buildCurvedBody(
+                    context: context,
+                    jamaah: state.self,
+                    state: state,
+                    dashboardCtrl: dashboardCtrl,
+                    isDark: isDark,
+                    headingColor: headingColor,
+                  ),
                 ),
               ],
             ),

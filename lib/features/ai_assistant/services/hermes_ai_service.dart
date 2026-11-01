@@ -11,9 +11,11 @@ import '../models/ai_chat_message.dart';
 import '../models/ai_reply.dart';
 import '../models/ai_server_config.dart';
 import '../models/ai_server_status.dart';
+import '../models/ai_stream_event.dart';
 import '../models/sensor_context.dart';
 import 'hermes_response_parser.dart';
 import 'oled_text_formatter.dart';
+import 'streaming_speech_extractor.dart';
 
 /// Exception terstruktur untuk komunikasi dengan server Hermes Agent.
 class HermesAiException implements Exception {
@@ -59,7 +61,7 @@ class HermesAiService {
     final headers = <String, String>{
       'Content-Type': 'application/json',
       'Accept': 'application/json',
-      'Authorization': 'Bearer ${config.apiKey.trim()}',
+      'Authorization': 'Bearer ${config.effectiveApiKey.trim()}',
     };
     if (config.isOpenRouter) {
       headers['HTTP-Referer'] = 'https://hajicare.id';
@@ -88,7 +90,7 @@ class HermesAiService {
 
   /// Bangun `system` prompt sesuai spesifikasi dengan konteks nyata dari
   /// Smartband BLE + seluruh modul aplikasi (GPS HP, Jarak Real-Time, Room, Salat, Kiblat, SOS).
-  static String buildSystemPrompt(SensorContext sensor) {
+  static String buildSystemPrompt(SensorContext sensor, {bool concise = false}) {
     final replyLang = _resolveReplyLanguageName();
     final String bpmText = sensor.isSmartbandConnected
         ? (sensor.heartRateBpm > 0
@@ -146,7 +148,8 @@ class HermesAiService {
         'Jawab dalam bahasa $replyLang dengan kalimat utuh, ramah, sopan, tenang, dan jelas (JANGAN gunakan gaya "terse caveman"). '
         'DILARANG KERAS menulis tanda kurung siku atau timestamp angka seperti 0.0: atau 3.8: di dalam teks jawaban. '
         'WAJIB balas HANYA dalam format JSON murni tanpa markdown codeblock dengan struktur: '
-        '{"speech": "kalimat lengkap untuk dibacakan suara", "oled": "ringkasan maksimal 55 karakter tanpa emoji untuk layar gelang"}.';
+        '{"speech": "kalimat lengkap untuk dibacakan suara", "oled": "ringkasan maksimal 55 karakter tanpa emoji untuk layar gelang"}.'
+        '${concise ? " MODE SUARA AKTIF: Jawab secara singkat, padat, dan ramah dalam 2-4 kalimat (maksimal ±60 kata), langsung ke inti jawaban." : ""}';
   }
 
   /// Bangun pesan user yang menyertakan pengingat konteks nyata & format JSON
@@ -185,17 +188,18 @@ class HermesAiService {
       final isOldPlaceholderUrl =
           savedUrl == null ||
           savedUrl.isEmpty ||
-          savedUrl.contains('DOMAIN_STATIC_NGROK_KAMU') ||
-          savedUrl.contains('unbalance-compile-chariot.ngrok-free.dev');
+          savedUrl.contains('DOMAIN_STATIC_NGROK_KAMU');
+
       final isOldPlaceholderKey =
           savedKey == null ||
           savedKey.isEmpty ||
           savedKey == AiServerConfig.legacyDefaultApiKey ||
-          savedKey.startsWith('sk-675b8dd28e37e08f');
+          savedKey == AiServerConfig.defaultApiKey;
+
       final isOldPlaceholderModel =
           savedModel == null ||
           savedModel.isEmpty ||
-          savedModel == 'ngoding-combo' ||
+
           (isOldPlaceholderUrl &&
               savedModel == AiServerConfig.legacyDefaultModel);
 
@@ -203,7 +207,7 @@ class HermesAiService {
           ? AiServerConfig.defaultBaseUrl
           : AiServerConfig.normalizeBaseUrl(savedUrl);
       final resolvedKey = isOldPlaceholderKey
-          ? AiServerConfig.defaultApiKey
+          ? ''
           : savedKey;
       final resolvedModel = isOldPlaceholderModel
           ? AiServerConfig.defaultModel
@@ -214,7 +218,7 @@ class HermesAiService {
         await prefs.setString(prefKeyBaseUrl, resolvedUrl);
       }
       if (isOldPlaceholderKey && savedKey != null) {
-        await prefs.setString(prefKeyApiKey, resolvedKey);
+        await prefs.remove(prefKeyApiKey);
       }
       if (isOldPlaceholderModel && savedModel != null) {
         await prefs.setString(prefKeyModel, resolvedModel);
@@ -239,7 +243,7 @@ class HermesAiService {
     final normalized = AiServerConfig(
       baseUrl: AiServerConfig.normalizeBaseUrl(config.baseUrl),
       apiKey: config.apiKey.trim().isEmpty
-          ? AiServerConfig.defaultApiKey
+          ? ''
           : config.apiKey.trim(),
       model: config.model.trim().isEmpty
           ? AiServerConfig.defaultModel
@@ -249,7 +253,11 @@ class HermesAiService {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(prefKeyBaseUrl, normalized.baseUrl);
-      await prefs.setString(prefKeyApiKey, normalized.apiKey);
+      if (normalized.isCustomApiKey) {
+        await prefs.setString(prefKeyApiKey, normalized.apiKey);
+      } else {
+        await prefs.remove(prefKeyApiKey);
+      }
       await prefs.setString(prefKeyModel, normalized.model);
     } catch (e) {
       AppLogger.warn(
@@ -435,6 +443,183 @@ class HermesAiService {
         }
       }
       rethrow;
+    }
+  }
+
+  /// Streaming SSE (`stream: true`) untuk respons instan kata-demi-kata dan sentence-by-sentence TTS.
+  Stream<AiStreamEvent> streamChatCompletion({
+    required AiServerConfig config,
+    required String userQuestion,
+    required SensorContext sensorContext,
+    List<AiChatMessage> history = const <AiChatMessage>[],
+    bool concise = false,
+  }) async* {
+    final trimmedQuestion = userQuestion.trim();
+    if (trimmedQuestion.isEmpty) {
+      throw const HermesAiException('Pertanyaan tidak boleh kosong.');
+    }
+
+    if (config.isPlaceholder) {
+      throw const HermesAiException(
+        'URL Server AI masih menggunakan domain placeholder.',
+        isConfigError: true,
+      );
+    }
+
+    final urlError = AiServerConfig.validateBaseUrl(config.baseUrl);
+    if (urlError != null) {
+      throw HermesAiException(urlError, isConfigError: true);
+    }
+
+    final messages = <Map<String, String>>[
+      {'role': 'system', 'content': buildSystemPrompt(sensorContext, concise: concise)},
+      ..._buildHistoryMessages(history, maxMessages: 4),
+      {
+        'role': 'user',
+        'content': buildContextualUserMessage(trimmedQuestion, sensorContext),
+      },
+    ];
+
+    final payload = <String, dynamic>{
+      'model': config.model,
+      'messages': messages,
+      'temperature': 0.3,
+      'max_tokens': concise ? 700 : 2048,
+      'stream': true,
+    };
+
+    var hasEmittedAny = false;
+    try {
+      await for (final event in _executeChatStreamRequest(config, payload)) {
+        hasEmittedAny = true;
+        yield event;
+      }
+    } catch (e) {
+      if (!hasEmittedAny && !config.isOpenRouter) {
+        AppLogger.info(
+          'Target streaming AI utama (${config.baseUrl}) mengalami kendala ($e). Mencoba Auto-Fallback ke OpenRouter Cloud...',
+          tag: 'HermesAiService',
+        );
+        try {
+          final fallbackConfig = AiServerConfig.openRouterFallback;
+          final fallbackPayload = <String, dynamic>{
+            'model': fallbackConfig.model,
+            'messages': messages,
+            'temperature': 0.3,
+            'max_tokens': concise ? 700 : 2048,
+            'stream': true,
+          };
+          await for (final event in _executeChatStreamRequest(fallbackConfig, fallbackPayload)) {
+            yield event;
+          }
+          return;
+        } catch (fallbackError) {
+          AppLogger.warn(
+            'Auto-Fallback streaming OpenRouter juga mengalami kendala: $fallbackError',
+            tag: 'HermesAiService',
+          );
+        }
+      }
+      rethrow;
+    }
+  }
+
+  Stream<AiStreamEvent> _executeChatStreamRequest(
+    AiServerConfig config,
+    Map<String, dynamic> payload,
+  ) async* {
+    http.StreamedResponse streamedResponse;
+    try {
+      final request = http.Request('POST', config.chatCompletionsUri);
+      request.headers.addAll(buildHeaders(config));
+      request.body = jsonEncode(payload);
+
+      streamedResponse = await _httpClient.send(request).timeout(_requestTimeout);
+    } on TimeoutException {
+      throw const HermesAiException('Koneksi streaming ke server AI melebihi batas waktu.');
+    } catch (e) {
+      throw HermesAiException('Gagal memulai koneksi streaming ke server AI: $e');
+    }
+
+    final statusCode = streamedResponse.statusCode;
+    if (statusCode == 401 || statusCode == 403) {
+      throw HermesAiException(
+        'Autentikasi gagal (HTTP $statusCode). Periksa API Key Bearer.',
+        statusCode: statusCode,
+      );
+    }
+    if (statusCode == 429) {
+      throw const HermesAiException(
+        'Batas kuota/rate limit provider tercapai (HTTP 429).',
+        statusCode: 429,
+      );
+    }
+    if (statusCode < 200 || statusCode >= 300) {
+      final errorBody = await streamedResponse.stream.bytesToString();
+      throw HermesAiException(
+        'Server AI mengembalikan kode HTTP $statusCode ($errorBody).',
+        statusCode: statusCode,
+      );
+    }
+
+    final contentType = streamedResponse.headers['content-type']?.toLowerCase() ?? '';
+
+    if (!contentType.contains('text/event-stream')) {
+      final rawBody = await streamedResponse.stream.bytesToString();
+      final reply = HermesResponseParser.parseHttpBody(rawBody);
+      yield AiStreamDone(reply);
+      return;
+    }
+
+    final extractor = StreamingSpeechExtractor();
+    await for (final line in streamedResponse.stream
+        .transform(utf8.decoder)
+        .transform(const LineSplitter())) {
+      final trimmed = line.trim();
+      if (trimmed.isEmpty || trimmed.startsWith(':')) continue;
+      if (trimmed.startsWith('data:')) {
+        final data = trimmed.substring(5).trim();
+        if (data == '[DONE]') break;
+        try {
+          final decoded = jsonDecode(data);
+          if (decoded is Map<String, dynamic>) {
+            final choices = decoded['choices'];
+            if (choices is List && choices.isNotEmpty) {
+              final firstChoice = choices[0];
+              if (firstChoice is Map) {
+                final delta = firstChoice['delta'];
+                if (delta is Map) {
+                  final content = delta['content'];
+                  if (content is String && content.isNotEmpty) {
+                    extractor.addChunk(content);
+                    final speech = extractor.currentSpeech;
+                    if (speech.isNotEmpty) {
+                      yield AiStreamDelta(speech);
+                    }
+                  }
+                }
+              }
+            }
+          }
+        } catch (_) {}
+      }
+    }
+
+    try {
+      final finalReply = HermesResponseParser.parseModelContent(extractor.rawAccumulatedText);
+      yield AiStreamDone(finalReply);
+    } catch (_) {
+      final speech = extractor.currentSpeech.isNotEmpty
+          ? extractor.currentSpeech
+          : 'Kondisi Anda terpantau aman.';
+      final oled = OledTextFormatter.sanitize(speech);
+      yield AiStreamDone(
+        AiReply(
+          speech: speech,
+          oled: oled.isNotEmpty ? oled : 'Kondisi Anda stabil',
+          isStructured: false,
+        ),
+      );
     }
   }
 

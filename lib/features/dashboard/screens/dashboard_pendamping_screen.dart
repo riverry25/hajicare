@@ -21,6 +21,7 @@ import '../../prayer/screens/prayer_times_screen.dart';
 import '../../profile/screens/profile_screen.dart';
 import '../../room/widgets/active_room_card.dart';
 import '../../room/widgets/add_jamaah_dialog.dart';
+import '../../room/widgets/jamaah_detail_sheet.dart';
 import '../../ai_assistant/widgets/hajicare_ai_widget.dart';
 import '../controllers/dashboard_controller.dart';
 import '../widgets/pendamping_radar_card.dart';
@@ -56,17 +57,37 @@ class DashboardPendampingScreen extends StatelessWidget {
               IndexedStack(
                 index: currentIdx,
                 children: [
-                  _buildHome(context, state, dashboardCtrl),
+                  TickerMode(
+                    enabled: currentIdx == 0,
+                    child: RepaintBoundary(
+                      child: _buildHome(context, state, dashboardCtrl),
+                    ),
+                  ),
                   if (dashboardCtrl.visitedTabs.contains(1))
-                    const InteractiveMapScreen(showBottomNav: false)
+                    TickerMode(
+                      enabled: currentIdx == 1,
+                      child: const RepaintBoundary(
+                        child: InteractiveMapScreen(showBottomNav: false),
+                      ),
+                    )
                   else
                     const SizedBox.shrink(),
                   if (dashboardCtrl.visitedTabs.contains(2))
-                    const PrayerTimesScreen(showBottomNav: false)
+                    TickerMode(
+                      enabled: currentIdx == 2,
+                      child: const RepaintBoundary(
+                        child: PrayerTimesScreen(showBottomNav: false),
+                      ),
+                    )
                   else
                     const SizedBox.shrink(),
                   if (dashboardCtrl.visitedTabs.contains(3))
-                    const ProfileScreen(showBottomNav: false)
+                    TickerMode(
+                      enabled: currentIdx == 3,
+                      child: const RepaintBoundary(
+                        child: ProfileScreen(showBottomNav: false),
+                      ),
+                    )
                   else
                     const SizedBox.shrink(),
                 ],
@@ -140,8 +161,12 @@ class DashboardPendampingScreen extends StatelessWidget {
             maxWidth: AppBreakpoints.maxTabletContentWidth,
             child: Column(
               children: [
-                _hero(context, state, dashboardCtrl, prayerCtrl, isDark),
-                _body(context, state, dashboardCtrl, isDark),
+                RepaintBoundary(
+                  child: _hero(context, state, dashboardCtrl, prayerCtrl, isDark),
+                ),
+                RepaintBoundary(
+                  child: _body(context, state, dashboardCtrl, isDark),
+                ),
               ],
             ),
           ),
@@ -706,9 +731,11 @@ class DashboardPendampingScreen extends StatelessWidget {
             // Rule 1: Evaluate .obs at top line before conditionals
             final activeSosCount = state.activeSosCount.value;
             final separatedList = state.separatedJamaahList;
+            final criticalList = state.criticalAnomalyJamaahList;
             final hasSos = activeSosCount > 0 || state.anySosActive;
             final hasSeparated = separatedList.isNotEmpty;
-            if (!hasSos && !hasSeparated) return const SizedBox.shrink();
+            final hasCritical = criticalList.isNotEmpty;
+            if (!hasSos && !hasSeparated && !hasCritical) return const SizedBox.shrink();
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -718,6 +745,7 @@ class DashboardPendampingScreen extends StatelessWidget {
                   actionText: context.tr('dashboard.viewMap'),
                   onAction: () {
                     final target =
+                        criticalList.firstOrNull ??
                         state.jamaahList.firstWhereOrNull(
                           (j) => j.sosActive || j.separatedMode,
                         ) ??
@@ -735,6 +763,7 @@ class DashboardPendampingScreen extends StatelessWidget {
                   isDark: isDark,
                 ),
                 const SizedBox(height: 12),
+                if (hasCritical) _criticalAnomalyAlert(context, state, isDark),
                 if (hasSos && state.activeRoomId.value != null)
                   PendampingSosBanner(
                     state: state,
@@ -1308,6 +1337,120 @@ class DashboardPendampingScreen extends StatelessWidget {
             ],
           );
         },
+      ),
+    );
+  }
+
+  Widget _criticalAnomalyAlert(
+    BuildContext context,
+    HajiCareController state,
+    bool isDark,
+  ) {
+    final criticalList = state.criticalAnomalyJamaahList;
+    if (criticalList.isEmpty) return const SizedBox.shrink();
+
+    final count = criticalList.length;
+    final first = criticalList.first;
+
+    final String reason;
+    if (first.isFallen) {
+      reason = 'Jatuh Terdeteksi!';
+    } else if (first.isTemperatureCritical) {
+      final t = first.temperature != null ? '${first.temperature!.toStringAsFixed(1)}°C' : '--';
+      reason = 'Suhu Kritis ($t)!';
+    } else if (first.isHeartRateCritical) {
+      reason = 'Detak Jantung Abnormal (${first.heartRate} BPM)!';
+    } else if (first.isSpo2Critical) {
+      reason = 'Kadar Oksigen Drop (${first.spo2}%)!';
+    } else if (first.sosActive) {
+      reason = 'Sinyal SOS Aktif!';
+    } else {
+      reason = 'Anomali Medis Darurat!';
+    }
+
+    final String alertText = count <= 1
+        ? '🚨 ${first.name}: $reason Ketuk untuk cek telemetri smartband & tindakan.'
+        : '🚨 $count Jamaah (${first.name}, dll) mengalami Anomali Darurat / Jatuh!';
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () {
+          HapticFeedback.mediumImpact();
+          JamaahDetailSheet.show(
+            context,
+            jamaah: first,
+            roomId: state.activeRoomId.value ?? '',
+            roomName: state.activeRoom.value?.capitalizedName ?? 'Rombongan',
+            roomCode: state.activeRoom.value?.code ?? '',
+          );
+        },
+        child: Container(
+          margin: const EdgeInsets.only(top: 10),
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: AppColors.statusDanger.withValues(alpha: isDark ? 0.22 : 0.12),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: AppColors.statusDanger,
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.statusDanger.withValues(alpha: 0.15),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.statusDanger.withValues(alpha: 0.25),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.warning_amber_rounded,
+                  color: AppColors.statusDanger,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  alertText,
+                  style: TextStyle(
+                    color: isDark ? const Color(0xFFFFB4AB) : AppColors.statusDanger,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    height: 1.4,
+                  ),
+                ),
+              ),
+              if (count > 1) ...[
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppColors.statusDanger,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    '$count',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
       ),
     );
   }

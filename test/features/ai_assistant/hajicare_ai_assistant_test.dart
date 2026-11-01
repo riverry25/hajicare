@@ -53,6 +53,18 @@ class _NoopVoiceService extends AiVoiceService {
   Future<void> initTts() async {}
 
   @override
+  void feedStreamingSpeech(String speechSoFar) {
+    spokenTexts.add(speechSoFar);
+    onSpeakingChanged?.call(true);
+  }
+
+  @override
+  void finishStreamingSpeech([String? finalSpeech]) {
+    if (finalSpeech != null) spokenTexts.add(finalSpeech);
+    onSpeakingChanged?.call(true);
+  }
+
+  @override
   Future<void> speak(String text) async {
     spokenTexts.add(text);
     onSpeakingChanged?.call(true);
@@ -392,10 +404,12 @@ Semoga membantu!
             'https://api.groq.com/openai/v1/chat/completions',
           ),
         );
+        expect(defaultConfig.apiKey, isEmpty);
         expect(
-          defaultConfig.apiKey,
+          defaultConfig.effectiveApiKey,
           equals(AiServerConfig.defaultApiKey),
         );
+        expect(defaultConfig.isCustomApiKey, isFalse);
         expect(defaultConfig.model, equals(AiServerConfig.defaultModel));
 
         final health = await repo.checkServerHealth();
@@ -552,7 +566,7 @@ Semoga membantu!
             home: const HajiCareAiAssistantPage(),
           ),
         );
-        await tester.pump();
+        await tester.pumpAndSettle();
 
         // 1. Header minimalis & compact Smartband/OLED status strip tampil rapi
         expect(find.text('HajiCare AI Assistant'), findsOneWidget);
@@ -568,7 +582,7 @@ Semoga membantu!
 
         // 2. Ketuk kartu starter "Cek Kesehatan"
         await tester.tap(find.text('Cek Kesehatan'));
-        await tester.pump();
+        await tester.pumpAndSettle();
         await tester.pump(const Duration(milliseconds: 300));
 
         expect(controller.messages.length, greaterThanOrEqualTo(3));
@@ -579,7 +593,7 @@ Semoga membantu!
         // 3. Tombol Stop TTS muncul saat AI sedang berbicara
         expect(find.byKey(const Key('stop_tts_button')), findsOneWidget);
         await tester.tap(find.byKey(const Key('stop_tts_button')));
-        await tester.pump();
+        await tester.pumpAndSettle();
         expect(controller.isSpeaking.value, isFalse);
 
         // 4. Ketuk compact strip untuk membuka bottom sheet OLED 128x64 & Sensor Gelang
@@ -609,7 +623,7 @@ Semoga membantu!
 
         // 5. Buka Immersive Voice Orb Mode
         await tester.tap(find.byKey(const Key('voice_orb_mode_button')));
-        await tester.pump();
+        await tester.pumpAndSettle();
         await tester.pump(const Duration(milliseconds: 200));
 
         expect(controller.isVoiceModeOpen.value, isTrue);
@@ -618,7 +632,7 @@ Semoga membantu!
 
         // Tutup Immersive Voice Orb Mode
         await tester.tap(find.byKey(const Key('voice_orb_close_button')));
-        await tester.pump();
+        await tester.pumpAndSettle();
         expect(controller.isVoiceModeOpen.value, isFalse);
 
         // Selesaikan timer indikator LED hijau (6 detik)
@@ -665,7 +679,7 @@ Semoga membantu!
             ),
           ),
         );
-        await tester.pump();
+        await tester.pumpAndSettle();
 
         final fabFinder = find.byKey(const Key('tanya_ai_fab_button'));
         expect(fabFinder, findsOneWidget);

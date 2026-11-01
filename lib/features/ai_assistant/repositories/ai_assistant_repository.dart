@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import '../../../core/utils/app_logger.dart';
 import '../models/ai_chat_message.dart';
 import '../models/ai_reply.dart';
 import '../models/ai_server_config.dart';
 import '../models/ai_server_status.dart';
+import '../models/ai_stream_event.dart';
 import '../models/oled_display_state.dart';
 import '../models/sensor_context.dart';
 import '../services/hermes_ai_service.dart';
@@ -133,6 +136,87 @@ class AiAssistantRepository {
       oledState: oledState,
       errorBannerMessage: bannerNotice,
     );
+  }
+
+  /// Streaming pertanyaan ke Hermes Agent dan teruskan ringkasan `oled` ke gelang BLE secara non-blocking.
+  Stream<AiTurnEvent> askQuestionStream({
+    required String question,
+    List<AiChatMessage> history = const <AiChatMessage>[],
+    bool concise = false,
+    bool allowOfflineFallback = true,
+  }) async* {
+    final config = await loadServerConfig();
+    final sensor = _smartbandBridge.readCurrentSensorContext();
+
+    var hasEmittedAny = false;
+    try {
+      await for (final event in _hermesService.streamChatCompletion(
+        config: config,
+        userQuestion: question,
+        sensorContext: sensor,
+        history: history,
+        concise: concise,
+      )) {
+        if (event is AiStreamDelta) {
+          hasEmittedAny = true;
+          yield AiTurnDelta(event.speechSoFar);
+        } else if (event is AiStreamDone) {
+          final reply = event.reply;
+          // Kirim OLED ke BLE secara non-blocking agar tidak menahan UI response
+          final oledFuture = _smartbandBridge.sendOledToSmartband(reply.oled);
+          final initialOledState = OledDisplayState(
+            text: reply.oled,
+            payload: 'AI:${reply.oled}',
+            status: _smartbandBridge.isBleHardwareConnected
+                ? OledDeliveryStatus.sending
+                : OledDeliveryStatus.previewOnly,
+            updatedAt: DateTime.now(),
+          );
+          unawaited(oledFuture);
+
+          yield AiTurnDone(
+            reply: reply,
+            sensorSnapshot: sensor,
+            oledState: initialOledState,
+          );
+          return;
+        }
+      }
+    } on HermesAiException catch (e) {
+      AppLogger.warn(
+        'HermesAiException saat askQuestionStream: ${e.userMessage}',
+        tag: 'AiAssistantRepo',
+      );
+      if (!allowOfflineFallback || hasEmittedAny) rethrow;
+      final fallbackReply = HermesAiService.buildOfflineFallbackReply(
+        question: question,
+        sensor: sensor,
+      );
+      final oledState = await _smartbandBridge.sendOledToSmartband(fallbackReply.oled);
+      yield AiTurnDone(
+        reply: fallbackReply,
+        sensorSnapshot: sensor,
+        oledState: oledState,
+        errorBannerMessage: e.userMessage,
+      );
+    } catch (e) {
+      AppLogger.warn(
+        'Error tak terduga saat askQuestionStream: $e',
+        tag: 'AiAssistantRepo',
+      );
+      if (!allowOfflineFallback || hasEmittedAny) rethrow;
+      final fallbackReply = HermesAiService.buildOfflineFallbackReply(
+        question: question,
+        sensor: sensor,
+      );
+      final oledState = await _smartbandBridge.sendOledToSmartband(fallbackReply.oled);
+      yield AiTurnDone(
+        reply: fallbackReply,
+        sensorSnapshot: sensor,
+        oledState: oledState,
+        errorBannerMessage: 'Server Hermes belum terjangkau, menggunakan asisten lokal.',
+      );
+    }
   }
 
   /// Kirim ulang teks OLED tertentu ke gelang pintar / pratinjau.

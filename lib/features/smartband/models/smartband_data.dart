@@ -18,6 +18,7 @@ class SmartbandData {
   final double? temperature;
   final bool fallDetected;
   final int? stepCount;
+  int? get steps => stepCount;
   final double? roll;
   final double? pitch;
   final double? accelG;
@@ -34,6 +35,8 @@ class SmartbandData {
   final double safeRadius;
   final double? distanceM;
   final bool radiusAlert;
+  final double? stepDistanceM;
+  final bool isAiListening;
   final DateTime timestamp;
   final String rawJson;
   final bool isValidLocation;
@@ -71,6 +74,8 @@ class SmartbandData {
     this.safeRadius = 50.0,
     this.distanceM,
     this.radiusAlert = false,
+    this.stepDistanceM,
+    this.isAiListening = false,
     DateTime? timestamp,
     this.rawJson = '',
     bool? isValidLocation,
@@ -172,6 +177,8 @@ class SmartbandData {
     double? safeRadius,
     double? distanceM,
     bool? radiusAlert,
+    double? stepDistanceM,
+    bool? isAiListening,
     DateTime? timestamp,
     String? rawJson,
     bool? isValidLocation,
@@ -201,6 +208,8 @@ class SmartbandData {
       safeRadius: safeRadius ?? this.safeRadius,
       distanceM: distanceM ?? this.distanceM,
       radiusAlert: radiusAlert ?? this.radiusAlert,
+      stepDistanceM: stepDistanceM ?? this.stepDistanceM,
+      isAiListening: isAiListening ?? this.isAiListening,
       timestamp: timestamp ?? this.timestamp,
       rawJson: rawJson ?? this.rawJson,
       isValidLocation: isValidLocation ?? this.isValidLocation,
@@ -355,6 +364,12 @@ class SmartbandData {
       json['distanceM'] ?? json['dist'] ?? json['distance'],
     );
     final bool radAlert = parseBool(json['radiusAlert'] ?? json['outOfRange']);
+    final double? stepDist = parseDouble(
+      json['stepDistanceM'] ?? json['stepDistance'] ?? json['stepDist'],
+    );
+    final bool aiRec = parseBool(
+      json['aiListening'] ?? json['isAiListening'] ?? json['aiRec'],
+    );
 
     // Validasi lokasi geografis
     final bool validLoc =
@@ -394,6 +409,8 @@ class SmartbandData {
       safeRadius: sRadius,
       distanceM: distM,
       radiusAlert: radAlert,
+      stepDistanceM: stepDist,
+      isAiListening: aiRec,
       timestamp: DateTime.now(),
       rawJson: raw,
       isValidLocation: validLoc,
@@ -436,6 +453,8 @@ class SmartbandData {
     'safeRadius': safeRadius,
     'distanceM': distanceM,
     'radiusAlert': radiusAlert,
+    'stepDistanceM': stepDistanceM,
+    'aiListening': isAiListening,
     'timestamp': timestamp.toIso8601String(),
     'isValidLocation': isValidLocation,
   };

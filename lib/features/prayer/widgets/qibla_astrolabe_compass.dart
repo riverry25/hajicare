@@ -32,16 +32,17 @@ class QiblaAstrolabeCompass extends StatelessWidget {
       final qiblaBearingVal = controller.qiblaBearing.value;
       final safeQiblaBearing =
           qiblaBearingVal.isFinite && !qiblaBearingVal.isNaN
-          ? qiblaBearingVal
-          : 0.0;
+          ? qiblaBearingVal : 0.0; // bearing fallback
+
       final qiblaDeg = safeQiblaBearing.toStringAsFixed(0);
 
-      final offsetVal = controller.qiblaOffset.value;
-      final safeOffset = offsetVal.isFinite && !offsetVal.isNaN
-          ? offsetVal
-          : 0.0;
-      final rawAngle = (safeOffset * math.pi / 180.0);
-      final safeAngle = rawAngle.isFinite && !rawAngle.isNaN ? rawAngle : 0.0;
+      // Offset is read inside granular Obx blocks below to avoid rebuilding full AppCard
+
+
+
+
+
+
 
       final hasSensor = controller.hasCompassSensor.value;
 
@@ -156,7 +157,7 @@ class QiblaAstrolabeCompass extends StatelessWidget {
                           child: CustomPaint(
                             size: const Size(230, 230),
                             painter: _QiblaCompassDialPainter(
-                              isAligned: isAligned,
+                              isAligned: controller.isQiblaAligned.value,
                               isDark: isDark,
                               accentColor: colors.accent,
                               successColor: colors.islamic,
@@ -214,8 +215,8 @@ class QiblaAstrolabeCompass extends StatelessWidget {
 
                       // Rotating Kaaba Pointer Needle (Isolated in RepaintBoundary)
                       RepaintBoundary(
-                        child: Transform.rotate(
-                          angle: safeAngle,
+                        child: _buildRotatingNeedle(
+                          // angle is driven by granular Obx inside _buildRotatingNeedle
                           child: SizedBox(
                             width: 170,
                             height: 170,
@@ -331,16 +332,26 @@ class QiblaAstrolabeCompass extends StatelessWidget {
               const SizedBox(height: AppSpacing.lg),
 
               // Dynamic Turn Guidance Status Banner
-              _buildTurnGuidanceBanner(
+              Obx(() => _buildTurnGuidanceBanner(
                 context,
-                isAligned: isAligned,
-                safeOffset: safeOffset,
-                colors: colors,
+                isAligned: controller.isQiblaAligned.value,
+                safeOffset: controller.qiblaOffset.value.isFinite && !controller.qiblaOffset.value.isNaN ? controller.qiblaOffset.value : 0.0,
+                colors: colors)
               ),
             ],
           ],
         ),
       );
+    });
+  }
+
+  Widget _buildRotatingNeedle({required Widget child}) {
+    return Obx(() {
+      final offsetVal = controller.qiblaOffset.value;
+      final needleOffset = offsetVal.isFinite && !offsetVal.isNaN ? offsetVal : 0.0;
+      final needleRawAngle = needleOffset * math.pi / 180.0;
+      final needleAngle = needleRawAngle.isFinite && !needleRawAngle.isNaN ? needleRawAngle : 0.0;
+      return Transform.rotate(angle: needleAngle, child: child);
     });
   }
 

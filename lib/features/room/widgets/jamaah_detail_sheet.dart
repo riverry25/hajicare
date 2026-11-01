@@ -67,6 +67,7 @@ class JamaahDetailSheet extends StatefulWidget {
 class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
   final RoomService _roomService = RoomService();
   StreamSubscription<DocumentSnapshot>? _userDocSub;
+  StreamSubscription<DocumentSnapshot>? _roomMemberDocSub;
   Map<String, dynamic>? _userFirestoreData;
 
   bool _isRemoving = false;
@@ -82,6 +83,7 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
   @override
   void dispose() {
     _userDocSub?.cancel();
+    _roomMemberDocSub?.cancel();
     super.dispose();
   }
 
@@ -94,7 +96,10 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
           (doc) {
             if (doc.exists && mounted) {
               setState(() {
-                _userFirestoreData = doc.data();
+                _userFirestoreData = {
+                  ...?_userFirestoreData,
+                  ...?doc.data(),
+                };
               });
             }
           },
@@ -102,6 +107,30 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
             debugPrint('[JamaahDetailSheet] Error loading user doc: $e');
           },
         );
+
+    if (widget.roomId.isNotEmpty) {
+      _roomMemberDocSub = FirebaseFirestore.instance
+          .collection('rooms')
+          .doc(widget.roomId)
+          .collection('members')
+          .doc(widget.jamaah.id)
+          .snapshots()
+          .listen(
+            (doc) {
+              if (doc.exists && mounted) {
+                setState(() {
+                  _userFirestoreData = {
+                    ...?_userFirestoreData,
+                    ...?doc.data(),
+                  };
+                });
+              }
+            },
+            onError: (e) {
+              debugPrint('[JamaahDetailSheet] Error loading room member doc: $e');
+            },
+          );
+    }
   }
 
   Future<void> _loadJoinedAt() async {
@@ -152,6 +181,184 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
       (_userFirestoreData?['maktab'] as String?)?.trim() ??
       widget.jamaah.maktab;
 
+  Map<String, dynamic>? get _smartbandMap {
+    if (_userFirestoreData != null && _userFirestoreData!['smartband'] is Map) {
+      return _userFirestoreData!['smartband'] as Map<String, dynamic>;
+    }
+    return null;
+  }
+
+  bool get _isSmartbandConnected {
+    if (_smartbandMap != null) {
+      return (_smartbandMap!['connected'] as bool?) ?? true;
+    }
+    return (_userFirestoreData?['isSmartbandConnected'] as bool?) ??
+        widget.jamaah.isSmartbandConnected;
+  }
+
+  String get _smartbandBraceletId {
+    if (_smartbandMap != null && _smartbandMap!['braceletId'] is String) {
+      return _smartbandMap!['braceletId'] as String;
+    }
+    return widget.jamaah.braceletId ?? 'HCG-001';
+  }
+
+  int? get _heartRate {
+    if (_smartbandMap != null && _smartbandMap!['heartRate'] is num) {
+      return (_smartbandMap!['heartRate'] as num).toInt();
+    }
+    if (_userFirestoreData?['heartRate'] is num) {
+      return (_userFirestoreData!['heartRate'] as num).toInt();
+    }
+    return widget.jamaah.heartRate;
+  }
+
+  double? get _temperature {
+    if (_smartbandMap != null && _smartbandMap!['temperature'] is num) {
+      return (_smartbandMap!['temperature'] as num).toDouble();
+    }
+    if (_userFirestoreData?['temperature'] is num) {
+      return (_userFirestoreData!['temperature'] as num).toDouble();
+    }
+    return widget.jamaah.temperature;
+  }
+
+  int? get _spo2 {
+    if (_smartbandMap != null && _smartbandMap!['spo2'] is num) {
+      return (_smartbandMap!['spo2'] as num).toInt();
+    }
+    if (_userFirestoreData?['spo2'] is num) {
+      return (_userFirestoreData!['spo2'] as num).toInt();
+    }
+    return widget.jamaah.spo2;
+  }
+
+  bool get _fallDetected {
+    if (_smartbandMap != null && _smartbandMap!['fallDetected'] is bool) {
+      return _smartbandMap!['fallDetected'] as bool;
+    }
+    if (_userFirestoreData?['fallDetected'] is bool) {
+      return _userFirestoreData!['fallDetected'] as bool;
+    }
+    return widget.jamaah.fallDetected;
+  }
+
+  String get _fallStatus {
+    if (_smartbandMap != null && _smartbandMap!['fallStatus'] is String) {
+      return _smartbandMap!['fallStatus'] as String;
+    }
+    if (_userFirestoreData?['fallStatus'] is String) {
+      return _userFirestoreData!['fallStatus'] as String;
+    }
+    return widget.jamaah.fallStatus ?? 'NORMAL';
+  }
+
+  int? get _batteryLevel {
+    if (_smartbandMap != null && _smartbandMap!['batteryLevel'] is num) {
+      return (_smartbandMap!['batteryLevel'] as num).toInt();
+    }
+    if (_userFirestoreData?['batteryLevel'] is num) {
+      return (_userFirestoreData!['batteryLevel'] as num).toInt();
+    }
+    return widget.jamaah.batteryLevel;
+  }
+
+  bool get _isSosActive {
+    if (_smartbandMap != null && _smartbandMap!['isSos'] is bool) {
+      if (_smartbandMap!['isSos'] as bool) return true;
+    }
+    if (_userFirestoreData?['sosActive'] is bool) {
+      return _userFirestoreData!['sosActive'] as bool;
+    }
+    return widget.jamaah.sosActive;
+  }
+
+  bool get _isHeartRateCritical =>
+      _heartRate != null && _heartRate! > 0 && (_heartRate! < 45 || _heartRate! > 120);
+
+  bool get _isHeartRateWarning =>
+      _heartRate != null &&
+      _heartRate! > 0 &&
+      ((_heartRate! >= 45 && _heartRate! < 50) ||
+          (_heartRate! > 100 && _heartRate! <= 120));
+
+  bool get _isTemperatureCritical =>
+      _temperature != null && (_temperature! > 38.5 || _temperature! < 35.0);
+
+  bool get _isTemperatureWarning =>
+      _temperature != null && (_temperature! >= 37.6 && _temperature! <= 38.5);
+
+  bool get _isSpo2Critical => _spo2 != null && _spo2! > 0 && _spo2! < 90;
+
+  bool get _isSpo2Warning => _spo2 != null && _spo2! >= 90 && _spo2! < 95;
+
+  bool get _isFallen =>
+      _fallDetected || _fallStatus.toUpperCase() == 'FALLEN';
+
+  int? get _steps {
+    if (_smartbandMap != null && _smartbandMap!['steps'] is num) {
+      return (_smartbandMap!['steps'] as num).toInt();
+    }
+    if (_userFirestoreData?['steps'] is num) {
+      return (_userFirestoreData!['steps'] as num).toInt();
+    }
+    return widget.jamaah.steps;
+  }
+
+  double? get _stepDistanceM {
+    if (_smartbandMap != null && _smartbandMap!['stepDistanceM'] is num) {
+      return (_smartbandMap!['stepDistanceM'] as num).toDouble();
+    }
+    if (_userFirestoreData?['stepDistanceM'] is num) {
+      return (_userFirestoreData!['stepDistanceM'] as num).toDouble();
+    }
+    return widget.jamaah.stepDistanceM;
+  }
+
+  double? get _calculatedDistanceMeters {
+    final loc = _resolvedLocation;
+    if (loc == null) return null;
+    Position? userPos;
+    if (Get.isRegistered<HajiCareController>()) {
+      userPos = Get.find<HajiCareController>().myCurrentPosition.value;
+    }
+    double? userLat = userPos?.latitude;
+    double? userLng = userPos?.longitude;
+
+    if (userLat == null && Get.isRegistered<MapController>()) {
+      final mapLoc = Get.find<MapController>().currentUserLocation.value;
+      if (mapLoc != null) {
+        userLat = mapLoc.latitude;
+        userLng = mapLoc.longitude;
+      }
+    }
+
+    if (userLat == null || userLng == null) return null;
+    return Geolocator.distanceBetween(
+      userLat,
+      userLng,
+      loc.latitude,
+      loc.longitude,
+    );
+  }
+
+  bool get _isOutOfSafeRadius {
+    final meters = _calculatedDistanceMeters;
+    if (meters != null) {
+      final safeRadius = Get.isRegistered<HajiCareController>()
+          ? Get.find<HajiCareController>().safeRadiusMeters.value
+          : 50.0;
+      return meters > safeRadius;
+    }
+    return widget.jamaah.isOutOfSafeRadius;
+  }
+
+  bool get _hasCriticalAnomaly =>
+      _isSosActive || _isFallen || _isHeartRateCritical || _isTemperatureCritical || _isSpo2Critical;
+
+  bool get _hasAnyAnomaly =>
+      _hasCriticalAnomaly || _isOutOfSafeRadius || _isHeartRateWarning || _isTemperatureWarning || _isSpo2Warning;
+
   String? get _resolvedBloodType =>
       (_userFirestoreData?['bloodType'] as String?)?.trim() ??
       widget.jamaah.bloodType;
@@ -200,6 +407,29 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
     if (raw is Timestamp) return raw.toDate();
     return widget.jamaah.locationUpdatedAt;
   }
+
+  DateTime? get _smartbandUpdatedAt {
+    final raw = _smartbandMap != null
+        ? _smartbandMap!['updatedAt']
+        : _userFirestoreData?['smartbandUpdatedAt'];
+    if (raw is Timestamp) return raw.toDate();
+    if (raw is String) return DateTime.tryParse(raw);
+    return widget.jamaah.smartbandUpdatedAt;
+  }
+
+  String get _smartbandRelativeTime {
+    final dt = _smartbandUpdatedAt;
+    if (dt == null) return context.tr('smartband.statusConnected');
+    final diff = DateTime.now().difference(dt);
+    if (diff.inSeconds < 10) return context.tr('smartband.justNow');
+    if (diff.inSeconds < 60) return '${diff.inSeconds}d lalu';
+    if (diff.inMinutes < 60) return '${diff.inMinutes}m lalu';
+    return '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+  }
+
+  String? get _resolvedPhone =>
+      (_userFirestoreData?['phoneNumber'] as String?)?.trim() ??
+      (_userFirestoreData?['phone'] as String?)?.trim();
 
 
   String _formatDate(DateTime? dt) {
@@ -281,33 +511,16 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
   }
 
   String _getDistanceText() {
-    final loc = _resolvedLocation;
-    if (loc == null) return context.tr('room.locationNotAvailable');
-    Position? userPos;
-    if (Get.isRegistered<HajiCareController>()) {
-      userPos = Get.find<HajiCareController>().myCurrentPosition.value;
-    }
-    double? userLat = userPos?.latitude;
-    double? userLng = userPos?.longitude;
-
-    if (userLat == null && Get.isRegistered<MapController>()) {
-      final mapLoc = Get.find<MapController>().currentUserLocation.value;
-      if (mapLoc != null) {
-        userLat = mapLoc.latitude;
-        userLng = mapLoc.longitude;
+    final meters = _calculatedDistanceMeters;
+    if (meters == null) {
+      if (widget.jamaah.distance > 0) {
+        final d = widget.jamaah.distance;
+        return d < 1000
+            ? context.tr('room.metersFromYou', {'meters': d.toStringAsFixed(0)})
+            : context.tr('room.kmFromYou', {'km': (d / 1000).toStringAsFixed(1)});
       }
-    }
-
-    if (userLat == null || userLng == null) {
       return context.tr('room.notDetected');
     }
-
-    final meters = Geolocator.distanceBetween(
-      userLat,
-      userLng,
-      loc.latitude,
-      loc.longitude,
-    );
 
     if (meters < 1000) {
       return context.tr('room.metersFromYou', {
@@ -978,6 +1191,584 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
     );
   }
 
+  Widget _buildUrgentAnomalyBanner(BuildContext context, HajiColors hc) {
+    if (!_hasAnyAnomaly) return const SizedBox.shrink();
+
+    final isCritical = _hasCriticalAnomaly;
+    final bannerBg = isCritical
+        ? hc.danger.withValues(alpha: 0.14)
+        : hc.warning.withValues(alpha: 0.14);
+    final bannerBorder = isCritical ? hc.danger : hc.warning;
+    final iconColor = isCritical ? hc.danger : hc.warning;
+
+    final anomalyItems = <Widget>[];
+
+    if (_isSosActive) {
+      anomalyItems.add(_buildAnomalyBullet(
+        icon: Icons.emergency_rounded,
+        text: context.tr('room.smartbandSosAlert'),
+        color: hc.danger,
+        isCritical: true,
+      ));
+    }
+
+    if (_isFallen) {
+      anomalyItems.add(_buildAnomalyBullet(
+        icon: Icons.personal_injury_rounded,
+        text: context.tr('room.smartbandFallenAlert'),
+        color: hc.danger,
+        isCritical: true,
+      ));
+    }
+
+    if (_isTemperatureCritical) {
+      final tempStr = _temperature?.toStringAsFixed(1) ?? '--';
+      final text = (_temperature ?? 0) > 38.5
+          ? context.tr('room.smartbandHeatstrokeAlert', {'temp': tempStr})
+          : context.tr('room.smartbandHypothermiaAlert', {'temp': tempStr});
+      anomalyItems.add(_buildAnomalyBullet(
+        icon: Icons.thermostat_rounded,
+        text: text,
+        color: hc.danger,
+        isCritical: true,
+      ));
+    } else if (_isTemperatureWarning) {
+      final tempStr = _temperature?.toStringAsFixed(1) ?? '--';
+      anomalyItems.add(_buildAnomalyBullet(
+        icon: Icons.thermostat_rounded,
+        text: 'Suhu Hangat/Meningkat ($tempStr°C) - Awasi Hidrasi',
+        color: hc.warning,
+        isCritical: false,
+      ));
+    }
+
+    if (_isHeartRateCritical) {
+      final bpmStr = '$_heartRate';
+      final text = (_heartRate ?? 0) > 120
+          ? context.tr('room.smartbandTachycardiaAlert', {'bpm': bpmStr})
+          : context.tr('room.smartbandBradycardiaAlert', {'bpm': bpmStr});
+      anomalyItems.add(_buildAnomalyBullet(
+        icon: Icons.favorite_rounded,
+        text: text,
+        color: hc.danger,
+        isCritical: true,
+      ));
+    } else if (_isHeartRateWarning) {
+      anomalyItems.add(_buildAnomalyBullet(
+        icon: Icons.favorite_rounded,
+        text: 'Detak Jantung Waspada ($_heartRate BPM)',
+        color: hc.warning,
+        isCritical: false,
+      ));
+    }
+
+    if (_isSpo2Critical) {
+      anomalyItems.add(_buildAnomalyBullet(
+        icon: Icons.air_rounded,
+        text: context.tr('room.smartbandHypoxiaAlert', {'spo2': '$_spo2'}),
+        color: hc.danger,
+        isCritical: true,
+      ));
+    } else if (_isSpo2Warning) {
+      anomalyItems.add(_buildAnomalyBullet(
+        icon: Icons.air_rounded,
+        text: 'Kadar Oksigen Menurun ($_spo2% SpO2) - Cek Pernapasan',
+        color: hc.warning,
+        isCritical: false,
+      ));
+    }
+
+    if (_isOutOfSafeRadius) {
+      final dist = _getDistanceText();
+      anomalyItems.add(_buildAnomalyBullet(
+        icon: Icons.radar_rounded,
+        text: context.tr('room.smartbandOutOfRadiusAlert', {'dist': dist}),
+        color: hc.warning,
+        isCritical: false,
+      ));
+    }
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(20, 0, 20, 14),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: bannerBg,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: bannerBorder, width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: (isCritical ? hc.danger : hc.warning).withValues(alpha: 0.18),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: iconColor.withValues(alpha: 0.2),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  isCritical ? Icons.warning_rounded : Icons.info_outline_rounded,
+                  color: iconColor,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  isCritical
+                      ? 'PERINGATAN KRITIS JAMAAH'
+                      : 'PERHATIAN ANOMALI KESEHATAN',
+                  style: context.text.labelLarge.copyWith(
+                    color: iconColor,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 13,
+                    letterSpacing: 0.3,
+                  ),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: iconColor,
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                ),
+                child: Text(
+                  isCritical ? 'DARURAT' : 'WASPADA',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 10,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          ...anomalyItems,
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAnomalyBullet({
+    required IconData icon,
+    required String text,
+    required Color color,
+    required bool isCritical,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 15, color: color),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(
+                color: color,
+                fontWeight: isCritical ? FontWeight.w700 : FontWeight.w600,
+                fontSize: 12,
+                height: 1.35,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSmartbandSection(BuildContext context, HajiColors hc) {
+    final headingColor = hc.textPrimary;
+    final bodyColor = hc.textSecondary;
+    final sectionBg = hc.surfaceSand;
+    final dividerColor = hc.borderSubtle;
+    final isConnected = _isSmartbandConnected;
+
+    final hrColor = _isHeartRateCritical
+        ? hc.danger
+        : _isHeartRateWarning
+            ? hc.warning
+            : hc.islamic;
+
+    final tempColor = _isTemperatureCritical
+        ? hc.danger
+        : _isTemperatureWarning
+            ? hc.warning
+            : hc.islamic;
+
+    final spo2Color = _isSpo2Critical
+        ? hc.danger
+        : _isSpo2Warning
+            ? hc.warning
+            : hc.islamic;
+
+    final fallColor = _isFallen ? hc.danger : hc.islamic;
+    final radiusColor = _isOutOfSafeRadius ? hc.danger : hc.islamic;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: _buildSectionCard(
+        context: context,
+        title: context.tr('room.smartbandSectionTitle'),
+        icon: Icons.watch_rounded,
+        iconColor: hc.brand,
+        cardBg: sectionBg,
+        borderColor: dividerColor,
+        headingColor: headingColor,
+        trailingHeader: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+          decoration: BoxDecoration(
+            color: isConnected
+                ? hc.islamic.withValues(alpha: 0.12)
+                : Colors.grey.withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(AppRadius.pill),
+            border: Border.all(
+              color: isConnected
+                  ? hc.islamic.withValues(alpha: 0.3)
+                  : Colors.grey.withValues(alpha: 0.3),
+              width: 0.8,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 7,
+                height: 7,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: isConnected ? hc.islamic : Colors.grey,
+                ),
+              ),
+              const SizedBox(width: 5),
+              Text(
+                isConnected
+                    ? context.tr('room.smartbandConnectedBadge', {'id': _smartbandBraceletId})
+                    : context.tr('room.smartbandDisconnectedBadge'),
+                style: TextStyle(
+                  color: isConnected ? hc.islamic : bodyColor,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 10.5,
+                ),
+              ),
+            ],
+          ),
+        ),
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: _buildMetricTile(
+                  icon: Icons.favorite_rounded,
+                  iconColor: hrColor,
+                  label: context.tr('room.smartbandHeartRate'),
+                  value: _heartRate != null && _heartRate! > 0 ? '$_heartRate BPM' : '--',
+                  subtitle: _isHeartRateCritical
+                      ? 'Kritis'
+                      : _isHeartRateWarning
+                          ? 'Waspada'
+                          : 'Normal',
+                  statusColor: hrColor,
+                  hc: hc,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildMetricTile(
+                  icon: Icons.thermostat_rounded,
+                  iconColor: tempColor,
+                  label: context.tr('room.smartbandTemperature'),
+                  value: _temperature != null ? '${_temperature!.toStringAsFixed(1)}°C' : '--',
+                  subtitle: _isTemperatureCritical
+                      ? 'Kritis'
+                      : _isTemperatureWarning
+                          ? 'Demam Ringan'
+                          : 'Normal',
+                  statusColor: tempColor,
+                  hc: hc,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: _buildMetricTile(
+                  icon: Icons.air_rounded,
+                  iconColor: spo2Color,
+                  label: context.tr('room.smartbandSpo2'),
+                  value: _spo2 != null && _spo2! > 0 ? '$_spo2%' : '--',
+                  subtitle: _isSpo2Critical
+                      ? 'Hipoksia'
+                      : _isSpo2Warning
+                          ? 'Rendah'
+                          : 'Optimal',
+                  statusColor: spo2Color,
+                  hc: hc,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildMetricTile(
+                  icon: Icons.personal_injury_rounded,
+                  iconColor: fallColor,
+                  label: context.tr('room.smartbandFallStatus'),
+                  value: _isFallen ? 'TERJATUH' : 'TEGAK',
+                  subtitle: _isFallen ? 'Butuh Cek!' : 'Stabil',
+                  statusColor: fallColor,
+                  hc: hc,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: _buildMetricTile(
+                  icon: Icons.radar_rounded,
+                  iconColor: radiusColor,
+                  label: context.tr('room.smartbandSafeRadius'),
+                  value: _isOutOfSafeRadius ? 'Di Luar Radius' : 'Dalam Radius',
+                  subtitle: _getDistanceText(),
+                  statusColor: radiusColor,
+                  hc: hc,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildMetricTile(
+                  icon: Icons.battery_charging_full_rounded,
+                  iconColor: (_batteryLevel ?? 100) < 20 ? hc.warning : hc.islamic,
+                  label: context.tr('room.smartbandBattery'),
+                  value: _batteryLevel != null ? '$_batteryLevel%' : '--',
+                  subtitle: (_batteryLevel ?? 100) < 20 ? 'Perlu Cas' : 'Daya Cukup',
+                  statusColor: (_batteryLevel ?? 100) < 20 ? hc.warning : hc.islamic,
+                  hc: hc,
+                ),
+              ),
+            ],
+          ),
+          if (_steps != null && _steps! > 0) ...[
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildMetricTile(
+                    icon: Icons.directions_walk_rounded,
+                    iconColor: hc.brand,
+                    label: context.tr('room.smartbandSteps'),
+                    value: '$_steps langkah',
+                    subtitle: '${(_stepDistanceM ?? (_steps! * 0.70)).toStringAsFixed(0)} m aktif',
+                    statusColor: hc.brand,
+                    hc: hc,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _buildMetricTile(
+                    icon: Icons.speed_rounded,
+                    iconColor: hc.islamic,
+                    label: context.tr('room.smartbandActivityStatus'),
+                    value: _steps! > 5000 ? 'Target Tercapai' : 'Sedang Bergerak',
+                    subtitle: 'Sensor MPU6050',
+                    statusColor: hc.islamic,
+                    hc: hc,
+                  ),
+                ),
+              ],
+            ),
+          ],
+          const SizedBox(height: 12),
+          Divider(height: 1, color: dividerColor),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Icon(
+                Icons.sync_rounded,
+                size: 13,
+                color: bodyColor.withValues(alpha: 0.7),
+              ),
+              const SizedBox(width: 4),
+              Text(
+                context.tr('room.smartbandLastUpdated', {'time': _smartbandRelativeTime}),
+                style: TextStyle(
+                  fontSize: 11,
+                  color: bodyColor.withValues(alpha: 0.8),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const Spacer(),
+              InkWell(
+                onTap: _sendAlertToPilgrimSmartband,
+                borderRadius: BorderRadius.circular(8),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: hc.brand.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: hc.brand.withValues(alpha: 0.3),
+                      width: 0.8,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.vibration_rounded, size: 13, color: hc.brand),
+                      const SizedBox(width: 4),
+                      Text(
+                        context.tr('room.smartbandSendAlertOledBtn'),
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: hc.brand,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMetricTile({
+    required IconData icon,
+    required Color iconColor,
+    required String label,
+    required String value,
+    required String subtitle,
+    required Color statusColor,
+    required HajiColors hc,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: hc.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: statusColor != hc.islamic
+              ? statusColor.withValues(alpha: 0.5)
+              : hc.borderSubtle,
+          width: statusColor != hc.islamic ? 1.2 : 0.8,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 14, color: iconColor),
+              const SizedBox(width: 5),
+              Expanded(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w500,
+                    color: hc.textSecondary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 5),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w800,
+              color: hc.textPrimary,
+              letterSpacing: -0.2,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Row(
+            children: [
+              Container(
+                width: 5,
+                height: 5,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: statusColor,
+                ),
+              ),
+              const SizedBox(width: 4),
+              Expanded(
+                child: Text(
+                  subtitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    color: statusColor,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _sendAlertToPilgrimSmartband() async {
+    try {
+      HapticFeedback.mediumImpact();
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(widget.jamaah.id)
+          .set({
+        'smartbandCommand': {
+          'type': 'ALERT_BUZZER',
+          'message': 'Panggilan Pendamping',
+          'timestamp': FieldValue.serverTimestamp(),
+        },
+      }, SetOptions(merge: true));
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(context.tr('room.smartbandOledSentSuccess')),
+            backgroundColor: context.hc.success,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal mengirim ke gelang: $e'),
+            backgroundColor: context.hc.danger,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
   // Main Build
 
   @override
@@ -1232,6 +2023,9 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
                       ),
                       const SizedBox(height: 18),
 
+                      // Urgent Health / Radius Anomaly Banner
+                      _buildUrgentAnomalyBanner(context, hc),
+
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 20),
                         child: _buildSectionCard(
@@ -1311,6 +2105,10 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
                           ],
                         ),
                       ),
+                      const SizedBox(height: 12),
+
+                      // Smartband Real-time Telemetry Section
+                      _buildSmartbandSection(context, hc),
                       const SizedBox(height: 12),
 
                       Padding(
@@ -1516,6 +2314,45 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
                                   ),
                                 ),
                               ),
+
+                            // Call Pilgrim directly (if phone available)
+                            if (_resolvedPhone != null &&
+                                _resolvedPhone!.isNotEmpty) ...[
+                              if (hasLocation) const SizedBox(height: 10),
+                              SizedBox(
+                                width: double.infinity,
+                                height: 46,
+                                child: OutlinedButton.icon(
+                                  onPressed: () => _makePhoneCall(
+                                    _resolvedPhone!,
+                                  ),
+                                  icon: Icon(
+                                    Icons.call_rounded,
+                                    size: 17,
+                                    color: hc.brand,
+                                  ),
+                                  label: Text(
+                                    context.tr('room.smartbandCallBtn'),
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 13,
+                                      color: hc.brand,
+                                    ),
+                                  ),
+                                  style: OutlinedButton.styleFrom(
+                                    side: BorderSide(
+                                      color: hc.brand,
+                                      width: 1.2,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(
+                                        AppRadius.pill,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
 
                             // 2. Call Emergency Contact (if available
                             if (hasEmergencyContact) ...[
