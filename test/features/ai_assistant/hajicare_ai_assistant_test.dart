@@ -522,6 +522,139 @@ Semoga membantu!
     );
   });
 
+  group('Deep Audit & Auto-Fallback Resilience Tests', () {
+    test('Groq Cloud 429 rate limit triggers silent auto-fallback to OpenRouter Cloud without user error', () async {
+      final contactedHosts = <String>[];
+      final mockHttp = MockClient((request) async {
+        contactedHosts.add(request.url.host);
+        if (request.url.host.contains('groq.com')) {
+          return http.Response(
+            jsonEncode({'error': {'message': 'Rate limit reached', 'type': 'tokens_exceeded'}}),
+            429,
+            headers: {'content-type': 'application/json'},
+          );
+        }
+        if (request.url.host.contains('openrouter.ai')) {
+          return http.Response(
+            jsonEncode({
+              'choices': [
+                {
+                  'message': {
+                    'role': 'assistant',
+                    'content': jsonEncode({
+                      'speech': 'Kondisi kesehatan stabil dari OpenRouter fallback.',
+                      'oled': 'OpenRouter: Stabil HR:76',
+                    }),
+                  },
+                },
+              ],
+            }),
+            200,
+            headers: {'content-type': 'application/json'},
+          );
+        }
+        return http.Response('Not Found', 404);
+      });
+
+      final fakeBle = _FakeSmartbandBleService()..mockConnected = false;
+      final repo = AiAssistantRepository(
+        hermesService: HermesAiService(httpClient: mockHttp),
+        smartbandBridge: SmartbandAiBridgeService(bleService: fakeBle),
+      );
+
+      final outcome = await repo.askQuestion(
+        question: 'Bagaimana kondisi saya?',
+        allowOfflineFallback: true,
+      );
+
+      expect(contactedHosts, contains('api.groq.com'));
+      expect(contactedHosts, contains('openrouter.ai'));
+      expect(outcome.reply.speech, contains('OpenRouter fallback'));
+      expect(outcome.errorBannerMessage, isNull);
+    });
+
+    test('Groq Cloud 502 server error triggers silent auto-fallback to OpenRouter Cloud', () async {
+      final contactedHosts = <String>[];
+      final mockHttp = MockClient((request) async {
+        contactedHosts.add(request.url.host);
+        if (request.url.host.contains('groq.com')) {
+          return http.Response('Bad Gateway Server Error', 502);
+        }
+        if (request.url.host.contains('openrouter.ai')) {
+          return http.Response(
+            jsonEncode({
+              'choices': [
+                {
+                  'message': {
+                    'role': 'assistant',
+                    'content': '{"speech":"Semua normal dan aman.","oled":"NORMAL AMAN"}',
+                  },
+                },
+              ],
+            }),
+            200,
+            headers: {'content-type': 'application/json'},
+          );
+        }
+        return http.Response('Not Found', 404);
+      });
+
+      final fakeBle = _FakeSmartbandBleService()..mockConnected = false;
+      final repo = AiAssistantRepository(
+        hermesService: HermesAiService(httpClient: mockHttp),
+        smartbandBridge: SmartbandAiBridgeService(bleService: fakeBle),
+      );
+
+      final outcome = await repo.askQuestion(
+        question: 'Cek detak jantung saya',
+        allowOfflineFallback: true,
+      );
+
+      expect(contactedHosts, contains('api.groq.com'));
+      expect(contactedHosts, contains('openrouter.ai'));
+      expect(outcome.reply.speech, equals('Semua normal dan aman.'));
+    });
+
+    test('Both Groq and OpenRouter fail smoothly drops to Smart Offline Heuristic Mode without crashing', () async {
+      final mockHttp = MockClient((request) async {
+        return http.Response('Connection refused', 503);
+      });
+
+      final fakeBle = _FakeSmartbandBleService()..mockConnected = false;
+      final repo = AiAssistantRepository(
+        hermesService: HermesAiService(httpClient: mockHttp),
+        smartbandBridge: SmartbandAiBridgeService(bleService: fakeBle),
+      );
+
+      final outcome = await repo.askQuestion(
+        question: 'Saya merasa pusing dan lelah setelah tawaf',
+        allowOfflineFallback: true,
+      );
+
+      expect(outcome.reply.isOfflineFallback, isTrue);
+      expect(outcome.reply.speech.toLowerCase(), contains('duduk perlahan'));
+      expect(outcome.oledState.status, equals(OledDeliveryStatus.previewOnly));
+    });
+
+    test('Defensive parser handles reasoning think tags and extra markdown wrappers', () {
+      const rawLlmWithThink = '''
+<think>
+Checking pilgrim vitals and providing soothing advice.
+</think>
+```json
+{
+  "speech": "Alhamdulillah detak jantung Anda 78 BPM dan stabil.",
+  "oled": "Detak Jantung: 78 BPM"
+}
+```
+      ''';
+
+      final reply = HermesResponseParser.parseModelContent(rawLlmWithThink);
+      expect(reply.speech, equals('Alhamdulillah detak jantung Anda 78 BPM dan stabil.'));
+      expect(reply.oled, equals('Detak Jantung: 78 BPM'));
+    });
+  });
+
   group('HajiCareAiAssistantPage Redesigned UI & UX Test', () {
     testWidgets(
       'merender UI minimalis sesuai referensi, starter cards 2x2, compact OLED strip, modal OLED 128x64, dan mode suara tanpa overflow',

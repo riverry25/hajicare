@@ -42,6 +42,11 @@ class SmartbandBleService {
   SmartbandBleStatus _currentStatus = SmartbandBleStatus.disconnected;
   SmartbandData? _lastData;
   bool _isDisposed = false;
+  bool _isManualDisconnect = false;
+  BluetoothDevice? _lastKnownDevice;
+  Timer? _reconnectTimer;
+  int _reconnectAttempts = 0;
+  static const int maxReconnectAttempts = 3;
 
   // Buffer untuk reassembly fragment (~%02X%02X%02X:)
   int? _lastSeq;
@@ -300,6 +305,9 @@ class SmartbandBleService {
 
     _emitStatus(SmartbandBleStatus.connecting);
     final devId = device.remoteId.str;
+    _lastKnownDevice = device;
+    _isManualDisconnect = false;
+    _reconnectTimer?.cancel();
     _log('CONNECT START');
     _log('deviceId: $devId');
 
@@ -609,6 +617,39 @@ class SmartbandBleService {
     _log('DISCONNECTED: $reason');
     _cleanUpDeviceState();
     _emitStatus(SmartbandBleStatus.disconnected);
+
+    if (!_isManualDisconnect && _lastKnownDevice != null && !_isDisposed) {
+      _scheduleAutoReconnect();
+    }
+  }
+
+  void _scheduleAutoReconnect() {
+    if (_isManualDisconnect || _isDisposed || _lastKnownDevice == null) return;
+    if (_reconnectAttempts >= maxReconnectAttempts) {
+      _log('Batas percobaan auto-reconnect tercapai ($_reconnectAttempts kali).');
+      return;
+    }
+    _reconnectAttempts++;
+    final delaySeconds = _reconnectAttempts * 2;
+    _log(
+      'Menjadwalkan auto-reconnect ke ${_lastKnownDevice?.remoteId.str} dalam $delaySeconds detik (percobaan $_reconnectAttempts/$maxReconnectAttempts)...',
+    );
+    _reconnectTimer?.cancel();
+    _reconnectTimer = Timer(Duration(seconds: delaySeconds), () async {
+      if (_isManualDisconnect || _isDisposed || _lastKnownDevice == null) return;
+      if (_currentStatus == SmartbandBleStatus.connected ||
+          _currentStatus == SmartbandBleStatus.connecting) {
+        return;
+      }
+      try {
+        _log('Menjalankan auto-reconnect...');
+        await connectToSmartband(_lastKnownDevice!);
+        _log('Auto-reconnect berhasil!');
+      } catch (e) {
+        _log('Percobaan auto-reconnect ke-$_reconnectAttempts gagal: $e');
+        _scheduleAutoReconnect();
+      }
+    });
   }
 
   /// Bersihkan state internal koneksi
@@ -635,6 +676,9 @@ class SmartbandBleService {
   /// 7. Putuskan koneksi Smartband secara manual dan aman
   Future<void> disconnectSmartband() async {
     _log('Memutuskan koneksi Smartband secara aman...');
+    _isManualDisconnect = true;
+    _reconnectTimer?.cancel();
+    _reconnectAttempts = 0;
     try {
       if (_dataCharacteristic != null) {
         try {
@@ -658,6 +702,8 @@ class SmartbandBleService {
   void dispose() {
     if (_isDisposed) return;
     _isDisposed = true;
+    _isManualDisconnect = true;
+    _reconnectTimer?.cancel();
 
     disconnectSmartband();
 

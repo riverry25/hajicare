@@ -594,7 +594,7 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
           final temp = ctrl.mcpTemperature.value;
           heroValue = temp != null ? temp.toStringAsFixed(1) : '--.-';
           heroUnit = '°C';
-          arcPercent = temp != null
+          arcPercent = (temp != null && !temp.isNaN && !temp.isInfinite)
               ? ((temp - 34.0) / (41.0 - 34.0)).clamp(0.05, 1.0)
               : 0.0;
           arcColor = const Color(0xFFD4A857);
@@ -657,7 +657,9 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
           heroValue = dist != null ? dist.toStringAsFixed(1) : '--';
           heroUnit = 'Meter ke Pendamping';
           final rad = ctrl.safeRadiusMeters.value;
-          arcPercent = dist != null ? (dist / (rad * 1.5)).clamp(0.05, 1.0) : 0.0;
+          arcPercent = (dist != null && rad > 0 && !dist.isNaN && !dist.isInfinite)
+              ? (dist / (rad * 1.5)).clamp(0.05, 1.0)
+              : 0.0;
           arcColor = ctrl.radiusAlertActive.value
               ? AppColors.statusDanger
               : const Color(0xFF0D9488);

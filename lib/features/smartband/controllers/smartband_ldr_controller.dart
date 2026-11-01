@@ -95,12 +95,12 @@ class SmartbandLdrController extends GetxController {
 
   /// Hitungan langkah efektif (menghitung dari titik awal / reset)
   int get effectiveSteps {
-    if (sessionSteps.value > 0) return sessionSteps.value;
+    if (sessionSteps.value > 0) return sessionSteps.value.clamp(0, 999999);
     final total = stepCount.value;
     if (_stepBaseline > 0 && total >= _stepBaseline) {
-      return total - _stepBaseline;
+      return (total - _stepBaseline).clamp(0, 999999);
     }
-    return total;
+    return total.clamp(0, 999999);
   }
 
   DateTime _lastStepAt = DateTime.now();
@@ -747,6 +747,7 @@ class SmartbandLdrController extends GetxController {
 
   /// Deteksi langkah kaki dinamis dari fluktuasi akselerometer MPU6050
   void _detectStepFromAccel(double g) {
+    if (g.isNaN || g.isInfinite || g <= 0) return;
     if (stepCount.value > 0) return;
     final now = DateTime.now();
     if (g > 1.25 && !_stepPeak && now.difference(_lastStepAt).inMilliseconds > 300) {
@@ -800,6 +801,7 @@ class SmartbandLdrController extends GetxController {
   }
 
   void _evaluateRadiusAlert(double dist) {
+    if (dist.isNaN || dist.isInfinite || dist < 0) return;
     final rad = safeRadiusMeters.value;
     final isOut = rad > 0 && dist > rad;
 
