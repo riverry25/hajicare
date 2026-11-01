@@ -24,12 +24,25 @@ class AiServerConfig {
   static const String openRouterBaseUrl = 'https://openrouter.ai/api';
   static const String openRouterModel = 'dots-studio/dots-3-note-preview:free';
 
+  /// Penanda kunci sistem yang terenkripsi di vault lokal (tidak pernah dibocorkan ke UI).
+  static const String systemVaultMarker = '[TERLINDUNGI_SISTEM_VAULT]';
+
+  /// True jika menggunakan kunci bawaan sistem yang terproteksi aman.
+  static bool isSystemKey(String? key) {
+    if (key == null || key.trim().isEmpty) return true;
+    final k = key.trim();
+    return k == systemVaultMarker ||
+        k == AiSecretVault.groqApiKey ||
+        k == AiSecretVault.openRouterApiKey ||
+        k == legacyDefaultApiKey;
+  }
+
   static String get defaultBaseUrl => const String.fromEnvironment(
     'HERMES_BASE_URL',
     defaultValue: groqBaseUrl,
   );
 
-  static String get defaultApiKey => AiSecretVault.groqApiKey;
+  static String get defaultApiKey => systemVaultMarker;
 
   static String get defaultModel => const String.fromEnvironment(
     'HERMES_MODEL',
@@ -47,15 +60,15 @@ class AiServerConfig {
   static const String legacyDefaultApiKey = 'rahasia_hajicare_2026';
   static const String legacyDefaultModel = 'hermes';
 
-  static AiServerConfig get groqDefault => AiServerConfig(
+  static AiServerConfig get groqDefault => const AiServerConfig(
     baseUrl: groqBaseUrl,
-    apiKey: AiSecretVault.groqApiKey,
+    apiKey: systemVaultMarker,
     model: groqModel,
   );
 
-  static AiServerConfig get openRouterFallback => AiServerConfig(
+  static AiServerConfig get openRouterFallback => const AiServerConfig(
     baseUrl: openRouterBaseUrl,
-    apiKey: AiSecretVault.openRouterApiKey,
+    apiKey: systemVaultMarker,
     model: openRouterModel,
   );
 
@@ -139,9 +152,20 @@ class AiServerConfig {
     return null;
   }
 
+  /// Kunci API riil yang digunakan untuk memanggil endpoint AI (diamankan via AiSecretVault jika memakai kunci sistem).
+  String get resolvedApiKey {
+    if (isSystemKey(apiKey)) {
+      if (isOpenRouter) {
+        return AiSecretVault.openRouterApiKey;
+      }
+      return AiSecretVault.groqApiKey;
+    }
+    return apiKey.trim();
+  }
+
   static String? validateApiKey(String raw) {
     final key = raw.trim();
-    if (key.isEmpty) return 'API key wajib diisi.';
+    if (key.isEmpty || isSystemKey(key)) return null;
     if (key.contains(RegExp(r'\s'))) return 'API key tidak boleh berisi spasi.';
     return null;
   }
@@ -153,6 +177,7 @@ class AiServerConfig {
 
   /// API key yang disamarkan untuk ditampilkan di UI, mis. `gsk•••••SoX`.
   String get maskedApiKey {
+    if (isSystemKey(apiKey)) return '🔒 Terproteksi Sistem';
     if (apiKey.length <= 6) return '•' * apiKey.length;
     return '${apiKey.substring(0, 3)}•••••${apiKey.substring(apiKey.length - 3)}';
   }

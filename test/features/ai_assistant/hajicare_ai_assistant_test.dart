@@ -402,7 +402,7 @@ Semoga membantu!
         expect(health.health, equals(AiServerHealth.online));
         expect(
           capturedRequest.headers['Authorization'],
-          equals('Bearer ${AiServerConfig.defaultApiKey}'),
+          equals('Bearer ${defaultConfig.resolvedApiKey}'),
         );
 
         final outcome = await repo.askQuestion(
@@ -423,7 +423,7 @@ Semoga membantu!
         );
         expect(
           capturedRequest.headers['Authorization'],
-          equals('Bearer ${AiServerConfig.defaultApiKey}'),
+          equals('Bearer ${defaultConfig.resolvedApiKey}'),
         );
 
         // Verifikasi body & system prompt

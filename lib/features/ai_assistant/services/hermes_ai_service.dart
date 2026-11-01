@@ -59,7 +59,7 @@ class HermesAiService {
     final headers = <String, String>{
       'Content-Type': 'application/json',
       'Accept': 'application/json',
-      'Authorization': 'Bearer ${config.apiKey.trim()}',
+      'Authorization': 'Bearer ${config.resolvedApiKey}',
     };
     if (config.isOpenRouter) {
       headers['HTTP-Referer'] = 'https://hajicare.id';
@@ -191,7 +191,8 @@ class HermesAiService {
           savedKey == null ||
           savedKey.isEmpty ||
           savedKey == AiServerConfig.legacyDefaultApiKey ||
-          savedKey.startsWith('sk-675b8dd28e37e08f');
+          savedKey.startsWith('sk-675b8dd28e37e08f') ||
+          AiServerConfig.isSystemKey(savedKey);
       final isOldPlaceholderModel =
           savedModel == null ||
           savedModel.isEmpty ||
@@ -203,7 +204,7 @@ class HermesAiService {
           ? AiServerConfig.defaultBaseUrl
           : AiServerConfig.normalizeBaseUrl(savedUrl);
       final resolvedKey = isOldPlaceholderKey
-          ? AiServerConfig.defaultApiKey
+          ? AiServerConfig.systemVaultMarker
           : savedKey;
       final resolvedModel = isOldPlaceholderModel
           ? AiServerConfig.defaultModel
@@ -236,10 +237,11 @@ class HermesAiService {
 
   /// Simpan konfigurasi server AI ke `SharedPreferences`.
   Future<AiServerConfig> saveConfig(AiServerConfig config) async {
+    final isSys = AiServerConfig.isSystemKey(config.apiKey);
     final normalized = AiServerConfig(
       baseUrl: AiServerConfig.normalizeBaseUrl(config.baseUrl),
-      apiKey: config.apiKey.trim().isEmpty
-          ? AiServerConfig.defaultApiKey
+      apiKey: isSys
+          ? AiServerConfig.systemVaultMarker
           : config.apiKey.trim(),
       model: config.model.trim().isEmpty
           ? AiServerConfig.defaultModel
