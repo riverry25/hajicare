@@ -54,14 +54,21 @@ class HermesAiService {
   static const String prefKeyApiKey = 'hajicare_hermes_api_key';
   static const String prefKeyModel = 'hajicare_hermes_model';
 
-  /// Bangun HTTP headers wajib sesuai spesifikasi teknis Hermes + Ngrok Free.
+  /// Bangun HTTP headers wajib sesuai spesifikasi teknis Groq, OpenRouter, atau server custom.
   static Map<String, String> buildHeaders(AiServerConfig config) {
-    return <String, String>{
+    final headers = <String, String>{
       'Content-Type': 'application/json',
       'Accept': 'application/json',
       'Authorization': 'Bearer ${config.apiKey.trim()}',
-      'ngrok-skip-browser-warning': 'true',
     };
+    if (config.isOpenRouter) {
+      headers['HTTP-Referer'] = 'https://hajicare.id';
+      headers['X-Title'] = 'HajiCare';
+    }
+    if (config.isNgrokHost) {
+      headers['ngrok-skip-browser-warning'] = 'true';
+    }
+    return headers;
   }
 
   static String _resolveReplyLanguageName() {
@@ -178,14 +185,17 @@ class HermesAiService {
       final isOldPlaceholderUrl =
           savedUrl == null ||
           savedUrl.isEmpty ||
-          savedUrl.contains('DOMAIN_STATIC_NGROK_KAMU');
+          savedUrl.contains('DOMAIN_STATIC_NGROK_KAMU') ||
+          savedUrl.contains('unbalance-compile-chariot.ngrok-free.dev');
       final isOldPlaceholderKey =
           savedKey == null ||
           savedKey.isEmpty ||
-          savedKey == AiServerConfig.legacyDefaultApiKey;
+          savedKey == AiServerConfig.legacyDefaultApiKey ||
+          savedKey.startsWith('sk-675b8dd28e37e08f');
       final isOldPlaceholderModel =
           savedModel == null ||
           savedModel.isEmpty ||
+          savedModel == 'ngoding-combo' ||
           (isOldPlaceholderUrl &&
               savedModel == AiServerConfig.legacyDefaultModel);
 
@@ -357,6 +367,8 @@ class HermesAiService {
   }
 
   /// Kirim pertanyaan jamaah + konteks sensor ke `/v1/chat/completions`.
+  /// Jika target utama (misal Groq Cloud) mengalami rate limit / timeout / offline,
+  /// secara otomatis dan senyap mengalihkan pertanyaan ke OpenRouter Cloud Fallback.
   Future<AiReply> sendChatCompletion({
     required AiServerConfig config,
     required String userQuestion,
@@ -389,9 +401,6 @@ class HermesAiService {
       },
     ];
 
-    // Gunakan max_tokens=2048 agar model reasoning di belakang 9Router
-    // (seperti dots-3-note-preview / deepseek-r1 / qwq) tidak kehabisan token
-    // pada tahap reasoning ("finish_reason": "length", "content": null).
     final payload = <String, dynamic>{
       'model': config.model,
       'messages': messages,
@@ -399,6 +408,40 @@ class HermesAiService {
       'max_tokens': 2048,
     };
 
+    try {
+      return await _executeChatCompletionRequest(config, payload);
+    } catch (e) {
+      // Auto-Fallback: Jika provider utama bukan OpenRouter (misal Groq atau Custom Server)
+      // dan gagal (HTTP 429, timeout, network error, 5xx), otomatis lempar ke OpenRouter!
+      if (!config.isOpenRouter) {
+        AppLogger.info(
+          'Target AI utama (${config.baseUrl}) mengalami kendala ($e). Mencoba Auto-Fallback ke OpenRouter Cloud...',
+          tag: 'HermesAiService',
+        );
+        try {
+          final fallbackConfig = AiServerConfig.openRouterFallback;
+          final fallbackPayload = <String, dynamic>{
+            'model': fallbackConfig.model,
+            'messages': messages,
+            'temperature': 0.3,
+            'max_tokens': 2048,
+          };
+          return await _executeChatCompletionRequest(fallbackConfig, fallbackPayload);
+        } catch (fallbackError) {
+          AppLogger.warn(
+            'Auto-Fallback OpenRouter juga mengalami kendala: $fallbackError',
+            tag: 'HermesAiService',
+          );
+        }
+      }
+      rethrow;
+    }
+  }
+
+  Future<AiReply> _executeChatCompletionRequest(
+    AiServerConfig config,
+    Map<String, dynamic> payload,
+  ) async {
     const maxAttempts = 2;
     for (var attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
@@ -428,12 +471,19 @@ class HermesAiService {
           );
         }
 
+        if (response.statusCode == 429) {
+          throw const HermesAiException(
+            'Batas kuota/rate limit provider tercapai (HTTP 429).',
+            statusCode: 429,
+          );
+        }
+
         if (response.statusCode < 200 || response.statusCode >= 300) {
           if (attempt < maxAttempts && response.statusCode >= 500) {
             continue;
           }
           throw HermesAiException(
-            'Server Hermes mengembalikan kode HTTP ${response.statusCode}.',
+            'Server AI mengembalikan kode HTTP ${response.statusCode}.',
             statusCode: response.statusCode,
           );
         }
@@ -455,15 +505,15 @@ class HermesAiService {
       } on TimeoutException {
         if (attempt < maxAttempts) continue;
         throw const HermesAiException(
-          'Koneksi ke server Hermes melebihi batas waktu.',
+          'Koneksi ke server AI melebihi batas waktu.',
         );
       } catch (e) {
         if (attempt < maxAttempts) continue;
-        throw HermesAiException('Gagal terhubung ke server Hermes: $e');
+        throw HermesAiException('Gagal terhubung ke server AI: $e');
       }
     }
 
-    throw const HermesAiException('Gagal memproses respons server Hermes.');
+    throw const HermesAiException('Gagal memproses respons server AI.');
   }
 
   static List<Map<String, String>> _buildHistoryMessages(

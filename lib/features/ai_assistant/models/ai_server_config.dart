@@ -1,12 +1,13 @@
 import 'package:flutter/foundation.dart';
+import '../services/ai_secret_vault.dart';
 
-/// Konfigurasi koneksi ke server Hermes Agent (OpenAI-compatible API).
+/// Konfigurasi koneksi ke server Hermes Agent / Cloud AI (OpenAI-compatible API).
 ///
 /// Immutable domain model: gunakan [copyWith] untuk membuat varian baru.
 /// Nilai default dapat dioverride saat build melalui `--dart-define`:
-/// `--dart-define=HERMES_BASE_URL=https://xxx.ngrok-free.app`
+/// `--dart-define=HERMES_BASE_URL=https://...`
 /// `--dart-define=HERMES_API_KEY=...`
-/// `--dart-define=HERMES_MODEL=hermes`
+/// `--dart-define=HERMES_MODEL=...`
 @immutable
 class AiServerConfig {
   const AiServerConfig({
@@ -15,17 +16,24 @@ class AiServerConfig {
     required this.model,
   });
 
-  static const String defaultBaseUrl = String.fromEnvironment(
+  // 1. Endpoint Utama: Groq Cloud (Kecepatan LPU kilat ~300 tps)
+  static const String groqBaseUrl = 'https://api.groq.com/openai';
+  static const String groqModel = 'qwen/qwen3.8-27b';
+
+  // 2. Endpoint Cadangan: OpenRouter Cloud (Jaring pengaman auto-fallback)
+  static const String openRouterBaseUrl = 'https://openrouter.ai/api';
+  static const String openRouterModel = 'dots-studio/dots-3-note-preview:free';
+
+  static String get defaultBaseUrl => const String.fromEnvironment(
     'HERMES_BASE_URL',
-    defaultValue: 'https://unbalance-compile-chariot.ngrok-free.dev',
+    defaultValue: groqBaseUrl,
   );
-  static const String defaultApiKey = String.fromEnvironment(
-    'HERMES_API_KEY',
-    defaultValue: 'sk-675b8dd28e37e08f-jrv5r5-49d88117',
-  );
-  static const String defaultModel = String.fromEnvironment(
+
+  static String get defaultApiKey => AiSecretVault.groqApiKey;
+
+  static String get defaultModel => const String.fromEnvironment(
     'HERMES_MODEL',
-    defaultValue: 'ngoding-combo',
+    defaultValue: groqModel,
   );
 
   /// Path endpoint OpenAI-compatible chat completions.
@@ -39,13 +47,21 @@ class AiServerConfig {
   static const String legacyDefaultApiKey = 'rahasia_hajicare_2026';
   static const String legacyDefaultModel = 'hermes';
 
-  static const AiServerConfig defaults = AiServerConfig(
-    baseUrl: defaultBaseUrl,
-    apiKey: defaultApiKey,
-    model: defaultModel,
+  static AiServerConfig get groqDefault => AiServerConfig(
+    baseUrl: groqBaseUrl,
+    apiKey: AiSecretVault.groqApiKey,
+    model: groqModel,
   );
 
-  /// Base URL tanpa trailing slash, mis. `https://abc.ngrok-free.app`.
+  static AiServerConfig get openRouterFallback => AiServerConfig(
+    baseUrl: openRouterBaseUrl,
+    apiKey: AiSecretVault.openRouterApiKey,
+    model: openRouterModel,
+  );
+
+  static AiServerConfig get defaults => groqDefault;
+
+  /// Base URL tanpa trailing slash, mis. `https://api.groq.com/openai`.
   final String baseUrl;
 
   /// Bearer token untuk header `Authorization`.
@@ -62,6 +78,12 @@ class AiServerConfig {
     final host = Uri.tryParse(baseUrl)?.host.toLowerCase() ?? '';
     return host.contains('ngrok');
   }
+
+  /// True jika menggunakan Groq Cloud
+  bool get isGroq => baseUrl.toLowerCase().contains('groq.com');
+
+  /// True jika menggunakan OpenRouter Cloud
+  bool get isOpenRouter => baseUrl.toLowerCase().contains('openrouter.ai');
 
   Uri get chatCompletionsUri => Uri.parse('$baseUrl$chatCompletionsPath');
   Uri get healthUri => Uri.parse('$baseUrl$healthPath');
@@ -106,13 +128,13 @@ class AiServerConfig {
     if (url.isEmpty) return 'URL server wajib diisi.';
     final uri = Uri.tryParse(url);
     if (uri == null || uri.host.isEmpty) {
-      return 'Format URL tidak valid. Contoh: https://nama.ngrok-free.app';
+      return 'Format URL tidak valid. Contoh: https://api.groq.com/openai';
     }
     if (uri.scheme != 'https' && uri.scheme != 'http') {
       return 'Gunakan skema https:// atau http:// yang valid.';
     }
     if (url.contains(_placeholderMarker)) {
-      return 'Ganti placeholder dengan domain Ngrok atau IP server Anda.';
+      return 'Ganti placeholder dengan domain server Anda.';
     }
     return null;
   }
@@ -129,7 +151,7 @@ class AiServerConfig {
     return null;
   }
 
-  /// API key yang disamarkan untuk ditampilkan di UI, mis. `rah•••••026`.
+  /// API key yang disamarkan untuk ditampilkan di UI, mis. `gsk•••••SoX`.
   String get maskedApiKey {
     if (apiKey.length <= 6) return '•' * apiKey.length;
     return '${apiKey.substring(0, 3)}•••••${apiKey.substring(apiKey.length - 3)}';
@@ -158,4 +180,3 @@ class AiServerConfig {
   String toString() =>
       'AiServerConfig(baseUrl: $baseUrl, apiKey: $maskedApiKey, model: $model)';
 }
-

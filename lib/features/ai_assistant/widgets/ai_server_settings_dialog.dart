@@ -245,6 +245,62 @@ class _AiServerSettingsDialogState extends State<AiServerSettingsDialog> {
                 }),
                 const SizedBox(height: AppSpacing.lg),
 
+                // Preset Provider Shortcuts
+                Text(
+                  'Preset Server AI',
+                  style: context.text.labelLarge.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: hc.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    ActionChip(
+                      avatar: const Icon(Icons.flash_on_rounded, size: 16, color: Colors.orange),
+                      label: const Text('Groq Cloud (Utama)'),
+                      onPressed: () {
+                        setState(() {
+                          _urlController.text = AiServerConfig.groqBaseUrl;
+                          _apiKeyController.text = AiServerConfig.groqDefault.apiKey;
+                          _modelController.text = AiServerConfig.groqModel;
+                          _urlValidationError = null;
+                          _apiKeyValidationError = null;
+                        });
+                      },
+                    ),
+                    ActionChip(
+                      avatar: const Icon(Icons.shield_rounded, size: 16, color: Colors.teal),
+                      label: const Text('OpenRouter (Cadangan)'),
+                      onPressed: () {
+                        setState(() {
+                          _urlController.text = AiServerConfig.openRouterBaseUrl;
+                          _apiKeyController.text = AiServerConfig.openRouterFallback.apiKey;
+                          _modelController.text = AiServerConfig.openRouterModel;
+                          _urlValidationError = null;
+                          _apiKeyValidationError = null;
+                        });
+                      },
+                    ),
+                    ActionChip(
+                      avatar: const Icon(Icons.computer_rounded, size: 16, color: Colors.indigo),
+                      label: const Text('9Router / Lokal'),
+                      onPressed: () {
+                        setState(() {
+                          _urlController.text = 'http://localhost:20128';
+                          _apiKeyController.text = 'sk-9router';
+                          _modelController.text = 'default';
+                          _urlValidationError = null;
+                          _apiKeyValidationError = null;
+                        });
+                      },
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.md),
+
                 // Base URL Input
                 Text(
                   context.tr('ai.settingsServerUrlLabel'),
@@ -260,7 +316,7 @@ class _AiServerSettingsDialogState extends State<AiServerSettingsDialog> {
                   autocorrect: false,
                   style: context.text.bodyMedium,
                   decoration: InputDecoration(
-                    hintText: 'https://unbalance-compile-chariot.ngrok-free.dev',
+                    hintText: 'https://api.groq.com/openai/v1',
                     errorText: _urlValidationError,
                     prefixIcon: const Icon(Icons.link_rounded, size: 20),
                     suffixIcon: Row(
@@ -390,7 +446,7 @@ class _AiServerSettingsDialogState extends State<AiServerSettingsDialog> {
                     controller: _modelController,
                     autocorrect: false,
                     decoration: InputDecoration(
-                      hintText: 'ngoding-combo',
+                      hintText: 'qwen/qwen3.8-27b',
                       prefixIcon: const Icon(
                         Icons.auto_awesome_rounded,
                         size: 18,

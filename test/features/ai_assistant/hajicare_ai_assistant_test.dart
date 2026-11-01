@@ -379,34 +379,30 @@ Semoga membantu!
           smartbandBridge: bridge,
         );
 
-        // Verifikasi konfigurasi default final (9Router Ngrok)
+        // Verifikasi konfigurasi default final (Groq Cloud)
         final defaultConfig = await repo.loadServerConfig(forceReload: true);
         expect(defaultConfig, equals(AiServerConfig.defaults));
         expect(
           defaultConfig.baseUrl,
-          equals('https://unbalance-compile-chariot.ngrok-free.dev'),
+          equals(AiServerConfig.defaultBaseUrl),
         );
         expect(
           defaultConfig.chatCompletionsUri.toString(),
           equals(
-            'https://unbalance-compile-chariot.ngrok-free.dev/v1/chat/completions',
+            'https://api.groq.com/openai/v1/chat/completions',
           ),
         );
         expect(
           defaultConfig.apiKey,
-          equals('sk-675b8dd28e37e08f-jrv5r5-49d88117'),
+          equals(AiServerConfig.defaultApiKey),
         );
-        expect(defaultConfig.model, equals('ngoding-combo'));
+        expect(defaultConfig.model, equals(AiServerConfig.defaultModel));
 
         final health = await repo.checkServerHealth();
         expect(health.health, equals(AiServerHealth.online));
         expect(
-          capturedRequest.headers['ngrok-skip-browser-warning'],
-          equals('true'),
-        );
-        expect(
           capturedRequest.headers['Authorization'],
-          equals('Bearer sk-675b8dd28e37e08f-jrv5r5-49d88117'),
+          equals('Bearer ${AiServerConfig.defaultApiKey}'),
         );
 
         final outcome = await repo.askQuestion(
@@ -418,7 +414,7 @@ Semoga membantu!
         expect(
           capturedRequest.url.toString(),
           equals(
-            'https://unbalance-compile-chariot.ngrok-free.dev/v1/chat/completions',
+            'https://api.groq.com/openai/v1/chat/completions',
           ),
         );
         expect(
@@ -427,17 +423,13 @@ Semoga membantu!
         );
         expect(
           capturedRequest.headers['Authorization'],
-          equals('Bearer sk-675b8dd28e37e08f-jrv5r5-49d88117'),
-        );
-        expect(
-          capturedRequest.headers['ngrok-skip-browser-warning'],
-          equals('true'),
+          equals('Bearer ${AiServerConfig.defaultApiKey}'),
         );
 
         // Verifikasi body & system prompt
         final sentJson =
             jsonDecode(capturedRequest.body) as Map<String, dynamic>;
-        expect(sentJson['model'], equals('ngoding-combo'));
+        expect(sentJson['model'], equals(AiServerConfig.defaultModel));
         final messages = sentJson['messages'] as List<dynamic>;
         final sysPrompt = (messages.first as Map)['content'] as String;
         expect(sysPrompt, contains('Detak Jantung='));
@@ -509,7 +501,7 @@ Semoga membantu!
         final health = await repo.checkServerHealth();
         expect(health.health, equals(AiServerHealth.online));
         // Pastikan /v1/models dipanggil langsung tanpa memicu 404 pada /health
-        expect(requestedPaths.first, equals('/v1/models'));
+        expect(requestedPaths.first.endsWith('/v1/models'), isTrue);
         expect(requestedPaths.contains('/health'), isFalse);
 
         final outcome = await repo.askQuestion(
