@@ -404,12 +404,10 @@ Semoga membantu!
             'https://api.groq.com/openai/v1/chat/completions',
           ),
         );
-        expect(defaultConfig.apiKey, isEmpty);
         expect(
-          defaultConfig.effectiveApiKey,
+          defaultConfig.apiKey,
           equals(AiServerConfig.defaultApiKey),
         );
-        expect(defaultConfig.isCustomApiKey, isFalse);
         expect(defaultConfig.model, equals(AiServerConfig.defaultModel));
 
         final health = await repo.checkServerHealth();

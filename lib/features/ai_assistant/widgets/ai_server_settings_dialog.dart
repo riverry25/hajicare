@@ -57,8 +57,9 @@ class _AiServerSettingsDialogState extends State<AiServerSettingsDialog> {
     _urlController = TextEditingController(
       text: cfg.isPlaceholder ? '' : cfg.baseUrl,
     );
+    // Zero-Leak: Kunci rahasia bawaan developer TIDAK PERNAH dimuat ke input teks controller!
     _apiKeyController = TextEditingController(
-      text: isSys ? '' : cfg.apiKey,
+      text: cfg.isCustomApiKey ? cfg.apiKey : '',
     );
     _modelController = TextEditingController(text: cfg.model);
   }
@@ -113,9 +114,7 @@ class _AiServerSettingsDialogState extends State<AiServerSettingsDialog> {
     try {
       final status = await widget.controller.saveServerConfiguration(
         baseUrl: _urlController.text,
-        apiKey: _useCustomApiKey && _apiKeyController.text.trim().isNotEmpty
-            ? _apiKeyController.text.trim()
-            : AiServerConfig.systemVaultMarker,
+        apiKey: _apiKeyController.text.trim(),
         model: _modelController.text,
       );
       if (!mounted) return;
@@ -131,9 +130,7 @@ class _AiServerSettingsDialogState extends State<AiServerSettingsDialog> {
                 ? 'Terhubung ke Hermes Server (${status.latency?.inMilliseconds ?? 0} ms)'
                 : 'URL disimpan (${status.label})',
             style: TextStyle(
-              color: status.isOnline
-                  ? Colors.white
-                  : context.hc.textPrimary,
+              color: status.isOnline ? Colors.white : context.hc.textPrimary,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -151,8 +148,7 @@ class _AiServerSettingsDialogState extends State<AiServerSettingsDialog> {
     if (!mounted) return;
     setState(() {
       _urlController.text = cfg.baseUrl;
-      _useCustomApiKey = false;
-      _apiKeyController.clear();
+      _apiKeyController.text = cfg.isCustomApiKey ? cfg.apiKey : '';
       _modelController.text = cfg.model;
       _urlValidationError = null;
       _apiKeyValidationError = null;
@@ -271,13 +267,17 @@ class _AiServerSettingsDialogState extends State<AiServerSettingsDialog> {
                   runSpacing: 8,
                   children: [
                     ActionChip(
-                      avatar: const Icon(Icons.flash_on_rounded, size: 16, color: Colors.orange),
+                      avatar: const Icon(
+                        Icons.flash_on_rounded,
+                        size: 16,
+                        color: Colors.orange,
+                      ),
                       label: const Text('Groq Cloud (Utama)'),
                       onPressed: () {
                         setState(() {
                           _urlController.text = AiServerConfig.groqBaseUrl;
-                          _useCustomApiKey = false;
-                          _apiKeyController.clear();
+                          _apiKeyController
+                              .clear(); // Menggunakan kunci bawaan terproteksi
                           _modelController.text = AiServerConfig.groqModel;
                           _urlValidationError = null;
                           _apiKeyValidationError = null;
@@ -285,21 +285,31 @@ class _AiServerSettingsDialogState extends State<AiServerSettingsDialog> {
                       },
                     ),
                     ActionChip(
-                      avatar: const Icon(Icons.shield_rounded, size: 16, color: Colors.teal),
+                      avatar: const Icon(
+                        Icons.shield_rounded,
+                        size: 16,
+                        color: Colors.teal,
+                      ),
                       label: const Text('OpenRouter (Cadangan)'),
                       onPressed: () {
                         setState(() {
-                          _urlController.text = AiServerConfig.openRouterBaseUrl;
-                          _useCustomApiKey = false;
-                          _apiKeyController.clear();
-                          _modelController.text = AiServerConfig.openRouterModel;
+                          _urlController.text =
+                              AiServerConfig.openRouterBaseUrl;
+                          _apiKeyController
+                              .clear(); // Menggunakan kunci bawaan terproteksi
+                          _modelController.text =
+                              AiServerConfig.openRouterModel;
                           _urlValidationError = null;
                           _apiKeyValidationError = null;
                         });
                       },
                     ),
                     ActionChip(
-                      avatar: const Icon(Icons.computer_rounded, size: 16, color: Colors.indigo),
+                      avatar: const Icon(
+                        Icons.computer_rounded,
+                        size: 16,
+                        color: Colors.indigo,
+                      ),
                       label: const Text('9Router / Lokal'),
                       onPressed: () {
                         setState(() {
@@ -415,6 +425,7 @@ class _AiServerSettingsDialogState extends State<AiServerSettingsDialog> {
 
                 if (_showAdvanced) ...[
                   const SizedBox(height: AppSpacing.xs),
+                  // Header API Key + Status Badge Proteksi
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -425,106 +436,118 @@ class _AiServerSettingsDialogState extends State<AiServerSettingsDialog> {
                           color: hc.textPrimary,
                         ),
                       ),
-                      if (_useCustomApiKey)
-                        TextButton.icon(
-                          style: TextButton.styleFrom(
-                            padding: EdgeInsets.zero,
-                            minimumSize: const Size(50, 24),
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          ),
-                          icon: const Icon(Icons.lock_reset_rounded, size: 14),
-                          label: const Text('Gunakan Kunci Sistem', style: TextStyle(fontSize: 11)),
-                          onPressed: () {
-                            setState(() {
-                              _useCustomApiKey = false;
-                              _apiKeyController.clear();
-                              _apiKeyValidationError = null;
-                            });
-                          },
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 3,
                         ),
+                        decoration: BoxDecoration(
+                          color: _apiKeyController.text.trim().isNotEmpty
+                              ? hc.accent.withValues(alpha: 0.12)
+                              : const Color(0xFF22C55E).withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(AppRadius.pill),
+                          border: Border.all(
+                            color: _apiKeyController.text.trim().isNotEmpty
+                                ? hc.accent.withValues(alpha: 0.3)
+                                : const Color(
+                                    0xFF22C55E,
+                                  ).withValues(alpha: 0.3),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              _apiKeyController.text.trim().isNotEmpty
+                                  ? Icons.person_rounded
+                                  : Icons.verified_user_rounded,
+                              size: 12,
+                              color: _apiKeyController.text.trim().isNotEmpty
+                                  ? hc.accent
+                                  : const Color(0xFF22C55E),
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              _apiKeyController.text.trim().isNotEmpty
+                                  ? context.tr('ai.settingsCustomKeyBadge')
+                                  : context.tr('ai.settingsDefaultKeyBadge'),
+                              style: context.text.labelSmall.copyWith(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                                color: _apiKeyController.text.trim().isNotEmpty
+                                    ? hc.accent
+                                    : const Color(0xFF22C55E),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 4),
-                  if (!_useCustomApiKey)
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                      decoration: BoxDecoration(
-                        color: hc.surfaceSubtle,
-                        borderRadius: BorderRadius.circular(AppRadius.md),
-                        border: Border.all(
-                          color: context.hc.success.withValues(alpha: 0.35),
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(Icons.lock_rounded, color: context.hc.success, size: 20),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                  TextField(
+                    controller: _apiKeyController,
+                    obscureText: _obscureApiKey,
+                    autocorrect: false,
+                    decoration: InputDecoration(
+                      hintText: context.tr('ai.settingsKeyProtectedHint'),
+                      errorText: _apiKeyValidationError,
+                      prefixIcon: const Icon(Icons.vpn_key_rounded, size: 18),
+                      suffixIcon: _apiKeyController.text.trim().isNotEmpty
+                          ? Row(
+                              mainAxisSize: MainAxisSize.min,
                               children: [
-                                Text(
-                                  'Kunci Sistem Terenkripsi (Vault)',
-                                  style: context.text.labelMedium.copyWith(
-                                    fontWeight: FontWeight.w700,
-                                    color: hc.textPrimary,
+                                IconButton(
+                                  tooltip: context.tr(
+                                    'ai.settingsUseDefaultKeyBtn',
                                   ),
+                                  icon: const Icon(
+                                    Icons.restore_rounded,
+                                    size: 18,
+                                  ),
+                                  onPressed: () {
+                                    _apiKeyController.clear();
+                                    setState(() {
+                                      _apiKeyValidationError = null;
+                                    });
+                                  },
                                 ),
-                                Text(
-                                  'Tersimpan aman di Vault & tidak dapat diintip demi privasi.',
-                                  style: context.text.bodySmall.copyWith(
-                                    color: hc.textSecondary,
-                                    fontSize: 11,
+                                IconButton(
+                                  icon: Icon(
+                                    _obscureApiKey
+                                        ? Icons.visibility_rounded
+                                        : Icons.visibility_off_rounded,
+                                    size: 19,
+                                  ),
+                                  onPressed: () => setState(
+                                    () => _obscureApiKey = !_obscureApiKey,
                                   ),
                                 ),
                               ],
-                            ),
-                          ),
-                          OutlinedButton(
-                            style: OutlinedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                              minimumSize: const Size(40, 28),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(AppRadius.sm),
-                              ),
-                            ),
-                            onPressed: () {
-                              setState(() {
-                                _useCustomApiKey = true;
-                                _apiKeyController.clear();
-                              });
-                            },
-                            child: const Text('Ganti Kunci', style: TextStyle(fontSize: 11)),
-                          ),
-                        ],
-                      ),
-                    )
-                  else
-                    TextField(
-                      controller: _apiKeyController,
-                      obscureText: _obscureApiKey,
-                      autocorrect: false,
-                      decoration: InputDecoration(
-                        hintText: 'sk-... (Masukkan API Key pribadi Anda)',
-                        errorText: _apiKeyValidationError,
-                        prefixIcon: const Icon(Icons.vpn_key_rounded, size: 18),
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _obscureApiKey
-                                ? Icons.visibility_rounded
-                                : Icons.visibility_off_rounded,
-                            size: 19,
-                          ),
-                          onPressed: () =>
-                              setState(() => _obscureApiKey = !_obscureApiKey),
-                        ),
-                        filled: true,
-                        fillColor: hc.surfaceSubtle,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.md),
-                        ),
+                            )
+                          : null,
+                      filled: true,
+                      fillColor: hc.surfaceSubtle,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.md),
                       ),
                     ),
+                    onChanged: (_) {
+                      setState(() {
+                        if (_apiKeyValidationError != null) {
+                          _apiKeyValidationError = null;
+                        }
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    context.tr('ai.settingsDefaultKeyHelper'),
+                    style: context.text.labelSmall.copyWith(
+                      color: hc.textSecondary,
+                      fontSize: 10.5,
+                    ),
+                  ),
                   const SizedBox(height: AppSpacing.sm),
                   Text(
                     context.tr('ai.settingsModelLabel'),
@@ -621,10 +644,7 @@ class _AiServerSettingsDialogState extends State<AiServerSettingsDialog> {
 }
 
 class _ServerHealthBanner extends StatelessWidget {
-  const _ServerHealthBanner({
-    required this.status,
-    required this.onTestTap,
-  });
+  const _ServerHealthBanner({required this.status, required this.onTestTap});
 
   final AiServerStatus status;
   final VoidCallback onTestTap;

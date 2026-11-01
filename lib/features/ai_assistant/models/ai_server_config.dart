@@ -61,15 +61,15 @@ class AiServerConfig {
   static const String legacyDefaultApiKey = 'rahasia_hajicare_2026';
   static const String legacyDefaultModel = 'hermes';
 
-  static AiServerConfig get groqDefault => AiServerConfig(
+  static AiServerConfig get groqDefault => const AiServerConfig(
     baseUrl: groqBaseUrl,
-    apiKey: AiSecretVault.groqApiKey,
+    apiKey: systemVaultMarker,
     model: groqModel,
   );
 
-  static AiServerConfig get openRouterFallback => AiServerConfig(
+  static AiServerConfig get openRouterFallback => const AiServerConfig(
     baseUrl: openRouterBaseUrl,
-    apiKey: AiSecretVault.openRouterApiKey,
+    apiKey: systemVaultMarker,
     model: openRouterModel,
   );
 
