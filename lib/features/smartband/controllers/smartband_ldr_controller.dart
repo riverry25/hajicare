@@ -7,6 +7,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:latlong2/latlong.dart';
 import '../../../core/routes/app_routes.dart';
+import '../../../core/services/location_service.dart';
 import '../../../core/state/hajicare_controller.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/app_logger.dart';
@@ -300,24 +301,15 @@ class SmartbandLdrController extends GetxController {
         final hajiCtrl = Get.find<HajiCareController>();
         final radius = hajiCtrl.safeRadiusMeters.value;
         activeSafeRadius.value = radius;
-        final dist = hajiCtrl.calculatedDistance.value ?? 0.0;
-        currentDistanceToPosko.value = dist;
+        safeRadiusMeters.value = radius;
+        final dist = hajiCtrl.calculatedDistance.value;
 
-        if (dist > radius && radius > 0) {
-          if (!isOutsideSafeRadius.value) {
-            isOutsideSafeRadius.value = true;
-            safeRadiusStatusLabel.value = 'Di Luar Radius Aman';
-            lcdLine2.value = '!LUAR RADIUS !';
-            bleService.sendCommand('VIBRATE');
-            bleService.sendCommand('BUZZ');
-          }
+        if (dist != null) {
+          currentDistanceToPosko.value = dist;
+          currentDistanceM.value = dist;
+          _evaluateRadiusAlert(dist);
         } else {
-          if (isOutsideSafeRadius.value) {
-            isOutsideSafeRadius.value = false;
-            safeRadiusStatusLabel.value = 'Di Dalam Radius Aman';
-            lcdLine2.value = 'STATUS: NORMAL  ';
-            bleService.sendCommand('STOP_BUZZ');
-          }
+          _recalculateDistance();
         }
       }
     });
@@ -761,37 +753,50 @@ class SmartbandLdrController extends GetxController {
       _stepPeak = true;
       _lastStepAt = now;
       sessionSteps.value++;
-      _recalculateDistance();
     } else if (g < 1.05) {
       _stepPeak = false;
     }
   }
 
-  /// Hitung jarak riil jemaah ke HP (per-langkah jika GPS belum fix)
+  /// Hitung jarak riil jamaah (Smartband + HP) ke lokasi Pendamping
   void _recalculateDistance() {
     if (!isConnected) {
       currentDistanceM.value = null;
       return;
     }
 
-    // 1. Prioritas GPS jika satelit fix
-    if (isGpsFix.value && latitude.value != null && longitude.value != null) {
-      if (Get.isRegistered<HajiCareController>()) {
-        final hajiCtrl = Get.find<HajiCareController>();
-        final dist = hajiCtrl.calculatedDistance.value;
-        if (dist != null && dist > 0) {
-          currentDistanceM.value = dist;
-          _evaluateRadiusAlert(dist);
+    // 1. Jarak riil GPS Jamaah (HP/Smartband) ke Pendamping via Room
+    if (Get.isRegistered<HajiCareController>()) {
+      final hajiCtrl = Get.find<HajiCareController>();
+      final dist = hajiCtrl.calculatedDistance.value;
+      if (dist != null && dist >= 0) {
+        currentDistanceM.value = dist;
+        currentDistanceToPosko.value = dist;
+        _evaluateRadiusAlert(dist);
+        return;
+      }
+
+      // 2. Jika GPS Smartband fix & ada lokasi pendamping terdaftar di Room
+      if (isGpsFix.value && latitude.value != null && longitude.value != null) {
+        final compLoc = hajiCtrl.pendampingLocation.value;
+        if (compLoc != null) {
+          final locService = LocationService();
+          final d = locService.calculateDistanceMeters(
+            latitude.value!,
+            longitude.value!,
+            compLoc.latitude,
+            compLoc.longitude,
+          );
+          currentDistanceM.value = d;
+          currentDistanceToPosko.value = d;
+          _evaluateRadiusAlert(d);
           return;
         }
       }
     }
 
-    // 2. Jika GPS belum fix (indoor / 0 satelit), hitung jarak per langkah (0.7m/langkah)
-    final steps = effectiveSteps;
-    final dist = steps * strideLengthMeters;
-    currentDistanceM.value = dist;
-    _evaluateRadiusAlert(dist);
+    // 3. Jika belum terhubung ke Room / pendamping belum membagikan lokasi GPS
+    currentDistanceM.value = null;
   }
 
   void _evaluateRadiusAlert(double dist) {
@@ -806,6 +811,9 @@ class SmartbandLdrController extends GetxController {
       bleService.sendCommand(isOut ? 'RADIUS_ALERT:1' : 'RADIUS_ALERT:0');
       if (isOut) {
         bleService.sendCommand('VIBRATE');
+        bleService.sendCommand('BUZZ');
+      } else {
+        bleService.sendCommand('STOP_BUZZ');
       }
     }
     // Kirim sinkronisasi jarak ke gelang jika berubah >= 0.5m atau status alert berubah
@@ -815,21 +823,16 @@ class SmartbandLdrController extends GetxController {
     }
   }
 
-  /// Tambah langkah (untuk pengetesan cepat jarak per langkah)
+  /// Tambah langkah (untuk pedometer MPU6050)
   void addStep([int count = 1]) {
     sessionSteps.value = effectiveSteps + count;
-    _recalculateDistance();
   }
 
-  /// Reset titik awal jarak (kembali ke 0 meter & 0 langkah)
+  /// Reset titik awal langkah pedometer
   void resetStepDistance() {
     _stepBaseline = stepCount.value;
     sessionSteps.value = 0;
-    _lastSentDistance = 0.0;
-    currentDistanceM.value = 0.0;
-    _evaluateRadiusAlert(0.0);
     bleService.sendCommand('RESET_STEPS');
-    _recalculateDistance();
   }
 
   @override

@@ -653,10 +653,9 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
 
         case 4: // Dynamic Safe Radius
           heroTitle = 'Dynamic Safe Radius (Batas Aman)';
-          final dist = ctrl.currentDistanceM.value ?? (isConn ? 0.0 : null);
-          final steps = ctrl.effectiveSteps;
+          final dist = ctrl.currentDistanceM.value;
           heroValue = dist != null ? dist.toStringAsFixed(1) : '--';
-          heroUnit = 'Meter ($steps Langkah)';
+          heroUnit = 'Meter ke Pendamping';
           final rad = ctrl.safeRadiusMeters.value;
           arcPercent = dist != null ? (dist / (rad * 1.5)).clamp(0.05, 1.0) : 0.0;
           arcColor = ctrl.radiusAlertActive.value
@@ -664,9 +663,11 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
               : const Color(0xFF0D9488);
           statusPillText = !isConn
               ? 'MENUNGGU BLE'
-              : (ctrl.radiusAlertActive.value
-                    ? 'DI LUAR RADIUS (${dist?.toStringAsFixed(1)} m > $rad m)'
-                    : 'DALAM RADIUS AMAN (Batas $rad m)');
+              : (dist == null
+                    ? 'MENUNGGU GPS PENDAMPING'
+                    : (ctrl.radiusAlertActive.value
+                        ? 'DI LUAR RADIUS (${dist.toStringAsFixed(1)} m > ${rad.round()} m)'
+                        : 'DALAM RADIUS AMAN (Batas ${rad.round()} m)'));
           statusPillBg = ctrl.radiusAlertActive.value
               ? AppColors.statusDanger.withValues(alpha: 0.15)
               : const Color(0xFF0D9488).withValues(alpha: 0.15);
@@ -929,15 +930,15 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
                     isSelected: selected == 4,
                     icon: Icons.radar_rounded,
                     iconColor: const Color(0xFF0D9488),
-                    valueText: isConn
-                        ? (dist != null ? dist.toStringAsFixed(1) : '0.0')
-                        : '--',
+                    valueText: isConn && dist != null ? dist.toStringAsFixed(1) : '--',
                     unit: 'Meter',
                     title: 'Safe Radius',
                     subtitle: isConn
-                        ? (ctrl.radiusAlertActive.value
-                              ? 'Di Luar Batas!'
-                              : '${ctrl.effectiveSteps} Langkah • Batas ${rad.round()}m')
+                        ? (dist != null
+                              ? (ctrl.radiusAlertActive.value
+                                    ? 'Di Luar Batas!'
+                                    : 'Ke Pendamping • Batas ${rad.round()}m')
+                              : 'Menunggu GPS Pendamping')
                         : 'Menunggu BLE',
                     onTap: () => ctrl.selectSensor(4),
                   ),
@@ -1190,9 +1191,9 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
                   Expanded(
                     child: Text(
                       dist != null
-                          ? 'Jarak saat ini: ${dist.toStringAsFixed(1)} m (${ctrl.effectiveSteps} langkah • 0.7m/langkah) • Batas: ${currentRadius.round()} m'
+                          ? 'Jarak ke Pendamping: ${dist.toStringAsFixed(1)} m • Batas: ${currentRadius.round()} m'
                           : (isConn
-                              ? 'Jarak saat ini: 0.0 m (0 langkah • Titik Awal)'
+                              ? 'Menghitung koordinat GPS pendamping...'
                               : 'Menunggu Smartband Terhubung...'),
                       style: TextStyle(
                         fontSize: 12,
@@ -1569,7 +1570,7 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
               ),
             ),
             Text(
-              dist != null ? 'Jarak : ${dist.toStringAsFixed(1)} m' : 'Jarak : Menunggu',
+              dist != null ? 'Jarak : ${dist.toStringAsFixed(1)} m' : 'Jarak : Mencari GPS',
               style: const TextStyle(
                 fontFamily: 'monospace',
                 fontSize: 12,
