@@ -1288,73 +1288,75 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
       ));
     }
 
-    return Container(
-      margin: const EdgeInsets.fromLTRB(20, 0, 20, 14),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: bannerBg,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: bannerBorder, width: 1.5),
-        boxShadow: [
-          BoxShadow(
-            color: (isCritical ? hc.danger : hc.warning).withValues(alpha: 0.18),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: iconColor.withValues(alpha: 0.2),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  isCritical ? Icons.warning_rounded : Icons.info_outline_rounded,
-                  color: iconColor,
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  isCritical
-                      ? 'PERINGATAN KRITIS JAMAAH'
-                      : 'PERHATIAN ANOMALI KESEHATAN',
-                  style: context.text.labelLarge.copyWith(
+    return RepaintBoundary(
+      child: Container(
+        margin: const EdgeInsets.fromLTRB(20, 0, 20, 14),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: bannerBg,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: bannerBorder, width: 1.5),
+          boxShadow: [
+            BoxShadow(
+              color: (isCritical ? hc.danger : hc.warning).withValues(alpha: 0.18),
+              blurRadius: 10,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: iconColor.withValues(alpha: 0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    isCritical ? Icons.warning_rounded : Icons.info_outline_rounded,
                     color: iconColor,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 13,
-                    letterSpacing: 0.3,
+                    size: 20,
                   ),
                 ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: iconColor,
-                  borderRadius: BorderRadius.circular(AppRadius.pill),
-                ),
-                child: Text(
-                  isCritical ? 'DARURAT' : 'WASPADA',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 10,
-                    letterSpacing: 0.5,
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    isCritical
+                        ? 'PERINGATAN KRITIS JAMAAH'
+                        : 'PERHATIAN ANOMALI KESEHATAN',
+                    style: context.text.labelLarge.copyWith(
+                      color: iconColor,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 13,
+                      letterSpacing: 0.3,
+                    ),
                   ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          ...anomalyItems,
-        ],
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: iconColor,
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                  ),
+                  child: Text(
+                    isCritical ? 'DARURAT' : 'WASPADA',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 10,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            ...anomalyItems,
+          ],
+        ),
       ),
     );
   }
@@ -1416,11 +1418,12 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
     final fallColor = _isFallen ? hc.danger : hc.islamic;
     final radiusColor = _isOutOfSafeRadius ? hc.danger : hc.islamic;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: _buildSectionCard(
-        context: context,
-        title: context.tr('room.smartbandSectionTitle'),
+    return RepaintBoundary(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        child: _buildSectionCard(
+          context: context,
+          title: context.tr('room.smartbandSectionTitle'),
         icon: Icons.watch_rounded,
         iconColor: hc.brand,
         cardBg: sectionBg,
@@ -1596,21 +1599,32 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
           const SizedBox(height: 10),
           Row(
             children: [
-              Icon(
-                Icons.sync_rounded,
-                size: 13,
-                color: bodyColor.withValues(alpha: 0.7),
-              ),
-              const SizedBox(width: 4),
-              Text(
-                context.tr('room.smartbandLastUpdated', {'time': _smartbandRelativeTime}),
-                style: TextStyle(
-                  fontSize: 11,
-                  color: bodyColor.withValues(alpha: 0.8),
-                  fontWeight: FontWeight.w500,
+              Expanded(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.sync_rounded,
+                      size: 13,
+                      color: bodyColor.withValues(alpha: 0.7),
+                    ),
+                    const SizedBox(width: 4),
+                    Flexible(
+                      child: Text(
+                        context.tr('room.smartbandLastUpdated', {'time': _smartbandRelativeTime}),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: bodyColor.withValues(alpha: 0.8),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const Spacer(),
+              const SizedBox(width: 8),
               InkWell(
                 onTap: _sendAlertToPilgrimSmartband,
                 borderRadius: BorderRadius.circular(8),
@@ -1644,6 +1658,7 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
             ],
           ),
         ],
+      ),
       ),
     );
   }
@@ -1823,7 +1838,7 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
     return SafeArea(
       child: ConstrainedBox(
         constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.90,
+          maxHeight: MediaQuery.sizeOf(context).height * 0.92,
         ),
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -2457,30 +2472,32 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
                 left: 0,
                 right: 0,
                 child: Center(
-                  child: Container(
-                    width: 72,
-                    height: 72,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: isSos ? hc.danger : hc.islamic,
-                      border: Border.all(color: hc.surface, width: 4),
-                      boxShadow: [
-                        BoxShadow(
-                          color: (isSos ? hc.danger : Colors.black).withValues(
-                            alpha: hc.isDark ? 0.45 : 0.18,
+                  child: RepaintBoundary(
+                    child: Container(
+                      width: 72,
+                      height: 72,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: isSos ? hc.danger : hc.islamic,
+                        border: Border.all(color: hc.surface, width: 4),
+                        boxShadow: [
+                          BoxShadow(
+                            color: (isSos ? hc.danger : Colors.black).withValues(
+                              alpha: hc.isDark ? 0.45 : 0.18,
+                            ),
+                            blurRadius: 14,
+                            offset: const Offset(0, 4),
                           ),
-                          blurRadius: 14,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Center(
-                      child: Text(
-                        initial,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 28,
+                        ],
+                      ),
+                      child: Center(
+                        child: Text(
+                          initial,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 28,
+                          ),
                         ),
                       ),
                     ),

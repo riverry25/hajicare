@@ -14,8 +14,8 @@ enum StartupState { checking, authenticated, unauthenticated }
 
 /// Centralized controller & Single Source of Truth (SSOT) for
 /// App startup bootstrap & single-destination routing
-/// Persistent onboarding status (one-time onboarding
-/// Persistent "Remember Me" pand session lifecycle
+/// Persistent onboarding status (one-time onboarding)
+/// Persistent "Remember Me" and session lifecycle
 class AppStartupController extends GetxController {
   AppStartupController({
     FirebaseAuth? firebaseAuth,
@@ -80,10 +80,10 @@ class AppStartupController extends GetxController {
     }
   }
 
-  // Remember Me Persistence (Secure Encrypted Storage
+  // Remember Me Persistence (Secure Encrypted Storage)
 
   /// Reads whether the user chose "Remember Me" on their last login.
-  /// Defaults to true, using encrypted storage (OWASP  V1).
+  /// Defaults to true, using encrypted storage (OWASP V1).
   Future<bool> isRememberMe() async {
     try {
       return await SecureStorageService.instance.isRememberMe();
@@ -93,7 +93,7 @@ class AppStartupController extends GetxController {
     }
   }
 
-  /// Saves the user's "Remember Me" pto hardware-backed secure storage.
+  /// Saves the user's "Remember Me" preference to hardware-backed secure storage.
   Future<void> setRememberMe(bool value) async {
     try {
       await SecureStorageService.instance.setRememberMe(value);
@@ -163,15 +163,19 @@ class AppStartupController extends GetxController {
     startupState.value = StartupState.checking;
 
     try {
-      // 1. Check onboarding status first
-      final onboardingDone = await isOnboardingDone();
+      // 1 & 2. Inisialisasi pengecekan onboarding dan Remember Me secara paralel (I/O optimization)
+      final checkResults = await Future.wait([
+        isOnboardingDone(),
+        isRememberMe(),
+      ]);
+      final onboardingDone = checkResults[0];
+      final rememberMe = checkResults[1];
+
       if (!onboardingDone) {
         startupState.value = StartupState.unauthenticated;
         return AppRoutes.onboarding;
       }
 
-      // 2. Check Remember Me p
-      final rememberMe = await isRememberMe();
       if (!rememberMe) {
         // If user logged in without Remember Me, terminate persistent session on restart
         debugPrint(
@@ -203,16 +207,24 @@ class AppStartupController extends GetxController {
   /// Resolves the user's role and activeRoom destination from Firestore or local cache.
   Future<String> resolveUserRoleDestination(String uid) async {
     try {
-      // 1. Try to read the role from Firebase Auth Custom Claims (most authoritative).
-      final token = await _firebaseAuth.currentUser?.getIdTokenResult(true);
-      final rawClaim = token?.claims?['role']?.toString().toLowerCase();
-      final claimedRole = rawClaim == 'petugas' ? 'pendamping' : rawClaim;
-
-      final doc = await _firestore
+      // 1. Ambil Custom Claims dan User Document dari Firestore secara paralel
+      final tokenFuture = _firebaseAuth.currentUser?.getIdTokenResult(true);
+      final docFuture = _firestore
           .collection('users')
           .doc(uid)
           .get()
           .timeout(const Duration(seconds: 4));
+
+      final results = await Future.wait([
+        tokenFuture ?? Future.value(null),
+        docFuture,
+      ]);
+
+      final token = results[0] as IdTokenResult?;
+      final doc = results[1] as DocumentSnapshot<Map<String, dynamic>>;
+
+      final rawClaim = token?.claims?['role']?.toString().toLowerCase();
+      final claimedRole = rawClaim == 'petugas' ? 'pendamping' : rawClaim;
 
       if (doc.exists) {
         final data = doc.data();

@@ -27,25 +27,25 @@ void main() async {
   final settings = Get.put(AppSettingsController(), permanent: true);
   final adhanNotifService = AdhanNotificationService();
 
-  // Inisialisasi service utama secara paralel
+  // Inisialisasi dependensi kritis UI secara paralel (Fast Cold Boot)
   await Future.wait([
     Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform),
     settings.loadSettings(),
-    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android)
-      AndroidAlarmManager.initialize().catchError((e) {
-        debugPrint('[Main] AndroidAlarmManager initialization error: $e');
-        return false;
-      }),
-    adhanNotifService.initialize().catchError((e) {
-      debugPrint('[Main] AdhanNotificationService initialization error: $e');
-    }),
-    SmartbandStorageService.instance.init().catchError((e) {
-      debugPrint('[Main] SmartbandStorageService initialization error: $e');
-    }),
   ]);
 
-  // Inisialisasi Firebase App Check
-  await AppCheckService.initialize();
+  // Inisialisasi Firebase App Check dengan timeout guard agar tidak menghambat startup
+  try {
+    await AppCheckService.initialize().timeout(
+      const Duration(milliseconds: 2500),
+      onTimeout: () {
+        debugPrint(
+          '[Main] AppCheckService initialization timed out; continuing cold boot.',
+        );
+      },
+    );
+  } catch (e) {
+    debugPrint('[Main] AppCheckService initialization error: $e');
+  }
 
   // Registrasi controller global
   Get.put(AppStartupController(), permanent: true);
@@ -54,7 +54,28 @@ void main() async {
   Get.put(HajjGuideService(), permanent: true);
   Get.lazyPut<MapController>(() => MapController(), fenix: true);
 
-  unawaited(adhanNotifService.scheduleFromPreferences());
+  // Inisialisasi background services secara asynchronous agar First Frame langsung ter-render
+  unawaited(() async {
+    try {
+      if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+        await AndroidAlarmManager.initialize().catchError((e) {
+          debugPrint('[Main] AndroidAlarmManager initialization error: $e');
+          return false;
+        });
+      }
+      await adhanNotifService.initialize().catchError((e) {
+        debugPrint('[Main] AdhanNotificationService initialization error: $e');
+      });
+      await SmartbandStorageService.instance.init().catchError((e) {
+        debugPrint('[Main] SmartbandStorageService initialization error: $e');
+      });
+      await adhanNotifService.scheduleFromPreferences().catchError((e) {
+        debugPrint('[Main] Adhan scheduleFromPreferences error: $e');
+      });
+    } catch (e) {
+      debugPrint('[Main] Background services async error: $e');
+    }
+  }());
 
   runApp(const HajiCareApp());
 }
