@@ -1474,7 +1474,7 @@ const Map<String, String> idTranslations = {
   'sign.sibiInstructions':
       'Model SIBI aktif: Arahkan dan tahan gestur huruf alfabet. Kata dibacakan saat SPASI ditekan atau setelah jeda sejenak.',
   'sign.bisindoInstructions':
-      'Model BISINDO aktif: Deteksi otomatis — setiap kata yang terdeteksi langsung masuk ke transkripsi dan dibacakan. Transkripsi tetap tersimpan saat ganti model.',
+      'Model BISINDO aktif: Abjad BISINDO menggunakan DUA TANGAN (contoh huruf "A" dibentuk segitiga oleh kedua tangan di depan dada). Deteksi berjalan otomatis.',
   'sign.retry': 'Coba Lagi',
   'sign.manageDownloads': 'Kelola Unduhan',
   'sign.downloadSettingsTitle': 'Pengaturan Unduhan Video',

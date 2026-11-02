@@ -1463,7 +1463,7 @@ const Map<String, String> enTranslations = {
   'sign.sibiInstructions':
       'SIBI active: Aim and hold alphabet gestures. Words are voiced when SPACE is tapped or after a pause.',
   'sign.bisindoInstructions':
-      'BISINDO active: Automatic detection — detected words are added to transcript and voiced. Transcript is preserved when switching models.',
+      'BISINDO active: BISINDO alphabet uses TWO HANDS (e.g. letter "A" forms a triangle with both hands in front of chest). Detection is automatic.',
   'sign.retry': 'Try Again',
   'sign.manageDownloads': 'Manage Downloads',
   'sign.downloadSettingsTitle': 'Video Download Settings',

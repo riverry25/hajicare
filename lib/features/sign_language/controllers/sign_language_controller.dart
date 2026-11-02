@@ -371,8 +371,7 @@ class SignLanguageController extends GetxController {
           ? 0.35
           : (classifierService.confidenceThreshold * 0.58).clamp(0.35, 0.52);
 
-      if (prediction.isRecognized &&
-          prediction.label.isNotEmpty &&
+      if (prediction.label.isNotEmpty &&
           prediction.confidence >= candidateThreshold) {
         confidenceScore.value = prediction.confidence;
         topCandidates.assignAll(prediction.candidates);
