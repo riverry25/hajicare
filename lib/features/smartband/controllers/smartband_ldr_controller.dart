@@ -236,6 +236,20 @@ class SmartbandLdrController extends GetxController {
   bool get isConnecting => bleStatus.value == SmartbandBleStatus.connecting;
   bool get isBusy => isScanning || isConnecting;
 
+  /// Hanya Pendamping atau Admin yang berhak mengubah pengaturan Safe Radius
+  bool get canManageSafeRadius {
+    if (!Get.isRegistered<HajiCareController>()) return false;
+    final role = Get.find<HajiCareController>().role;
+    return role == UserRole.pendamping || role == UserRole.admin;
+  }
+
+  /// Nama pendamping aktif untuk ditampilkan pada informasi otoritas Safe Radius
+  String get activePendampingName {
+    if (!Get.isRegistered<HajiCareController>()) return 'Pendamping Rombongan';
+    final name = Get.find<HajiCareController>().pendampingName.value.trim();
+    return name.isNotEmpty ? name : 'Pendamping Rombongan';
+  }
+
   int get currentHeartRate => heartRate.value ?? 0;
   int get currentSpo2 => spo2.value ?? 0;
   double get currentTemperature => mcpTemperature.value ?? 0.0;
@@ -637,16 +651,23 @@ class SmartbandLdrController extends GetxController {
     }
     isCharging.value = data.isCharging;
 
-    // 6. Dynamic Safe Radius & Jarak Realtime
-    if (data.hasSafeRadiusFromBand) {
+    // 6. Dynamic Safe Radius (Otoritas Pendamping via HajiCareController) & Jarak Realtime
+    if (Get.isRegistered<HajiCareController>()) {
+      final authoritativeRadius =
+          Get.find<HajiCareController>().safeRadiusMeters.value;
+      if (safeRadiusMeters.value != authoritativeRadius) {
+        safeRadiusMeters.value = authoritativeRadius;
+        activeSafeRadius.value = authoritativeRadius;
+      }
+      // Pastikan memori hardware gelang selalu mengikuti ketetapan Pendamping
+      if (isConnected &&
+          (!data.hasSafeRadiusFromBand ||
+              (data.safeRadius - authoritativeRadius).abs() >= 1.0)) {
+        bleService.setSafeRadius(authoritativeRadius);
+      }
+    } else if (data.hasSafeRadiusFromBand) {
       safeRadiusMeters.value = data.safeRadius;
       activeSafeRadius.value = data.safeRadius;
-      if (Get.isRegistered<HajiCareController>()) {
-        final hajiCtrl = Get.find<HajiCareController>();
-        if (hajiCtrl.safeRadiusMeters.value != data.safeRadius) {
-          hajiCtrl.safeRadiusMeters.value = data.safeRadius;
-        }
-      }
     }
     if (data.distanceM != null) {
       currentDistanceM.value = data.distanceM;
@@ -811,22 +832,28 @@ class SmartbandLdrController extends GetxController {
     await bleService.setOledPage(oledPage.value);
   }
 
-  /// Ubah batas Safe Radius pada gelang secara dinamis
+  /// Ubah batas Safe Radius (HANYA diizinkan untuk Pendamping / Admin)
   Future<void> setSafeRadius(double radiusMeters) async {
+    if (!canManageSafeRadius) {
+      AppLogger.warn(
+        'Akses ditolak: Hanya Pendamping yang dapat mengubah batas Safe Radius.',
+        tag: 'SmartbandLdr',
+      );
+      return;
+    }
     safeRadiusMeters.value = radiusMeters;
     activeSafeRadius.value = radiusMeters;
     if (Get.isRegistered<HajiCareController>()) {
       final hajiCtrl = Get.find<HajiCareController>();
-      if (hajiCtrl.safeRadiusMeters.value != radiusMeters) {
-        hajiCtrl.safeRadiusMeters.value = radiusMeters;
-      }
+      await hajiCtrl.setSafeRadius(radiusMeters);
+    } else {
+      await bleService.setSafeRadius(radiusMeters);
     }
     if (radiusMeters <= 0) {
       radiusAlertActive.value = false;
       isOutsideSafeRadius.value = false;
       safeRadiusStatusLabel.value = 'Radius Aman Nonaktif (OFF)';
     }
-    await bleService.setSafeRadius(radiusMeters);
     _lastSentDistance = -1.0;
     _recalculateDistance();
   }

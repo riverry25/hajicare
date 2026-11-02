@@ -1145,7 +1145,7 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
     );
   }
 
-  // 4. KONTROL DYNAMIC SAFE RADIUS (Sinkronisasi BLE ke Gelang)
+  // 4. MONITOR SAFE RADIUS PENDAMPING & PEDOMETER (Sinkronisasi BLE ke Gelang)
   Widget _buildSafeRadiusControlCard(
     BuildContext context,
     SmartbandLdrController ctrl,
@@ -1157,6 +1157,8 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
       final isConn = ctrl.isConnected;
       final currentRadius = ctrl.safeRadiusMeters.value;
       final dist = ctrl.currentDistanceM.value;
+      final canEdit = ctrl.canManageSafeRadius;
+      final pendampingName = ctrl.activePendampingName;
 
       return AppCard(
         padding: const EdgeInsets.all(AppSpacing.cardPadding),
@@ -1173,7 +1175,9 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'KONTROL DYNAMIC SAFE RADIUS',
+                    canEdit
+                        ? 'KONTROL DYNAMIC SAFE RADIUS'
+                        : 'MONITOR SAFE RADIUS PENDAMPING',
                     style: AppTypography.titleMedium.copyWith(
                       color: headingColor,
                       fontWeight: FontWeight.bold,
@@ -1199,31 +1203,73 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Ubah batas radius toleransi pergerakan jamaah langsung ke memori hardware gelang via BLE.',
+              canEdit
+                  ? 'Ubah batas radius toleransi pergerakan jamaah langsung ke memori hardware gelang via BLE.'
+                  : 'Batas radius aman diatur secara terpusat oleh Pendamping Rombongan dan disinkronkan otomatis ke memori gelang via BLE.',
               style: AppTypography.caption.copyWith(color: bodyColor),
             ),
             const SizedBox(height: 12),
 
-            // Preset Buttons: OFF (0m), 1m, 25m, 50m, 100m, 200m
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  _buildRadiusChip(0, currentRadius, () => ctrl.setSafeRadius(0)),
-                  const SizedBox(width: 8),
-                  _buildRadiusChip(1, currentRadius, () => ctrl.setSafeRadius(1)),
-                  const SizedBox(width: 8),
-                  _buildRadiusChip(25, currentRadius, () => ctrl.setSafeRadius(25)),
-                  const SizedBox(width: 8),
-                  _buildRadiusChip(50, currentRadius, () => ctrl.setSafeRadius(50)),
-                  const SizedBox(width: 8),
-                  _buildRadiusChip(100, currentRadius, () => ctrl.setSafeRadius(100)),
-                  const SizedBox(width: 8),
-                  _buildRadiusChip(200, currentRadius, () => ctrl.setSafeRadius(200)),
-                ],
+            if (canEdit) ...[
+              // Preset Buttons (Hanya muncul untuk Pendamping / Admin): 50m, 100m, 150m, 200m, 300m, 500m
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    _buildRadiusChip(50, currentRadius, () => ctrl.setSafeRadius(50)),
+                    const SizedBox(width: 8),
+                    _buildRadiusChip(100, currentRadius, () => ctrl.setSafeRadius(100)),
+                    const SizedBox(width: 8),
+                    _buildRadiusChip(150, currentRadius, () => ctrl.setSafeRadius(150)),
+                    const SizedBox(width: 8),
+                    _buildRadiusChip(200, currentRadius, () => ctrl.setSafeRadius(200)),
+                    const SizedBox(width: 8),
+                    _buildRadiusChip(300, currentRadius, () => ctrl.setSafeRadius(300)),
+                    const SizedBox(width: 8),
+                    _buildRadiusChip(500, currentRadius, () => ctrl.setSafeRadius(500)),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(height: 12),
+              const SizedBox(height: 12),
+            ] else ...[
+              // Badge Read-Only untuk Jamaah (Hanya Pendamping yang dapat mengubah Safe Radius)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+                decoration: BoxDecoration(
+                  color: AppColors.isDark(context)
+                      ? Colors.white.withValues(alpha: 0.05)
+                      : const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  border: Border.all(
+                    color: AppColors.isDark(context)
+                        ? AppColors.darkCardBorder
+                        : const Color(0xFFE2E8F0),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.lock_outline_rounded,
+                      size: 16,
+                      color: AppColors.primaryGold,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Dikendalikan oleh $pendampingName • Batas Aktif: ${currentRadius.round()} Meter',
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w600,
+                          color: bodyColor,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 10),
+            ],
 
             // Distance Status Bar
             Container(
