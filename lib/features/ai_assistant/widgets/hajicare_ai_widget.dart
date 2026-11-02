@@ -16,11 +16,9 @@ import '../bindings/hajicare_ai_binding.dart';
 import '../controllers/hajicare_ai_controller.dart';
 import '../models/ai_chat_message.dart';
 import '../models/ai_voice_phase.dart';
-import 'ai_server_settings_dialog.dart';
 import 'oled_smartband_preview_card.dart';
 import 'sensor_context_live_card.dart';
 
-export 'ai_server_settings_dialog.dart';
 export 'oled_smartband_preview_card.dart';
 export 'sensor_context_live_card.dart';
 
@@ -410,17 +408,7 @@ class _MinimalAiHeader extends StatelessWidget {
             );
           }),
 
-          // Tombol ikon Settings (⚙️) untuk mengubah URL Ngrok / IP Server
-          IconButton(
-            key: const Key('ai_settings_gear_button'),
-            onPressed: () => AiServerSettingsDialog.show(context),
-            tooltip: context.tr('ai.settingsTitle'),
-            icon: Icon(
-              Icons.settings_outlined,
-              color: hc.textPrimary,
-              size: 22,
-            ),
-          ),
+
 
           // Menu Opsi Lainnya (⋮) seperti referensi foto ke-4
           PopupMenuButton<String>(
@@ -436,8 +424,7 @@ class _MinimalAiHeader extends StatelessWidget {
                   context,
                   controller,
                 );
-              } else if (value == 'settings') {
-                AiServerSettingsDialog.show(context);
+
               } else if (value == 'clear') {
                 controller.clearConversation();
               }
@@ -450,15 +437,6 @@ class _MinimalAiHeader extends StatelessWidget {
                   contentPadding: EdgeInsets.zero,
                   leading: const Icon(Icons.watch_rounded),
                   title: Text(context.tr('ai.menuOledAndSensor')),
-                ),
-              ),
-              PopupMenuItem(
-                value: 'settings',
-                child: ListTile(
-                  dense: true,
-                  contentPadding: EdgeInsets.zero,
-                  leading: const Icon(Icons.dns_rounded),
-                  title: Text(context.tr('ai.menuServerSettings')),
                 ),
               ),
               PopupMenuItem(

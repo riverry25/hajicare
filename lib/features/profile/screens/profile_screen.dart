@@ -178,7 +178,7 @@ class ProfileScreen extends StatelessWidget {
                     horizontal: AppSpacing.screenEdgeGutter,
                   ),
                   child: _SettingsGroup(
-                    title: 'ASISTEN PINTAR & SERVER AI',
+                    title: 'ASISTEN PINTAR AI',
                     titleColor: colors.textSecondary,
                     cardBg: cardBg,
                     children: [
@@ -190,21 +190,6 @@ class ProfileScreen extends StatelessWidget {
                         headingColor: headingColor,
                         bodyColor: bodyColor,
                         onTap: () => Get.toNamed(AppRoutes.aiAssistant),
-                      ),
-                      _DividerThin(),
-                      _SettingsTile(
-                        icon: Icons.settings_ethernet_rounded,
-                        label: 'Pengaturan Server AI (Ngrok/IP)',
-                        trailingLabel: aiCtrl.serverConfig.value.isPlaceholder
-                            ? 'Atur URL'
-                            : (Uri.tryParse(
-                                    aiCtrl.serverConfig.value.baseUrl,
-                                  )?.host ??
-                                  'Tersimpan'),
-                        cardBg: cardBg,
-                        headingColor: headingColor,
-                        bodyColor: bodyColor,
-                        onTap: () => AiServerSettingsDialog.show(context),
                       ),
                     ],
                   ),

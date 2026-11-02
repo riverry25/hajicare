@@ -183,7 +183,49 @@ class MapPoi {
   }) : icon = icon ?? category.defaultIcon,
        color = color ?? category.defaultColor;
 
-  Uri? get openStreetMapUri {
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'name': name,
+    'category': category.name,
+    'lat': coordinate.latitude,
+    'lng': coordinate.longitude,
+    'statusLabel': statusLabel,
+    'isAccessible': isAccessible,
+    'subtitle': subtitle,
+    'tags': tags,
+    'address': address,
+    'phone': phone,
+    'website': website,
+    'openingHours': openingHours,
+    'osmType': osmType,
+    'osmId': osmId,
+  };
+
+  factory MapPoi.fromJson(Map<String, dynamic> json) => MapPoi(
+    id: json['id'] as String,
+    name: json['name'] as String,
+    category: PoiCategory.values.firstWhere(
+      (c) => c.name == json['category'],
+      orElse: () => PoiCategory.place,
+    ),
+    coordinate: LatLng(
+      (json['lat'] as num).toDouble(),
+      (json['lng'] as num).toDouble(),
+    ),
+    statusLabel: json['statusLabel'] as String? ?? 'Data OpenStreetMap',
+    isAccessible: json['isAccessible'] as bool? ?? false,
+    subtitle: json['subtitle'] as String?,
+    tags: (json['tags'] as List?)?.map((e) => e.toString()).toList() ?? const [],
+    address: json['address'] as String?,
+    phone: json['phone'] as String?,
+    website: json['website'] as String?,
+    openingHours: json['openingHours'] as String?,
+    osmType: json['osmType'] as String?,
+    osmId: json['osmId'] as int?,
+  );
+
+    Uri? get openStreetMapUri {
     if (osmType == null || osmId == null) return null;
     return Uri.https('www.openstreetmap.org', '/$osmType/$osmId');
   }

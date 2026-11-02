@@ -90,6 +90,10 @@ class AudioTranscriptionService {
 
     final wavBytes = convertPcmToWav(pcmBytes);
     final lang = language ?? 'id';
+    AppLogger.info(
+      'Memulai transkripsi Smartband: ${pcmBytes.length} bytes PCM -> ${wavBytes.length} bytes WAV',
+      tag: 'AudioTranscription',
+    );
 
     // TIER 1: Custom / Local Server (jika dikonfigurasi pengguna di aplikasi)
     if (Get.isRegistered<AiAssistantRepository>()) {
@@ -125,7 +129,13 @@ class AudioTranscriptionService {
         model: 'whisper-large-v3-turbo',
         language: lang,
       );
-      if (groqResult.isNotEmpty) return groqResult;
+      if (groqResult.isNotEmpty) {
+        AppLogger.info(
+          'Groq Whisper sukses transkripsi audio gelang: "$groqResult"',
+          tag: 'AudioTranscription',
+        );
+        return groqResult;
+      }
     } catch (e) {
       AppLogger.warn(
         'Groq Whisper Cloud transcription error: $e',
@@ -158,6 +168,7 @@ class AudioTranscriptionService {
     required String language,
   }) async {
     final request = http.MultipartRequest('POST', endpoint);
+    request.headers['User-Agent'] = 'HajiCare-Mobile/2.0 (Android; SmartbandVoice)';
     if (apiKey.isNotEmpty) {
       request.headers['Authorization'] = 'Bearer $apiKey';
     }

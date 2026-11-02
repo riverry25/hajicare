@@ -377,13 +377,18 @@ class QiblaAstrolabeCompass extends StatelessWidget {
           children: [
             Icon(Icons.check_circle_rounded, size: 18, color: colors.islamic),
             const SizedBox(width: 8),
-            Text(
-              context.tr('qiblaAligned').isNotEmpty
-                  ? context.tr('qiblaAligned')
-                  : 'Tepat Menghadap Ka\'bah',
-              style: context.text.labelMedium.copyWith(
-                color: colors.islamic,
-                fontWeight: FontWeight.w800,
+            Flexible(
+              child: Text(
+                context.tr('qiblaAligned').isNotEmpty
+                    ? context.tr('qiblaAligned')
+                    : 'Tepat Menghadap Ka\'bah',
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: context.text.labelMedium.copyWith(
+                  color: colors.islamic,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
           ],

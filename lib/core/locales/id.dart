@@ -549,7 +549,7 @@ const Map<String, String> idTranslations = {
   'maps.searchNameOrStatus': 'Cari nama atau status...',
   'maps.searchPlaceholder': 'Cari maktab, posko medis, atau tenda...',
   'maps.searchThisArea': 'Cari di area ini',
-  'maps.searchingLocation': 'Mencari lokasi...',
+  'maps.searchingLocation': 'Sedang mencari lokasi Anda...',
   'maps.searchingWalkingRoute': 'Mencari rute jalan kaki...',
   'maps.selectDestinationFirst':
       'Pilih tempat atau anggota tujuan terlebih dahulu.',

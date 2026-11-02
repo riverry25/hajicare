@@ -44,6 +44,7 @@ class SmartbandBleService {
   // Buffer akumulator audio PCM 16-bit 8000Hz dari INMP441
   final BytesBuilder _pcmAudioBuffer = BytesBuilder(copy: false);
   bool _isSmartbandRecordingVoice = false;
+  Timer? _audioSilenceTimer;
 
   // Subscriptions
   StreamSubscription<List<ScanResult>>? _scanSubscription;
@@ -357,7 +358,7 @@ class SmartbandBleService {
       _log('CONNECT SUCCESS');
       _log('CONNECTION STATE:\nCONNECTED');
 
-      // Negosiasi MTU 247
+      // Negosiasi MTU 247 dan prioritas koneksi tinggi (untuk stream audio INMP441)
       if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
         try {
           _log('REQUEST MTU 247');
@@ -365,6 +366,14 @@ class SmartbandBleService {
           _log('MTU NEGOTIATED: $mtu');
         } catch (e) {
           _log('Peringatan: Gagal negosiasi MTU: $e');
+        }
+        try {
+          await device.requestConnectionPriority(
+            connectionPriorityRequest: ConnectionPriority.high,
+          );
+          _log('BLE CONNECTION PRIORITY: HIGH (11.25-15ms interval)');
+        } catch (e) {
+          _log('Peringatan: Gagal negosiasi connection priority: $e');
         }
       }
 
@@ -549,6 +558,38 @@ class SmartbandBleService {
     return sendAiOledPayload('AI:$message');
   }
 
+  /// Reset watchdog keheningan audio (jika paket audio berhenti selama 1.2 detik, finalisasi rekaman)
+  void _resetAudioSilenceWatchdog() {
+    _audioSilenceTimer?.cancel();
+    _audioSilenceTimer = Timer(const Duration(milliseconds: 1200), () {
+      if (_isSmartbandRecordingVoice || _pcmAudioBuffer.length > 0) {
+        _log('AUDIO SILENCE WATCHDOG: Aliran paket audio berhenti, menyelesaikan rekaman...');
+        _finalizePcmAudioRecording();
+      }
+    });
+  }
+
+  /// Finalisasi dan kirim seluruh byte rekaman audio PCM ke listener
+  void _finalizePcmAudioRecording() {
+    _audioSilenceTimer?.cancel();
+    _audioSilenceTimer = null;
+
+    if (!_isSmartbandRecordingVoice && _pcmAudioBuffer.length == 0) return;
+
+    _isSmartbandRecordingVoice = false;
+    if (!_smartbandAiListeningController.isClosed) {
+      _smartbandAiListeningController.add(false);
+    }
+
+    final completePcm = _pcmAudioBuffer.toBytes();
+    _pcmAudioBuffer.clear();
+
+    _log('REKAMAN AUDIO SELESAI: ${completePcm.length} bytes PCM siap ditranskripsi');
+    if (completePcm.isNotEmpty && !_completePcmRecordingController.isClosed) {
+      _completePcmRecordingController.add(completePcm);
+    }
+  }
+
   /// Subscribe ke notifikasi karakteristik audio (6e400004)
   Future<void> subscribeToAudioNotification([
     BluetoothCharacteristic? characteristic,
@@ -566,9 +607,20 @@ class SmartbandBleService {
         (bytes) {
           if (bytes.isNotEmpty) {
             final uint8 = Uint8List.fromList(bytes);
-            if (_isSmartbandRecordingVoice) {
-              _pcmAudioBuffer.add(uint8);
+
+            // Auto-deteksi: jika data audio mulai mengalir dari mic, otomatis aktifkan buffer perekaman
+            if (!_isSmartbandRecordingVoice) {
+              _isSmartbandRecordingVoice = true;
+              _pcmAudioBuffer.clear();
+              if (!_smartbandAiListeningController.isClosed) {
+                _smartbandAiListeningController.add(true);
+              }
+              _log('AUDIO STREAM DETECTED: Auto-mulai merekam suara INMP441');
             }
+
+            _pcmAudioBuffer.add(uint8);
+            _resetAudioSilenceWatchdog();
+
             if (!_audioStreamController.isClosed) {
               _audioStreamController.add(uint8);
             }
@@ -605,6 +657,13 @@ class SmartbandBleService {
       _log('AI OLED PAYLOAD SENT: $payload');
       return true;
     } catch (e) {
+      if (char.properties.writeWithoutResponse) {
+        try {
+          await char.write(utf8.encode(payload), withoutResponse: true);
+          _log('AI OLED PAYLOAD SENT (fallback withoutResponse): $payload');
+          return true;
+        } catch (_) {}
+      }
       _log('AI OLED PAYLOAD FAILED: $e');
       return false;
     }
@@ -655,37 +714,19 @@ class SmartbandBleService {
       if (rawString.isEmpty) return;
 
       // Cek apakah paket adalah event kontrol suara AI (AI_START / AI_END)
-      if (rawString.startsWith('{') && rawString.contains('"event"')) {
-        try {
-          final dynamic evtDecoded = jsonDecode(rawString);
-          if (evtDecoded is Map<String, dynamic> &&
-              evtDecoded.containsKey('event')) {
-            final evt = evtDecoded['event']?.toString().toUpperCase();
-            if (evt == 'AI_START') {
-              _isSmartbandRecordingVoice = true;
-              _pcmAudioBuffer.clear();
-              if (!_smartbandAiListeningController.isClosed) {
-                _smartbandAiListeningController.add(true);
-              }
-              _log('EVENT AI_START: Smartband mic INMP441 mulai merekam');
-              return;
-            } else if (evt == 'AI_END') {
-              _isSmartbandRecordingVoice = false;
-              if (!_smartbandAiListeningController.isClosed) {
-                _smartbandAiListeningController.add(false);
-              }
-              final completePcm = _pcmAudioBuffer.toBytes();
-              _pcmAudioBuffer.clear();
-              _log(
-                'EVENT AI_END: Smartband mic selesai (\${completePcm.length} bytes)',
-              );
-              if (!_completePcmRecordingController.isClosed) {
-                _completePcmRecordingController.add(completePcm);
-              }
-              return;
-            }
-          }
-        } catch (_) {}
+      if (rawString.contains('AI_START')) {
+        _isSmartbandRecordingVoice = true;
+        _pcmAudioBuffer.clear();
+        _resetAudioSilenceWatchdog();
+        if (!_smartbandAiListeningController.isClosed) {
+          _smartbandAiListeningController.add(true);
+        }
+        _log('EVENT AI_START: Smartband mic INMP441 mulai merekam');
+        return;
+      } else if (rawString.contains('AI_END')) {
+        _log('EVENT AI_END: Smartband mic selesai dari hardware');
+        _finalizePcmAudioRecording();
+        return;
       }
 
       String jsonToParse = rawString;
@@ -799,6 +840,8 @@ class SmartbandBleService {
     _deviceConnectionSubscription?.cancel();
     _deviceConnectionSubscription = null;
 
+    _audioSilenceTimer?.cancel();
+    _audioSilenceTimer = null;
     _dataCharacteristic = null;
     _writeCharacteristic = null;
     _audioCharacteristic = null;
@@ -814,6 +857,7 @@ class SmartbandBleService {
     _log('Memutuskan koneksi Smartband secara aman...');
     _isManualDisconnect = true;
     _reconnectTimer?.cancel();
+    _audioSilenceTimer?.cancel();
     _reconnectAttempts = 0;
     try {
       if (_dataCharacteristic != null) {
@@ -840,6 +884,7 @@ class SmartbandBleService {
     _isDisposed = true;
     _isManualDisconnect = true;
     _reconnectTimer?.cancel();
+    _audioSilenceTimer?.cancel();
 
     disconnectSmartband();
 

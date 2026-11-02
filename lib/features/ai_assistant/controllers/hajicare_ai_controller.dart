@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/locales/app_translations.dart';
+import '../../../core/routes/app_routes.dart';
 import '../../../core/state/app_settings_controller.dart';
 import '../models/ai_chat_message.dart';
 import '../models/ai_server_config.dart';
@@ -18,6 +19,7 @@ import '../services/hermes_ai_service.dart';
 import 'dart:typed_data';
 import '../../../core/utils/app_logger.dart';
 import '../../smartband/services/smartband_ble_service.dart';
+import '../../smartband/controllers/smartband_ldr_controller.dart';
 import '../services/audio_transcription_service.dart';
 import '../services/smartband_ai_bridge_service.dart';
 
@@ -182,6 +184,7 @@ class HajiCareAiController extends GetxController {
   StreamSubscription<AiTurnEvent>? _currentTurnSubscription;
   StreamSubscription<bool>? _smartbandAiListeningSub;
   StreamSubscription<Uint8List>? _smartbandAudioSub;
+  StreamSubscription<Uint8List>? _smartbandLivePacketsSub;
 
   // State Posisi & Pengecilan Tombol Floating AI (Sinkron di Beranda, Jadwal Salat, & Profil)
   final RxBool fabDockedRight = true.obs;
@@ -316,17 +319,33 @@ class HajiCareAiController extends GetxController {
   /// Kaitkan aliran perekaman audio INMP441 & status mic dari gelang fisik ESP32-S3
   void _bindSmartbandAiVoiceStream() {
     try {
-      final bleService = Get.isRegistered<SmartbandBleService>()
-          ? Get.find<SmartbandBleService>()
-          : null;
-      if (bleService == null) return;
+      SmartbandBleService? bleService;
+      if (Get.isRegistered<SmartbandBleService>()) {
+        bleService = Get.find<SmartbandBleService>();
+      } else if (Get.isRegistered<SmartbandLdrController>()) {
+        bleService = Get.find<SmartbandLdrController>().bleService;
+      }
+
+      if (bleService == null) {
+        AppLogger.warn(
+          'SmartbandBleService belum siap untuk audio, akan auto-bind saat snapshot berikutnya.',
+          tag: 'HajiCareAi',
+        );
+        return;
+      }
 
       _smartbandAiListeningSub?.cancel();
       _smartbandAiListeningSub = bleService.smartbandAiListeningStream.listen(
         (isListeningFromBand) {
+          isListening.value = isListeningFromBand;
           if (isListeningFromBand) {
             voicePhase.value = AiVoicePhase.listening;
             voiceStatusMessage.value = 'Mendengarkan suara dari Smartband (INMP441)...';
+            recognizedText.value = 'Mendengarkan ucapan Anda dari gelang...';
+
+            if (Get.currentRoute != AppRoutes.aiAssistant) {
+              Get.toNamed(AppRoutes.aiAssistant);
+            }
           } else {
             if (voicePhase.value == AiVoicePhase.listening) {
               voicePhase.value = AiVoicePhase.thinking;
@@ -336,12 +355,33 @@ class HajiCareAiController extends GetxController {
         },
       );
 
+      _smartbandLivePacketsSub?.cancel();
+      _smartbandLivePacketsSub = bleService.audioStream.listen(
+        (chunk) {
+          if (chunk.length >= 2) {
+            int peak = 0;
+            final bd = ByteData.sublistView(chunk);
+            final samples = chunk.length ~/ 2;
+            for (var i = 0; i < samples; i += 2) {
+              final val = bd.getInt16(i * 2, Endian.little).abs();
+              if (val > peak) peak = val;
+            }
+            soundLevel.value = (peak / 32768.0).clamp(0.0, 1.0) * 10.0;
+          }
+        },
+      );
+
       _smartbandAudioSub?.cancel();
       _smartbandAudioSub = bleService.completePcmAudioRecordingStream.listen(
         (pcmBytes) async {
+          AppLogger.info(
+            'Menerima aliran rekaman audio smartband: ${pcmBytes.length} bytes',
+            tag: 'HajiCareAi',
+          );
           await _handleSmartbandAudioRecording(pcmBytes);
         },
       );
+      AppLogger.info('Aliran suara Smartband BLE berhasil dikaitkan ke HajiCare AI', tag: 'HajiCareAi');
     } catch (e) {
       AppLogger.warn('Gagal mengaitkan aliran suara Smartband BLE: $e', tag: 'HajiCareAi');
     }
@@ -350,6 +390,8 @@ class HajiCareAiController extends GetxController {
   /// Memproses rekaman audio PCM mentah dari gelang via AudioTranscriptionService lalu menjalankan AI
   Future<void> _handleSmartbandAudioRecording(Uint8List pcmBytes) async {
     try {
+      isListening.value = false;
+      soundLevel.value = 0.0;
       voicePhase.value = AiVoicePhase.thinking;
       voiceStatusMessage.value = 'Mentranskripsi suara dari gelang...';
       unawaited(_repository.smartbandBridge.streamTokenToSmartbandOled('Memproses suara...'));
@@ -357,6 +399,7 @@ class HajiCareAiController extends GetxController {
       final text = await AudioTranscriptionService.instance.transcribePcm(pcmBytes);
       if (text.trim().isEmpty) {
         voiceStatusMessage.value = 'Suara tidak terdengar jelas';
+        recognizedText.value = '';
         unawaited(_repository.smartbandBridge.streamTokenToSmartbandOled('Suara tidak jelas. Coba lagi.', isFinal: true));
         voicePhase.value = AiVoicePhase.idle;
         return;
@@ -364,12 +407,16 @@ class HajiCareAiController extends GetxController {
 
       voiceStatusMessage.value = text;
       recognizedText.value = text;
+      AppLogger.info('Smartband STT berhasil ditranskripsi: "$text"', tag: 'HajiCareAi');
 
       // Jalankan proses tanya-jawab AI streaming otomatis & bacakan via TTS
-      await sendQuestion(text);
+      await sendQuestion(text, autoSpeak: !isMuted.value);
     } catch (e) {
       AppLogger.error('Gagal memproses audio dari smartband: $e', tag: 'HajiCareAi');
       unawaited(_repository.smartbandBridge.streamTokenToSmartbandOled('Gagal proses audio', isFinal: true));
+      isListening.value = false;
+      soundLevel.value = 0.0;
+      recognizedText.value = '';
       voicePhase.value = AiVoicePhase.idle;
     }
   }
@@ -427,6 +474,9 @@ class HajiCareAiController extends GetxController {
     final nextContext = _repository.getLatestSensorContext();
     if (sensorContext.value != nextContext) {
       sensorContext.value = nextContext;
+    }
+    if (_smartbandAudioSub == null) {
+      _bindSmartbandAiVoiceStream();
     }
   }
 
@@ -611,7 +661,10 @@ class HajiCareAiController extends GetxController {
             if (effectiveAutoSpeak) {
               _voiceService.finishStreamingSpeech(fullSpeech);
             }
-            unawaited(_repository.smartbandBridge.streamTokenToSmartbandOled(fullSpeech, isFinal: true));
+            final oledText = event.reply.oled.trim().isNotEmpty
+                ? event.reply.oled.trim()
+                : fullSpeech;
+            unawaited(_repository.smartbandBridge.streamTokenToSmartbandOled(oledText, isFinal: true));
 
             _streamingTargetText = fullSpeech;
             _streamingTargetDone = true;
@@ -938,6 +991,7 @@ class HajiCareAiController extends GetxController {
     _currentTurnSubscription?.cancel();
     _smartbandAiListeningSub?.cancel();
     _smartbandAudioSub?.cancel();
+    _smartbandLivePacketsSub?.cancel();
     _localeWorker?.dispose();
     _sensorSyncTimer?.cancel();
     _ledPulseTimer?.cancel();

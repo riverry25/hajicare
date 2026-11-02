@@ -19,6 +19,7 @@ import 'features/notification/controllers/notification_controller.dart';
 import 'features/map/controllers/map_controller.dart';
 import 'features/dashboard/services/hajj_guide_service.dart';
 import 'features/smartband/services/smartband_storage_service.dart';
+import 'features/smartband/services/smartband_ble_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -52,6 +53,7 @@ void main() async {
   Get.put(HajiCareController(), permanent: true);
   Get.put(NotificationController(), permanent: true);
   Get.put(HajjGuideService(), permanent: true);
+  Get.put(SmartbandBleService(), permanent: true);
   Get.lazyPut<MapController>(() => MapController(), fenix: true);
 
   // Inisialisasi background services secara asynchronous agar First Frame langsung ter-render

@@ -217,10 +217,15 @@ class MapController extends GetxController
     return null;
   }
 
-  static const LatLng defaultMinaBase = LatLng(21.4135, 39.8930);
+  static const LatLng defaultUserAnchor = LatLng(-6.1200, 106.1500); // Dynamic Anchor Serang, Banten
+  static const LatLng defaultMinaBase = defaultUserAnchor;
   final currentUserLocation = Rxn<LatLng>();
   final isLocationLoading = false.obs;
+  final isAcquiringInitialGps = true.obs;
   final locationError = RxnString();
+  static const String _cachedLatKey = 'hajicare_last_user_lat';
+  static const String _cachedLngKey = 'hajicare_last_user_lng';
+  static const String _cachedPoisKey = 'hajicare_cached_pois_json';
 
   // Pending focus coordinate and zoom for map initialization/transitions
   LatLng? pendingFocusCoordinate;
@@ -307,6 +312,26 @@ class MapController extends GetxController
   void onInit() {
     super.onInit();
     WidgetsBinding.instance.addObserver(this);
+
+    // 1. Langsung adopsi koordinat dinamis dari HajiCareController jika sudah tersedia
+    if (Get.isRegistered<HajiCareController>()) {
+      final state = Get.find<HajiCareController>();
+      if (state.myCurrentPosition.value != null) {
+        final pos = state.myCurrentPosition.value!;
+        final coord = LatLng(pos.latitude, pos.longitude);
+        currentUserLocation.value = coord;
+        isAcquiringInitialGps.value = false;
+        pendingFocusCoordinate = coord;
+      } else if (state.self.currentLocation != null) {
+        final geo = state.self.currentLocation!;
+        final coord = LatLng(geo.latitude, geo.longitude);
+        currentUserLocation.value = coord;
+        isAcquiringInitialGps.value = false;
+        pendingFocusCoordinate = coord;
+      }
+    }
+
+    _loadCachedLocation();
     loadSearchHistory();
     _initRoomListener();
     _autoStartGps();
@@ -318,6 +343,64 @@ class MapController extends GetxController
 
   /// Listens to device compass magnetometer to dynamically rotate the user location puck
   /// when stationary or turning body (Google Maps signature beam rotation).
+  /// Loads persisted user coordinate so the map immediately opens at their actual
+  /// physical position (e.g. Serang, Banten, Indonesia) instead of falling back to Saudi Arabia.
+  Future<void> _loadCachedLocation() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      double? lat = prefs.getDouble(_cachedLatKey);
+      double? lng = prefs.getDouble(_cachedLngKey);
+
+      if (lat == null || lng == null) {
+        final prayerLatRaw = prefs.get('prayer_cache_lat');
+        final prayerLngRaw = prefs.get('prayer_cache_lng');
+        if (prayerLatRaw is double) {
+          lat = prayerLatRaw;
+        } else if (prayerLatRaw is String) {
+          final cleaned = prayerLatRaw.replaceAll('VGhpcyBpcyB0aGUgcHJlZml4IGZvciBEb3VibGUu', '');
+          lat = double.tryParse(cleaned);
+        }
+        if (prayerLngRaw is double) {
+          lng = prayerLngRaw;
+        } else if (prayerLngRaw is String) {
+          final cleaned = prayerLngRaw.replaceAll('VGhpcyBpcyB0aGUgcHJlZml4IGZvciBEb3VibGUu', '');
+          lng = double.tryParse(cleaned);
+        }
+      }
+
+      // 1. Pulihkan data POI dari cache lokal agar icon langsung muncul instan (0 ms)
+      final cachedPoisRaw = prefs.getString(_cachedPoisKey);
+      if (cachedPoisRaw != null && cachedPoisRaw.isNotEmpty && pois.isEmpty) {
+        try {
+          final decoded = jsonDecode(cachedPoisRaw) as List;
+          final cachedList = decoded
+              .map((e) => MapPoi.fromJson(e as Map<String, dynamic>))
+              .where((p) => p.id != 'maktab_posko_rombongan')
+              .toList();
+          if (cachedList.isNotEmpty) {
+            pois.assignAll(cachedList);
+          }
+        } catch (e) {
+          debugPrint('[MapController] Error restoring cached POIs: $e');
+        }
+      }
+
+      // 2. Terapkan koordinat tersimpan dan langsung segarkan POI di sekitar
+      if (lat != null && lng != null && lat >= -90.0 && lat <= 90.0 && lng >= -180.0 && lng <= 180.0) {
+        if (currentUserLocation.value == null) {
+          final cachedCoord = LatLng(lat, lng);
+          currentUserLocation.value = cachedCoord;
+          isAcquiringInitialGps.value = false;
+          pendingFocusCoordinate ??= cachedCoord;
+          // Segarkan fasilitas sekitar segera tanpa menunggu GPS satelit
+          refreshNearbyPois(cachedCoord, radiusMeters: 4000, force: true);
+        }
+      }
+    } catch (e) {
+      debugPrint('[MapController] _loadCachedLocation error: $e');
+    }
+  }
+
   void _initCompassStream() {
     final stream =
         _injectedCompassStream ?? (kIsWeb ? null : FlutterCompass.events);
@@ -408,7 +491,16 @@ class MapController extends GetxController
         forceRefresh: force,
       );
       if (requestId == _poiRequestId) {
+        // HANYA gunakan realPois murni secara dinamis dari server OpenStreetMap tanpa data statis
         pois.assignAll(realPois);
+
+        // Simpan ke SharedPreferences agar pembukaan peta berikutnya berkecepatan 0 ms
+        SharedPreferences.getInstance().then((prefs) {
+          final jsonStr = jsonEncode(
+            realPois.take(50).map((p) => p.toJson()).toList(),
+          );
+          prefs.setString(_cachedPoisKey, jsonStr);
+        }).catchError((_) {});
       }
     } on PoiServiceException catch (error) {
       if (requestId == _poiRequestId) poiError.value = error.message;
@@ -443,8 +535,11 @@ class MapController extends GetxController
     if (!isMapAttached) return;
     final camera = flutterMapController.camera;
     onMapPositionChanged(camera.center, camera.zoom, hasGesture: false);
-    if (poiQueryCenter.value == null && !isPoiLoading.value) {
-      refreshNearbyPois(camera.center);
+    // HANYA muat POI jika koordinat dinamis pengguna sudah valid dan terkonfirmasi
+    if (currentUserLocation.value != null &&
+        poiQueryCenter.value == null &&
+        !isPoiLoading.value) {
+      refreshNearbyPois(currentUserLocation.value!, radiusMeters: 4000, force: true);
     }
     if (pendingFocusCoordinate != null) {
       final target = pendingFocusCoordinate!;
@@ -472,9 +567,9 @@ class MapController extends GetxController
   }
 
   static int _radiusForZoom(double zoom) {
-    if (zoom >= 17) return 2000;
-    if (zoom >= 15) return 3500;
-    if (zoom >= 13) return 6000;
+    if (zoom >= 17) return 3500;
+    if (zoom >= 15) return 4500;
+    if (zoom >= 13) return 7000;
     return 10000;
   }
 
@@ -512,8 +607,11 @@ class MapController extends GetxController
     if (Get.isRegistered<HajiCareController>()) {
       final state = Get.find<HajiCareController>();
       activeRoomName.value = state.activeRoom.value?.name ?? 'Room $roomId';
+      if (roomMembers.isEmpty && state.activeRoomMembers.isNotEmpty) {
+        roomMembers.value = state.activeRoomMembers.toList();
+      }
       if (currentUserLocation.value != null) {
-        refreshNearbyPois(currentUserLocation.value!);
+        refreshNearbyPois(currentUserLocation.value!, radiusMeters: 2500);
       }
     }
 
@@ -751,6 +849,10 @@ class MapController extends GetxController
       Position? firstPosition;
       try {
         firstPosition = await Geolocator.getLastKnownPosition();
+        if (firstPosition != null) {
+          _applyPosition(firstPosition, publishToRoom: false);
+          isAcquiringInitialGps.value = false;
+        }
       } catch (_) {}
 
       firstPosition ??= await Geolocator.getCurrentPosition(
@@ -841,7 +943,14 @@ class MapController extends GetxController
   void _applyPosition(Position position, {bool publishToRoom = true}) {
     final newCoord = LatLng(position.latitude, position.longitude);
     currentUserLocation.value = newCoord;
+    isAcquiringInitialGps.value = false;
     gpsAccuracy.value = position.accuracy;
+
+    // Persist real coordinate for subsequent instant map boot
+    SharedPreferences.getInstance().then((prefs) {
+      prefs.setDouble(_cachedLatKey, position.latitude);
+      prefs.setDouble(_cachedLngKey, position.longitude);
+    }).catchError((_) {});
 
     // Movement detection: walking threshold is ~ 0.8 m/s (approx 2.9 km/h
     final moving = position.speed > 0.8;
@@ -1016,6 +1125,12 @@ class MapController extends GetxController
       selectedJamaah.value = null;
       selectedPoi.value = null;
       openBottomSheet();
+
+      // Pastikan di filter "Semua" (index 0) data POI langsung dimuat jika masih kosong
+      final center = mapCameraCenter.value ?? currentUserLocation.value;
+      if (center != null && pois.isEmpty) {
+        refreshNearbyPois(center, radiusMeters: 4500, force: true);
+      }
     } else {
       // POI filters only change visibility. They never invent/select a place.
       selectedRoleFilter.value = 0;
@@ -1029,7 +1144,14 @@ class MapController extends GetxController
       // Otomatis muat / cari jika data POI belum ada atau hasil filter untuk kategori ini masih kosong
       final center = mapCameraCenter.value ?? currentUserLocation.value;
       if (center != null && (pois.isEmpty || filteredPois.isEmpty)) {
-        refreshNearbyPois(center, radiusMeters: 4000);
+        refreshNearbyPois(center, radiusMeters: 4500, force: true);
+      } else if (center != null && filteredPois.isNotEmpty) {
+        // Jika POI ada tetapi berada di luar viewport layar saat ini karena zoom terlalu dekat
+        final nearest = filteredPois.first;
+        final dist = calculateDistanceMeters(center, nearest.coordinate);
+        if (dist > 400 && _mapCameraZoom > 15.2) {
+          animatedMove(center, 14.8);
+        }
       }
     }
   }

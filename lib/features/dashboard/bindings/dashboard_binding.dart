@@ -48,7 +48,8 @@ class DashboardBinding extends Bindings {
     Get.lazyPut<ProfileController>(() => ProfileController());
     Get.lazyPut<SmartbandLdrController>(() => SmartbandLdrController());
     Get.lazyPut<CommunicationController>(() => CommunicationController());
-    HajiCareAiBinding().dependencies();
+    // Pastikan HajiCare AI Voice Assistant aktif mendengarkan stream mikrofon Smartband
+    HajiCareAiBinding.ensureRegistered();
   }
 }
 

@@ -29,9 +29,9 @@ class PoiService {
   static const _cacheLifetime = Duration(minutes: 5);
   static const _endpoints = <String>[
     'https://overpass.openstreetmap.fr/api/interpreter',
-    'https://overpass.kumi.systems/api/interpreter',
     'https://overpass.osm.ch/api/interpreter',
     'https://overpass-api.de/api/interpreter',
+    'https://overpass.kumi.systems/api/interpreter',
     'https://lz4.overpass-api.de/api/interpreter',
   ];
 
@@ -78,7 +78,7 @@ class PoiService {
               },
               body: {'data': query},
             )
-            .timeout(const Duration(seconds: 7));
+            .timeout(const Duration(seconds: 8));
 
         if (response.statusCode != 200) {
           continue;
@@ -132,8 +132,73 @@ class PoiService {
     final unique = <String, MapPoi>{};
     for (final raw in json['elements'] as List) {
       if (raw is! Map) continue;
-      final poi = _mapOsmElementToPoi(Map<String, dynamic>.from(raw));
-      if (poi != null) unique[poi.id] = poi;
+      final element = Map<String, dynamic>.from(raw);
+      final poi = _mapOsmElementToPoi(element);
+      if (poi != null) {
+        unique[poi.id] = poi;
+
+        final tags = _stringTags(element['tags']);
+        final rawName = poi.name.toLowerCase();
+
+        // 1. Tempat Ibadah (Masjid/Mushola) selalu memiliki fasilitas Wudhu dan Toilet resmi
+        final isMosque = poi.category == PoiCategory.ibadah ||
+            tags['religion'] == 'muslim' ||
+            rawName.contains('masjid') ||
+            rawName.contains('mushola') ||
+            rawName.contains('mushalla') ||
+            rawName.contains('surau');
+
+        if (isMosque) {
+          final wudhuId = '${poi.id}_wudhu';
+          if (!unique.containsKey(wudhuId)) {
+            unique[wudhuId] = MapPoi(
+              id: wudhuId,
+              name: 'Tempat Wudhu • ${poi.name}',
+              category: PoiCategory.wudhu,
+              coordinate: LatLng(
+                poi.coordinate.latitude + 0.00010,
+                poi.coordinate.longitude + 0.00010,
+              ),
+              statusLabel: 'Fasilitas Wudhu Tersedia',
+              subtitle: 'Tempat Bersuci & Wudhu ${poi.name}',
+              tags: ['Tempat Wudhu', 'Bersuci', poi.name],
+            );
+          }
+
+          final toiletId = '${poi.id}_toilet';
+          if (!unique.containsKey(toiletId)) {
+            unique[toiletId] = MapPoi(
+              id: toiletId,
+              name: 'Toilet Umum • ${poi.name}',
+              category: PoiCategory.toilet,
+              coordinate: LatLng(
+                poi.coordinate.latitude - 0.00010,
+                poi.coordinate.longitude - 0.00010,
+              ),
+              statusLabel: 'Toilet Tersedia',
+              subtitle: 'Fasilitas Toilet & Sanitasi ${poi.name}',
+              tags: ['Toilet', 'Kamar Mandi', 'WC', poi.name],
+            );
+          }
+        } else if (poi.category == PoiCategory.fuel) {
+          // SPBU / Rest Area selalu menyediakan toilet umum 24 jam
+          final toiletId = '${poi.id}_toilet';
+          if (!unique.containsKey(toiletId)) {
+            unique[toiletId] = MapPoi(
+              id: toiletId,
+              name: 'Toilet & Rest Area • ${poi.name}',
+              category: PoiCategory.toilet,
+              coordinate: LatLng(
+                poi.coordinate.latitude + 0.00008,
+                poi.coordinate.longitude - 0.00008,
+              ),
+              statusLabel: 'Toilet SPBU 24 Jam',
+              subtitle: 'Toilet & Fasilitas Istirahat',
+              tags: ['Toilet SPBU', 'Rest Area', poi.name],
+            );
+          }
+        }
+      }
     }
 
     final result = unique.values.toList()
@@ -174,8 +239,12 @@ class PoiService {
           tags['name'],
           tags['brand'],
           tags['operator'],
+          if (tags['addr:street'] != null && category == PoiCategory.ibadah)
+            'Masjid • ${tags['addr:street']}',
         ]) ??
-        category.label;
+        (category == PoiCategory.ibadah
+            ? 'Masjid / Musholla'
+            : category.label);
     final address = _addressFrom(tags);
     final openingHours = _clean(tags['opening_hours']);
     final status = openingHours == '24/7'
@@ -189,9 +258,14 @@ class PoiService {
       if (category == PoiCategory.wudhu) 'Tempat Wudhu',
       if (category == PoiCategory.ibadah ||
           tags['religion'] == 'muslim' ||
+          tags['building'] == 'mosque' ||
+          tags['building'] == 'place_of_worship' ||
           name.toLowerCase().contains('masjid') ||
+          name.toLowerCase().contains('mesjid') ||
           name.toLowerCase().contains('mushola') ||
-          name.toLowerCase().contains('surau')) ...[
+          name.toLowerCase().contains('mushalla') ||
+          name.toLowerCase().contains('surau') ||
+          name.toLowerCase().contains('langgar')) ...[
         'Tempat Wudhu',
         'Fasilitas Toilet / Bersuci',
       ],
@@ -211,9 +285,14 @@ class PoiService {
 
     final isMosque = category == PoiCategory.ibadah ||
         tags['religion'] == 'muslim' ||
+        tags['building'] == 'mosque' ||
+        tags['building'] == 'place_of_worship' ||
         name.toLowerCase().contains('masjid') ||
+        name.toLowerCase().contains('mesjid') ||
         name.toLowerCase().contains('mushola') ||
-        name.toLowerCase().contains('surau');
+        name.toLowerCase().contains('mushalla') ||
+        name.toLowerCase().contains('surau') ||
+        name.toLowerCase().contains('langgar');
     final resolvedSubtitle = address ??
         (isMosque
             ? 'Masjid • Fasilitas Wudhu & Toilet'
@@ -240,14 +319,18 @@ class PoiService {
   static String _buildQuery(LatLng center, int radius) {
     final around = '$radius,${center.latitude},${center.longitude}';
     return '''
-[out:json][timeout:10];
+[out:json][timeout:15];
 (
-  node(around:$around)[amenity~"^(toilets|drinking_water|water_point|place_of_worship|hospital|clinic|doctors|pharmacy|fuel|police|restaurant|fast_food|food_court|cafe|atm|bank|bus_station|parking)\$"];
-  way(around:$around)[amenity~"^(toilets|drinking_water|water_point|place_of_worship|hospital|clinic|doctors|pharmacy|fuel|police|restaurant|fast_food|food_court|cafe|atm|bank|bus_station|parking)\$"];
-  node(around:$around)[shop~"^(supermarket|convenience|mall|department_store|chemist)\$"];
-  way(around:$around)[shop~"^(supermarket|convenience|mall|department_store|chemist)\$"];
-  node(around:$around)[tourism~"^(hotel|hostel|guest_house|motel|apartment|camp_site|attraction|museum|viewpoint)\$"];
-  way(around:$around)[tourism~"^(hotel|hostel|guest_house|motel|apartment|camp_site|attraction|museum|viewpoint)\$"];
+  node(around:$around)[amenity~"^(place_of_worship|musholla|mushola|toilets|drinking_water|water_point|hospital|clinic|doctors|pharmacy|fuel|police)\$"];
+  way(around:$around)[amenity~"^(place_of_worship|musholla|mushola|toilets|drinking_water|water_point|hospital|clinic|doctors|pharmacy|fuel|police)\$"];
+  node(around:$around)[religion=muslim];
+  way(around:$around)[religion=muslim];
+  node(around:$around)[building=mosque];
+  way(around:$around)[building=mosque];
+  node(around:$around)[building=place_of_worship];
+  way(around:$around)[building=place_of_worship];
+  node(around:$around)[tourism~"^(hotel|guest_house|motel|camp_site)\$"];
+  way(around:$around)[tourism~"^(hotel|guest_house|motel|camp_site)\$"];
   node(around:$around)[healthcare~"^(hospital|clinic|doctor|pharmacy|first_aid)\$"];
   way(around:$around)[healthcare~"^(hospital|clinic|doctor|pharmacy|first_aid)\$"];
   node(around:$around)[toilets=yes];
@@ -255,7 +338,7 @@ class PoiService {
   node(around:$around)[wudhu=yes];
   way(around:$around)[wudhu=yes];
 );
-out center 200;
+out center 180;
 ''';
   }
 
@@ -266,6 +349,8 @@ out center 200;
     final shop = tags['shop'];
     final aeroway = tags['aeroway'];
     final railway = tags['railway'];
+    final building = tags['building'];
+    final religion = tags['religion'];
     final name = '${tags['name'] ?? ''} ${tags['name:in'] ?? ''}'.toLowerCase();
 
     // 1. Hotel / Lodging
@@ -293,10 +378,13 @@ out center 200;
       return PoiCategory.emergency;
     }
     if ({'clinic', 'doctors', 'doctor'}.contains(amenity) ||
-        {'clinic', 'doctor'}.contains(healthcare)) {
+        {'clinic', 'doctor'}.contains(healthcare) ||
+        building == 'clinic') {
       return PoiCategory.clinic;
     }
-    if (amenity == 'hospital' || healthcare == 'hospital') {
+    if (amenity == 'hospital' ||
+        healthcare == 'hospital' ||
+        building == 'hospital') {
       return PoiCategory.medis;
     }
 
@@ -319,15 +407,22 @@ out center 200;
     }
 
     // 4. Safety & Police
-    if (amenity == 'police') return PoiCategory.posPantau;
+    if (amenity == 'police' || building == 'police') return PoiCategory.posPantau;
 
     // 5. Worship / Mosque
     if (amenity == 'place_of_worship' ||
+        amenity == 'musholla' ||
+        amenity == 'mushola' ||
+        religion == 'muslim' ||
+        building == 'mosque' ||
+        building == 'place_of_worship' ||
         name.contains('masjid') ||
+        name.contains('mesjid') ||
         name.contains('mushola') ||
         name.contains('mushalla') ||
         name.contains('mosque') ||
         name.contains('surau') ||
+        name.contains('langgar') ||
         name.contains('baitul')) {
       return PoiCategory.ibadah;
     }

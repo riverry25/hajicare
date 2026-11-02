@@ -471,45 +471,55 @@ class SmartbandAiBridgeService {
         .where((e) => e.role == 'pendamping' && e.distanceMeters != null)
         .toList();
 
-    // 1. Ringkasan Jamaah Terdekat, Terjauh, & Pendamping Terdekat
+    // Helper pemformat jarak yang nyaman dibaca pengguna
+    String formatFriendlyDist(double meters) {
+      if (meters < 1000) {
+        return '${meters.round()} m';
+      } else {
+        final km = meters / 1000.0;
+        return km >= 100 ? '${km.round()} km' : '${km.toStringAsFixed(1)} km';
+      }
+    }
+
+    // 1. Ringkasan Jamaah Terdekat, Terjauh, & Pendamping Terdekat (Tipografi Rapi & Elegan)
     final closestParts = <String>[];
     if (otherJamaahWithDist.isNotEmpty) {
       final closestJ = otherJamaahWithDist.first;
-      final d = closestJ.distanceMeters!.round();
-      final status = d <= safeRadius ? 'Aman' : 'Di luar radius aman';
+      final d = closestJ.distanceMeters!;
+      final status = d <= safeRadius ? 'Aman' : 'Luar Radius';
       closestParts.add(
-        'Jamaah paling dekat (terdekat) dengan Anda: ${closestJ.name} (${d}m, $status)',
+        '• Terdekat: ${closestJ.name} (${formatFriendlyDist(d)} • $status)',
       );
       if (otherJamaahWithDist.length > 1) {
         final farthestJ = otherJamaahWithDist.last;
-        final df = farthestJ.distanceMeters!.round();
+        final df = farthestJ.distanceMeters!;
         closestParts.add(
-          'Jamaah paling jauh (terjauh) dari Anda: ${farthestJ.name} (${df}m)',
+          '• Terjauh: ${farthestJ.name} (${formatFriendlyDist(df)})',
         );
       }
     } else if (otherJamaahNoDist.isNotEmpty) {
       final names = otherJamaahNoDist.map((e) => e.name).join(', ');
       closestParts.add(
-        'Jamaah lain di room Anda (${otherJamaahNoDist.length} orang): $names (saat ini lokasi GPS HP mereka belum aktif sehingga jarak ke sesama jamaah belum dapat diukur)',
+        '• Anggota (${otherJamaahNoDist.length}): $names (GPS belum aktif)',
       );
     } else {
       closestParts.add(
-        'Belum ada jamaah lain selain Anda di dalam room ini',
+        '• Belum ada jemaah lain di room ini',
       );
     }
 
     if (otherPendampingWithDist.isNotEmpty) {
       final cp = otherPendampingWithDist.first;
       closestParts.add(
-        'Pendamping terdekat: ${cp.name} (${cp.distanceMeters!.round()}m)',
+        '• Pendamping: ${cp.name} (${formatFriendlyDist(cp.distanceMeters!)})',
       );
     } else if (realDistanceToCompanion != null) {
       closestParts.add(
-        'Pendamping terdekat: ${companionName ?? "Pendamping"} (${realDistanceToCompanion.round()}m)',
+        '• Pendamping: ${companionName ?? "Pendamping"} (${formatFriendlyDist(realDistanceToCompanion)})',
       );
     }
 
-    final closestSummary = closestParts.join('. ');
+    final closestSummary = closestParts.join('\n');
 
     // 2. Daftar Lengkap Seluruh Anggota Room (diurutkan dari yang terdekat)
     final pendampingCount =
@@ -713,7 +723,7 @@ class SmartbandAiBridgeService {
       }
     }
 
-    var clean = OledTextFormatter.sanitize(accumulatedText).trim();
+    var clean = OledTextFormatter.sanitize(accumulatedText, limit: 80).trim();
     if (clean.isEmpty) return false;
 
     // Maksimal 85 karakter agar nyaman dan pas di 4-5 baris OLED 128x64

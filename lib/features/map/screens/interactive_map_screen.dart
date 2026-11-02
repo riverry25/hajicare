@@ -101,6 +101,13 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
       vsync: this,
       duration: const Duration(milliseconds: 2000),
     )..repeat(reverse: true);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final loc = _mapController.currentUserLocation.value;
+      if (loc != null && _mapController.pois.isEmpty) {
+        _mapController.refreshNearbyPois(loc, radiusMeters: 4000, force: true);
+      }
+    });
   }
 
   void _onSearchTextUpdated() {
@@ -151,6 +158,18 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
               return RepaintBoundary(
                 child: NavigationMapView(mapCtrl: mapCtrl),
               );
+            }
+            final userLoc = mapCtrl.currentUserLocation.value;
+            final pendingCoord = mapCtrl.pendingFocusCoordinate;
+            final stateLoc = state.myCurrentPosition.value != null
+                ? LatLng(state.myCurrentPosition.value!.latitude, state.myCurrentPosition.value!.longitude)
+                : (state.self.currentLocation != null
+                    ? LatLng(state.self.currentLocation!.latitude, state.self.currentLocation!.longitude)
+                    : null);
+
+            // Jika lokasi belum ditemukan, tampilkan radar pencarian dinamis (JANGAN tampilkan peta statis Arab)
+            if (userLoc == null && pendingCoord == null && stateLoc == null) {
+              return _buildDynamicLocationSearchingPlaceholder(context, mapCtrl);
             }
             return RepaintBoundary(child: _buildInteractiveMap(state, mapCtrl));
           }),
@@ -375,6 +394,66 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
               nearestInfo: mapCtrl.nearestMemberInfo,
               onRoomTap: mapCtrl.openBottomSheet,
             );
+          }),
+
+          // 5b. Feedback: Sedang mencari lokasi Anda (hanya tampil saat pertama membuka dan belum ditemukan lokasi)
+          Obx(() {
+            if (mapCtrl.isNavigatingRx.value) return const SizedBox.shrink();
+            if (mapCtrl.isAcquiringInitialGps.value && mapCtrl.currentUserLocation.value == null) {
+              return Positioned(
+                top: MediaQuery.of(context).padding.top + 168,
+                left: 24,
+                right: 24,
+                child: Center(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+                    decoration: BoxDecoration(
+                      color: context.hc.surface.withValues(alpha: 0.94),
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.12),
+                          blurRadius: 10,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                      border: Border.all(
+                        color: context.hc.accent.withValues(alpha: 0.4),
+                        width: 1.2,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(context.hc.accent),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Flexible(
+                          child: Text(
+                            context.tr('maps.searchingLocation').isNotEmpty
+                                ? context.tr('maps.searchingLocation')
+                                : 'Sedang mencari lokasi Anda...',
+                            style: context.text.labelMedium.copyWith(
+                              color: context.hc.textPrimary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }
+            return const SizedBox.shrink();
           }),
 
           // 6. Navigation Mode HUD Overlays
@@ -651,16 +730,150 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
     );
   }
 
+  Widget _buildDynamicLocationSearchingPlaceholder(
+    BuildContext context,
+    MapController mapCtrl,
+  ) {
+    final hc = context.hc;
+    final isDark = hc.isDark;
+
+    return Container(
+      width: double.infinity,
+      height: double.infinity,
+      color: hc.canvas,
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Radar Locator Circle
+            SizedBox(
+              width: 130,
+              height: 130,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  // Outer ripple
+                  AnimatedBuilder(
+                    animation: _pulseController,
+                    builder: (context, child) {
+                      final scale = 1.0 + (_pulseController.value * 0.45);
+                      final opacity = (1.0 - _pulseController.value).clamp(0.0, 0.45);
+                      return Transform.scale(
+                        scale: scale,
+                        child: Container(
+                          width: 110,
+                          height: 110,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: hc.accent.withValues(alpha: opacity),
+                              width: 2.0,
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  // Middle pulse
+                  AnimatedBuilder(
+                    animation: _pulseController,
+                    builder: (context, child) {
+                      return Container(
+                        width: 78,
+                        height: 78,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: hc.accent.withValues(
+                            alpha: isDark ? 0.20 : 0.12,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  // Center GPS Puck
+                  Container(
+                    width: 52,
+                    height: 52,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: hc.accent,
+                      boxShadow: [
+                        BoxShadow(
+                          color: hc.accent.withValues(alpha: 0.4),
+                          blurRadius: 16,
+                          spreadRadius: 2,
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.my_location_rounded,
+                      color: Colors.white,
+                      size: 26,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+            // Title
+            Text(
+              'Sedang mencari lokasi Anda...',
+              style: context.text.titleMedium.copyWith(
+                color: hc.textPrimary,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.2,
+              ),
+            ),
+            const SizedBox(height: 8),
+            // Subtitle
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 40),
+              child: Text(
+                'Menyelaraskan koordinat GPS ponsel secara dinamis agar sesuai posisi Anda.',
+                textAlign: TextAlign.center,
+                style: context.text.bodySmall.copyWith(
+                  color: hc.textSecondary,
+                  height: 1.4,
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            // Subtle loading indicator
+            SizedBox(
+              width: 24,
+              height: 24,
+              child: CircularProgressIndicator(
+                strokeWidth: 2.5,
+                valueColor: AlwaysStoppedAnimation<Color>(hc.accent),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   // INTERACTIVE FLUTTER_MAP CANVAS
 
   Widget _buildInteractiveMap(HajiCareController state, MapController mapCtrl) {
+    final effectiveCenter = mapCtrl.pendingFocusCoordinate ??
+        mapCtrl.currentUserLocation.value ??
+        (state.myCurrentPosition.value != null
+            ? LatLng(
+                state.myCurrentPosition.value!.latitude,
+                state.myCurrentPosition.value!.longitude,
+              )
+            : (state.self.currentLocation != null
+                ? LatLng(
+                    state.self.currentLocation!.latitude,
+                    state.self.currentLocation!.longitude,
+                  )
+                : MapController.defaultUserAnchor));
+
     return fmap.FlutterMap(
       mapController: mapCtrl.ensureFreshMapController(),
       options: fmap.MapOptions(
-        initialCenter:
-            mapCtrl.pendingFocusCoordinate ??
-            mapCtrl.currentUserLocation.value ??
-            MapController.defaultMinaBase,
+        initialCenter: effectiveCenter,
         initialZoom: mapCtrl.pendingFocusCoordinate != null
             ? (mapCtrl.pendingFocusZoom ?? 17.0)
             : 16.5,
@@ -1090,6 +1303,25 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
 
     // 1. Collect room members from current filter
     final members = List<RoomMemberModel>.from(mapCtrl.filteredMembers);
+    for (final rm in state.activeRoomMembers) {
+      if (!members.any((m) => m.uid == rm.uid)) {
+        members.add(rm);
+      }
+    }
+    for (final j in state.jamaahList) {
+      if (!members.any((m) => m.uid == j.id)) {
+        members.add(
+          RoomMemberModel(
+            uid: j.id,
+            name: j.name,
+            role: 'jamaah',
+            currentLocation: j.currentLocation,
+            locationUpdatedAt: j.locationUpdatedAt,
+            sosActive: j.sosActive,
+          ),
+        );
+      }
+    }
     if (mapCtrl.selectedMember.value != null &&
         !members.any((m) => m.uid == mapCtrl.selectedMember.value!.uid)) {
       members.add(mapCtrl.selectedMember.value!);

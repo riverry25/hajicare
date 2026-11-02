@@ -304,20 +304,21 @@ class _DisconnectedSmartbandBanner extends StatelessWidget {
               Expanded(
                 child: Text(
                   context.tr('ai.bandDisconnectedBannerTitle'),
-                  style: context.text.labelMedium.copyWith(
+                  style: context.text.titleSmall.copyWith(
                     color: hc.textPrimary,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 6),
           Text(
             context.tr('ai.bandDisconnectedBannerDesc'),
-            style: context.text.labelSmall.copyWith(
+            style: context.text.bodySmall.copyWith(
               color: hc.textSecondary,
-              height: 1.35,
+              height: 1.45,
+              fontWeight: FontWeight.w400,
             ),
           ),
           if (onConnectTap != null) ...[
@@ -402,15 +403,18 @@ class _RealAppInfoRow extends StatelessWidget {
                 Text(
                   title,
                   style: context.text.labelSmall.copyWith(
-                    color: hc.textSecondary,
+                    color: isWarning ? hc.danger : hc.textSecondary,
                     fontWeight: FontWeight.w600,
+                    letterSpacing: 0.15,
                   ),
                 ),
+                const SizedBox(height: 3),
                 Text(
                   value,
-                  style: context.text.labelMedium.copyWith(
+                  style: context.text.bodySmall.copyWith(
                     color: isWarning ? hc.danger : hc.textPrimary,
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w500,
+                    height: 1.4,
                   ),
                 ),
               ],
