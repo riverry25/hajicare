@@ -27,6 +27,7 @@ class MainActivity : FlutterFragmentActivity() {
         private const val EVENT_CHANNEL_NAME = "com.hajicare.bisindo/landmarks"
         private const val PREVIEW_VIEW_TYPE = "com.hajicare.bisindo/camera_preview"
         private const val CAMERA_PERMISSION_REQUEST_CODE = 1001
+        private const val BLE_PERMISSION_REQUEST_CODE = 1002
         private const val TTS_INSTALLER_CHANNEL = "com.hajicare.tts/voice_installer"
         private const val SMARTBAND_SERVICE_CHANNEL = "com.hajicare/smartband_background_service"
     }
@@ -36,6 +37,7 @@ class MainActivity : FlutterFragmentActivity() {
     private var landmarkEventSink: EventChannel.EventSink? = null
     private var isCameraRequested = false
     private var pendingPermissionResult: MethodChannel.Result? = null
+    private var pendingBlePermissionResult: MethodChannel.Result? = null
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -338,6 +340,11 @@ class MainActivity : FlutterFragmentActivity() {
                             result.error("CANCEL_ALL_FAILED", e.message, null)
                         }
 
+                    }
+                    else -> result.notImplemented()
+                }
+            }
+
         // 6. Setup MethodChannel for Smartband 24/7 Foreground Service & Battery Optimization
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, SMARTBAND_SERVICE_CHANNEL)
             .setMethodCallHandler { call, result ->
@@ -427,9 +434,26 @@ class MainActivity : FlutterFragmentActivity() {
                             result.success(true)
                         }
                     }
-                    else -> result.notImplemented()
-                }
-            }
+                    "ensureBlePermissions" -> {
+                        val needed = mutableListOf<String>()
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                            if (ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED) {
+                                needed.add(Manifest.permission.BLUETOOTH_SCAN)
+                            }
+                            if (ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+                                needed.add(Manifest.permission.BLUETOOTH_CONNECT)
+                            }
+                        } else {
+                            if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                                needed.add(Manifest.permission.ACCESS_FINE_LOCATION)
+                            }
+                        }
+                        if (needed.isEmpty()) {
+                            result.success(true)
+                        } else {
+                            pendingBlePermissionResult = result
+                            ActivityCompat.requestPermissions(this, needed.toTypedArray(), BLE_PERMISSION_REQUEST_CODE)
+                        }
                     }
                     else -> result.notImplemented()
                 }
@@ -446,6 +470,10 @@ class MainActivity : FlutterFragmentActivity() {
             val granted = grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED
             pendingPermissionResult?.success(if (granted) "granted" else "denied")
             pendingPermissionResult = null
+        } else if (requestCode == BLE_PERMISSION_REQUEST_CODE) {
+            val allGranted = grantResults.isNotEmpty() && grantResults.all { it == PackageManager.PERMISSION_GRANTED }
+            pendingBlePermissionResult?.success(allGranted)
+            pendingBlePermissionResult = null
         }
     }
 

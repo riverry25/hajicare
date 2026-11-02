@@ -220,8 +220,8 @@ void main() {
 
       expect(controller.isOutsideSafeRadius.value, isTrue);
       expect(controller.currentDistanceToPosko.value, 320.0);
-      expect(mockBle.sentCommands.contains('VIBRATE'), isTrue);
-      expect(mockBle.sentCommands.contains('BUZZ'), isTrue);
+      expect(mockBle.sentCommands.contains('RADIUS_ALERT:1'), isTrue);
+      expect(mockBle.sentCommands.contains('DIST:320.0'), isTrue);
       expect(controller.lcdLine2.value, '!LUAR RADIUS !');
     });
 
@@ -236,7 +236,7 @@ void main() {
       await Future.delayed(const Duration(milliseconds: 1200));
 
       expect(controller.isOutsideSafeRadius.value, isFalse);
-      expect(mockBle.sentCommands.contains('STOP_BUZZ'), isTrue);
+      expect(mockBle.sentCommands.contains('RADIUS_ALERT:0'), isTrue);
       expect(controller.lcdLine2.value.contains('NORMAL'), isTrue);
     });
   });

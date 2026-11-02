@@ -69,6 +69,9 @@ class SmartbandBleService {
   final Map<int, String> _fragmentParts = {};
   int _expectedTotal = 0;
 
+  // Antrean penulisan BLE GATT agar perintah berurutan tidak saling bertabrakan (write busy)
+  Future<void> _writeQueue = Future<void>.value();
+
   // Getters publik
   SmartbandBleStatus get currentStatus => _currentStatus;
   BluetoothDevice? get connectedDevice => _connectedDevice;
@@ -115,6 +118,7 @@ class SmartbandBleService {
   Future<bool> isBluetoothAvailable() async {
     _log('BLE START');
     try {
+      await SmartbandForegroundService.ensureBlePermissions();
       final isSupported = await FlutterBluePlus.isSupported;
       _log('BLE supported: ${isSupported ? "YES" : "NO"}');
       if (!isSupported) {
@@ -382,6 +386,8 @@ class SmartbandBleService {
       await discoverServices(device);
 
       _emitStatus(SmartbandBleStatus.connected);
+      // Minta snapshot telemetri segar segera setelah notifikasi CCCD dan MTU siap
+      unawaited(ping());
       unawaited(
         SmartbandForegroundService.startService(
           title: 'HajiCare Smartband Terhubung',
@@ -489,25 +495,38 @@ class SmartbandBleService {
   bool get canWriteCommand => _writeCharacteristic != null;
 
   /// Kirim perintah teks (misal: "PING", "CANCEL", "PAGE:1", "RADIUS:50", atau `"AI:<teks>"`) ke ESP32
-  Future<bool> sendCommand(String cmd) async {
-    final char = _writeCharacteristic;
-    if (char == null) {
-      _log('Characteristic penulisan BLE tidak tersedia');
-      return false;
-    }
-    try {
-      _log('SEND COMMAND: $cmd');
-      await char.write(
-        utf8.encode('$cmd\n'),
-        withoutResponse:
-            char.properties.writeWithoutResponse && !char.properties.write,
-      );
-      _log('COMMAND SENT: $cmd');
-      return true;
-    } catch (e) {
-      _log('COMMAND FAILED: $e');
-      return false;
-    }
+  Future<bool> sendCommand(String cmd) {
+    final completer = Completer<bool>();
+    _writeQueue = _writeQueue.then((_) async {
+      final char = _writeCharacteristic;
+      if (char == null) {
+        _log('Characteristic penulisan BLE tidak tersedia');
+        completer.complete(false);
+        return;
+      }
+      try {
+        _log('SEND COMMAND: $cmd');
+        await char.write(
+          utf8.encode('$cmd\n'),
+          withoutResponse:
+              char.properties.writeWithoutResponse && !char.properties.write,
+        );
+        _log('COMMAND SENT: $cmd');
+        completer.complete(true);
+      } catch (e) {
+        if (char.properties.writeWithoutResponse) {
+          try {
+            await char.write(utf8.encode('$cmd\n'), withoutResponse: true);
+            _log('COMMAND SENT (fallback withoutResponse): $cmd');
+            completer.complete(true);
+            return;
+          } catch (_) {}
+        }
+        _log('COMMAND FAILED: $e');
+        completer.complete(false);
+      }
+    });
+    return completer.future;
   }
 
   /// Ubah batas Safe Radius pada gelang (meter)
@@ -528,15 +547,10 @@ class SmartbandBleService {
 
   /// Kirim jarak jemaah ke pendamping (meter)
   Future<bool> sendDistance(double distanceM, [double? safeRadius]) async {
-    if (safeRadius != null) {
-      return sendCommand(
-        'DIST:${distanceM.toStringAsFixed(1)},${safeRadius.round()}',
-      );
-    }
     return sendCommand('DIST:${distanceM.toStringAsFixed(1)}');
   }
 
-  /// Pindah halaman OLED pada gelang (0:HR, 1:GPS, 2:Temp, 3:Motion, 4:Safe Radius)
+  /// Pindah halaman OLED pada gelang (0:HR, 1:GPS, 2:Temp, 3:Fall, 4:Steps, 5:Safe Radius, 6:AI Voice)
   Future<bool> setOledPage(int page) async {
     return sendCommand('PAGE:$page');
   }
@@ -659,32 +673,38 @@ class SmartbandBleService {
 
   /// Kirim payload AI OLED (`"AI:<teks>"`) maksimal 55 karakter ASCII tanpa newline
   /// ke BLE RX Characteristic (6e400002-b5a3-f393-e0a9-e50e24dcca9e).
-  Future<bool> sendAiOledPayload(String payload) async {
-    final char = _writeCharacteristic;
-    if (char == null) {
-      _log('BLE RX Characteristic ($rxCharacteristicUuid) belum terhubung');
-      return false;
-    }
-    try {
-      _log('SEND AI OLED PAYLOAD: $payload');
-      await char.write(
-        utf8.encode(payload),
-        withoutResponse:
-            char.properties.writeWithoutResponse && !char.properties.write,
-      );
-      _log('AI OLED PAYLOAD SENT: $payload');
-      return true;
-    } catch (e) {
-      if (char.properties.writeWithoutResponse) {
-        try {
-          await char.write(utf8.encode(payload), withoutResponse: true);
-          _log('AI OLED PAYLOAD SENT (fallback withoutResponse): $payload');
-          return true;
-        } catch (_) {}
+  Future<bool> sendAiOledPayload(String payload) {
+    final completer = Completer<bool>();
+    _writeQueue = _writeQueue.then((_) async {
+      final char = _writeCharacteristic;
+      if (char == null) {
+        _log('BLE RX Characteristic ($rxCharacteristicUuid) belum terhubung');
+        completer.complete(false);
+        return;
       }
-      _log('AI OLED PAYLOAD FAILED: $e');
-      return false;
-    }
+      try {
+        _log('SEND AI OLED PAYLOAD: $payload');
+        await char.write(
+          utf8.encode(payload),
+          withoutResponse:
+              char.properties.writeWithoutResponse && !char.properties.write,
+        );
+        _log('AI OLED PAYLOAD SENT: $payload');
+        completer.complete(true);
+      } catch (e) {
+        if (char.properties.writeWithoutResponse) {
+          try {
+            await char.write(utf8.encode(payload), withoutResponse: true);
+            _log('AI OLED PAYLOAD SENT (fallback withoutResponse): $payload');
+            completer.complete(true);
+            return;
+          } catch (_) {}
+        }
+        _log('AI OLED PAYLOAD FAILED: $e');
+        completer.complete(false);
+      }
+    });
+    return completer.future;
   }
 
   /// 4. Subscribe ke BLE Notification data karakteristik
@@ -740,11 +760,19 @@ class SmartbandBleService {
         if (!_smartbandAiListeningController.isClosed) {
           _smartbandAiListeningController.add(true);
         }
+        if (_lastData != null && !_smartbandDataController.isClosed) {
+          _lastData = _lastData!.copyWith(isAiListening: true, oledPage: 6);
+          _smartbandDataController.add(_lastData!);
+        }
         _log('EVENT AI_START: Smartband mic INMP441 mulai merekam');
         return;
       } else if (trimmed.contains('AI_END')) {
         _log('EVENT AI_END: Smartband mic selesai dari hardware');
         _finalizePcmAudioRecording();
+        if (_lastData != null && !_smartbandDataController.isClosed) {
+          _lastData = _lastData!.copyWith(isAiListening: false, oledPage: 6);
+          _smartbandDataController.add(_lastData!);
+        }
         return;
       }
 

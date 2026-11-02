@@ -9,7 +9,11 @@ class SmartbandBleTestController extends GetxController {
   final SmartbandBleService bleService;
 
   SmartbandBleTestController({SmartbandBleService? service})
-    : bleService = service ?? SmartbandBleService();
+    : bleService =
+          service ??
+          (Get.isRegistered<SmartbandBleService>()
+              ? Get.find<SmartbandBleService>()
+              : SmartbandBleService());
 
   // Observable States
   final Rx<SmartbandBleStatus> connectionStatus =
@@ -104,7 +108,6 @@ class SmartbandBleTestController extends GetxController {
     _dataSub?.cancel();
     _deviceSub?.cancel();
     _logSub?.cancel();
-    bleService.dispose();
     super.onClose();
   }
 }

@@ -33,10 +33,15 @@ class SmartbandData {
   final bool fingerDetected;
   final String fallStatus;
   final double safeRadius;
+  final bool hasSafeRadiusFromBand;
   final double? distanceM;
+  final String? distanceStatus;
   final bool radiusAlert;
   final double? stepDistanceM;
   final bool isAiListening;
+  final String? aiText;
+  final int? oledPage;
+  final bool isGpsFix;
   final DateTime timestamp;
   final String rawJson;
   final bool isValidLocation;
@@ -71,11 +76,16 @@ class SmartbandData {
     this.emergencyMessage,
     this.fingerDetected = false,
     this.fallStatus = 'NORMAL',
-    this.safeRadius = 50.0,
+    this.safeRadius = 200.0,
+    this.hasSafeRadiusFromBand = false,
     this.distanceM,
+    this.distanceStatus,
     this.radiusAlert = false,
     this.stepDistanceM,
     this.isAiListening = false,
+    this.aiText,
+    this.oledPage,
+    bool? isGpsFix,
     DateTime? timestamp,
     this.rawJson = '',
     bool? isValidLocation,
@@ -84,6 +94,12 @@ class SmartbandData {
            (latitude != null &&
                longitude != null &&
                (latitude.abs() > 0.0001 || longitude.abs() > 0.0001)),
+       isGpsFix =
+           isGpsFix ??
+           (isValidLocation ??
+               (latitude != null &&
+                   longitude != null &&
+                   (latitude.abs() > 0.0001 || longitude.abs() > 0.0001))),
        fallDetected = isFallDetected ?? fallDetected,
        isSos = sosButtonPressed ?? isSos,
        roll = gyroRoll ?? roll,
@@ -104,9 +120,9 @@ class SmartbandData {
   /// Validasi rentang fisiologis SpO2 (70% - 100%)
   bool get isValidSpo2 => spo2 != null && spo2! >= 70 && spo2! <= 100;
 
-  /// Validasi rentang fisiologis suhu tubuh jemaah (30°C - 45°C)
+  /// Validasi rentang sensor suhu MCP9808 (15°C - 45°C)
   bool get isValidTemperature =>
-      temperature != null && temperature! >= 30.0 && temperature! <= 45.0;
+      temperature != null && temperature! >= 15.0 && temperature! <= 45.0;
 
   /// Indikator apakah data tanda-tanda vital valid
   bool get hasValidVitals => heartRate > 0;
@@ -175,10 +191,15 @@ class SmartbandData {
     bool? fingerDetected,
     String? fallStatus,
     double? safeRadius,
+    bool? hasSafeRadiusFromBand,
     double? distanceM,
+    String? distanceStatus,
     bool? radiusAlert,
     double? stepDistanceM,
     bool? isAiListening,
+    String? aiText,
+    int? oledPage,
+    bool? isGpsFix,
     DateTime? timestamp,
     String? rawJson,
     bool? isValidLocation,
@@ -206,10 +227,16 @@ class SmartbandData {
       fingerDetected: fingerDetected ?? this.fingerDetected,
       fallStatus: fallStatus ?? this.fallStatus,
       safeRadius: safeRadius ?? this.safeRadius,
+      hasSafeRadiusFromBand:
+          hasSafeRadiusFromBand ?? this.hasSafeRadiusFromBand,
       distanceM: distanceM ?? this.distanceM,
+      distanceStatus: distanceStatus ?? this.distanceStatus,
       radiusAlert: radiusAlert ?? this.radiusAlert,
       stepDistanceM: stepDistanceM ?? this.stepDistanceM,
       isAiListening: isAiListening ?? this.isAiListening,
+      aiText: aiText ?? this.aiText,
+      oledPage: oledPage ?? this.oledPage,
+      isGpsFix: isGpsFix ?? this.isGpsFix,
       timestamp: timestamp ?? this.timestamp,
       rawJson: rawJson ?? this.rawJson,
       isValidLocation: isValidLocation ?? this.isValidLocation,
@@ -358,11 +385,15 @@ class SmartbandData {
         (isSos ? 'TOMBOL SOS AKTIF!' : null);
 
     // 7. Dynamic Safe Radius & Distance
-    final double sRadius =
-        parseDouble(json['safeRadius'] ?? json['radius']) ?? 50.0;
+    final double? parsedRadius = parseDouble(
+      json['safeRadius'] ?? json['radius'],
+    );
+    final double sRadius = parsedRadius ?? 200.0;
+    final bool hasBandRadius = parsedRadius != null;
     final double? distM = parseDouble(
       json['distanceM'] ?? json['dist'] ?? json['distance'],
     );
+    final String? distStat = json['distanceStatus']?.toString();
     final bool radAlert = parseBool(json['radiusAlert'] ?? json['outOfRange']);
     final double? stepDist = parseDouble(
       json['stepDistanceM'] ?? json['stepDistance'] ?? json['stepDist'],
@@ -370,24 +401,27 @@ class SmartbandData {
     final bool aiRec = parseBool(
       json['aiListening'] ?? json['isAiListening'] ?? json['aiRec'],
     );
+    final String? aiReply =
+        json['aiText']?.toString() ?? json['aiReply']?.toString();
+    final int? pageIdx = parseInt(json['page'] ?? json['oledPage']);
 
     // Validasi lokasi geografis
-    final bool validLoc =
-        isFix ||
-        (lat != null &&
-            lng != null &&
-            !lat.isNaN &&
-            !lng.isNaN &&
-            (lat.abs() > 0.000001 || lng.abs() > 0.000001) &&
-            lat >= -90.0 &&
-            lat <= 90.0 &&
-            lng >= -180.0 &&
-            lng <= 180.0);
+    final bool hasValidCoords =
+        lat != null &&
+        lng != null &&
+        !lat.isNaN &&
+        !lng.isNaN &&
+        (lat.abs() > 0.000001 || lng.abs() > 0.000001) &&
+        lat >= -90.0 &&
+        lat <= 90.0 &&
+        lng >= -180.0 &&
+        lng <= 180.0;
+    final bool validLoc = isFix || hasValidCoords;
 
     return SmartbandData(
       braceletId: bId,
-      latitude: (lat != null && lat.abs() > 0.000001) ? lat : null,
-      longitude: (lng != null && lng.abs() > 0.000001) ? lng : null,
+      latitude: hasValidCoords ? lat : null,
+      longitude: hasValidCoords ? lng : null,
       heartRate: hr < 0 ? 0 : hr,
       spo2: oxygen?.clamp(0, 100),
       temperature: temp,
@@ -407,10 +441,15 @@ class SmartbandData {
       fingerDetected: finger,
       fallStatus: fallStat,
       safeRadius: sRadius,
+      hasSafeRadiusFromBand: hasBandRadius,
       distanceM: distM,
+      distanceStatus: distStat,
       radiusAlert: radAlert,
       stepDistanceM: stepDist,
       isAiListening: aiRec,
+      aiText: aiReply,
+      oledPage: pageIdx?.clamp(0, 6),
+      isGpsFix: isFix || hasValidCoords,
       timestamp: DateTime.now(),
       rawJson: raw,
       isValidLocation: validLoc,
@@ -452,15 +491,18 @@ class SmartbandData {
     'fallStatus': fallStatus,
     'safeRadius': safeRadius,
     'distanceM': distanceM,
+    'distanceStatus': distanceStatus,
     'radiusAlert': radiusAlert,
     'stepDistanceM': stepDistanceM,
     'aiListening': isAiListening,
+    'page': oledPage,
+    'gpsFix': isGpsFix,
     'timestamp': timestamp.toIso8601String(),
     'isValidLocation': isValidLocation,
   };
 
   @override
   String toString() {
-    return 'SmartbandData(braceletId: $braceletId, lat: $latitude, lng: $longitude, hr: $heartRate, finger: $fingerDetected, temp: $temperature, motionG: $accelG, fall: $fallStatus, sos: $isSos, radius: $safeRadius, dist: $distanceM, radAlert: $radiusAlert)';
+    return 'SmartbandData(braceletId: $braceletId, lat: $latitude, lng: $longitude, fix: $isGpsFix, sats: $satellites, hr: $heartRate, finger: $fingerDetected, temp: $temperature, motionG: $accelG, steps: $stepCount, fall: $fallStatus, sos: $isSos, radius: $safeRadius, dist: $distanceM, radAlert: $radiusAlert, page: $oledPage)';
   }
 }

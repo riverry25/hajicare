@@ -5,7 +5,9 @@ import '../services/smartband_ble_service.dart';
 class SmartbandBleTestBinding extends Bindings {
   @override
   void dependencies() {
-    Get.lazyPut<SmartbandBleService>(() => SmartbandBleService());
+    if (!Get.isRegistered<SmartbandBleService>()) {
+      Get.put<SmartbandBleService>(SmartbandBleService(), permanent: true);
+    }
     Get.lazyPut<SmartbandBleTestController>(
       () =>
           SmartbandBleTestController(service: Get.find<SmartbandBleService>()),

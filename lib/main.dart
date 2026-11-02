@@ -20,6 +20,7 @@ import 'features/map/controllers/map_controller.dart';
 import 'features/dashboard/services/hajj_guide_service.dart';
 import 'features/smartband/services/smartband_storage_service.dart';
 import 'features/smartband/services/smartband_ble_service.dart';
+import 'features/smartband/controllers/smartband_ldr_controller.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -30,7 +31,17 @@ void main() async {
 
   // Inisialisasi dependensi kritis UI secara paralel (Fast Cold Boot)
   await Future.wait([
-    Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform),
+    (() async {
+      try {
+        if (Firebase.apps.isEmpty) {
+          await Firebase.initializeApp(
+            options: DefaultFirebaseOptions.currentPlatform,
+          );
+        }
+      } catch (e) {
+        debugPrint('[Main] Firebase.initializeApp error: $e');
+      }
+    })(),
     settings.loadSettings(),
   ]);
 
@@ -54,6 +65,7 @@ void main() async {
   Get.put(NotificationController(), permanent: true);
   Get.put(HajjGuideService(), permanent: true);
   Get.put(SmartbandBleService(), permanent: true);
+  Get.put(SmartbandLdrController(), permanent: true);
   Get.lazyPut<MapController>(() => MapController(), fenix: true);
 
   // Inisialisasi background services secara asynchronous agar First Frame langsung ter-render

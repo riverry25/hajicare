@@ -2047,11 +2047,26 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                   ],
                 ),
                 child: Obx(() {
+                  // Baca seluruh state reaktif di level atas Obx agar ter-subscribe penuh
                   final isConnected = ldrCtrl.isConnected;
                   final isFix = ldrCtrl.isGpsFix.value;
                   final lat = ldrCtrl.latitude.value;
                   final lng = ldrCtrl.longitude.value;
+                  final sats = ldrCtrl.gpsSatellites.value ?? 0;
                   final relativeTime = ldrCtrl.relativeTimeText.value;
+                  final hrVal = ldrCtrl.heartRate.value;
+                  final tempVal = ldrCtrl.mcpTemperature.value;
+                  final finger = ldrCtrl.fingerDetected.value;
+                  final stepsVal = ldrCtrl.effectiveSteps;
+                  final rawStepDist = ldrCtrl.smartbandStepDistanceM.value;
+                  final accelVal = ldrCtrl.accelG.value;
+                  final fallStat = ldrCtrl.fallStatus.value;
+                  final distM = ldrCtrl.currentDistanceM.value;
+                  final safeRad = ldrCtrl.safeRadiusMeters.value;
+                  final radAlert = ldrCtrl.radiusAlertActive.value;
+                  // Suppress unused warning while ensuring Obx tracks all telemetry updates
+                  final _ = (accelVal, fallStat, distM, safeRad, radAlert);
+
                   // hasLocation: HANYA tampil jika Smartband terhubung dan koordinat GPS realtime FIX
                   final hasLocation = isConnected &&
                       isFix &&
@@ -2233,7 +2248,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                                     const SizedBox(height: 2),
                                     Text(
                                       isConnected
-                                          ? 'ID: ${ldrCtrl.braceletId.value} • ${context.tr('smartband.justNow')}'
+                                          ? 'ID: ${ldrCtrl.braceletId.value} • $relativeTime'
                                           : (ldrCtrl.lastDataReceivedAt.value !=
                                                     null
                                                 ? context.tr(
@@ -2265,9 +2280,6 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                         // ROW 1: DETAK JANTUNG (MAX30102) & SUHU TUBUH (MCP9808) (2 Kolom Dinamis)
                         Builder(
                           builder: (_) {
-                            final hrVal = ldrCtrl.heartRate.value;
-                            final tempVal = ldrCtrl.mcpTemperature.value;
-                            final finger = ldrCtrl.fingerDetected.value;
                             final hasHr = hrVal != null && hrVal > 0;
                             final hasTemp = tempVal != null && tempVal > 0;
                             final isStoredHr = !isConnected &&
@@ -2518,14 +2530,13 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                         // ROW 2: TOTAL LANGKAH (MPU6050 Pedometer 3-Sumbu)
                         Builder(
                           builder: (_) {
-                            final stepsVal = ldrCtrl.stepCount.value;
-                            final hasSteps = stepsVal > 0;
+                            final hasSteps = isConnected || stepsVal > 0;
                             final isStoredSteps = !isConnected &&
                                 ldrCtrl.hasRestoredData.value &&
-                                hasSteps;
-                            final stepDistM = ldrCtrl.smartbandStepDistanceM.value > 0
-                                ? ldrCtrl.smartbandStepDistanceM.value
-                                : (stepsVal * 0.65);
+                                stepsVal > 0;
+                            final stepDistM = rawStepDist > 0
+                                ? rawStepDist
+                                : (stepsVal * SmartbandLdrController.strideLengthMeters);
 
                             return Container(
                               width: double.infinity,
@@ -2723,15 +2734,21 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                                     child: Text(
                                       activeTarget != null
                                           ? (isConnected
-                                                ? 'GPS Aktif'
+                                                ? 'GPS Fix ($sats Sat)'
                                                 : 'Lokasi Terakhir')
-                                          : 'Belum Ada Sinyal',
+                                          : (isConnected
+                                                ? (sats > 0
+                                                      ? 'Mencari Fix ($sats Sat)'
+                                                      : 'Mencari Satelit...')
+                                                : 'Belum Ada Sinyal'),
                                       style: TextStyle(
                                         fontSize: 10,
                                         fontWeight: FontWeight.w700,
                                         color: activeTarget != null
                                             ? AppColors.statusSafe
-                                            : AppColors.textMuted,
+                                            : (isConnected
+                                                  ? AppColors.primaryGold
+                                                  : AppColors.textMuted),
                                       ),
                                     ),
                                   ),
@@ -3001,7 +3018,11 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                                       ),
                                       const SizedBox(height: 8),
                                       Text(
-                                        'Lokasi Belum Terdeteksi',
+                                        isConnected
+                                            ? (sats > 0
+                                                  ? 'Menunggu Kuncian ($sats Satelit)'
+                                                  : 'Mencari Sinyal GPS ATGM336H...')
+                                            : 'Lokasi Belum Terdeteksi',
                                         style: TextStyle(
                                           fontSize: 12.5,
                                           fontWeight: FontWeight.bold,
@@ -3010,7 +3031,9 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                                       ),
                                       const SizedBox(height: 3),
                                       Text(
-                                        'Hubungkan smartband di area terbuka untuk memperbarui posisi jemaah secara otomatis.',
+                                        isConnected
+                                            ? 'Bawa smartband ke area terbuka langit agar modul GPS ATGM336H mengunci koordinat satelit.'
+                                            : 'Hubungkan smartband di area terbuka untuk memperbarui posisi jemaah secara otomatis.',
                                         textAlign: TextAlign.center,
                                         style: TextStyle(
                                           fontSize: 11,

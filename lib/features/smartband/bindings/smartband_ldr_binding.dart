@@ -6,10 +6,13 @@ class SmartbandLdrBinding extends Bindings {
   @override
   void dependencies() {
     if (!Get.isRegistered<SmartbandBleService>()) {
-      Get.lazyPut<SmartbandBleService>(() => SmartbandBleService());
+      Get.put<SmartbandBleService>(SmartbandBleService(), permanent: true);
     }
-    Get.lazyPut<SmartbandLdrController>(
-      () => SmartbandLdrController(bleService: Get.find<SmartbandBleService>()),
-    );
+    if (!Get.isRegistered<SmartbandLdrController>()) {
+      Get.put<SmartbandLdrController>(
+        SmartbandLdrController(bleService: Get.find<SmartbandBleService>()),
+        permanent: true,
+      );
+    }
   }
 }

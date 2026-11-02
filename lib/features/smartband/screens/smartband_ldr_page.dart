@@ -600,15 +600,15 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
           heroTitle = 'MCP9808 Suhu Sensor (°C)';
           final temp = ctrl.mcpTemperature.value;
           heroValue = temp != null ? temp.toStringAsFixed(1) : '--.-';
-          heroUnit = '°C';
+          heroUnit = '°C (Presisi 0.125°C)';
           arcPercent = (temp != null && !temp.isNaN && !temp.isInfinite)
-              ? ((temp - 34.0) / (41.0 - 34.0)).clamp(0.05, 1.0)
+              ? ((temp - 20.0) / (42.0 - 20.0)).clamp(0.05, 1.0)
               : 0.0;
           arcColor = const Color(0xFFD4A857);
           statusPillText = !isConn
               ? 'MENUNGGU BLE'
               : (temp != null
-                    ? (temp >= 37.5 ? 'WASPADA SUHU TINGGI' : 'NORMAL')
+                    ? (temp >= 37.5 ? 'WASPADA SUHU TINGGI' : 'SENSOR AKTIF • NORMAL')
                     : 'MENGUKUR...');
           statusPillBg = (temp != null && temp >= 37.5)
               ? AppColors.statusWarning.withValues(alpha: 0.15)
@@ -618,11 +618,15 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
               : AppColors.statusSafe;
           break;
 
-        case 2: // MPU6050 Motion G & Fall
-          heroTitle = 'MPU6050 Motion & Monitor Jatuh';
+        case 2: // MPU6050 Motion G, Fall & Pedometer
+          heroTitle = 'MPU6050 Motion & Pedometer';
           final g = ctrl.accelG.value;
+          final steps = ctrl.effectiveSteps;
+          final stepDist = ctrl.smartbandStepDistanceM.value > 0
+              ? ctrl.smartbandStepDistanceM.value
+              : (steps * SmartbandLdrController.strideLengthMeters);
           heroValue = g != null ? g.toStringAsFixed(2) : '--';
-          heroUnit = 'G-Force (Total Gravitasi)';
+          heroUnit = 'g • $steps Langkah (${stepDist.toStringAsFixed(1)} m)';
           arcPercent = g != null ? (g / 3.0).clamp(0.05, 1.0) : 0.0;
           arcColor = ctrl.isFallDetected.value
               ? AppColors.statusDanger
@@ -631,7 +635,7 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
               ? 'MENUNGGU BLE'
               : (ctrl.isFallDetected.value
                     ? 'JATUH TERDETEKSI'
-                    : ctrl.fallStatus.value);
+                    : '${ctrl.fallStatus.value} • $steps LANGKAH');
           statusPillBg = ctrl.isFallDetected.value
               ? AppColors.statusDanger.withValues(alpha: 0.15)
               : AppColors.statusSafe.withValues(alpha: 0.15);
@@ -661,9 +665,11 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
         case 4: // Dynamic Safe Radius
           heroTitle = 'Dynamic Safe Radius (Batas Aman)';
           final dist = ctrl.currentDistanceM.value;
-          heroValue = dist != null ? dist.toStringAsFixed(1) : '--';
-          heroUnit = 'Meter ke Pendamping';
           final rad = ctrl.safeRadiusMeters.value;
+          heroValue = rad <= 0
+              ? 'OFF'
+              : (dist != null ? dist.toStringAsFixed(1) : '--');
+          heroUnit = rad <= 0 ? 'Radius Nonaktif' : 'Meter ke Pendamping';
           arcPercent = (dist != null && rad > 0 && !dist.isNaN && !dist.isInfinite)
               ? (dist / (rad * 1.5)).clamp(0.05, 1.0)
               : 0.0;
@@ -672,17 +678,51 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
               : const Color(0xFF0D9488);
           statusPillText = !isConn
               ? 'MENUNGGU BLE'
-              : (dist == null
-                    ? 'MENUNGGU GPS PENDAMPING'
-                    : (ctrl.radiusAlertActive.value
-                        ? 'DI LUAR RADIUS (${dist.toStringAsFixed(1)} m > ${rad.round()} m)'
-                        : 'DALAM RADIUS AMAN (Batas ${rad.round()} m)'));
+              : (rad <= 0
+                    ? 'SAFE RADIUS OFF'
+                    : (dist == null
+                          ? 'MENUNGGU GPS PENDAMPING'
+                          : (ctrl.radiusAlertActive.value
+                                ? 'DI LUAR RADIUS (${dist.toStringAsFixed(1)} m > ${rad.round()} m)'
+                                : 'DALAM RADIUS AMAN (Batas ${rad.round()} m)')));
           statusPillBg = ctrl.radiusAlertActive.value
               ? AppColors.statusDanger.withValues(alpha: 0.15)
               : const Color(0xFF0D9488).withValues(alpha: 0.15);
           statusPillColor = ctrl.radiusAlertActive.value
               ? AppColors.statusDanger
               : const Color(0xFF0D9488);
+          break;
+
+        case 5: // Action Button, SOS & INMP441 AI Mic
+          heroTitle = 'Action Button • SOS & AI Voice (INMP441)';
+          final isSos = ctrl.isSosButtonPressed.value;
+          final isAiRec = ctrl.isSmartbandRecordingVoice.value;
+          final steps = ctrl.effectiveSteps;
+          heroValue = isSos
+              ? 'SOS!'
+              : (isAiRec ? 'REKAM' : '$steps');
+          heroUnit = isSos
+              ? 'SINYAL DARURAT AKTIF'
+              : (isAiRec ? 'MENDENGARKAN SUARA (8kHz PCM)' : 'Langkah • Tombol Siap');
+          arcPercent = isSos || isAiRec
+              ? 1.0
+              : (steps > 0 ? (steps / 1000.0).clamp(0.1, 1.0) : 0.25);
+          arcColor = isSos
+              ? AppColors.statusDanger
+              : (isAiRec ? const Color(0xFF8B5CF6) : const Color(0xFFEF4444));
+          statusPillText = !isConn
+              ? 'MENUNGGU BLE'
+              : (isSos
+                    ? 'DARURAT SOS AKTIF'
+                    : (isAiRec
+                          ? 'MIKROFON INMP441 AKTIF'
+                          : '1x Page • 2x AI Voice • Hold 3s SOS'));
+          statusPillBg = isSos
+              ? AppColors.statusDanger.withValues(alpha: 0.15)
+              : AppColors.primaryGold.withValues(alpha: 0.15);
+          statusPillColor = isSos
+              ? AppColors.statusDanger
+              : AppColors.primaryGold;
           break;
 
         default: // MAX30102 Detak Jantung BPM
@@ -904,7 +944,7 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
                         ? 'Menunggu BLE'
                         : (ctrl.isFallDetected.value
                               ? 'JATUH!'
-                              : ctrl.fallStatus.value),
+                              : '${ctrl.effectiveSteps} lkh • ${ctrl.fallStatus.value}'),
                     onTap: () => ctrl.selectSensor(2),
                   ),
                 ),
@@ -929,7 +969,7 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
             ),
             const SizedBox(height: 8),
 
-            // Baris 3: Dynamic Safe Radius & Action Button SOS
+            // Baris 3: Dynamic Safe Radius & Action Button SOS / AI
             Row(
               children: [
                 Expanded(
@@ -939,15 +979,19 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
                     isSelected: selected == 4,
                     icon: Icons.radar_rounded,
                     iconColor: const Color(0xFF0D9488),
-                    valueText: isConn && dist != null ? dist.toStringAsFixed(1) : '--',
-                    unit: 'Meter',
+                    valueText: rad <= 0
+                        ? 'OFF'
+                        : (isConn && dist != null ? dist.toStringAsFixed(1) : '--'),
+                    unit: rad <= 0 ? '' : 'Meter',
                     title: 'Safe Radius',
                     subtitle: isConn
-                        ? (dist != null
-                              ? (ctrl.radiusAlertActive.value
-                                    ? 'Di Luar Batas!'
-                                    : 'Ke Pendamping • Batas ${rad.round()}m')
-                              : 'Menunggu GPS Pendamping')
+                        ? (rad <= 0
+                              ? 'Radius Nonaktif'
+                              : (dist != null
+                                    ? (ctrl.radiusAlertActive.value
+                                          ? 'Di Luar Batas!'
+                                          : 'Ke Pendamping • Batas ${rad.round()}m')
+                                    : 'Batas ${rad.round()}m • Mencari GPS'))
                         : 'Menunggu BLE',
                     onTap: () => ctrl.selectSensor(4),
                   ),
@@ -958,14 +1002,22 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
                     context,
                     index: 5,
                     isSelected: selected == 5,
-                    icon: Icons.touch_app_rounded,
-                    iconColor: const Color(0xFFEF4444),
-                    valueText: ctrl.isSosButtonPressed.value ? 'AKTIF' : 'SIAP',
-                    unit: 'SOS',
+                    icon: ctrl.isSmartbandRecordingVoice.value
+                        ? Icons.mic_rounded
+                        : Icons.touch_app_rounded,
+                    iconColor: ctrl.isSmartbandRecordingVoice.value
+                        ? const Color(0xFF8B5CF6)
+                        : const Color(0xFFEF4444),
+                    valueText: ctrl.isSosButtonPressed.value
+                        ? 'SOS!'
+                        : (ctrl.isSmartbandRecordingVoice.value ? 'REKAM' : 'SIAP'),
+                    unit: ctrl.isSmartbandRecordingVoice.value ? 'AI' : 'SOS',
                     title: 'Tombol Action',
                     subtitle: ctrl.isSosButtonPressed.value
                         ? 'DARURAT SOS'
-                        : 'Tahan 3 Detik',
+                        : (ctrl.isSmartbandRecordingVoice.value
+                              ? 'Mic INMP441 Aktif'
+                              : '1x Page • 2x AI • 3s SOS'),
                     onTap: () => ctrl.selectSensor(5),
                   ),
                 ),
@@ -1135,7 +1187,7 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
                     borderRadius: BorderRadius.circular(AppRadius.chip),
                   ),
                   child: Text(
-                    '${currentRadius.round()} m',
+                    currentRadius <= 0 ? 'OFF' : '${currentRadius.round()} m',
                     style: const TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
@@ -1152,11 +1204,13 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
             ),
             const SizedBox(height: 12),
 
-            // Preset Buttons: 1m, 25m, 50m, 100m, 200m
+            // Preset Buttons: OFF (0m), 1m, 25m, 50m, 100m, 200m
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
                 children: [
+                  _buildRadiusChip(0, currentRadius, () => ctrl.setSafeRadius(0)),
+                  const SizedBox(width: 8),
                   _buildRadiusChip(1, currentRadius, () => ctrl.setSafeRadius(1)),
                   const SizedBox(width: 8),
                   _buildRadiusChip(25, currentRadius, () => ctrl.setSafeRadius(25)),
@@ -1199,11 +1253,13 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      dist != null
-                          ? 'Jarak ke Pendamping: ${dist.toStringAsFixed(1)} m • Batas: ${currentRadius.round()} m'
-                          : (isConn
-                              ? 'Menghitung koordinat GPS pendamping...'
-                              : 'Menunggu Smartband Terhubung...'),
+                      currentRadius <= 0
+                          ? 'Safe Radius Nonaktif (OFF)'
+                          : (dist != null
+                                ? 'Jarak ke Pendamping: ${dist.toStringAsFixed(1)} m • Batas: ${currentRadius.round()} m'
+                                : (isConn
+                                      ? 'Menghitung koordinat GPS pendamping...'
+                                      : 'Menunggu Smartband Terhubung...')),
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
@@ -1218,28 +1274,48 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
             ),
             const SizedBox(height: 10),
 
-            // Tombol Uji Langkah Cepat (Pedometer Stride Distance)
+            // Kontrol Pedometer MPU6050 & Mikrofon AI INMP441
             Row(
               children: [
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: () => ctrl.addStep(1),
+                    onPressed: !isConn
+                        ? null
+                        : () => ctrl.isSmartbandRecordingVoice.value
+                              ? ctrl.stopSmartbandMic()
+                              : ctrl.startSmartbandMic(),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFF0D9488),
-                      side: const BorderSide(color: Color(0xFF0D9488)),
+                      foregroundColor: ctrl.isSmartbandRecordingVoice.value
+                          ? const Color(0xFFDC2626)
+                          : const Color(0xFF0D9488),
+                      side: BorderSide(
+                        color: ctrl.isSmartbandRecordingVoice.value
+                            ? const Color(0xFFDC2626)
+                            : const Color(0xFF0D9488),
+                      ),
                       padding: const EdgeInsets.symmetric(vertical: 8),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(AppRadius.button),
                       ),
                     ),
-                    icon: const Icon(Icons.directions_walk_rounded, size: 16),
-                    label: const Text('+1 Langkah (+0.7m)', style: TextStyle(fontSize: 11)),
+                    icon: Icon(
+                      ctrl.isSmartbandRecordingVoice.value
+                          ? Icons.stop_circle_rounded
+                          : Icons.mic_rounded,
+                      size: 16,
+                    ),
+                    label: Text(
+                      ctrl.isSmartbandRecordingVoice.value
+                          ? 'Stop Mic AI'
+                          : 'Rekam Suara AI',
+                      style: const TextStyle(fontSize: 11),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: () => ctrl.resetStepDistance(),
+                    onPressed: !isConn ? null : () => ctrl.resetStepDistance(),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: Colors.grey.shade700,
                       side: BorderSide(color: Colors.grey.shade400),
@@ -1249,7 +1325,10 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
                       ),
                     ),
                     icon: const Icon(Icons.restart_alt_rounded, size: 16),
-                    label: const Text('Reset 0 m', style: TextStyle(fontSize: 11)),
+                    label: Text(
+                      'Reset Langkah (${ctrl.effectiveSteps})',
+                      style: const TextStyle(fontSize: 11),
+                    ),
                   ),
                 ),
               ],
@@ -1262,8 +1341,9 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
 
   Widget _buildRadiusChip(double meters, double current, VoidCallback onTap) {
     final isSelected = (current.round() == meters.round());
+    final labelText = meters <= 0 ? 'OFF (0m)' : '${meters.round()} Meter';
     return ChoiceChip(
-      label: Text('${meters.round()} Meter'),
+      label: Text(labelText),
       selected: isSelected,
       onSelected: (_) => onTap(),
       selectedColor: const Color(0xFF0D9488),
@@ -1275,12 +1355,12 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
     );
   }
 
-  // 5. LAYAR OLED SSD1306 128x64 & KONTROL PAGE
+  // 5. LAYAR OLED SSD1306 128x64 & KONTROL PAGE (7 Halaman)
   Widget _buildOledScreenCard(BuildContext context, SmartbandLdrController ctrl) {
     final headingColor = AppColors.textHeadingColor(context);
 
     return Obx(() {
-      final page = ctrl.oledPage.value;
+      final page = ctrl.oledPage.value.clamp(0, 6);
       final isConn = ctrl.isConnected;
 
       return AppCard(
@@ -1306,7 +1386,7 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
                   ),
                 ),
                 Text(
-                  'Halaman ${page + 1}/5',
+                  'Halaman ${page + 1}/7',
                   style: const TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
@@ -1363,16 +1443,16 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
                   const Divider(color: Colors.white, height: 8, thickness: 1),
                   const SizedBox(height: 4),
 
-                  // OLED Dynamic Content (Tergantung Halaman Terpilih)
+                  // OLED Dynamic Content (Tergantung Halaman Terpilih / Alarm)
                   _buildOledPageContent(ctrl, page),
 
                   const SizedBox(height: 8),
                   const Divider(color: Colors.white, height: 8, thickness: 0.5),
 
-                  // OLED Footer Dots (5 Halaman)
+                  // OLED Footer Dots (7 Halaman)
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(6, (i) {
+                    children: List.generate(7, (i) {
                       final active = (i == page);
                       return Container(
                         margin: const EdgeInsets.symmetric(horizontal: 3),
@@ -1415,6 +1495,8 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
                   _buildOledPageButton('4: Langkah', 4, page, () => ctrl.setOledPage(4)),
                   const SizedBox(width: 6),
                   _buildOledPageButton('5: Radius', 5, page, () => ctrl.setOledPage(5)),
+                  const SizedBox(width: 6),
+                  _buildOledPageButton('6: AI Voice', 6, page, () => ctrl.setOledPage(6)),
                 ],
               ),
             ),
@@ -1434,6 +1516,107 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
     final lng = ctrl.longitude.value;
     final dist = ctrl.currentDistanceM.value;
     final rad = ctrl.safeRadiusMeters.value;
+
+    // Prioritas tampilan layar darurat OLED sama persis dengan firmware v2.8.1
+    if (ctrl.isSosButtonPressed.value) {
+      return const Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'SOS!',
+            style: TextStyle(
+              fontFamily: 'monospace',
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFFEF4444),
+            ),
+          ),
+          Text(
+            'SINYAL DARURAT AKTIF',
+            style: TextStyle(
+              fontFamily: 'monospace',
+              fontSize: 10,
+              color: Colors.white,
+            ),
+          ),
+          Text(
+            '1x tekan: matikan getar',
+            style: TextStyle(
+              fontFamily: 'monospace',
+              fontSize: 9,
+              color: Color(0xFF94A3B8),
+            ),
+          ),
+        ],
+      );
+    }
+
+    if (ctrl.isFallDetected.value) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'TERJATUH!',
+            style: TextStyle(
+              fontFamily: 'monospace',
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFFEF4444),
+            ),
+          ),
+          Text(
+            'Kirim darurat ${ctrl.fallCountdownSeconds.value} dtk',
+            style: const TextStyle(
+              fontFamily: 'monospace',
+              fontSize: 10,
+              color: Colors.white,
+            ),
+          ),
+          const Text(
+            'Tekan 1x jika aman',
+            style: TextStyle(
+              fontFamily: 'monospace',
+              fontSize: 9,
+              color: Color(0xFF94A3B8),
+            ),
+          ),
+        ],
+      );
+    }
+
+    if (ctrl.radiusAlertActive.value) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'PERINGATAN JARAK! MENJAUH',
+            style: TextStyle(
+              fontFamily: 'monospace',
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFFEF4444),
+            ),
+          ),
+          Text(
+            dist != null ? '${dist.round()}m' : 'JAUH!',
+            style: const TextStyle(
+              fontFamily: 'monospace',
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+          Text(
+            'Batas: ${rad.round()}m | Klik=Diam',
+            style: const TextStyle(
+              fontFamily: 'monospace',
+              fontSize: 9,
+              color: Color(0xFF94A3B8),
+            ),
+          ),
+        ],
+      );
+    }
 
     switch (page) {
       case 1: // GPS ATGM336H
@@ -1534,7 +1717,9 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
 
       case 4: // Langkah Jalan (Pedometer MPU6050)
         final steps = ctrl.effectiveSteps;
-        final stepDist = steps * 0.70;
+        final stepDist = ctrl.smartbandStepDistanceM.value > 0
+            ? ctrl.smartbandStepDistanceM.value
+            : (steps * SmartbandLdrController.strideLengthMeters);
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -1566,35 +1751,101 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
           ],
         );
 
-      case 5: // Safe Radius
+      case 5: // Safe Radius (Refreshed v2.8.1 UI)
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'SAFE RADIUS',
+                  style: TextStyle(
+                    fontFamily: 'monospace',
+                    fontSize: 11,
+                    color: Colors.white,
+                  ),
+                ),
+                Text(
+                  rad <= 0 ? 'OFF' : 'ON ${rad.round()}m',
+                  style: const TextStyle(
+                    fontFamily: 'monospace',
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF4ADE80),
+                  ),
+                ),
+              ],
+            ),
             Text(
-              'Batas : ${rad.round()} m',
+              rad <= 0
+                  ? 'Mode: Nonaktif'
+                  : (dist != null
+                        ? 'HP: ${dist.round()} m'
+                        : 'HP: Mencari GPS'),
               style: const TextStyle(
                 fontFamily: 'monospace',
-                fontSize: 12,
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
                 color: Colors.white,
               ),
             ),
             Text(
-              dist != null ? 'Jarak : ${dist.toStringAsFixed(1)} m' : 'Jarak : Mencari GPS',
-              style: const TextStyle(
-                fontFamily: 'monospace',
-                fontSize: 12,
-                color: Colors.white,
-              ),
-            ),
-            Text(
-              ctrl.radiusAlertActive.value ? 'STATUS: DI LUAR!' : 'STATUS: AMAN',
+              rad <= 0
+                  ? 'Set di aplikasi [OFF]'
+                  : (ctrl.radiusAlertActive.value
+                        ? 'Batas: ${rad.round()}m [JAUH!]'
+                        : 'Batas: ${rad.round()}m [AMAN]'),
               style: TextStyle(
                 fontFamily: 'monospace',
-                fontSize: 11,
+                fontSize: 10,
                 fontWeight: FontWeight.bold,
                 color: ctrl.radiusAlertActive.value
                     ? const Color(0xFFEF4444)
                     : const Color(0xFF4ADE80),
+              ),
+            ),
+          ],
+        );
+
+      case 6: // AI Voice Assistant (INMP441)
+        final isRec = ctrl.isSmartbandRecordingVoice.value;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  isRec ? 'MENDENGARKAN' : 'HAJICARE AI',
+                  style: TextStyle(
+                    fontFamily: 'monospace',
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: isRec ? const Color(0xFF4ADE80) : Colors.white,
+                  ),
+                ),
+                Text(
+                  isRec ? 'REC ●' : 'INMP441',
+                  style: TextStyle(
+                    fontFamily: 'monospace',
+                    fontSize: 10,
+                    color: isRec ? const Color(0xFFEF4444) : const Color(0xFF94A3B8),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 2),
+            Text(
+              isRec
+                  ? 'Silakan bicara ke mikrofon gelang (1x klik = selesai)...'
+                  : ctrl.aiDisplayText.value,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontFamily: 'monospace',
+                fontSize: 11,
+                color: Colors.white,
               ),
             ),
           ],

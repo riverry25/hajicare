@@ -81,34 +81,33 @@ class SmartbandLdrController extends GetxController {
   final Rxn<double> lastKnownLongitude = Rxn<double>();
 
   // 5. Dynamic Safe Radius
-  final RxDouble safeRadiusMeters = 50.0.obs;
+  final RxDouble safeRadiusMeters = 200.0.obs;
   final RxDouble activeSafeRadius = 200.0.obs;
   final Rxn<double> currentDistanceM = Rxn<double>();
   final RxDouble currentDistanceToPosko = 0.0.obs;
   final RxBool isOutsideSafeRadius = false.obs;
   final RxString safeRadiusStatusLabel = 'Di Dalam Radius Aman'.obs;
   final RxBool radiusAlertActive = false.obs;
+  DateTime? _lastCompGpsSentAt;
+  DateTime? _lastDistanceSentAt;
 
-  /// Panjang rata-rata per langkah jamaah dewasa: 0.70 meter (70 cm)
-  static const double strideLengthMeters = 0.70;
+  /// Panjang rata-rata per langkah sesuai kalibrasi ESP32-S3 (0.65 meter)
+  static const double strideLengthMeters = 0.65;
 
   /// Jumlah langkah sesi aktif (dihitung sejak gelang tersambung / reset)
   final RxInt sessionSteps = 0.obs;
   int _stepBaseline = 0;
   double _lastSentDistance = -1.0;
 
-  /// Hitungan langkah efektif (menghitung dari titik awal / reset)
+  /// Hitungan langkah efektif dari sensor MPU6050
   int get effectiveSteps {
-    if (sessionSteps.value > 0) return sessionSteps.value.clamp(0, 999999);
     final total = stepCount.value;
     if (_stepBaseline > 0 && total >= _stepBaseline) {
       return (total - _stepBaseline).clamp(0, 999999);
     }
-    return total.clamp(0, 999999);
+    if (total > 0) return total.clamp(0, 999999);
+    return sessionSteps.value.clamp(0, 999999);
   }
-
-  DateTime _lastStepAt = DateTime.now();
-  bool _stepPeak = false;
 
   // 6. Action Button / SOS & Haptic
   final RxBool isSosButtonPressed = false.obs;
@@ -119,9 +118,10 @@ class SmartbandLdrController extends GetxController {
   Timer? _sosCountdownTimer;
   Timer? _safeRadiusWatcherTimer;
 
-  // 7. Status Tampilan OLED (Halaman Aktif 0-4)
-  // 0:HR, 1:GPS, 2:Temp, 3:Motion, 4:Safe Radius
+  // 7. Status Tampilan OLED (Halaman Aktif 0-6)
+  // 0:HR, 1:GPS, 2:Temp, 3:Fall, 4:Steps, 5:Safe Radius, 6:AI Voice
   final RxInt oledPage = 0.obs;
+  final RxString aiDisplayText = 'Klik 2x tombol untuk bicara ke AI HajiCare'.obs;
   final RxString lcdLine1 = 'HR:--   T:--.-C'.obs;
   final RxString lcdLine2 = 'STATUS: NORMAL  '.obs;
   RxString get oledLine1 => lcdLine1;
@@ -137,17 +137,19 @@ class SmartbandLdrController extends GetxController {
   final Rxn<double> batteryVoltage = Rxn<double>();
   final RxBool isCharging = false.obs;
 
-  // 9. AI Voice Assistant & Step Counter MPU6050 ESP32-S3 v2.3
+  // 9. AI Voice Assistant & Step Counter MPU6050 ESP32-S3 v2.8.1
   final RxBool isSmartbandRecordingVoice = false.obs;
   final RxDouble smartbandStepDistanceM = 0.0.obs;
   StreamSubscription<bool>? _aiListeningSub;
   StreamSubscription<DocumentSnapshot>? _commandSub;
 
-  // 9. Riwayat Telemetri Dinamis untuk Grafik Tren
+  // 10. Riwayat Telemetri Dinamis untuk Grafik Tren
   final RxList<double> hrHistory = <double>[].obs;
   final RxList<double> tempHistory = <double>[].obs;
   final RxList<double> motionHistory = <double>[].obs;
   final RxList<double> spo2History = <double>[].obs;
+  final RxList<double> gpsSatellitesHistory = <double>[].obs;
+  final RxList<double> distanceHistory = <double>[].obs;
   final RxList<double> stabilityHistory = <double>[].obs;
   final RxList<double> stepHistory = <double>[].obs;
   final RxList<double> batteryHistory = <double>[].obs;
@@ -168,7 +170,11 @@ class SmartbandLdrController extends GetxController {
       case 2:
         return motionHistory;
       case 3:
-        return spo2History;
+        return spo2History.isNotEmpty ? spo2History : gpsSatellitesHistory;
+      case 4:
+        return distanceHistory;
+      case 5:
+        return stepHistory;
       default:
         return hrHistory;
     }
@@ -179,17 +185,24 @@ class SmartbandLdrController extends GetxController {
       case 1:
         return '\u00B0C';
       case 2:
-        return 'G';
+        return 'g';
       case 3:
-        return '%';
+        return spo2History.isNotEmpty ? '%' : 'Sats';
+      case 4:
+        return 'm';
+      case 5:
+        return 'lkh';
       default:
         return 'BPM';
     }
   }
 
   String formatTrendValue(double val) {
-    if (selectedSensorIndex.value == 1) {
+    if (selectedSensorIndex.value == 1 || selectedSensorIndex.value == 4) {
       return val.toStringAsFixed(1);
+    }
+    if (selectedSensorIndex.value == 2) {
+      return val.toStringAsFixed(2);
     }
     return val.toStringAsFixed(0);
   }
@@ -262,19 +275,19 @@ class SmartbandLdrController extends GetxController {
   String get elderlyHeartRateAdvice {
     final hr = heartRate.value ?? 0;
     if (hr == 0) return 'Sensor detak jantung belum aktif.';
-    return 'Detak jantung  BPM berada dalam rentang normal istirahat.';
+    return 'Detak jantung $hr BPM berada dalam rentang normal istirahat.';
   }
 
   String get elderlyTemperatureAdvice {
     final t = mcpTemperature.value ?? temperature.value ?? 0.0;
     if (t == 0.0) return 'Sensor suhu belum aktif.';
-    return 'Suhu tubuh \u00B0C nyaman dan normal.';
+    return 'Suhu tubuh ${t.toStringAsFixed(1)}\u00B0C nyaman dan normal.';
   }
 
   String get elderlySpo2Advice {
     final s = spo2.value ?? 0;
     if (s == 0) return 'Kadar oksigen belum terdeteksi.';
-    return 'Saturasi oksigen % sangat baik.';
+    return 'Saturasi oksigen $s% sangat baik.';
   }
 
   String get elderlyMobilityAdvice {
@@ -338,30 +351,54 @@ class SmartbandLdrController extends GetxController {
   void _startSafeRadiusWatcher() {
     _safeRadiusWatcherTimer?.cancel();
     _safeRadiusWatcherTimer = Timer.periodic(const Duration(milliseconds: 1000), (_) {
-      if (Get.isRegistered<HajiCareController>()) {
-        final hajiCtrl = Get.find<HajiCareController>();
-        final radius = hajiCtrl.safeRadiusMeters.value;
-        if (activeSafeRadius.value != radius) activeSafeRadius.value = radius;
-        if (safeRadiusMeters.value != radius) {
-          safeRadiusMeters.value = radius;
-          if (bleService.isConnected) {
-            bleService.setSafeRadius(radius);
-          }
+      if (!Get.isRegistered<HajiCareController>()) return;
+      final hajiCtrl = Get.find<HajiCareController>();
+      final radius = hajiCtrl.safeRadiusMeters.value;
+      if (activeSafeRadius.value != radius) activeSafeRadius.value = radius;
+      if (safeRadiusMeters.value != radius) {
+        safeRadiusMeters.value = radius;
+        if (bleService.isConnected) {
+          bleService.setSafeRadius(radius);
         }
-        final dist = hajiCtrl.calculatedDistance.value;
+      }
 
-        if (dist != null) {
-          if (currentDistanceToPosko.value != dist) currentDistanceToPosko.value = dist;
-          if (currentDistanceM.value != dist) currentDistanceM.value = dist;
-          _evaluateRadiusAlert(dist);
-        } else {
-          _recalculateDistance();
+      if (!isConnected) {
+        if (currentDistanceM.value != null) currentDistanceM.value = null;
+        if (radiusAlertActive.value) radiusAlertActive.value = false;
+        if (isOutsideSafeRadius.value) isOutsideSafeRadius.value = false;
+        return;
+      }
+
+      final dist = hajiCtrl.calculatedDistance.value;
+      if (dist != null && !dist.isNaN && !dist.isInfinite && dist >= 0) {
+        if (currentDistanceToPosko.value != dist) {
+          currentDistanceToPosko.value = dist;
         }
+        if (currentDistanceM.value != dist) {
+          currentDistanceM.value = dist;
+        }
+        _evaluateRadiusAlert(dist);
+      } else if (bleService.lastData?.distanceM == null) {
+        _recalculateDistance();
+      }
 
-        // Sinkronkan GPS pendamping ke ESP32 jika tersedia
+      // Sinkronkan GPS pendamping (atau GPS HP saat ini sebagai referensi) ke ESP32 setiap 4 detik
+      final now = DateTime.now();
+      if (_lastCompGpsSentAt == null ||
+          now.difference(_lastCompGpsSentAt!).inSeconds >= 4) {
         final compLoc = hajiCtrl.pendampingLocation.value;
-        if (compLoc != null && bleService.isConnected) {
+        final myPos = hajiCtrl.myCurrentPosition.value;
+        if (compLoc != null) {
+          _lastCompGpsSentAt = now;
           bleService.sendCompanionGps(compLoc.latitude, compLoc.longitude);
+        } else if (myPos != null &&
+            (myPos.latitude.abs() > 0.0001 || myPos.longitude.abs() > 0.0001)) {
+          _lastCompGpsSentAt = now;
+          bleService.sendCompanionGps(
+            myPos.latitude,
+            myPos.longitude,
+            myPos.accuracy > 0 ? myPos.accuracy : 10.0,
+          );
         }
       }
     });
@@ -428,6 +465,8 @@ class SmartbandLdrController extends GetxController {
         isFallDetected.value = false;
         currentDistanceM.value = null;
         radiusAlertActive.value = false;
+        isOutsideSafeRadius.value = false;
+        isSmartbandRecordingVoice.value = false;
         heartRateStatus.value = 'Sensor belum tersedia';
         emergencyMessage.value = '';
         lcdLine1.value = 'HR:--   T:--.-C';
@@ -448,12 +487,12 @@ class SmartbandLdrController extends GetxController {
     });
 
     _aiListeningSub?.cancel();
-    _commandSub?.cancel();
     _aiListeningSub = bleService.smartbandAiListeningStream.listen((isListening) {
       isSmartbandRecordingVoice.value = isListening;
       if (isListening) {
+        oledPage.value = 6;
         statusMessage.value = 'Mendengarkan Suara Jamaah (INMP441)...';
-      } else {
+      } else if (isConnected) {
         statusMessage.value = 'Gelang Terhubung';
       }
     });
@@ -513,6 +552,9 @@ class SmartbandLdrController extends GetxController {
       isSensorAvailable.value = true;
       tempHistory.add(data.temperature!);
       if (tempHistory.length > 25) tempHistory.removeAt(0);
+    } else {
+      mcpTemperature.value = null;
+      temperature.value = null;
     }
 
     // 3. MPU6050: Motion G & Fall Status
@@ -520,7 +562,6 @@ class SmartbandLdrController extends GetxController {
       accelG.value = data.accelG;
       motionHistory.add(data.accelG!);
       if (motionHistory.length > 25) motionHistory.removeAt(0);
-      _detectStepFromAccel(data.accelG!);
     } else if (accelG.value == null && isConnected && data.fallStatus != 'UNAVAILABLE') {
       // Inisialisasi baseline 1.00g (gravitasi bumi) saat MPU aktif
       accelG.value = 1.0;
@@ -546,8 +587,12 @@ class SmartbandLdrController extends GetxController {
 
     // 4. GPS ATGM336H: Satelit & Koordinat
     gpsSatellites.value = data.satellites;
-    isGpsFix.value = data.isValidLocation;
-    if (data.isValidLocation &&
+    if (data.satellites != null) {
+      gpsSatellitesHistory.add(data.satellites!.toDouble());
+      if (gpsSatellitesHistory.length > 25) gpsSatellitesHistory.removeAt(0);
+    }
+    isGpsFix.value = data.isGpsFix;
+    if (data.isGpsFix &&
         data.latitude != null &&
         data.longitude != null) {
       latitude.value = data.latitude;
@@ -570,8 +615,18 @@ class SmartbandLdrController extends GetxController {
     }
     if (data.stepDistanceM != null) {
       smartbandStepDistanceM.value = data.stepDistanceM!;
+    } else if (data.stepCount != null) {
+      smartbandStepDistanceM.value = data.stepCount! * strideLengthMeters;
     }
     isSmartbandRecordingVoice.value = data.isAiListening;
+    if (data.isAiListening) {
+      oledPage.value = 6;
+    } else if (data.oledPage != null) {
+      oledPage.value = data.oledPage!;
+    }
+    if (data.aiText != null && data.aiText!.isNotEmpty) {
+      aiDisplayText.value = data.aiText!;
+    }
     if (data.batteryLevel != null) {
       batteryPercent.value = data.batteryLevel!;
       batteryHistory.add(data.batteryLevel!.toDouble());
@@ -582,17 +637,50 @@ class SmartbandLdrController extends GetxController {
     }
     isCharging.value = data.isCharging;
 
-    // 6. Dynamic Safe Radius & Jarak Per Langkah Realtime
-    safeRadiusMeters.value = data.safeRadius;
-    _recalculateDistance();
+    // 6. Dynamic Safe Radius & Jarak Realtime
+    if (data.hasSafeRadiusFromBand) {
+      safeRadiusMeters.value = data.safeRadius;
+      activeSafeRadius.value = data.safeRadius;
+      if (Get.isRegistered<HajiCareController>()) {
+        final hajiCtrl = Get.find<HajiCareController>();
+        if (hajiCtrl.safeRadiusMeters.value != data.safeRadius) {
+          hajiCtrl.safeRadiusMeters.value = data.safeRadius;
+        }
+      }
+    }
+    if (data.distanceM != null) {
+      currentDistanceM.value = data.distanceM;
+      currentDistanceToPosko.value = data.distanceM!;
+      distanceHistory.add(data.distanceM!);
+      if (distanceHistory.length > 25) distanceHistory.removeAt(0);
+      final rad = safeRadiusMeters.value;
+      final isOut = data.radiusAlert || (rad > 0 && data.distanceM! > rad);
+      radiusAlertActive.value = isOut;
+      isOutsideSafeRadius.value = isOut;
+      safeRadiusStatusLabel.value =
+          isOut ? 'Di Luar Radius Aman' : 'Di Dalam Radius Aman';
+    } else {
+      _recalculateDistance();
+      if (data.radiusAlert && !radiusAlertActive.value) {
+        radiusAlertActive.value = true;
+        isOutsideSafeRadius.value = true;
+        safeRadiusStatusLabel.value = 'Di Luar Radius Aman';
+      }
+    }
 
     // 7. Action Button / SOS & Fall Alerts
     if (data.isSos) {
       triggerSosButtonAlert();
     } else if (isSosButtonPressed.value) {
       cancelSosButtonAlert();
-    } else if (data.fallDetected) {
-      triggerFallAlert();
+    }
+
+    if (data.fallDetected) {
+      if (!isFallDetected.value) {
+        triggerFallAlert();
+      }
+    } else if (isFallDetected.value) {
+      cancelFallAlert();
     }
 
     // Update Baris OLED
@@ -717,15 +805,27 @@ class SmartbandLdrController extends GetxController {
     } catch (_) {}
   }
 
-  /// Pindah halaman OLED gelang dari HP (0:HR, 1:GPS, 2:Temp, 3:Motion, 4:Safe Radius)
+  /// Pindah halaman OLED gelang dari HP (0:HR, 1:GPS, 2:Temp, 3:Fall, 4:Steps, 5:Safe Radius, 6:AI Voice)
   Future<void> setOledPage(int page) async {
-    oledPage.value = page;
-    await bleService.setOledPage(page);
+    oledPage.value = page.clamp(0, 6);
+    await bleService.setOledPage(oledPage.value);
   }
 
   /// Ubah batas Safe Radius pada gelang secara dinamis
   Future<void> setSafeRadius(double radiusMeters) async {
     safeRadiusMeters.value = radiusMeters;
+    activeSafeRadius.value = radiusMeters;
+    if (Get.isRegistered<HajiCareController>()) {
+      final hajiCtrl = Get.find<HajiCareController>();
+      if (hajiCtrl.safeRadiusMeters.value != radiusMeters) {
+        hajiCtrl.safeRadiusMeters.value = radiusMeters;
+      }
+    }
+    if (radiusMeters <= 0) {
+      radiusAlertActive.value = false;
+      isOutsideSafeRadius.value = false;
+      safeRadiusStatusLabel.value = 'Radius Aman Nonaktif (OFF)';
+    }
     await bleService.setSafeRadius(radiusMeters);
     _lastSentDistance = -1.0;
     _recalculateDistance();
@@ -938,27 +1038,16 @@ class SmartbandLdrController extends GetxController {
     if (diff.inSeconds < 5) {
       if (relativeTimeText.value != 'Baru saja') relativeTimeText.value = 'Baru saja';
     } else if (diff.inSeconds < 60) {
-      if (relativeTimeText.value != ' detik lalu') relativeTimeText.value = ' detik lalu';
+      final s = '${diff.inSeconds} detik lalu';
+      if (relativeTimeText.value != s) relativeTimeText.value = s;
     } else if (diff.inMinutes < 60) {
-      if (relativeTimeText.value != ' menit lalu') relativeTimeText.value = ' menit lalu';
+      final m = '${diff.inMinutes} menit lalu';
+      if (relativeTimeText.value != m) relativeTimeText.value = m;
     } else {
-      if (relativeTimeText.value != ' jam lalu') relativeTimeText.value = ' jam lalu';
+      final h = '${diff.inHours} jam lalu';
+      if (relativeTimeText.value != h) relativeTimeText.value = h;
     }
     if (relativeTimeStr.value != relativeTimeText.value) relativeTimeStr.value = relativeTimeText.value;
-  }
-
-  /// Deteksi langkah kaki dinamis dari fluktuasi akselerometer MPU6050
-  void _detectStepFromAccel(double g) {
-    if (g.isNaN || g.isInfinite || g <= 0) return;
-    if (stepCount.value > 0) return;
-    final now = DateTime.now();
-    if (g > 1.25 && !_stepPeak && now.difference(_lastStepAt).inMilliseconds > 300) {
-      _stepPeak = true;
-      _lastStepAt = now;
-      sessionSteps.value++;
-    } else if (g < 1.05) {
-      _stepPeak = false;
-    }
   }
 
   /// Hitung jarak riil jamaah (Smartband + HP) ke lokasi Pendamping
@@ -968,27 +1057,41 @@ class SmartbandLdrController extends GetxController {
       return;
     }
 
-    // 1. Jarak riil GPS Jamaah (HP/Smartband) ke Pendamping via Room
+    // 1. Jarak riil dari Smartband jika sudah dihitung oleh ESP32
+    final bandDist = bleService.lastData?.distanceM;
+    if (bandDist != null && !bandDist.isNaN && !bandDist.isInfinite && bandDist >= 0) {
+      currentDistanceM.value = bandDist;
+      currentDistanceToPosko.value = bandDist;
+      _evaluateRadiusAlert(bandDist, fromBand: true);
+      return;
+    }
+
+    // 2. Jarak riil GPS Jamaah (HP/Smartband) ke Pendamping via Room
     if (Get.isRegistered<HajiCareController>()) {
       final hajiCtrl = Get.find<HajiCareController>();
       final dist = hajiCtrl.calculatedDistance.value;
-      if (dist != null && dist >= 0) {
+      if (dist != null && !dist.isNaN && !dist.isInfinite && dist >= 0) {
         currentDistanceM.value = dist;
         currentDistanceToPosko.value = dist;
         _evaluateRadiusAlert(dist);
         return;
       }
 
-      // 2. Jika GPS Smartband fix & ada lokasi pendamping terdaftar di Room
+      // 3. Jika GPS Smartband fix & ada lokasi pendamping (atau HP)
       if (isGpsFix.value && latitude.value != null && longitude.value != null) {
         final compLoc = hajiCtrl.pendampingLocation.value;
-        if (compLoc != null) {
+        final myPos = hajiCtrl.myCurrentPosition.value;
+        final refLat = compLoc?.latitude ?? myPos?.latitude;
+        final refLon = compLoc?.longitude ?? myPos?.longitude;
+        if (refLat != null &&
+            refLon != null &&
+            (refLat.abs() > 0.0001 || refLon.abs() > 0.0001)) {
           final locService = LocationService();
           final d = locService.calculateDistanceMeters(
             latitude.value!,
             longitude.value!,
-            compLoc.latitude,
-            compLoc.longitude,
+            refLat,
+            refLon,
           );
           currentDistanceM.value = d;
           currentDistanceToPosko.value = d;
@@ -998,43 +1101,46 @@ class SmartbandLdrController extends GetxController {
       }
     }
 
-    // 3. Jika belum terhubung ke Room / pendamping belum membagikan lokasi GPS
+    // 4. Jika belum terhubung ke Room / belum ada GPS referensi
     currentDistanceM.value = null;
   }
 
-  void _evaluateRadiusAlert(double dist) {
+  void _evaluateRadiusAlert(double dist, {bool fromBand = false}) {
     if (dist.isNaN || dist.isInfinite || dist < 0) return;
     final rad = safeRadiusMeters.value;
     final isOut = rad > 0 && dist > rad;
+    final stateChanged = isOut != radiusAlertActive.value;
 
-    if (isOut != radiusAlertActive.value) {
+    if (stateChanged) {
       radiusAlertActive.value = isOut;
       isOutsideSafeRadius.value = isOut;
       safeRadiusStatusLabel.value = isOut ? 'Di Luar Radius Aman' : 'Di Dalam Radius Aman';
       lcdLine2.value = isOut ? '!LUAR RADIUS !' : 'STATUS: NORMAL  ';
       bleService.sendCommand(isOut ? 'RADIUS_ALERT:1' : 'RADIUS_ALERT:0');
-      if (isOut) {
-        bleService.sendCommand('VIBRATE');
-        bleService.sendCommand('BUZZ');
-      } else {
-        bleService.sendCommand('STOP_BUZZ');
-      }
     }
-    // Kirim sinkronisasi jarak ke gelang jika berubah >= 0.5m atau status alert berubah
-    if ((dist - _lastSentDistance).abs() >= 0.5 || isOut != radiusAlertActive.value) {
-      _lastSentDistance = dist;
-      bleService.sendDistance(dist, rad);
+
+    // Kirim sinkronisasi jarak ke gelang jika berasal dari kalkulasi HP (maks 1x per 3 detik atau saat status berubah)
+    if (!fromBand) {
+      final now = DateTime.now();
+      final elapsedOk = _lastDistanceSentAt == null ||
+          now.difference(_lastDistanceSentAt!).inSeconds >= 3;
+      if (stateChanged || ((dist - _lastSentDistance).abs() >= 1.0 && elapsedOk)) {
+        _lastSentDistance = dist;
+        _lastDistanceSentAt = now;
+        bleService.sendDistance(dist);
+      }
     }
   }
 
-  /// Tambah langkah (untuk pedometer MPU6050)
+  /// Tambah langkah (kompatibilitas pengujian)
   void addStep([int count = 1]) {
     sessionSteps.value = effectiveSteps + count;
   }
 
-  /// Reset titik awal langkah pedometer
+  /// Reset titik awal langkah pedometer pada aplikasi dan memori ESP32-S3
   void resetStepDistance() {
-    _stepBaseline = stepCount.value;
+    _stepBaseline = 0;
+    stepCount.value = 0;
     sessionSteps.value = 0;
     smartbandStepDistanceM.value = 0.0;
     bleService.resetSteps();

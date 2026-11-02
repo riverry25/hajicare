@@ -146,5 +146,19 @@ class SmartbandForegroundService {
       return false;
     }
   }
+
+  /// Meminta izin runtime Bluetooth (BLUETOOTH_SCAN & BLUETOOTH_CONNECT pada Android 12+)
+  static Future<bool> ensureBlePermissions() async {
+    if (kIsWeb || defaultTargetPlatform != TargetPlatform.android) {
+      return true;
+    }
+
+    try {
+      final res = await _channel.invokeMethod<bool>('ensureBlePermissions');
+      return res ?? true;
+    } catch (_) {
+      return true;
+    }
+  }
 }
 
