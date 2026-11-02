@@ -122,7 +122,7 @@ class SmartbandLdrController extends GetxController {
   // 7. Status Tampilan OLED (Halaman Aktif 0-4)
   // 0:HR, 1:GPS, 2:Temp, 3:Motion, 4:Safe Radius
   final RxInt oledPage = 0.obs;
-  final RxString lcdLine1 = 'HR:--   SpO2:--%'.obs;
+  final RxString lcdLine1 = 'HR:--   T:--.-C'.obs;
   final RxString lcdLine2 = 'STATUS: NORMAL  '.obs;
   RxString get oledLine1 => lcdLine1;
   RxString get oledLine2 => lcdLine2;
@@ -371,6 +371,26 @@ class SmartbandLdrController extends GetxController {
     bleStatus.value = bleService.currentStatus;
     _syncLegacyState(bleService.currentStatus);
 
+    // Langsung muat data terbaru jika BLE service sudah memiliki telemetri aktif
+    if (bleService.lastData != null) {
+      _processSmartbandData(bleService.lastData!);
+    } else {
+      final snapshot = _storage.loadStoredData();
+      if (snapshot.hasAnyData && !bleService.isConnected) {
+        if (snapshot.heartRate != null && snapshot.heartRate! > 0) {
+          heartRate.value = snapshot.heartRate;
+        }
+        if (snapshot.temperature != null && snapshot.temperature! > 0) {
+          mcpTemperature.value = snapshot.temperature;
+          temperature.value = snapshot.temperature;
+        }
+        if (snapshot.stepCount != null) {
+          stepCount.value = snapshot.stepCount!;
+        }
+        hasRestoredData.value = true;
+      }
+    }
+
     _bleStatusSub = bleService.connectionStateStream.listen((status) {
       bleStatus.value = status;
       _syncLegacyState(status);
@@ -378,6 +398,9 @@ class SmartbandLdrController extends GetxController {
       if (status == SmartbandBleStatus.connected) {
         errorMessage.value = '';
         statusMessage.value = 'Gelang Terhubung';
+        if (bleService.lastData != null) {
+          _processSmartbandData(bleService.lastData!);
+        }
         _lastSentDistance = -1.0;
         if (Get.isRegistered<HajiCareController>()) {
           final rad = Get.find<HajiCareController>().safeRadiusMeters.value;
@@ -407,7 +430,7 @@ class SmartbandLdrController extends GetxController {
         radiusAlertActive.value = false;
         heartRateStatus.value = 'Sensor belum tersedia';
         emergencyMessage.value = '';
-        lcdLine1.value = 'HR:--   SpO2:--%';
+        lcdLine1.value = 'HR:--   T:--.-C';
         lcdLine2.value = 'STATUS: NORMAL  ';
       } else if (status == SmartbandBleStatus.scanning) {
         statusMessage.value = 'Memindai sinyal gelang...';

@@ -118,8 +118,8 @@ class SmartbandData {
       return s.length > 16 ? s.substring(0, 16) : s.padRight(16);
     }
     final hrStr = heartRate > 0 ? heartRate.toString().padLeft(3) : ' --';
-    final oxStr = spo2 != null ? '$spo2%' : '--%';
-    final line = 'HR:$hrStr  SpO2:$oxStr';
+    final tempStr = temperature != null ? '${temperature!.toStringAsFixed(1)}C' : '--.-C';
+    final line = 'HR:$hrStr T:$tempStr';
     return line.length > 16 ? line.substring(0, 16) : line.padRight(16);
   }
 

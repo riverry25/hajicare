@@ -1409,12 +1409,6 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
             ? hc.warning
             : hc.islamic;
 
-    final spo2Color = _isSpo2Critical
-        ? hc.danger
-        : _isSpo2Warning
-            ? hc.warning
-            : hc.islamic;
-
     final fallColor = _isFallen ? hc.danger : hc.islamic;
     final radiusColor = _isOutOfSafeRadius ? hc.danger : hc.islamic;
 
@@ -1509,16 +1503,12 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
             children: [
               Expanded(
                 child: _buildMetricTile(
-                  icon: Icons.air_rounded,
-                  iconColor: spo2Color,
-                  label: context.tr('room.smartbandSpo2'),
-                  value: _spo2 != null && _spo2! > 0 ? '$_spo2%' : '--',
-                  subtitle: _isSpo2Critical
-                      ? 'Hipoksia'
-                      : _isSpo2Warning
-                          ? 'Rendah'
-                          : 'Optimal',
-                  statusColor: spo2Color,
+                  icon: Icons.directions_walk_rounded,
+                  iconColor: const Color(0xFF7C3AED),
+                  label: 'Langkah Jalan',
+                  value: _steps != null && _steps! > 0 ? '$_steps lkh' : '--',
+                  subtitle: _steps != null && _steps! > 0 ? 'Aktif' : 'Pedo MPU6050',
+                  statusColor: const Color(0xFF7C3AED),
                   hc: hc,
                 ),
               ),

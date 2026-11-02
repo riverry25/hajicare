@@ -359,11 +359,11 @@ class SmartbandBleService {
       _log('CONNECT SUCCESS');
       _log('CONNECTION STATE:\nCONNECTED');
 
-      // Negosiasi MTU 247 dan prioritas koneksi tinggi (untuk stream audio INMP441)
+      // Negosiasi MTU 512 dan prioritas koneksi tinggi (untuk stream audio INMP441 & paket telemetri utuh)
       if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
         try {
-          _log('REQUEST MTU 247');
-          final mtu = await device.requestMtu(247);
+          _log('REQUEST MTU 512');
+          final mtu = await device.requestMtu(512);
           _log('MTU NEGOTIATED: $mtu');
         } catch (e) {
           _log('Peringatan: Gagal negosiasi MTU: $e');
@@ -728,11 +728,12 @@ class SmartbandBleService {
     if (_isDisposed || bytes.isEmpty) return;
 
     try {
-      final rawString = utf8.decode(bytes, allowMalformed: true).trim();
-      if (rawString.isEmpty) return;
+      final rawString = utf8.decode(bytes, allowMalformed: true);
+      final trimmed = rawString.trim();
+      if (trimmed.isEmpty) return;
 
       // Cek apakah paket adalah event kontrol suara AI (AI_START / AI_END)
-      if (rawString.contains('AI_START')) {
+      if (trimmed.contains('AI_START')) {
         _isSmartbandRecordingVoice = true;
         _pcmAudioBuffer.clear();
         _resetAudioSilenceWatchdog();
@@ -741,13 +742,13 @@ class SmartbandBleService {
         }
         _log('EVENT AI_START: Smartband mic INMP441 mulai merekam');
         return;
-      } else if (rawString.contains('AI_END')) {
+      } else if (trimmed.contains('AI_END')) {
         _log('EVENT AI_END: Smartband mic selesai dari hardware');
         _finalizePcmAudioRecording();
         return;
       }
 
-      String jsonToParse = rawString;
+      String jsonToParse = trimmed;
 
       // Cek apakah paket adalah fragment (~%02X%02X%02X:payload)
       if (rawString.startsWith('~') &&
@@ -773,7 +774,7 @@ class SmartbandBleService {
         for (int i = 0; i < _expectedTotal; i++) {
           sb.write(_fragmentParts[i] ?? '');
         }
-        jsonToParse = sb.toString();
+        jsonToParse = sb.toString().trim();
         _fragmentParts.clear();
       }
 

@@ -214,9 +214,8 @@ class SensorContextLiveCard extends StatelessWidget {
                               width: itemWidth,
                               child: _MetricTile(
                                 icon: Icons.directions_walk_rounded,
-                                label: context.tr('ai.metricStepsSpo2'),
-                                value:
-                                    '${sensor.stepCount ?? 0} lkh • ${sensor.spo2Percent ?? "--"}%',
+                                label: 'Langkah Kaki',
+                                value: '${sensor.stepCount ?? 0} lkh',
                                 isWarning: false,
                                 accentColor: hc.primary,
                               ),
