@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/widgets.dart';
 
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -44,7 +45,7 @@ class AiPromptTopic {
 /// - 100% menggunakan data nyata dari seluruh aplikasi (GPS HP, Jarak Pendamping,
 ///   Room/Kloter/Maktab, Jadwal Salat, Kiblat, SOS, Notifikasi, dan BLE Gelang Asli).
 /// - Mendukung efek pengetikan kata demi kata (*word-by-word streaming*).
-class HajiCareAiController extends GetxController {
+class HajiCareAiController extends GetxController with WidgetsBindingObserver {
   HajiCareAiController({
     AiAssistantRepository? repository,
     AiVoiceService? voiceService,
@@ -179,6 +180,7 @@ class HajiCareAiController extends GetxController {
   final RxString currentTurnQuestion = ''.obs;
   final RxString currentTurnReply = ''.obs;
   final RxBool isMuted = false.obs;
+  final RxBool isAppInForeground = true.obs;
 
   int _turnGeneration = 0;
   StreamSubscription<AiTurnEvent>? _currentTurnSubscription;
@@ -207,6 +209,7 @@ class HajiCareAiController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    WidgetsBinding.instance.addObserver(this);
     _refreshSensorSnapshot();
     _seedInitialWelcomeMessage();
     _bindVoiceCallbacks();
@@ -343,7 +346,7 @@ class HajiCareAiController extends GetxController {
             voiceStatusMessage.value = 'Mendengarkan suara dari Smartband (INMP441)...';
             recognizedText.value = 'Mendengarkan ucapan Anda dari gelang...';
 
-            if (Get.currentRoute != AppRoutes.aiAssistant) {
+            if (isAppInForeground.value && Get.currentRoute != AppRoutes.aiAssistant) {
               Get.toNamed(AppRoutes.aiAssistant);
             }
           } else {
@@ -409,8 +412,12 @@ class HajiCareAiController extends GetxController {
       recognizedText.value = text;
       AppLogger.info('Smartband STT berhasil ditranskripsi: "$text"', tag: 'HajiCareAi');
 
-      // Jalankan proses tanya-jawab AI streaming otomatis & bacakan via TTS
-      await sendQuestion(text, autoSpeak: !isMuted.value);
+      // Jalankan proses tanya-jawab AI streaming otomatis.
+      // Jika HP di saku / layar terkunci (!isAppInForeground.value):
+      // TTS speaker dimatikan agar senyap di saku, jawaban hanya tampil di layar OLED gelang.
+      // Jika HP dibuka di foreground, TTS dibacakan normal.
+      final shouldAutoSpeak = isAppInForeground.value && !isMuted.value;
+      await sendQuestion(text, autoSpeak: shouldAutoSpeak);
     } catch (e) {
       AppLogger.error('Gagal memproses audio dari smartband: $e', tag: 'HajiCareAi');
       unawaited(_repository.smartbandBridge.streamTokenToSmartbandOled('Gagal proses audio', isFinal: true));
@@ -987,7 +994,18 @@ class HajiCareAiController extends GetxController {
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    isAppInForeground.value = (state == AppLifecycleState.resumed);
+    AppLogger.debug(
+      'HajiCare AI lifecycle changed: $state (isAppInForeground=${isAppInForeground.value})',
+      tag: 'HajiCareAi',
+    );
+  }
+
+  @override
   void onClose() {
+    WidgetsBinding.instance.removeObserver(this);
     _currentTurnSubscription?.cancel();
     _smartbandAiListeningSub?.cancel();
     _smartbandAudioSub?.cancel();

@@ -12,6 +12,7 @@ import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/app_card.dart';
 import '../../../core/widgets/hajicare_header.dart';
 import '../controllers/smartband_ldr_controller.dart';
+import '../widgets/battery_optimization_sheet.dart';
 import '../services/smartband_ble_service.dart';
 
 /// Halaman Utama Pemantauan Smartband HajiCare ESP32-S3 Pro v2.0
@@ -517,7 +518,13 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
                 ],
               ),
             ),
-            const SizedBox(width: 8),
+            IconButton(
+              onPressed: () => BatteryOptimizationSheet.show(context),
+              icon: const Icon(Icons.battery_saver_rounded, size: 20),
+              tooltip: 'Setelan Latar Belakang 24/7',
+              color: AppColors.primaryGold,
+            ),
+            const SizedBox(width: 4),
             isConn
                 ? OutlinedButton.icon(
                     onPressed: () => ctrl.disconnectSmartband(),

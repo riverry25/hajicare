@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import '../models/smartband_data.dart';
+import 'smartband_foreground_service.dart';
 
 /// Enum representasi status koneksi BLE Smartband
 enum SmartbandBleStatus { disconnected, scanning, connecting, connected }
@@ -381,6 +382,12 @@ class SmartbandBleService {
       await discoverServices(device);
 
       _emitStatus(SmartbandBleStatus.connected);
+      unawaited(
+        SmartbandForegroundService.startService(
+          title: 'HajiCare Smartband Terhubung',
+          message: '❤️ Monitor Sensor & AI Siaga 24/7',
+        ),
+      );
     } catch (e) {
       _log('CONNECT FAILED');
       _log('error: $e');
@@ -767,6 +774,15 @@ class SmartbandBleService {
         _smartbandDataController.add(parsedData);
       }
 
+      final bpmStr = parsedData.heartRate > 0 ? '${parsedData.heartRate} BPM' : 'Aktif';
+      final alertStr = parsedData.fallDetected ? ' • ⚠️ JATUH TERDETEKSI' : '';
+      unawaited(
+        SmartbandForegroundService.updateNotification(
+          title: 'HajiCare Smartband Terhubung',
+          message: '❤️ $bpmStr • AI Siaga$alertStr',
+        ),
+      );
+
       _log('PARSED BLE DATA');
       _log('braceletId: ${parsedData.braceletId}');
       _log('heartRate: ${parsedData.heartRate}');
@@ -788,6 +804,12 @@ class SmartbandBleService {
     _log('DISCONNECTED: $reason');
     _cleanUpDeviceState();
     _emitStatus(SmartbandBleStatus.disconnected);
+    unawaited(
+      SmartbandForegroundService.updateNotification(
+        title: 'HajiCare Smartband',
+        message: 'Menyambungkan kembali ke gelang...',
+      ),
+    );
 
     if (!_isManualDisconnect && _lastKnownDevice != null && !_isDisposed) {
       _scheduleAutoReconnect();
@@ -874,6 +896,7 @@ class SmartbandBleService {
     } finally {
       _cleanUpDeviceState();
       _emitStatus(SmartbandBleStatus.disconnected);
+      unawaited(SmartbandForegroundService.stopService());
       _log('Koneksi Smartband telah terputus.');
     }
   }

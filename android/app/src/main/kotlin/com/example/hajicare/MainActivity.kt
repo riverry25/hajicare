@@ -28,6 +28,7 @@ class MainActivity : FlutterFragmentActivity() {
         private const val PREVIEW_VIEW_TYPE = "com.hajicare.bisindo/camera_preview"
         private const val CAMERA_PERMISSION_REQUEST_CODE = 1001
         private const val TTS_INSTALLER_CHANNEL = "com.hajicare.tts/voice_installer"
+        private const val SMARTBAND_SERVICE_CHANNEL = "com.hajicare/smartband_background_service"
     }
 
     private var cameraHelper: BisindoCameraHelper? = null
@@ -336,6 +337,99 @@ class MainActivity : FlutterFragmentActivity() {
                             Log.e("ADHAN_MAIN", "Error cancelling all native adhans: ${e.message}", e)
                             result.error("CANCEL_ALL_FAILED", e.message, null)
                         }
+
+        // 6. Setup MethodChannel for Smartband 24/7 Foreground Service & Battery Optimization
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, SMARTBAND_SERVICE_CHANNEL)
+            .setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "startService" -> {
+                        try {
+                            val title = call.argument<String>("title") ?: "HajiCare Smartband Terhubung"
+                            val message = call.argument<String>("message") ?: "Monitor Sensor & AI Siaga 24/7"
+                            val intent = Intent(this, SmartbandBackgroundService::class.java).apply {
+                                action = SmartbandBackgroundService.ACTION_START
+                                putExtra(SmartbandBackgroundService.EXTRA_TITLE, title)
+                                putExtra(SmartbandBackgroundService.EXTRA_MESSAGE, message)
+                            }
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                ContextCompat.startForegroundService(this, intent)
+                            } else {
+                                startService(intent)
+                            }
+                            result.success(true)
+                        } catch (e: Exception) {
+                            Log.e("SmartbandBg", "Error starting SmartbandBackgroundService: ${e.message}", e)
+                            result.error("START_FAILED", e.message, null)
+                        }
+                    }
+                    "updateNotification" -> {
+                        try {
+                            val title = call.argument<String>("title") ?: "HajiCare Smartband Terhubung"
+                            val message = call.argument<String>("message") ?: "Monitor Sensor & AI Siaga 24/7"
+                            val intent = Intent(this, SmartbandBackgroundService::class.java).apply {
+                                action = SmartbandBackgroundService.ACTION_UPDATE
+                                putExtra(SmartbandBackgroundService.EXTRA_TITLE, title)
+                                putExtra(SmartbandBackgroundService.EXTRA_MESSAGE, message)
+                            }
+                            startService(intent)
+                            result.success(true)
+                        } catch (e: Exception) {
+                            result.error("UPDATE_FAILED", e.message, null)
+                        }
+                    }
+                    "stopService" -> {
+                        try {
+                            val intent = Intent(this, SmartbandBackgroundService::class.java).apply {
+                                action = SmartbandBackgroundService.ACTION_STOP
+                            }
+                            startService(intent)
+                            result.success(true)
+                        } catch (e: Exception) {
+                            result.error("STOP_FAILED", e.message, null)
+                        }
+                    }
+                    "isServiceRunning" -> {
+                        result.success(SmartbandBackgroundService.isRunning)
+                    }
+                    "requestIgnoreBatteryOptimizations" -> {
+                        try {
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                                val pm = getSystemService(Context.POWER_SERVICE) as? android.os.PowerManager
+                                val isIgnoring = pm?.isIgnoringBatteryOptimizations(packageName) ?: false
+                                if (!isIgnoring) {
+                                    val intent = Intent(android.provider.Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+                                        data = android.net.Uri.parse("package:$packageName")
+                                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                    }
+                                    startActivity(intent)
+                                }
+                                result.success(true)
+                            } else {
+                                result.success(true)
+                            }
+                        } catch (e: Exception) {
+                            try {
+                                val intent = Intent(android.provider.Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS).apply {
+                                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                }
+                                startActivity(intent)
+                                result.success(true)
+                            } catch (e2: Exception) {
+                                result.error("BATTERY_OPT_FAILED", e2.message, null)
+                            }
+                        }
+                    }
+                    "isBatteryOptimizationIgnored" -> {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                            val pm = getSystemService(Context.POWER_SERVICE) as? android.os.PowerManager
+                            result.success(pm?.isIgnoringBatteryOptimizations(packageName) ?: false)
+                        } else {
+                            result.success(true)
+                        }
+                    }
+                    else -> result.notImplemented()
+                }
+            }
                     }
                     else -> result.notImplemented()
                 }

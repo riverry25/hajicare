@@ -5,6 +5,7 @@ import '../../../core/locales/app_localizations.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/theme_context.dart';
+import '../../smartband/widgets/battery_optimization_sheet.dart';
 import '../models/sensor_context.dart';
 
 /// Kartu **Konteks Sensor Gelang & Data Aplikasi Real-Time (Tanpa Simulasi)**.
@@ -114,6 +115,19 @@ class SensorContextLiveCard extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                         ),
                       ],
+                    ),
+                  ),
+                  IconButton(
+                    visualDensity: VisualDensity.compact,
+                    tooltip: 'Mode Latar Belakang 24/7 (Baterai)',
+                    onPressed: () {
+                      HapticFeedback.selectionClick();
+                      BatteryOptimizationSheet.show(context);
+                    },
+                    icon: Icon(
+                      Icons.battery_saver_rounded,
+                      size: 18,
+                      color: hc.textSecondary,
                     ),
                   ),
                   IconButton(
