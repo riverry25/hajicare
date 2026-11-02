@@ -342,7 +342,12 @@ class SmartbandLdrController extends GetxController {
         final hajiCtrl = Get.find<HajiCareController>();
         final radius = hajiCtrl.safeRadiusMeters.value;
         if (activeSafeRadius.value != radius) activeSafeRadius.value = radius;
-        if (safeRadiusMeters.value != radius) safeRadiusMeters.value = radius;
+        if (safeRadiusMeters.value != radius) {
+          safeRadiusMeters.value = radius;
+          if (bleService.isConnected) {
+            bleService.setSafeRadius(radius);
+          }
+        }
         final dist = hajiCtrl.calculatedDistance.value;
 
         if (dist != null) {
@@ -351,6 +356,12 @@ class SmartbandLdrController extends GetxController {
           _evaluateRadiusAlert(dist);
         } else {
           _recalculateDistance();
+        }
+
+        // Sinkronkan GPS pendamping ke ESP32 jika tersedia
+        final compLoc = hajiCtrl.pendampingLocation.value;
+        if (compLoc != null && bleService.isConnected) {
+          bleService.sendCompanionGps(compLoc.latitude, compLoc.longitude);
         }
       }
     });
@@ -368,6 +379,10 @@ class SmartbandLdrController extends GetxController {
         errorMessage.value = '';
         statusMessage.value = 'Gelang Terhubung';
         _lastSentDistance = -1.0;
+        if (Get.isRegistered<HajiCareController>()) {
+          final rad = Get.find<HajiCareController>().safeRadiusMeters.value;
+          bleService.setSafeRadius(rad);
+        }
         _recalculateDistance();
       } else if (status == SmartbandBleStatus.disconnected) {
         statusMessage.value = 'Gelang Belum Terhubung';

@@ -515,6 +515,17 @@ class SmartbandBleService {
     return sendCommand('RADIUS:${radiusMeters.round()}');
   }
 
+  /// Kirim lokasi GPS pendamping ke ESP32 agar gelang dapat menghitung jarak mandiri
+  Future<bool> sendCompanionGps(
+    double lat,
+    double lon, [
+    double accuracyM = 10.0,
+  ]) async {
+    return sendCommand(
+      'COMP_GPS:${lat.toStringAsFixed(6)},${lon.toStringAsFixed(6)},${accuracyM.toStringAsFixed(1)}',
+    );
+  }
+
   /// Kirim jarak jemaah ke pendamping (meter)
   Future<bool> sendDistance(double distanceM, [double? safeRadius]) async {
     if (safeRadius != null) {

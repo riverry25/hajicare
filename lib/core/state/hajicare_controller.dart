@@ -17,6 +17,7 @@ import '../../features/room/services/room_service.dart';
 import '../../features/sos/services/sos_service.dart';
 import '../../features/sos/services/sos_validation_tracker_service.dart';
 import '../../features/notification/controllers/notification_controller.dart';
+import '../../features/smartband/services/smartband_ble_service.dart';
 
 export '../models/jamaah_data.dart';
 export '../../features/room/models/room_model.dart';
@@ -1118,6 +1119,12 @@ class HajiCareController extends GetxController {
     final previousRadius = safeRadiusMeters.value;
     safeRadiusMeters.value = radius;
     _recalculateRealDistance();
+    if (Get.isRegistered<SmartbandBleService>()) {
+      final ble = Get.find<SmartbandBleService>();
+      if (ble.isConnected) {
+        ble.setSafeRadius(radius);
+      }
+    }
     final roomId = activeRoomId.value;
     if (roomId != null && roomId.isNotEmpty) {
       try {
