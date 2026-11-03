@@ -16,6 +16,7 @@ import '../bindings/hajicare_ai_binding.dart';
 import '../controllers/hajicare_ai_controller.dart';
 import '../models/ai_chat_message.dart';
 import '../models/ai_voice_phase.dart';
+import 'ai_server_settings_dialog.dart';
 import 'oled_smartband_preview_card.dart';
 import 'sensor_context_live_card.dart';
 
@@ -410,7 +411,22 @@ class _MinimalAiHeader extends StatelessWidget {
 
 
 
-          // Menu Opsi Lainnya (⋮) seperti referensi foto ke-4
+          // Tombol Langsung Pengaturan WhatsApp & Server AI (⚙️)
+          IconButton(
+            key: const Key('ai_whatsapp_settings_button'),
+            onPressed: () {
+              HapticFeedback.selectionClick();
+              AiServerSettingsDialog.show(context);
+            },
+            tooltip: 'Pengaturan WhatsApp & AI',
+            icon: Icon(
+              Icons.settings_rounded,
+              color: hc.textPrimary,
+              size: 21,
+            ),
+          ),
+
+          // Menu Opsi Lainnya (⋮)
           PopupMenuButton<String>(
             icon: Icon(
               Icons.more_vert_rounded,
@@ -419,17 +435,37 @@ class _MinimalAiHeader extends StatelessWidget {
             ),
             tooltip: context.tr('ai.moreMenuTooltip'),
             onSelected: (value) {
-              if (value == 'oled') {
+              if (value == 'whatsapp_settings') {
+                AiServerSettingsDialog.show(context);
+              } else if (value == 'oled') {
                 HajiCareAiAssistantPage.showSmartbandOledSheet(
                   context,
                   controller,
                 );
-
               } else if (value == 'clear') {
                 controller.clearConversation();
               }
             },
             itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'whatsapp_settings',
+                child: ListTile(
+                  dense: true,
+                  contentPadding: EdgeInsets.zero,
+                  leading: Icon(
+                    Icons.chat_rounded,
+                    color: Color(0xFF16A34A),
+                  ),
+                  title: Text(
+                    'Pengaturan WhatsApp & AI',
+                    style: TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  subtitle: Text(
+                    'Atur Nomor WA & Token Fonnte',
+                    style: TextStyle(fontSize: 11),
+                  ),
+                ),
+              ),
               PopupMenuItem(
                 value: 'oled',
                 child: ListTile(

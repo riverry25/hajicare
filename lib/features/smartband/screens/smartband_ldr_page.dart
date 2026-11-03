@@ -11,6 +11,7 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/app_card.dart';
 import '../../../core/widgets/hajicare_header.dart';
+import '../../ai_assistant/widgets/ai_server_settings_dialog.dart';
 import '../controllers/smartband_ldr_controller.dart';
 import '../widgets/battery_optimization_sheet.dart';
 import '../services/smartband_ble_service.dart';
@@ -1380,34 +1381,54 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
               ],
             ),
             const SizedBox(height: 8),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: () async {
-                  final res = await ctrl.shareTelemetryToWhatsApp();
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(res.message),
-                        behavior: SnackBarBehavior.floating,
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () async {
+                      final res = await ctrl.shareTelemetryToWhatsApp();
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(res.message),
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
+                      }
+                    },
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFF16A34A),
+                      side: const BorderSide(color: Color(0xFF16A34A)),
+                      padding: const EdgeInsets.symmetric(vertical: 9),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.button),
                       ),
-                    );
-                  }
-                },
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFF16A34A),
-                  side: const BorderSide(color: Color(0xFF16A34A)),
-                  padding: const EdgeInsets.symmetric(vertical: 9),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.button),
+                    ),
+                    icon: const Icon(Icons.chat_rounded, size: 16),
+                    label: const Text(
+                      'Kirim ke WhatsApp',
+                      style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700),
+                    ),
                   ),
                 ),
-                icon: const Icon(Icons.chat_rounded, size: 16),
-                label: const Text(
-                  'Kirim Kondisi & Lokasi ke WhatsApp Pendamping',
-                  style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700),
+                const SizedBox(width: 8),
+                OutlinedButton.icon(
+                  onPressed: () => AiServerSettingsDialog.show(context),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFF16A34A),
+                    side: const BorderSide(color: Color(0xFF16A34A)),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.button),
+                    ),
+                  ),
+                  icon: const Icon(Icons.settings_rounded, size: 16),
+                  label: const Text(
+                    'Atur Token WA',
+                    style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700),
+                  ),
                 ),
-              ),
+              ],
             ),
           ],
         ),
