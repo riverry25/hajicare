@@ -745,6 +745,17 @@ class _CleanChatView extends StatelessWidget {
                               controller,
                             );
                           },
+                          onShareWhatsAppTap: () async {
+                            final res = await controller.shareMessageToWhatsApp(message);
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(res.message),
+                                  behavior: SnackBarBehavior.floating,
+                                ),
+                              );
+                            }
+                          },
                           onRegenerateTap: () =>
                               controller.regenerateMessage(message),
                         ),
@@ -897,6 +908,7 @@ class _ModernAiChatBubble extends StatelessWidget {
     required this.onTapStreamingBubble,
     required this.onSpeakTap,
     required this.onSendToOledTap,
+    required this.onShareWhatsAppTap,
     required this.onRegenerateTap,
   });
 
@@ -905,6 +917,7 @@ class _ModernAiChatBubble extends StatelessWidget {
   final VoidCallback onTapStreamingBubble;
   final VoidCallback onSpeakTap;
   final VoidCallback onSendToOledTap;
+  final VoidCallback onShareWhatsAppTap;
   final VoidCallback onRegenerateTap;
 
   @override
@@ -1025,12 +1038,52 @@ class _ModernAiChatBubble extends StatelessWidget {
 
                     // Saat streaming berlangsung, sembunyikan tombol aksi agar pembacaan tetap bersih
                     if (!message.isStreaming) ...[
+                      if (message.whatsAppStatusText != null &&
+                          message.whatsAppStatusText!.isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF25D366).withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(AppRadius.pill),
+                            border: Border.all(
+                              color: const Color(0xFF25D366).withValues(alpha: 0.4),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.check_circle_rounded,
+                                size: 13,
+                                color: Color(0xFF16A34A),
+                              ),
+                              const SizedBox(width: 5),
+                              Flexible(
+                                child: Text(
+                                  message.whatsAppStatusText!,
+                                  style: context.text.labelSmall.copyWith(
+                                    color: const Color(0xFF16A34A),
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 11,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+
                       // Tombol Aksi Kontekstual Pintar untuk Membantu Jamaah
                       if (message.contextualActions.isNotEmpty) ...[
                         const SizedBox(height: AppSpacing.sm),
                         _ContextualActionRow(
                           actions: message.contextualActions,
                           onOpenOledTap: onSendToOledTap,
+                          onShareWhatsAppTap: onShareWhatsAppTap,
                         ),
                       ],
 
@@ -1097,6 +1150,20 @@ class _ModernAiChatBubble extends StatelessWidget {
                               onSendToOledTap();
                             },
                           ),
+                          const SizedBox(width: 4),
+
+                          // 4. Kirim Laporan & Lokasi ke WhatsApp (💬)
+                          _BubbleIconAction(
+                            icon: Icons.chat_rounded,
+                            tooltip: 'Kirim Laporan & Lokasi ke WhatsApp',
+                            label: 'WA',
+                            isActive: true,
+                            activeColor: const Color(0xFF16A34A),
+                            onTap: () {
+                              HapticFeedback.selectionClick();
+                              onShareWhatsAppTap();
+                            },
+                          ),
 
                           const Spacer(),
 
@@ -1151,13 +1218,13 @@ class _BubbleIconAction extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(AppRadius.pill),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 6),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, size: 17, color: color),
+              Icon(icon, size: 15.5, color: color),
               if (label != null) ...[
-                const SizedBox(width: 4),
+                const SizedBox(width: 3),
                 Text(
                   label!,
                   style: context.text.labelSmall.copyWith(
@@ -1180,10 +1247,12 @@ class _ContextualActionRow extends StatelessWidget {
   const _ContextualActionRow({
     required this.actions,
     required this.onOpenOledTap,
+    required this.onShareWhatsAppTap,
   });
 
   final List<AiContextualAction> actions;
   final VoidCallback onOpenOledTap;
+  final VoidCallback onShareWhatsAppTap;
 
   @override
   Widget build(BuildContext context) {
@@ -1235,6 +1304,12 @@ class _ContextualActionRow extends StatelessWidget {
             context.tr('ai.action.oled'),
             hc.accent,
             onOpenOledTap,
+          ),
+          AiContextualAction.sendWhatsApp => (
+            Icons.chat_rounded,
+            'Kirim ke WhatsApp',
+            const Color(0xFF16A34A),
+            onShareWhatsAppTap,
           ),
         };
 

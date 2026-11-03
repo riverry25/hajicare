@@ -8,6 +8,8 @@ class AiReply {
     required this.oled,
     this.isStructured = true,
     this.isOfflineFallback = false,
+    this.notifyChannel,
+    this.notifyMessage,
   });
 
   /// Kalimat lengkap untuk dibacakan TTS & ditampilkan di gelembung chat.
@@ -22,6 +24,13 @@ class AiReply {
   /// True jika balasan dibuat lokal karena server AI tidak dapat dihubungi.
   final bool isOfflineFallback;
 
+  /// Saluran pengiriman eksternal opsional jika pengguna meminta meneruskan pesan
+  /// (misal `'whatsapp'` atau `'none'`).
+  final String? notifyChannel;
+
+  /// Isi pesan opsional yang disusun khusus oleh AI untuk dikirim ke WhatsApp Pendamping/Keluarga.
+  final String? notifyMessage;
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -29,14 +38,22 @@ class AiReply {
           other.speech == speech &&
           other.oled == oled &&
           other.isStructured == isStructured &&
-          other.isOfflineFallback == isOfflineFallback;
+          other.isOfflineFallback == isOfflineFallback &&
+          other.notifyChannel == notifyChannel &&
+          other.notifyMessage == notifyMessage;
 
   @override
-  int get hashCode => Object.hash(speech, oled, isStructured, isOfflineFallback);
+  int get hashCode => Object.hash(
+    speech,
+    oled,
+    isStructured,
+    isOfflineFallback,
+    notifyChannel,
+    notifyMessage,
+  );
 
   @override
   String toString() =>
       'AiReply(speech: $speech, oled: $oled, structured: $isStructured, '
-      'offline: $isOfflineFallback)';
+      'offline: $isOfflineFallback, notify: $notifyChannel)';
 }
-

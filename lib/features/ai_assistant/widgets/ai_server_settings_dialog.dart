@@ -10,6 +10,7 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/theme_context.dart';
 import '../bindings/hajicare_ai_binding.dart';
 import '../controllers/hajicare_ai_controller.dart';
+import '../models/ai_messaging_config.dart';
 import '../models/ai_server_config.dart';
 import '../models/ai_server_status.dart';
 
@@ -40,13 +41,21 @@ class _AiServerSettingsDialogState extends State<AiServerSettingsDialog> {
   late final TextEditingController _urlController;
   late final TextEditingController _apiKeyController;
   late final TextEditingController _modelController;
+  late final TextEditingController _waPhoneController;
+  late final TextEditingController _waTokenController;
 
   bool _useCustomApiKey = false;
   bool _obscureApiKey = true;
-  bool _showAdvanced = true;
+  bool _obscureWaToken = true;
+  bool _showAdvanced = false;
   bool _isSaving = false;
+  bool _isTestingWa = false;
+  bool _autoAlertSosFall = true;
+  bool _autoAlertRadius = true;
+  WhatsAppGatewayProvider _waProvider = WhatsAppGatewayProvider.fonnte;
   String? _urlValidationError;
   String? _apiKeyValidationError;
+  String? _waStatusFeedback;
 
   @override
   void initState() {
@@ -62,6 +71,13 @@ class _AiServerSettingsDialogState extends State<AiServerSettingsDialog> {
       text: cfg.isCustomApiKey ? cfg.apiKey : '',
     );
     _modelController = TextEditingController(text: cfg.model);
+
+    final waCfg = widget.controller.messagingConfig.value;
+    _waPhoneController = TextEditingController(text: waCfg.whatsAppPhone);
+    _waTokenController = TextEditingController(text: waCfg.whatsAppApiToken);
+    _autoAlertSosFall = waCfg.autoAlertOnSosAndFall;
+    _autoAlertRadius = waCfg.autoAlertOnSafeRadius;
+    _waProvider = waCfg.gatewayProvider;
   }
 
   @override
@@ -69,6 +85,8 @@ class _AiServerSettingsDialogState extends State<AiServerSettingsDialog> {
     _urlController.dispose();
     _apiKeyController.dispose();
     _modelController.dispose();
+    _waPhoneController.dispose();
+    _waTokenController.dispose();
     super.dispose();
   }
 
@@ -107,11 +125,41 @@ class _AiServerSettingsDialogState extends State<AiServerSettingsDialog> {
     await widget.controller.checkServerHealth(tempConfig);
   }
 
+  AiMessagingConfig _buildCurrentWaConfig() {
+    return AiMessagingConfig(
+      whatsAppPhone: _waPhoneController.text.trim(),
+      whatsAppApiToken: _waTokenController.text.trim(),
+      gatewayProvider: _waProvider,
+      autoAlertOnSosAndFall: _autoAlertSosFall,
+      autoAlertOnSafeRadius: _autoAlertRadius,
+    );
+  }
+
+  Future<void> _handleTestWhatsApp() async {
+    HapticFeedback.selectionClick();
+    final cfg = _buildCurrentWaConfig();
+    await widget.controller.saveWhatsAppConfiguration(cfg);
+    setState(() {
+      _isTestingWa = true;
+      _waStatusFeedback = null;
+    });
+    try {
+      final res = await widget.controller.testWhatsAppConnection(cfg);
+      if (!mounted) return;
+      setState(() {
+        _waStatusFeedback = res.message;
+      });
+    } finally {
+      if (mounted) setState(() => _isTestingWa = false);
+    }
+  }
+
   Future<void> _handleSave() async {
     if (!_validateInputs()) return;
     HapticFeedback.lightImpact();
     setState(() => _isSaving = true);
     try {
+      await widget.controller.saveWhatsAppConfiguration(_buildCurrentWaConfig());
       final status = await widget.controller.saveServerConfiguration(
         baseUrl: _urlController.text,
         apiKey: _apiKeyController.text.trim(),
@@ -574,6 +622,202 @@ class _AiServerSettingsDialogState extends State<AiServerSettingsDialog> {
                     ),
                   ),
                 ],
+
+                const SizedBox(height: AppSpacing.lg),
+
+                // Seksi Integrasi WhatsApp Pendamping / Keluarga
+                Container(
+                  padding: const EdgeInsets.all(AppSpacing.md),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF25D366).withValues(alpha: 0.07),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                    border: Border.all(
+                      color: const Color(0xFF25D366).withValues(alpha: 0.35),
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF25D366).withValues(alpha: 0.16),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.chat_rounded,
+                              color: Color(0xFF16A34A),
+                              size: 18,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Integrasi WhatsApp (AI & Smartband)',
+                                  style: context.text.labelLarge.copyWith(
+                                    fontWeight: FontWeight.w800,
+                                    color: hc.textPrimary,
+                                  ),
+                                ),
+                                Text(
+                                  'Kirim laporan kondisi, detak jantung, suhu & titik Google Maps ke WA Pendamping.',
+                                  style: context.text.labelSmall.copyWith(
+                                    color: hc.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+
+                      // Nomor WhatsApp Tujuan
+                      Text(
+                        'Nomor WhatsApp Pendamping / Keluarga',
+                        style: context.text.labelMedium.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: hc.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      TextField(
+                        controller: _waPhoneController,
+                        keyboardType: TextInputType.phone,
+                        decoration: InputDecoration(
+                          hintText: 'Contoh: 081234567890 atau 6281234567890',
+                          prefixIcon: const Icon(Icons.phone_android_rounded, size: 18),
+                          filled: true,
+                          fillColor: hc.surface,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.md),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+
+                      // Token API Gateway WhatsApp Opsional (Fonnte / CallMeBot)
+                      Text(
+                        'Token API Gateway WA (Opsional - Kirim Otomatis Background)',
+                        style: context.text.labelMedium.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: hc.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      TextField(
+                        controller: _waTokenController,
+                        obscureText: _obscureWaToken,
+                        autocorrect: false,
+                        decoration: InputDecoration(
+                          hintText: 'Isi Token Fonnte agar terkirim tanpa buka aplikasi WA',
+                          prefixIcon: const Icon(Icons.bolt_rounded, size: 18),
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _obscureWaToken
+                                  ? Icons.visibility_rounded
+                                  : Icons.visibility_off_rounded,
+                              size: 18,
+                            ),
+                            onPressed: () => setState(
+                              () => _obscureWaToken = !_obscureWaToken,
+                            ),
+                          ),
+                          filled: true,
+                          fillColor: hc.surface,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.md),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '• Jika Token diisi: Pesan terkirim 100% otomatis di background (termasuk saat bicara dari mikrofon gelang).\n'
+                        '• Jika dikosongkan: Otomatis membuka WhatsApp (wa.me) dengan laporan lengkap.',
+                        style: context.text.labelSmall.copyWith(
+                          color: hc.textSecondary,
+                          fontSize: 10.5,
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+
+                      // Switch Auto-Alert
+                      SwitchListTile.adaptive(
+                        contentPadding: EdgeInsets.zero,
+                        dense: true,
+                        value: _autoAlertSosFall,
+                        onChanged: (v) => setState(() => _autoAlertSosFall = v),
+                        title: Text(
+                          'Auto-Alert WA saat SOS (3s) & Deteksi Jatuh',
+                          style: context.text.labelMedium.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: hc.textPrimary,
+                          ),
+                        ),
+                      ),
+                      SwitchListTile.adaptive(
+                        contentPadding: EdgeInsets.zero,
+                        dense: true,
+                        value: _autoAlertRadius,
+                        onChanged: (v) => setState(() => _autoAlertRadius = v),
+                        title: Text(
+                          'Auto-Alert WA saat Keluar Safe Radius',
+                          style: context.text.labelMedium.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: hc.textPrimary,
+                          ),
+                        ),
+                      ),
+
+                      if (_waStatusFeedback != null) ...[
+                        const SizedBox(height: 6),
+                        Text(
+                          _waStatusFeedback!,
+                          style: context.text.labelSmall.copyWith(
+                            color: const Color(0xFF16A34A),
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: _isTestingWa ? null : _handleTestWhatsApp,
+                          icon: _isTestingWa
+                              ? const SizedBox(
+                                  width: 14,
+                                  height: 14,
+                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                )
+                              : const Icon(
+                                  Icons.send_rounded,
+                                  size: 16,
+                                  color: Color(0xFF16A34A),
+                                ),
+                          label: const Text(
+                            'Tes Kirim Laporan ke WhatsApp Sekarang',
+                            style: TextStyle(
+                              color: Color(0xFF16A34A),
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: Color(0xFF16A34A)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(AppRadius.pill),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
 
                 const SizedBox(height: AppSpacing.lg),
 

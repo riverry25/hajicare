@@ -8,6 +8,8 @@ import '../../../core/locales/app_translations.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/state/app_settings_controller.dart';
 import '../models/ai_chat_message.dart';
+import '../models/ai_messaging_config.dart';
+import '../services/ai_external_messaging_service.dart';
 import '../models/ai_server_config.dart';
 import '../models/ai_server_status.dart';
 import '../models/ai_stream_event.dart';
@@ -73,6 +75,7 @@ class HajiCareAiController extends GetxController with WidgetsBindingObserver {
   /// Deretan tombol cepat (Quick Prompts) sekali sentuh yang mencakup seluruh fitur aplikasi.
   static const List<String> quickPrompts = <String>[
     'Bagaimana kondisi kesehatan saya sekarang?',
+    'Kabari pendamping kondisi & lokasi saya lewat WhatsApp',
     'Berapa jarak saya dengan pendamping dan dimana posisi saya sekarang?',
     'Kapan jadwal salat berikutnya dan berapa derajat arah kiblat?',
     'Saya merasa pusing dan lelah, apa yang harus saya lakukan?',
@@ -138,9 +141,10 @@ class HajiCareAiController extends GetxController with WidgetsBindingObserver {
     ),
   ];
 
-  // State Konfigurasi & Kesehatan Server Hermes
+  // State Konfigurasi & Kesehatan Server Hermes + Integrasi WhatsApp
   final Rx<AiServerConfig> serverConfig = AiServerConfig.defaults.obs;
   final Rx<AiServerStatus> serverStatus = AiServerStatus.initial.obs;
+  final Rx<AiMessagingConfig> messagingConfig = AiMessagingConfig.defaults.obs;
 
   // State Konteks Nyata Aplikasi & Sensor Gelang BLE (Tanpa Simulasi)
   final Rx<SensorContext> sensorContext = SensorContext(
@@ -237,6 +241,7 @@ class HajiCareAiController extends GetxController with WidgetsBindingObserver {
     await _loadFabPreferences();
     final loaded = await _repository.loadServerConfig();
     serverConfig.value = loaded;
+    messagingConfig.value = await AiExternalMessagingService.instance.loadConfig();
     await _voiceService.initTts();
     await checkServerHealth();
   }
@@ -683,6 +688,20 @@ class HajiCareAiController extends GetxController with WidgetsBindingObserver {
               targetText: fullSpeech,
               currentGen: currentGen,
             );
+
+            if (AiExternalMessagingService.shouldSendToWhatsApp(
+              userQuestion: question,
+              reply: event.reply,
+            )) {
+              unawaited(
+                _autoDispatchWhatsAppForTurn(
+                  messageId: pendingMsg.id,
+                  question: question,
+                  reply: event.reply,
+                  sensor: event.sensorSnapshot,
+                ),
+              );
+            }
           }
         },
         onError: (err) {
@@ -982,6 +1001,102 @@ class HajiCareAiController extends GetxController with WidgetsBindingObserver {
       recognizedText.value = '';
       await sendQuestion(captured, autoSpeak: !isMuted.value);
     }
+  }
+
+  /// Eksekusi pengiriman otomatis ke WhatsApp ketika terdeteksi dari perintah suara / chat AI.
+  Future<void> _autoDispatchWhatsAppForTurn({
+    required String messageId,
+    required String question,
+    required dynamic reply,
+    required SensorContext sensor,
+  }) async {
+    try {
+      final customMsg = (reply.notifyMessage as String?)?.trim();
+      final bodyText = (customMsg != null && customMsg.isNotEmpty)
+          ? customMsg
+          : '${reply.speech}\n(Permintaan Jamaah: "$question")';
+
+      final result = await AiExternalMessagingService.instance.sendWhatsAppReport(
+        aiOrAlertMessage: bodyText,
+        sensor: sensor,
+      );
+
+      final badgeText = result.isBackgroundApi
+          ? 'Terkirim otomatis ke WhatsApp (+${result.targetPhone})'
+          : (result.openedWhatsAppApp
+                ? 'Laporan siap dikirim di WhatsApp'
+                : result.message);
+
+      final idx = messages.indexWhere((m) => m.id == messageId);
+      if (idx >= 0) {
+        messages[idx] = messages[idx].copyWith(whatsAppStatusText: badgeText);
+      }
+
+      if (result.success) {
+        unawaited(
+          _repository.smartbandBridge.streamTokenToSmartbandOled(
+            result.oledConfirmation,
+            isFinal: true,
+          ),
+        );
+      }
+    } catch (e) {
+      AppLogger.warn('Gagal auto-dispatch WhatsApp: $e', tag: 'HajiCareAi');
+    }
+  }
+
+  /// Bagikan balasan AI tertentu beserta telemetri gelang & link Google Maps ke WhatsApp.
+  Future<WhatsAppDeliveryResult> shareMessageToWhatsApp(
+    AiChatMessage message,
+  ) async {
+    _refreshSensorSnapshot();
+    final result = await AiExternalMessagingService.instance.sendWhatsAppReport(
+      aiOrAlertMessage: message.effectiveFullText,
+      sensor: sensorContext.value,
+    );
+
+    final badgeText = result.isBackgroundApi
+        ? 'Terkirim otomatis ke WhatsApp (+${result.targetPhone})'
+        : (result.openedWhatsAppApp
+              ? 'Dibuka di WhatsApp'
+              : result.message);
+
+    final idx = messages.indexWhere((m) => m.id == message.id);
+    if (idx >= 0) {
+      messages[idx] = messages[idx].copyWith(whatsAppStatusText: badgeText);
+    }
+
+    if (result.success) {
+      unawaited(
+        _repository.smartbandBridge.streamTokenToSmartbandOled(
+          result.oledConfirmation,
+          isFinal: true,
+        ),
+      );
+    }
+    return result;
+  }
+
+  /// Simpan konfigurasi WhatsApp (Nomor Tujuan, Token Fonnte/CallMeBot, & Toggle Auto-Alert).
+  Future<AiMessagingConfig> saveWhatsAppConfiguration(
+    AiMessagingConfig config,
+  ) async {
+    final saved = await AiExternalMessagingService.instance.saveConfig(config);
+    messagingConfig.value = saved;
+    return saved;
+  }
+
+  /// Tes kirim laporan kondisi & lokasi nyata ke WhatsApp dari dialog pengaturan.
+  Future<WhatsAppDeliveryResult> testWhatsAppConnection(
+    AiMessagingConfig customConfig,
+  ) async {
+    _refreshSensorSnapshot();
+    return AiExternalMessagingService.instance.sendWhatsAppReport(
+      aiOrAlertMessage:
+          'Tes Koneksi Integrasi WhatsApp HajiCare AI & Smartband berhasil terhubung.',
+      sensor: sensorContext.value,
+      overrideConfig: customConfig,
+    );
   }
 
   /// Bersihkan riwayat percakapan dan kembali ke sapaan awal.

@@ -13,6 +13,8 @@ import '../../../core/services/location_service.dart';
 import '../../../core/state/hajicare_controller.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/app_logger.dart';
+import '../../ai_assistant/services/ai_external_messaging_service.dart';
+import '../../ai_assistant/services/smartband_ai_bridge_service.dart';
 import '../../map/controllers/map_controller.dart';
 import '../models/smartband_data.dart';
 import '../services/smartband_ble_service.dart';
@@ -953,6 +955,16 @@ class SmartbandLdrController extends GetxController {
       }
 
       final success = await hajiCtrl.triggerSos();
+      // Kirim juga laporan darurat + titik lokasi Google Maps ke WhatsApp Pendamping
+      final isFallReason = reason.toLowerCase().contains('jatuh');
+      final sensorSnap = SmartbandAiBridgeService(smartbandController: this).readCurrentSensorContext();
+      unawaited(
+        AiExternalMessagingService.instance.dispatchEmergencyAutoAlert(
+          alertKey: isFallReason ? 'FALL' : 'SOS',
+          emergencyReason: reason,
+          sensor: sensorSnap,
+        ),
+      );
       if (success) {
         isSosTransmitted.value = true;
         if (Get.context != null) {
@@ -1144,6 +1156,16 @@ class SmartbandLdrController extends GetxController {
       safeRadiusStatusLabel.value = isOut ? 'Di Luar Radius Aman' : 'Di Dalam Radius Aman';
       lcdLine2.value = isOut ? '!LUAR RADIUS !' : 'STATUS: NORMAL  ';
       bleService.sendCommand(isOut ? 'RADIUS_ALERT:1' : 'RADIUS_ALERT:0');
+      if (isOut) {
+        final sensorSnap = SmartbandAiBridgeService(smartbandController: this).readCurrentSensorContext();
+        unawaited(
+          AiExternalMessagingService.instance.dispatchEmergencyAutoAlert(
+            alertKey: 'SAFE_RADIUS',
+            emergencyReason: 'Keluar Batas Safe Radius (${dist.round()}m > ${rad.round()}m)',
+            sensor: sensorSnap,
+          ),
+        );
+      }
     }
 
     // Kirim sinkronisasi jarak ke gelang jika berasal dari kalkulasi HP (maks 1x per 3 detik atau saat status berubah)
@@ -1178,6 +1200,24 @@ class SmartbandLdrController extends GetxController {
 
   /// Selesaikan/hentikan perekaman suara mikrofon INMP441 pada gelang
   Future<bool> stopSmartbandMic() => bleService.stopSmartbandAiListening();
+
+  /// Bagikan laporan telemetri Smartband (Detak Jantung, Suhu, Status Jatuh, Langkah, Jarak) & Lokasi Google Maps ke WhatsApp
+  Future<WhatsAppDeliveryResult> shareTelemetryToWhatsApp({String? customNote}) async {
+    final sensorSnap = SmartbandAiBridgeService(smartbandController: this).readCurrentSensorContext();
+    final msg = (customNote != null && customNote.trim().isNotEmpty)
+        ? customNote.trim()
+        : (isConnected
+              ? 'Laporan status terkini dari gelang HajiCare Smartband ESP32-S3 (${braceletId.value}).'
+              : 'Laporan posisi & kondisi terkini dari aplikasi HajiCare.');
+    final result = await AiExternalMessagingService.instance.sendWhatsAppReport(
+      aiOrAlertMessage: msg,
+      sensor: sensorSnap,
+    );
+    if (result.success && isConnected) {
+      unawaited(bleService.showAiReplyOnOled(result.oledConfirmation));
+    }
+    return result;
+  }
 
   @override
   void onClose() {

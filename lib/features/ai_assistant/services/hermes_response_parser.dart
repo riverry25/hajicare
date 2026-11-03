@@ -285,6 +285,8 @@ class HermesResponseParser {
   static AiReply _fromReplyMap(Map<String, dynamic> map) {
     String? rawSpeech;
     String? rawOled;
+    String? rawNotifyChannel;
+    String? rawNotifyMessage;
 
     for (final entry in map.entries) {
       final key = entry.key.toLowerCase().trim();
@@ -294,6 +296,10 @@ class HermesResponseParser {
         rawSpeech ??= val;
       } else if (key == 'oled' || key == 'display' || key == 'summary' || key == 'ringkasan') {
         rawOled ??= val;
+      } else if (key == 'notify' || key == 'notifychannel' || key == 'notify_channel' || key == 'channel') {
+        rawNotifyChannel ??= val.toLowerCase();
+      } else if (key == 'notifymessage' || key == 'notify_message' || key == 'whatsapp_message' || key == 'wamessage') {
+        rawNotifyMessage ??= val;
       }
     }
 
@@ -314,6 +320,10 @@ class HermesResponseParser {
           ? cleanOled
           : OledTextFormatter.sanitize(effectiveSpeech),
       isStructured: true,
+      notifyChannel: (rawNotifyChannel == null || rawNotifyChannel == 'none' || rawNotifyChannel == 'false')
+          ? null
+          : rawNotifyChannel,
+      notifyMessage: rawNotifyMessage,
     );
   }
 
