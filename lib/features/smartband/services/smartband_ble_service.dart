@@ -1,8 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
+import 'package:get/get.dart';
+import '../../../core/state/hajicare_controller.dart';
 import '../models/smartband_data.dart';
 import 'smartband_foreground_service.dart';
 
@@ -22,6 +25,58 @@ class SmartbandBleService {
       '6e400002-b5a3-f393-e0a9-e50e24dcca9e';
   static const String audioCharacteristicUuid =
       '6e400004-b5a3-f393-e0a9-e50e24dcca9e';
+
+  // ============================================================================
+  // KODE RAHASIA AUTENTIKASI PAIRING SMARTBAND HAJICARE
+  // Hanya aplikasi resmi HajiCare yang memiliki token ini.
+  // ============================================================================
+  static const String hajicareBleSecretKey = 'HC2026_MZN_HIFZNAFS_AUTH';
+
+  @visibleForTesting
+  static bool bypassAuthForTesting = false;
+
+  // Status autentikasi pairing Smartband
+  bool _isSmartbandAuthenticated = false;
+  bool get isSmartbandAuthenticated => _isSmartbandAuthenticated;
+
+  /// Memeriksa apakah pengguna aplikasi saat ini telah mendownload HajiCare dan login resmi
+  bool get isUserAuthenticated {
+    if (bypassAuthForTesting) return true;
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null && user.uid.isNotEmpty) return true;
+    } catch (_) {}
+    if (Get.isRegistered<HajiCareController>()) {
+      final uid = Get.find<HajiCareController>().currentUid;
+      if (uid != null && uid.isNotEmpty) return true;
+    }
+    return false;
+  }
+
+  String _getAuthenticatedUid() {
+    try {
+      final u = FirebaseAuth.instance.currentUser;
+      if (u != null && u.uid.isNotEmpty) return u.uid;
+    } catch (_) {}
+    if (Get.isRegistered<HajiCareController>()) {
+      final uid = Get.find<HajiCareController>().currentUid;
+      if (uid != null && uid.isNotEmpty) return uid;
+    }
+    return 'HAJICARE_USER';
+  }
+
+  /// Mengirimkan kode rahasia autentikasi ke smartband agar firmware membuka kran telemetri
+  Future<bool> authenticateSmartbandSession() async {
+    final uid = _getAuthenticatedUid();
+    final authCmd = 'AUTH:$hajicareBleSecretKey:$uid';
+    _log('MENGIRIM HANDSHAKE AUTENTIKASI RAHASIA HAJICARE...');
+    final sent = await sendCommand(authCmd);
+    if (sent) {
+      _log('HANDSHAKE TERKIRIM: Menunggu verifikasi firmware Smartband.');
+      _isSmartbandAuthenticated = true;
+    }
+    return sent;
+  }
 
   // Perangkat aktif & characteristic
   BluetoothDevice? _connectedDevice;
@@ -185,6 +240,15 @@ class SmartbandBleService {
   }) async {
     if (_isDisposed) return;
 
+    if (!isUserAuthenticated) {
+      _log(
+        'Autentikasi ditolak: Hanya pengguna yang sudah mendownload dan login resmi di aplikasi HajiCare yang diizinkan memindai smartband.',
+      );
+      throw Exception(
+        'Harap login ke akun HajiCare terlebih dahulu untuk menghubungkan smartband.',
+      );
+    }
+
     final isReady = await isBluetoothAvailable();
     if (!isReady) {
       _log(
@@ -321,6 +385,15 @@ class SmartbandBleService {
   Future<void> connectToSmartband([BluetoothDevice? target]) async {
     if (_isDisposed) return;
 
+    if (!isUserAuthenticated) {
+      _log(
+        'Autentikasi ditolak: Hanya pengguna yang sudah mendownload dan login resmi di aplikasi HajiCare yang diizinkan terhubung ke smartband.',
+      );
+      throw Exception(
+        'Harap login ke akun HajiCare terlebih dahulu untuk menghubungkan smartband.',
+      );
+    }
+
     final device = target ?? _foundDevice;
     if (device == null) {
       _log('Target perangkat belum ditemukan untuk dihubungkan.');
@@ -384,6 +457,9 @@ class SmartbandBleService {
 
       // 3. Discover Services
       await discoverServices(device);
+
+      // 3b. Autentikasi Pairing Handshake Token Rahasia ke Firmware Smartband
+      await authenticateSmartbandSession();
 
       _emitStatus(SmartbandBleStatus.connected);
       // Minta snapshot telemetri segar segera setelah notifikasi CCCD dan MTU siap
@@ -752,6 +828,14 @@ class SmartbandBleService {
       final trimmed = rawString.trim();
       if (trimmed.isEmpty) return;
 
+      // Cek apakah paket adalah konfirmasi autentikasi pairing dari firmware
+      if (trimmed.contains('"auth":"verified"') ||
+          trimmed.contains('"auth": "verified"')) {
+        _isSmartbandAuthenticated = true;
+        _log('AUTENTIKASI SMARTBAND BERHASIL: Firmware mengonfirmasi pairing resmi HajiCare.');
+        return;
+      }
+
       // Cek apakah paket adalah event kontrol suara AI (AI_START / AI_END)
       if (trimmed.contains('AI_START')) {
         _isSmartbandRecordingVoice = true;
@@ -912,6 +996,7 @@ class SmartbandBleService {
     _connectedDevice = null;
     _lastData = null;
     _fragmentParts.clear();
+    _isSmartbandAuthenticated = false;
   }
 
   /// 7. Putuskan koneksi Smartband secara manual dan aman

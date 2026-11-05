@@ -7,7 +7,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart' as fmap;
 import 'package:get/get.dart';
 import 'package:latlong2/latlong.dart' hide Path;
-import '../../../core/constants/app_constants.dart';
 import '../../../core/models/filter_chip_item.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/services/app_alert_service.dart';
@@ -84,6 +83,14 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
     FilterChipItem(
       label: context.tr('maps.hotelPoi'),
       icon: Icons.hotel_rounded,
+    ),
+    FilterChipItem(
+      label: context.tr('maps.masjidPoi'),
+      icon: Icons.mosque_rounded,
+    ),
+    FilterChipItem(
+      label: context.tr('maps.restaurantPoi'),
+      icon: Icons.restaurant_rounded,
     ),
   ];
 
@@ -162,14 +169,23 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
             final userLoc = mapCtrl.currentUserLocation.value;
             final pendingCoord = mapCtrl.pendingFocusCoordinate;
             final stateLoc = state.myCurrentPosition.value != null
-                ? LatLng(state.myCurrentPosition.value!.latitude, state.myCurrentPosition.value!.longitude)
+                ? LatLng(
+                    state.myCurrentPosition.value!.latitude,
+                    state.myCurrentPosition.value!.longitude,
+                  )
                 : (state.self.currentLocation != null
-                    ? LatLng(state.self.currentLocation!.latitude, state.self.currentLocation!.longitude)
-                    : null);
+                      ? LatLng(
+                          state.self.currentLocation!.latitude,
+                          state.self.currentLocation!.longitude,
+                        )
+                      : null);
 
             // Jika lokasi belum ditemukan, tampilkan radar pencarian dinamis (JANGAN tampilkan peta statis Arab)
             if (userLoc == null && pendingCoord == null && stateLoc == null) {
-              return _buildDynamicLocationSearchingPlaceholder(context, mapCtrl);
+              return _buildDynamicLocationSearchingPlaceholder(
+                context,
+                mapCtrl,
+              );
             }
             return RepaintBoundary(child: _buildInteractiveMap(state, mapCtrl));
           }),
@@ -399,14 +415,18 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
           // 5b. Feedback: Sedang mencari lokasi Anda (hanya tampil saat pertama membuka dan belum ditemukan lokasi)
           Obx(() {
             if (mapCtrl.isNavigatingRx.value) return const SizedBox.shrink();
-            if (mapCtrl.isAcquiringInitialGps.value && mapCtrl.currentUserLocation.value == null) {
+            if (mapCtrl.isAcquiringInitialGps.value &&
+                mapCtrl.currentUserLocation.value == null) {
               return Positioned(
                 top: MediaQuery.of(context).padding.top + 168,
                 left: 24,
                 right: 24,
                 child: Center(
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 9,
+                    ),
                     decoration: BoxDecoration(
                       color: context.hc.surface.withValues(alpha: 0.94),
                       borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -430,7 +450,9 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
                           height: 14,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(context.hc.accent),
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              context.hc.accent,
+                            ),
                           ),
                         ),
                         const SizedBox(width: 10),
@@ -757,7 +779,10 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
                     animation: _pulseController,
                     builder: (context, child) {
                       final scale = 1.0 + (_pulseController.value * 0.45);
-                      final opacity = (1.0 - _pulseController.value).clamp(0.0, 0.45);
+                      final opacity = (1.0 - _pulseController.value).clamp(
+                        0.0,
+                        0.45,
+                      );
                       return Transform.scale(
                         scale: scale,
                         child: Container(
@@ -856,7 +881,8 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
   // INTERACTIVE FLUTTER_MAP CANVAS
 
   Widget _buildInteractiveMap(HajiCareController state, MapController mapCtrl) {
-    final effectiveCenter = mapCtrl.pendingFocusCoordinate ??
+    final effectiveCenter =
+        mapCtrl.pendingFocusCoordinate ??
         mapCtrl.currentUserLocation.value ??
         (state.myCurrentPosition.value != null
             ? LatLng(
@@ -864,11 +890,11 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
                 state.myCurrentPosition.value!.longitude,
               )
             : (state.self.currentLocation != null
-                ? LatLng(
-                    state.self.currentLocation!.latitude,
-                    state.self.currentLocation!.longitude,
-                  )
-                : MapController.defaultUserAnchor));
+                  ? LatLng(
+                      state.self.currentLocation!.latitude,
+                      state.self.currentLocation!.longitude,
+                    )
+                  : MapController.defaultUserAnchor));
 
     return fmap.FlutterMap(
       mapController: mapCtrl.ensureFreshMapController(),
@@ -904,15 +930,12 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
         },
       ),
       children: [
-        // 1. Tile Layer — changes only on layer toggle & dark mode
+        // 1. Tile Layer — changes only on layer toggle
         Obx(() {
-          final isDark = context.hc.isDark;
           final currentUrl = mapCtrl.activeTileUrl.value;
-          final effectiveUrl = isDark
-              ? (currentUrl == AppConstants.cartoVoyagerUrl
-                    ? AppConstants.cartoDarkMatterUrl
-                    : currentUrl)
-              : currentUrl;
+          // Peta Berwarna menampilkan Carto Voyager agar warna jalan, taman, & air tampil jelas
+          // Peta Sederhana menampilkan OpenStreetMap standard tile
+          final effectiveUrl = currentUrl;
 
           return fmap.TileLayer(
             urlTemplate: effectiveUrl,
@@ -1937,13 +1960,13 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
       final isToiletFilter = mapCtrl.selectedFilter.value == 4;
       final displayIcon = isToiletFilter
           ? (poi.category == PoiCategory.wudhu
-              ? Icons.water_drop_rounded
-              : Icons.wc_rounded)
+                ? Icons.water_drop_rounded
+                : Icons.wc_rounded)
           : poi.icon;
       final displayColor = isToiletFilter
           ? (poi.category == PoiCategory.wudhu
-              ? const Color(0xFF00ACC1)
-              : const Color(0xFF0288D1))
+                ? const Color(0xFF00ACC1)
+                : const Color(0xFF0288D1))
           : poi.color;
 
       return fmap.Marker(

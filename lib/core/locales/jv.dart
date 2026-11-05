@@ -495,6 +495,8 @@ final Map<String, String> jvTranslations = {
   'maps.guardPost': 'Pos Pantau',
   'maps.headingToDestination': 'Nuju menyang Lokasi',
   'maps.hotelPoi': 'Hotèl',
+  'maps.masjidPoi': 'Masjid',
+  'maps.restaurantPoi': 'Warung Mangan',
   'maps.kaaba': 'Masjidil Haram & Ka\'bah',
   'maps.keepFollowingRoute': 'Terus tututi rute',
   'maps.lastSeenSecondsAgo': 'Keri katon {seconds} dtk kepungkur',

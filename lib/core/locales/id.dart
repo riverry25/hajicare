@@ -490,6 +490,8 @@ const Map<String, String> idTranslations = {
   'maps.guardPost': 'Pos Pantau',
   'maps.headingToDestination': 'Sedang Menuju Lokasi',
   'maps.hotelPoi': 'Hotel',
+  'maps.masjidPoi': 'Masjid',
+  'maps.restaurantPoi': 'Rumah Makan',
   'maps.kaaba': 'Masjidil Haram & Ka\'bah',
   'maps.keepFollowingRoute': 'Terus ikuti rute',
   'maps.lastSeenSecondsAgo': 'Terakhir terlihat {seconds} dtk lalu',

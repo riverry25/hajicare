@@ -112,6 +112,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                     state.activeRoomId.value!.trim().isNotEmpty) ||
                 (state.activeRoom.value != null);
             final hasSos = state.anySosActive || jamaah.sosActive;
+            final safeRadius = state.safeRadiusMeters.value;
 
             if (!hasRoom && !hasSos) {
               return const SizedBox.shrink();
@@ -130,7 +131,13 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                   isDark: isDark,
                 ),
                 const SizedBox(height: 12),
-                _buildStatusAlertCard(context, jamaah, isDark, dashboardCtrl),
+                _buildStatusAlertCard(
+                  context,
+                  jamaah,
+                  isDark,
+                  dashboardCtrl,
+                  safeRadius,
+                ),
                 const SizedBox(height: 26),
               ],
             );
@@ -307,20 +314,17 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
     BuildContext context,
     JamaahData jamaah,
     bool isDark,
-    DashboardController dashboardCtrl,
-  ) {
-    // Wrap with Obx so card re-renders whenever safeRadiusMeters changes
-    // pendamping can update it at any time).
+    DashboardController dashboardCtrl, [
+    double? safeRadiusOverride,
+  ]) {
     final hc = Get.isRegistered<HajiCareController>()
         ? Get.find<HajiCareController>()
         : null;
+    final safeRadius =
+        safeRadiusOverride ?? (hc?.safeRadiusMeters.value ?? 100.0);
 
-    return Obx(() {
-      // Rule 1: Always evaluate .obs on line 1 before conditionals
-      final safeRadius = (hc ?? Get.find<HajiCareController>()).safeRadiusMeters.value;
-
-      // 2. Recompute tier against current safeRadius
-      // JamaahData.tier may be stale; we recompute inline.
+    // 2. Recompute tier against current safeRadius
+    // JamaahData.tier may be stale; we recompute inline.
       DistanceTier liveTier;
       if (jamaah.distance <= safeRadius * 0.5) {
         liveTier = DistanceTier.aman;
@@ -657,8 +661,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
           ),
         ),
       );
-    });
-  }
+    }
 
   // Dynamic Info Notifications Section (Up to 3 newest items from Companion & Admin
   Widget _buildDynamicInfoList(

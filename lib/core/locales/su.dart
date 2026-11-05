@@ -491,6 +491,8 @@ final Map<String, String> suTranslations = {
   'maps.guardPost': 'Pos Pantau',
   'maps.headingToDestination': 'Nuju ka Lokasi',
   'maps.hotelPoi': 'Hotél',
+  'maps.masjidPoi': 'Masjid',
+  'maps.restaurantPoi': 'Rumah Makan',
   'maps.kaaba': 'Masjidil Haram & Ka\'bah',
   'maps.keepFollowingRoute': 'Terus tuturkeun rute',
   'maps.lastSeenSecondsAgo': 'Pangahirna katingal {seconds} dtk kapungkur',

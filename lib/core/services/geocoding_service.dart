@@ -139,7 +139,7 @@ class GeocodingService {
     final shouldCloseClient = client == null;
 
     try {
-      // 1. PRIMARY: Photon Search API (OSM Elasticsearch POI Search
+      // 1. PRIMARY: Photon Search API
       try {
         final photonResults = await _searchPhoton(
           cleanQuery,
@@ -161,6 +161,8 @@ class GeocodingService {
       try {
         final nominatimResults = await _searchNominatim(
           cleanQuery,
+          latitude: latitude,
+          longitude: longitude,
           limit: limit,
           httpClient: httpClient,
         );
@@ -215,7 +217,7 @@ class GeocodingService {
             'Accept': 'application/json',
           },
         )
-        .timeout(const Duration(seconds: 6));
+        .timeout(const Duration(milliseconds: 2500));
 
     if (response.statusCode != 200) {
       throw http.ClientException(
@@ -317,32 +319,42 @@ class GeocodingService {
   /// OpenStreetMap Nominatim Search API implementation.
   Future<List<MapSearchResult>> _searchNominatim(
     String query, {
+    double? latitude,
+    double? longitude,
     required int limit,
     required http.Client httpClient,
   }) async {
-    final uri = Uri.parse(
+    final buffer = StringBuffer(
       'https://nominatim.openstreetmap.org/search'
-      '?q=${Uri.encodeComponent(query)}'
+      '?q='
       '&format=json'
       '&addressdetails=1'
       '&limit=$limit',
     );
+    if (latitude != null && longitude != null) {
+      const latDelta = 0.15;
+      const lonDelta = 0.15;
+      final minLat = latitude - latDelta;
+      final maxLat = latitude + latDelta;
+      final minLon = longitude - lonDelta;
+      final maxLon = longitude + lonDelta;
+      buffer.write('&viewbox=$minLon,$maxLat,$maxLon,$minLat&bounded=0');
+    }
+
+    final uri = Uri.parse(buffer.toString());
 
     final response = await httpClient
         .get(
           uri,
-          headers: {
-            'User-Agent': 'HajiCareApp/1.0 (contact: support@hajicare.app)',
+          headers: const {
+            'User-Agent': 'HajiCareApp/2.0 (contact: info@hajicare.app)',
             'Accept': 'application/json',
           },
         )
-        .timeout(const Duration(seconds: 6));
+        .timeout(const Duration(milliseconds: 3500));
 
     if (response.statusCode != 200) {
-      throw http.ClientException(
-        'Nominatim returned status ${response.statusCode}: ${response.body}',
-        uri,
-      );
+      return const [];
     }
 
     final dynamic decoded = jsonDecode(response.body);
