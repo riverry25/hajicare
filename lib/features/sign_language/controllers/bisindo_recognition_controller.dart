@@ -45,6 +45,7 @@ class BisindoRecognitionController extends GetxController {
   final BisindoTtsService ttsService;
   final SignTranscriptStore transcriptStore;
   final bool autoTick;
+  bool autoSpeakOnIdle;
 
   BisindoRecognitionController({
     this.config = const BisindoRecognitionConfig(),
@@ -53,6 +54,7 @@ class BisindoRecognitionController extends GetxController {
     BisindoTtsService? ttsService,
     SignTranscriptStore? transcriptStore,
     this.autoTick = true,
+    this.autoSpeakOnIdle = true,
   }) : ttsService = ttsService ?? BisindoTtsService(),
        transcriptStore =
            transcriptStore ?? const SharedPrefsSignTranscriptStore();
@@ -238,7 +240,11 @@ class BisindoRecognitionController extends GetxController {
     }
 
     if (streak >= requiredStreak) {
-      _commitLabel(prediction.label, timestamp);
+      _commitLabel(
+        prediction.label,
+        timestamp,
+        confidence: conf,
+      );
     }
   }
 
@@ -247,6 +253,8 @@ class BisindoRecognitionController extends GetxController {
     String label,
     DateTime now, {
     bool shouldSpeak = true,
+    String? sourceModel,
+    double? confidence,
   }) {
     // Anti Duplicate Cooldown Check
     if (_lastCommittedLabel == label && _lastCommittedAt != null) {
@@ -258,7 +266,10 @@ class BisindoRecognitionController extends GetxController {
 
     final SignToken token;
     try {
-      token = labelParser.parse(label).toToken();
+      token = labelParser.parse(label).toToken(
+        sourceModel: sourceModel,
+        confidence: confidence,
+      );
     } on FormatException catch (e) {
       debugPrint('[BISINDO] FormatException parsing label $label: $e');
       return null;
@@ -274,7 +285,7 @@ class BisindoRecognitionController extends GetxController {
     stabilityStreak.value = 0;
     holdProgress.value = 1.0;
 
-    if (shouldSpeak) {
+    if (shouldSpeak && autoSpeakOnIdle) {
       _lastGestureCommitAt = now;
     }
 
@@ -287,11 +298,22 @@ class BisindoRecognitionController extends GetxController {
   }
 
   /// Commits an externally recognized label (e.g. BISINDO segment classifier)
-  /// directly to the shared transcript. Utterance is debounced until the jamaah
-  /// stops gesturing for a few seconds.
-  bool commitWord(String label, {bool speak = false, DateTime? now}) {
+  /// directly to the shared transcript.
+  bool commitWord(
+    String label, {
+    bool speak = false,
+    DateTime? now,
+    String? sourceModel,
+    double? confidence,
+  }) {
     if (_isClosed) return false;
-    final token = _commitLabel(label, now ?? DateTime.now(), shouldSpeak: speak);
+    final token = _commitLabel(
+      label,
+      now ?? DateTime.now(),
+      shouldSpeak: speak,
+      sourceModel: sourceModel,
+      confidence: confidence,
+    );
     return token != null;
   }
 
@@ -342,13 +364,29 @@ class BisindoRecognitionController extends GetxController {
 
   void deleteLast() {
     if (tokens.isEmpty) return;
-    tokens.removeLast();
-    if (_lastSpokenTokenIndex > tokens.length) {
-      _lastSpokenTokenIndex = tokens.length;
-    }
-    if (_lastSpokenLetterRunEnd > tokens.length) {
-      _lastSpokenLetterRunEnd = tokens.length;
-    }
+    removeTokenAt(tokens.length - 1);
+  }
+
+  void removeTokenAt(int index) {
+    if (index < 0 || index >= tokens.length) return;
+    tokens.removeAt(index);
+    if (_lastSpokenTokenIndex > tokens.length) _lastSpokenTokenIndex = tokens.length;
+    if (_lastSpokenLetterRunEnd > tokens.length) _lastSpokenLetterRunEnd = tokens.length;
+    _onTranscriptChanged();
+  }
+
+  void replaceTokensFromClarification(List<String> glossTokens, {String? sourceModel}) {
+    tokens.assignAll(
+      glossTokens.map(
+        (g) => SignToken.word(
+          g.replaceAll('_', ' ').toLowerCase(),
+          sourceModel: sourceModel,
+          confidence: 0.92,
+        ),
+      ),
+    );
+    _lastSpokenTokenIndex = tokens.length;
+    _lastSpokenLetterRunEnd = tokens.length;
     _onTranscriptChanged();
   }
 
@@ -382,17 +420,23 @@ class BisindoRecognitionController extends GetxController {
     await _enqueueSpeech(text);
   }
 
+  Future<void> speakTextInLanguage(String text, {required String languageCode}) {
+    return _enqueueSpeech(text, languageCode: languageCode);
+  }
+
   // Speech helpers
 
   /// Serializes TTS so consecutive words never cut each other off.
-  Future<void> _enqueueSpeech(String text) {
+  Future<void> _enqueueSpeech(String text, {String? languageCode}) {
     final clean = text.trim();
     if (clean.isEmpty || _isClosed) return Future<void>.value();
     _pendingSpeechCount++;
     isSpeaking.value = true;
     _speechChain = _speechChain.then((_) async {
       try {
-        if (!_isClosed) await ttsService.speak(clean);
+        if (!_isClosed) {
+          await ttsService.speak(clean, languageCode: languageCode);
+        }
       } catch (e) {
         debugPrint('[SIGN_TTS] speak error: $e');
       } finally {
@@ -409,6 +453,7 @@ class BisindoRecognitionController extends GetxController {
   /// Speaks accumulated words and spelled letters after the jamaah pauses signing
   /// for [BisindoRecognitionConfig.speechIdleDelay].
   void _maybeSpeakIdleTranscript(DateTime now) {
+    if (!autoSpeakOnIdle) return;
     final lastCommit = _lastGestureCommitAt;
     if (lastCommit == null) return;
     if (now.difference(lastCommit) < config.speechIdleDelay) return;

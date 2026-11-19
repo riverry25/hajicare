@@ -9,10 +9,13 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_typography.dart';
 import '../controllers/bisindo_recognition_controller.dart';
+import '../controllers/cams_translation_controller.dart';
 import '../controllers/sign_language_controller.dart';
 import '../models/sign_language_model.dart';
-import '../models/sign_token.dart';
 import '../services/bisindo_camera_landmark_service.dart';
+import '../widgets/cams_context_bar.dart';
+import '../widgets/cams_gloss_buffer_strip.dart';
+import '../widgets/cams_translation_result_card.dart';
 
 /// Camera lens orientation for Sign Language screen.
 enum LensFacing { front, back }
@@ -45,6 +48,7 @@ class _SignLanguageScreenState extends State<SignLanguageScreen> {
 
   late final BisindoRecognitionController _recognition;
   late final SignLanguageController _isolatedController;
+  late final CamsTranslationController _camsController;
   late final BisindoCameraLandmarkService _cameraService;
 
   SignLanguageModel _currentModel = SignLanguageModel.sibi;
@@ -61,6 +65,17 @@ class _SignLanguageScreenState extends State<SignLanguageScreen> {
     super.initState();
     _currentModel = widget.initialModel;
     _recognition = Get.find<BisindoRecognitionController>();
+    // Silent visual auto-translate after 1.5s; manual TTS per language
+    _recognition.autoSpeakOnIdle = false;
+
+    if (Get.isRegistered<CamsTranslationController>()) {
+      _camsController = Get.find<CamsTranslationController>();
+    } else {
+      _camsController = CamsTranslationController(
+        recognitionController: _recognition,
+      );
+      Get.put(_camsController);
+    }
 
     if (Get.isRegistered<SignLanguageController>()) {
       _isolatedController = Get.find<SignLanguageController>();
@@ -69,7 +84,12 @@ class _SignLanguageScreenState extends State<SignLanguageScreen> {
       Get.put(_isolatedController);
     }
     _isolatedController.onPredictionAccepted = (prediction) {
-      _recognition.commitWord(prediction.label, speak: true);
+      _recognition.commitWord(
+        prediction.label,
+        speak: false,
+        sourceModel: _currentModel.displayName,
+        confidence: prediction.confidence,
+      );
     };
 
     // Both SIBI and BISINDO share the continuous landmark stream
@@ -315,6 +335,7 @@ class _SignLanguageScreenState extends State<SignLanguageScreen> {
           padding: const EdgeInsets.only(bottom: 28),
           children: [
             _buildModelSwitcher(),
+            CamsContextBar(controller: _camsController),
             _buildCameraPanel(),
             if (_errorMessage != null) _buildErrorCard(),
             const SizedBox(height: 14),
@@ -877,189 +898,17 @@ class _SignLanguageScreenState extends State<SignLanguageScreen> {
     );
   }
 
-  /// AI Transcription Card ("TRANSKRIPSI AI"
+  /// CAMS NLP v3 Live Gloss Buffer Strip + 3-Language Result Card
   Widget _buildUnifiedResultCard() {
-    return Obx(() {
-      final isDark = AppColors.isDark(context);
-      final items = _recognition.tokens;
-      final raw = _recognition.rawTranscript.value;
-
-      return Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: AppColors.cardBgColor(context),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: AppColors.cardBorderColor(context),
-            width: 1,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.04),
-              blurRadius: 12,
-              offset: const Offset(0, 3),
-            ),
-          ],
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        CamsGlossBufferStrip(
+          recognitionController: _recognition,
+          camsController: _camsController,
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  width: 8,
-                  height: 8,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: isDark
-                        ? AppColors.accentGoldStar
-                        : AppColors.espressoDark,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  context.tr('sign.aiTranscript'),
-                  style: AppTypography.labelLarge.copyWith(
-                    color: isDark
-                        ? AppColors.goldLight
-                        : AppColors.espressoDark,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 1.1,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            if (raw.isEmpty)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                child: Text(
-                  context.tr('sign.startSigningHint'),
-                  style: AppTypography.bodyMedium.copyWith(
-                    color: AppColors.textSecondaryColor(context),
-                    fontStyle: FontStyle.italic,
-                  ),
-                ),
-              )
-            else ...[
-              if (items.isNotEmpty)
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(children: items.map(_buildGestureBox).toList()),
-                ),
-              const SizedBox(height: 12),
-              Divider(
-                color: AppColors.outlineColor(context).withValues(alpha: 0.25),
-                height: 1,
-              ),
-              const SizedBox(height: 10),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Expanded(
-                    child: Text(
-                      raw,
-                      style: AppTypography.titleMedium.copyWith(
-                        color: AppColors.textHeadingColor(context),
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ),
-                  TextButton.icon(
-                    onPressed: _recognition.speakTranscript,
-                    icon: Icon(
-                      Icons.volume_up_rounded,
-                      size: 18,
-                      color: isDark
-                          ? AppColors.goldLight
-                          : AppColors.espressoDark,
-                    ),
-                    label: Text(
-                      context.tr('sign.listen'),
-                      style: AppTypography.labelLarge.copyWith(
-                        color: isDark
-                            ? AppColors.goldLight
-                            : AppColors.espressoDark,
-                      ),
-                    ),
-                    style: TextButton.styleFrom(
-                      foregroundColor: isDark
-                          ? AppColors.goldLight
-                          : AppColors.espressoDark,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ],
-        ),
-      );
-    });
-  }
-
-  Widget _buildGestureBox(SignToken token) {
-    final isDark = AppColors.isDark(context);
-
-    if (token.type == SignTokenType.space) {
-      return Container(
-        margin: const EdgeInsets.only(right: 8),
-        width: 38,
-        height: 44,
-        decoration: BoxDecoration(
-          color: isDark
-              ? AppColors.darkSurfaceContainerHigh
-              : AppColors.canvasCreamSubtle,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: AppColors.cardBorderColor(context),
-            width: 1.2,
-          ),
-        ),
-        child: Center(
-          child: Icon(
-            Icons.space_bar_rounded,
-            size: 20,
-            color: AppColors.textSecondaryColor(context),
-          ),
-        ),
-      );
-    }
-
-    final text = token.value;
-
-    return Container(
-      margin: const EdgeInsets.only(right: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      constraints: const BoxConstraints(minHeight: 44),
-      decoration: BoxDecoration(
-        color: isDark
-            ? AppColors.darkPrimaryContainer.withValues(alpha: 0.6)
-            : AppColors.canvasCreamSubtle,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isDark
-              ? AppColors.accentGoldStar.withValues(alpha: 0.4)
-              : AppColors.tanLight,
-          width: 1.3,
-        ),
-      ),
-      child: Center(
-        child: Text(
-          text,
-          style: AppTypography.titleMedium.copyWith(
-            color: isDark
-                ? AppColors.goldLight
-                : AppColors.textHeadingColor(context),
-            fontWeight: FontWeight.w700,
-            letterSpacing: 0.3,
-          ),
-        ),
-      ),
+        CamsTranslationResultCard(controller: _camsController),
+      ],
     );
   }
 
@@ -1361,7 +1210,21 @@ class _SignLanguageScreenState extends State<SignLanguageScreen> {
         child: SizedBox(
           height: 52,
           child: ElevatedButton.icon(
-            onPressed: raw.isEmpty ? null : _recognition.speakTranscript,
+            onPressed: raw.isEmpty
+                ? null
+                : () {
+                    final camsRes = _camsController.latestResult.value;
+                    if (camsRes != null && camsRes.isSuccess) {
+                      final activeLang = AppLocalizations.of(
+                        context,
+                      ).locale.languageCode;
+                      _camsController.speakLanguage(
+                        activeLang == 'en' ? 'en' : 'id',
+                      );
+                    } else {
+                      _recognition.speakTranscript();
+                    }
+                  },
             icon: isSpeaking
                 ? const SizedBox.square(
                     dimension: 20,

@@ -3,18 +3,46 @@ enum SignTokenType { word, letter, space }
 class SignToken {
   final SignTokenType type;
   final String value;
+  final String? sourceModel;
+  final double? confidence;
 
-  const SignToken({required this.type, required this.value});
+  const SignToken({
+    required this.type,
+    required this.value,
+    this.sourceModel,
+    this.confidence,
+  });
 
-  const SignToken.word(String value)
-    : this(type: SignTokenType.word, value: value);
+  const SignToken.word(
+    String value, {
+    String? sourceModel,
+    double? confidence,
+  }) : this(
+         type: SignTokenType.word,
+         value: value,
+         sourceModel: sourceModel,
+         confidence: confidence,
+       );
 
-  const SignToken.letter(String value)
-    : this(type: SignTokenType.letter, value: value);
+  const SignToken.letter(
+    String value, {
+    String? sourceModel,
+    double? confidence,
+  }) : this(
+         type: SignTokenType.letter,
+         value: value,
+         sourceModel: sourceModel,
+         confidence: confidence,
+       );
 
   const SignToken.space() : this(type: SignTokenType.space, value: ' ');
 
-  Map<String, String> toJson() => {'t': type.name, 'v': value};
+  Map<String, String> toJson() => {
+    't': type.name,
+    'v': value,
+    if (sourceModel != null && sourceModel!.isNotEmpty) 'm': sourceModel!,
+    if (confidence != null) 'c': confidence!.toStringAsFixed(3),
+  };
 
   /// Returns null for malformed entries so corrupt storage never crashes.
   static SignToken? tryFromJson(Object? json) {
@@ -22,11 +50,27 @@ class SignToken {
     final typeName = json['t'];
     final value = json['v'];
     if (typeName is! String || value is! String) return null;
+    final rawModel = json['m'];
+    final sourceModel =
+        (rawModel is String && rawModel.trim().isNotEmpty) ? rawModel.trim() : null;
+    final rawConf = json['c'];
+    double? confidence;
+    if (rawConf is num) {
+      confidence = rawConf.toDouble();
+    } else if (rawConf is String) {
+      confidence = double.tryParse(rawConf);
+    }
+
     for (final type in SignTokenType.values) {
       if (type.name == typeName) {
         if (type == SignTokenType.space) return const SignToken.space();
         if (value.trim().isEmpty) return null;
-        return SignToken(type: type, value: value);
+        return SignToken(
+          type: type,
+          value: value,
+          sourceModel: sourceModel,
+          confidence: confidence,
+        );
       }
     }
     return null;
@@ -34,10 +78,13 @@ class SignToken {
 
   @override
   bool operator ==(Object other) =>
-      other is SignToken && other.type == type && other.value == value;
+      other is SignToken &&
+      other.type == type &&
+      other.value == value &&
+      other.sourceModel == sourceModel;
 
   @override
-  int get hashCode => Object.hash(type, value);
+  int get hashCode => Object.hash(type, value, sourceModel);
 }
 
 class ParsedSignLabel {
@@ -46,7 +93,12 @@ class ParsedSignLabel {
 
   const ParsedSignLabel({required this.type, required this.value});
 
-  SignToken toToken() => SignToken(type: type, value: value);
+  SignToken toToken({String? sourceModel, double? confidence}) => SignToken(
+    type: type,
+    value: value,
+    sourceModel: sourceModel,
+    confidence: confidence,
+  );
 }
 
 /// Converts model metadata into transcript tokens. Existing unprefixed model

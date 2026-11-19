@@ -9,7 +9,7 @@ import '../state/app_settings_controller.dart';
 class AppTtsService {
   AppTtsService._();
 
-  /// Resolves the normalized 2-letter language code for TTS ('id' or 'en').
+  /// Resolves the normalized 2-letter language code for TTS ('id', 'en', or 'ar').
   /// If [explicitCode] is provided, it takes precedence.
   /// Otherwise, it reads the active locale from [AppSettingsController].
   /// Regional languages ('jv', 'su') gracefully fallback to 'id' due to
@@ -17,23 +17,31 @@ class AppTtsService {
   static String resolveLanguageCode([String? explicitCode]) {
     if (explicitCode != null && explicitCode.trim().isNotEmpty) {
       final code = explicitCode.trim().toLowerCase();
-      return code == 'en' ? 'en' : 'id';
+      if (code == 'ar' || code.startsWith('ar-') || code.startsWith('ar_')) {
+        return 'ar';
+      }
+      return (code == 'en' || code.startsWith('en-') || code.startsWith('en_'))
+          ? 'en'
+          : 'id';
     }
 
     try {
       if (Get.isRegistered<AppSettingsController>()) {
         final current =
             Get.find<AppSettingsController>().currentLocale.languageCode;
-        if (current.toLowerCase() == 'en') return 'en';
+        final lower = current.toLowerCase();
+        if (lower == 'en') return 'en';
+        if (lower == 'ar') return 'ar';
       }
     } catch (_) {}
 
     return 'id';
   }
 
-  /// Resolves the engine-level locale string for FlutterTts ('id-ID' or 'en-US').
+  /// Resolves the engine-level locale string for FlutterTts ('id-ID', 'en-US', or 'ar-SA').
   static String resolveEngineLocale([String? explicitCode]) {
     final code = resolveLanguageCode(explicitCode);
+    if (code == 'ar') return 'ar-SA';
     return code == 'en' ? 'en-US' : 'id-ID';
   }
 
@@ -55,7 +63,10 @@ class AppTtsService {
       if (isAvailable == true) {
         await tts.setLanguage(engineLocale);
       } else {
-        await tts.setLanguage(engineLocale == 'en-US' ? 'en' : 'id');
+        final fallback = engineLocale == 'ar-SA'
+            ? 'ar'
+            : (engineLocale == 'en-US' ? 'en' : 'id');
+        await tts.setLanguage(fallback);
       }
     } catch (e) {
       debugPrint('[AppTtsService] configureEngine setLanguage error: $e');

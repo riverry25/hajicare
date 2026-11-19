@@ -4,7 +4,7 @@ publish_to: 'none'
 version: 0.1.0+1
 
 environment:
-  sdk: ^3.11.1
+  sdk: ^3.13.0
 
 dependencies:
   flutter:
@@ -84,6 +84,7 @@ flutter:
     - assets/models/bisindo/labels.txt
     - assets/models/bisindo/model_metadata.json
     - assets/models/sibi/
+    - assets/cams/cams_v3_offline_weights.json
     - assets/audio/
     - assets/sign_language/offline/bisindo/alfabet/
     - assets/sign_language/offline/bisindo/kalimat/

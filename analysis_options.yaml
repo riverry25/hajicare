@@ -4,6 +4,9 @@ analyzer:
     - android/**
     - functions/node_modules/**
     - firebase-tests/node_modules/**
+  errors:
+    deprecated_member_use: ignore
+    prefer_initializing_formals: ignore
 include: package:flutter_lints/flutter.yaml
 
 linter:
