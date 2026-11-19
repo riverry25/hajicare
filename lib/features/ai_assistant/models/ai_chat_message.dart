@@ -20,6 +20,7 @@ enum AiContextualAction {
   openPrayer,
   openSos,
   openSmartbandSheet,
+  sendWhatsApp,
 }
 
 /// Satu gelembung percakapan pada asisten AI.
@@ -38,6 +39,7 @@ class AiChatMessage {
     this.retryPrompt,
     this.promptQuestion,
     this.contextualActions = const <AiContextualAction>[],
+    this.whatsAppStatusText,
   });
 
   factory AiChatMessage.user(String text) => AiChatMessage(
@@ -87,6 +89,9 @@ class AiChatMessage {
   /// Tombol aksi cepat kontekstual di bawah pesan asisten.
   final List<AiContextualAction> contextualActions;
 
+  /// Status pengiriman ke WhatsApp bila balasan ini diteruskan otomatis/manual ke WA.
+  final String? whatsAppStatusText;
+
   String get effectiveFullText =>
       (fullText != null && fullText!.isNotEmpty) ? fullText! : text;
 
@@ -111,6 +116,7 @@ class AiChatMessage {
     String? retryPrompt,
     String? promptQuestion,
     List<AiContextualAction>? contextualActions,
+    String? whatsAppStatusText,
   }) {
     return AiChatMessage(
       id: id,
@@ -125,6 +131,7 @@ class AiChatMessage {
       retryPrompt: retryPrompt ?? this.retryPrompt,
       promptQuestion: promptQuestion ?? this.promptQuestion,
       contextualActions: contextualActions ?? this.contextualActions,
+      whatsAppStatusText: whatsAppStatusText ?? this.whatsAppStatusText,
     );
   }
 
@@ -146,7 +153,8 @@ class AiChatMessage {
           other.isOfflineFallback == isOfflineFallback &&
           other.retryPrompt == retryPrompt &&
           other.promptQuestion == promptQuestion &&
-          listEquals(other.contextualActions, contextualActions);
+          listEquals(other.contextualActions, contextualActions) &&
+          other.whatsAppStatusText == whatsAppStatusText;
 
   @override
   int get hashCode => Object.hash(
@@ -160,5 +168,6 @@ class AiChatMessage {
     isOfflineFallback,
     retryPrompt,
     promptQuestion,
+    whatsAppStatusText,
   );
 }

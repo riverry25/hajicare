@@ -322,12 +322,14 @@ class MapController extends GetxController
         currentUserLocation.value = coord;
         isAcquiringInitialGps.value = false;
         pendingFocusCoordinate = coord;
+        refreshNearbyPois(coord, radiusMeters: 4000);
       } else if (state.self.currentLocation != null) {
         final geo = state.self.currentLocation!;
         final coord = LatLng(geo.latitude, geo.longitude);
         currentUserLocation.value = coord;
         isAcquiringInitialGps.value = false;
         pendingFocusCoordinate = coord;
+        refreshNearbyPois(coord, radiusMeters: 4000);
       }
     }
 
@@ -387,11 +389,13 @@ class MapController extends GetxController
 
       // 2. Terapkan koordinat tersimpan dan langsung segarkan POI di sekitar
       if (lat != null && lng != null && lat >= -90.0 && lat <= 90.0 && lng >= -180.0 && lng <= 180.0) {
+        final cachedCoord = LatLng(lat, lng);
         if (currentUserLocation.value == null) {
-          final cachedCoord = LatLng(lat, lng);
           currentUserLocation.value = cachedCoord;
           isAcquiringInitialGps.value = false;
           pendingFocusCoordinate ??= cachedCoord;
+        }
+        if (pois.isEmpty) {
           // Segarkan fasilitas sekitar segera tanpa menunggu GPS satelit
           refreshNearbyPois(cachedCoord, radiusMeters: 4000, force: true);
         }
@@ -472,16 +476,12 @@ class MapController extends GetxController
       }
     }
 
-    // Never keep pins from a different area while a new area is loading.
-    if (movedDistance != null && movedDistance > 500) {
-      pois.clear();
-      clearSelection();
-    }
-
     _lastPoiFetchCoord = center;
     poiQueryCenter.value = center;
     showSearchThisArea.value = false;
-    poiError.value = null;
+    if (pois.isEmpty) {
+      poiError.value = null;
+    }
     isPoiLoading.value = true;
     final requestId = ++_poiRequestId;
     try {
@@ -490,22 +490,30 @@ class MapController extends GetxController
         radiusMeters: radiusMeters ?? _radiusForZoom(_mapCameraZoom),
         forceRefresh: force,
       );
-      if (requestId == _poiRequestId) {
-        // HANYA gunakan realPois murni secara dinamis dari server OpenStreetMap tanpa data statis
-        pois.assignAll(realPois);
+      final currentMapCenter = mapCameraCenter.value ?? currentUserLocation.value ?? center;
+      final distToCurrent = calculateDistanceMeters(center, currentMapCenter);
+      final isStillRelevant = distToCurrent < 3500.0 || requestId == _poiRequestId;
 
-        // Simpan ke SharedPreferences agar pembukaan peta berikutnya berkecepatan 0 ms
-        SharedPreferences.getInstance().then((prefs) {
-          final jsonStr = jsonEncode(
-            realPois.take(50).map((p) => p.toJson()).toList(),
-          );
-          prefs.setString(_cachedPoisKey, jsonStr);
-        }).catchError((_) {});
+      if (isStillRelevant) {
+        if (realPois.isNotEmpty) {
+          pois.assignAll(realPois);
+          poiError.value = null;
+
+          // Simpan ke SharedPreferences agar pembukaan peta berikutnya berkecepatan 0 ms
+          SharedPreferences.getInstance().then((prefs) {
+            final jsonStr = jsonEncode(
+              realPois.take(50).map((p) => p.toJson()).toList(),
+            );
+            prefs.setString(_cachedPoisKey, jsonStr);
+          }).catchError((_) {});
+        }
       }
     } on PoiServiceException catch (error) {
-      if (requestId == _poiRequestId) poiError.value = error.message;
+      if (requestId == _poiRequestId && pois.isEmpty) {
+        poiError.value = error.message;
+      }
     } catch (error) {
-      if (requestId == _poiRequestId) {
+      if (requestId == _poiRequestId && pois.isEmpty) {
         poiError.value = 'Tempat di area ini belum dapat dimuat';
       }
       debugPrint('[MapController] POI refresh error: $error');
@@ -535,11 +543,13 @@ class MapController extends GetxController
     if (!isMapAttached) return;
     final camera = flutterMapController.camera;
     onMapPositionChanged(camera.center, camera.zoom, hasGesture: false);
-    // HANYA muat POI jika koordinat dinamis pengguna sudah valid dan terkonfirmasi
+    // Segera muat POI di sekitar koordinat aktif atau kamera saat peta siap
     if (currentUserLocation.value != null &&
-        poiQueryCenter.value == null &&
+        (poiQueryCenter.value == null || pois.isEmpty) &&
         !isPoiLoading.value) {
       refreshNearbyPois(currentUserLocation.value!, radiusMeters: 4000, force: true);
+    } else if (pois.isEmpty && !isPoiLoading.value) {
+      refreshNearbyPois(camera.center, radiusMeters: 4000, force: true);
     }
     if (pendingFocusCoordinate != null) {
       final target = pendingFocusCoordinate!;
@@ -1223,6 +1233,18 @@ class MapController extends GetxController
         break;
       case 7:
         list = pois.where((p) => p.category == PoiCategory.hotel).toList();
+        break;
+      case 8:
+        list = pois.where((p) => p.category == PoiCategory.ibadah).toList();
+        break;
+      case 9:
+        list = pois
+            .where(
+              (p) =>
+                  p.category == PoiCategory.restaurant ||
+                  p.category == PoiCategory.cafe,
+            )
+            .toList();
         break;
       default:
         list = pois.toList();

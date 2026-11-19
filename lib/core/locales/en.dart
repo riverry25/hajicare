@@ -484,6 +484,8 @@ const Map<String, String> enTranslations = {
   'maps.guardPost': 'Monitoring Post',
   'maps.headingToDestination': 'Heading to Location',
   'maps.hotelPoi': 'Hotel',
+  'maps.masjidPoi': 'Mosque',
+  'maps.restaurantPoi': 'Restaurant',
   'maps.kaaba': 'Masjidil Haram & Kaaba',
   'maps.keepFollowingRoute': 'Keep following route',
   'maps.lastSeenSecondsAgo': 'Last seen {seconds}s ago',

@@ -1318,67 +1318,6 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
                 ],
               ),
             ),
-            const SizedBox(height: 10),
-
-            // Kontrol Pedometer MPU6050 & Mikrofon AI INMP441
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: !isConn
-                        ? null
-                        : () => ctrl.isSmartbandRecordingVoice.value
-                              ? ctrl.stopSmartbandMic()
-                              : ctrl.startSmartbandMic(),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: ctrl.isSmartbandRecordingVoice.value
-                          ? const Color(0xFFDC2626)
-                          : const Color(0xFF0D9488),
-                      side: BorderSide(
-                        color: ctrl.isSmartbandRecordingVoice.value
-                            ? const Color(0xFFDC2626)
-                            : const Color(0xFF0D9488),
-                      ),
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.button),
-                      ),
-                    ),
-                    icon: Icon(
-                      ctrl.isSmartbandRecordingVoice.value
-                          ? Icons.stop_circle_rounded
-                          : Icons.mic_rounded,
-                      size: 16,
-                    ),
-                    label: Text(
-                      ctrl.isSmartbandRecordingVoice.value
-                          ? 'Stop Mic AI'
-                          : 'Rekam Suara AI',
-                      style: const TextStyle(fontSize: 11),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: !isConn ? null : () => ctrl.resetStepDistance(),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.grey.shade700,
-                      side: BorderSide(color: Colors.grey.shade400),
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.button),
-                      ),
-                    ),
-                    icon: const Icon(Icons.restart_alt_rounded, size: 16),
-                    label: Text(
-                      'Reset Langkah (${ctrl.effectiveSteps})',
-                      style: const TextStyle(fontSize: 11),
-                    ),
-                  ),
-                ),
-              ],
-            ),
           ],
         ),
       );

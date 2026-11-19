@@ -92,19 +92,30 @@ class JoinRoomController extends GetxController {
         ? AppRoutes.dashboardPendamping
         : AppRoutes.dashboardJamaah;
 
-    // Proactively clean up any previous MapController instance before navigating
-    // so the new dashboard starts with a fresh, clean map state for the joined room.
+    // Proactively reset map controller camera/state cleanly without force-evicting
+    // the registered controller while existing dashboard screens are still mounted.
     if (Get.isRegistered<MapController>()) {
-      Get.delete<MapController>(force: true);
+      try {
+        Get.find<MapController>().resetFlutterMapController();
+      } catch (_) {}
     }
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (isClosed) return;
-      // Close any active dialogs or bottom sheets before resetting root routes
-      while (Get.isDialogOpen == true || Get.isBottomSheetOpen == true) {
-        Get.back();
+
+      final nav = Get.key.currentState;
+      if (nav != null && nav.canPop()) {
+        // Pop all popups, dialogs, and JoinRoomScreen back to the dashboard cleanly
+        nav.popUntil((route) {
+          final name = route.settings.name;
+          return name == AppRoutes.dashboardJamaah ||
+              name == AppRoutes.dashboardPendamping ||
+              name == AppRoutes.home ||
+              route.isFirst;
+        });
+      } else {
+        Get.offAllNamed(targetRoute);
       }
-      Get.offAllNamed(targetRoute);
     });
   }
 

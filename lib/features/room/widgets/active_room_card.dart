@@ -1245,6 +1245,7 @@ class _RadarWaveStatisticWidgetState extends State<_RadarWaveStatisticWidget>
   @override
   Widget build(BuildContext context) {
     final hc = context.hc;
+    final textScaler = MediaQuery.textScalerOf(context);
     final effectiveRadius = widget.radius > 0 ? widget.radius : 500.0;
     final isWarning = _isOutOfRadius;
     final waveColor = _waveColor(hc);
@@ -1357,7 +1358,7 @@ class _RadarWaveStatisticWidgetState extends State<_RadarWaveStatisticWidget>
                 ),
                 child: AnimatedBuilder(
                   animation: Listenable.merge([_waveCtrl, _tapCtrl]),
-                  builder: (context, _) {
+                  builder: (_, _) {
                     return CustomPaint(
                       painter: _RadarWavePainter(
                         waveColor: waveColor,
@@ -1366,7 +1367,7 @@ class _RadarWaveStatisticWidgetState extends State<_RadarWaveStatisticWidget>
                         isTapped: _tapCtrl.isAnimating,
                         displayDistance: displayDist,
                         isDark: widget.isDark,
-                        textScaler: MediaQuery.textScalerOf(context),
+                        textScaler: textScaler,
                       ),
                       size: Size.infinite,
                     );

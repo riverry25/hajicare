@@ -108,7 +108,7 @@ class HermesAiService {
         : 'Belum tersedia (${sensor.distanceStatusSummary})';
 
     final String smartbandExtra = sensor.isSmartbandConnected
-        ? 'Status Gelang BLE=TERHUBUNG (ID: ${sensor.braceletId}, SpO2=${sensor.spo2Percent ?? "--"}%, Langkah=${sensor.stepCount ?? 0}, Baterai=${sensor.batteryPercent ?? "--"}%).'
+        ? 'Status Gelang BLE=TERHUBUNG (ID: ${sensor.braceletId}, Langkah=${sensor.stepCount ?? 0}).'
         : 'Status Gelang BLE=BELUM TERHUBUNG ke HP.';
 
     final String roomContext = sensor.hasActiveRoom
@@ -147,8 +147,9 @@ class HermesAiService {
         'INSTRUKSI WAJIB: Gunakan data nyata di atas untuk pertanyaan status aplikasi, JANGAN membuat simulasi atau mengarang angka sensor. '
         'Jawab dalam bahasa $replyLang dengan kalimat utuh, ramah, sopan, tenang, dan jelas (JANGAN gunakan gaya "terse caveman"). '
         'DILARANG KERAS menulis tanda kurung siku atau timestamp angka seperti 0.0: atau 3.8: di dalam teks jawaban. '
+        'Jika pengguna meminta mengirim pesan, lokasi, atau mengabari pendamping/keluarga lewat WhatsApp (WA), sertakan field "notify": "whatsapp" di dalam JSON dan konfirmasikan bahwa laporan beserta titik lokasi GPS dan kondisi gelang sedang dikirimkan ke WhatsApp Pendamping. '
         'WAJIB balas HANYA dalam format JSON murni tanpa markdown codeblock dengan struktur: '
-        '{"speech": "kalimat lengkap untuk dibacakan suara", "oled": "ringkasan maksimal 55 karakter tanpa emoji untuk layar gelang"}.'
+        '{"speech": "kalimat lengkap untuk dibacakan suara", "oled": "ringkasan maksimal 55 karakter tanpa emoji untuk layar gelang", "notify": "whatsapp atau none"}.'
         '${concise ? " MODE SUARA AKTIF: Jawab secara singkat, padat, dan ramah dalam 2-4 kalimat (maksimal ±60 kata), langsung ke inti jawaban." : ""}';
   }
 
@@ -173,7 +174,7 @@ class HermesAiService {
         '(Catatan Sistem: STOP CAVEMAN MODE. Jawab dengan kalimat utuh dan ramah dalam bahasa $replyLang, TANPA timestamp angka dan TANPA kurung siku. '
         'Ringkasan Data Nyata: Pengguna=${sensor.userName}, $bandInfo, $distInfo, $closestInfo'
         'Salat berikutnya=${sensor.nextPrayerName ?? "-"} ${sensor.nextPrayerTime ?? "-"}. '
-        'Balas HANYA JSON murni: {"speech": "jawaban kalimat utuh bahasa $replyLang tanpa kurung siku", "oled": "ringkasan <=55 char ASCII tanpa emoji"})';
+        'Balas HANYA JSON murni: {"speech": "jawaban kalimat utuh bahasa $replyLang tanpa kurung siku", "oled": "ringkasan <=55 char ASCII tanpa emoji", "notify": "whatsapp jika diminta kirim WA/kabari pendamping, atau none"})';
   }
 
   /// Muat konfigurasi server AI dari `SharedPreferences`.
@@ -804,8 +805,23 @@ class HermesAiService {
       actions.add(AiContextualAction.openPrayer);
     }
 
+    if (combined.contains('whatsapp') ||
+        combined.contains('wa ') ||
+        combined.contains('kirim') ||
+        combined.contains('kabari') ||
+        combined.contains('lapor') ||
+        combined.contains('pendamping') ||
+        combined.contains('keluarga') ||
+        combined.contains('darurat') ||
+        combined.contains('sos') ||
+        combined.contains('lokasi') ||
+        combined.contains('kesehatan')) {
+      actions.add(AiContextualAction.sendWhatsApp);
+    }
+
     if (actions.isEmpty) {
       actions.add(AiContextualAction.openSmartbandSheet);
+      actions.add(AiContextualAction.sendWhatsApp);
     }
 
     return actions;
@@ -819,6 +835,28 @@ class HermesAiService {
   }) {
     final q = question.toLowerCase();
     final radius = (sensor.safeRadiusMeters ?? 200).round();
+
+    // 0. Permintaan Kirim Pesan / Lokasi / Kondisi ke WhatsApp Pendamping atau Keluarga
+    if (q.contains('whatsapp') ||
+        RegExp(r'\b(wa|w\.a)\b').hasMatch(q) ||
+        (q.contains('kirim') && (q.contains('pendamping') || q.contains('keluarga') || q.contains('lokasi') || q.contains('pesan'))) ||
+        (q.contains('kabari') && (q.contains('pendamping') || q.contains('keluarga')))) {
+      final compName = sensor.companionName ?? 'Pendamping';
+      final vitalSummary = sensor.isSmartbandConnected
+          ? 'detak jantung ${sensor.heartRateBpm} BPM, suhu ${sensor.temperatureLabel} derajat Celcius'
+          : 'status aplikasi HP';
+      final distSummary = sensor.distanceToCompanionMeters != null
+          ? ', jarak ${sensor.distanceToCompanionMeters!.round()} meter'
+          : '';
+      final speech =
+          'Baik Bapak atau Ibu, saya segera mengirimkan laporan kondisi Anda ($vitalSummary$distSummary) beserta titik koordinat Google Maps ke WhatsApp $compName.';
+      return AiReply(
+        speech: speech,
+        oled: OledTextFormatter.sanitize('Kirim laporan & GPS ke WA $compName'),
+        isOfflineFallback: true,
+        notifyChannel: 'whatsapp',
+      );
+    }
 
     // 1. Kondisi Darurat Jatuh (hanya jika gelang benar-benar terhubung & mendeteksi jatuh)
     if (sensor.isSmartbandConnected && sensor.isFallDetected) {
@@ -1150,14 +1188,11 @@ class HermesAiService {
 
     final bpm = sensor.heartRateBpm;
     final temp = sensor.temperatureLabel;
-    final spo2Str = sensor.spo2Percent != null
-        ? ', saturasi oksigen ${sensor.spo2Percent}%'
-        : '';
     final distStr = sensor.distanceToCompanionMeters != null
         ? 'Jarak Anda dengan ${sensor.companionName ?? "pendamping"} adalah ${sensor.distanceToCompanionMeters!.round()} meter.'
         : sensor.distanceStatusSummary;
     final speech =
-        'Alhamdulillah gelang Smartband Anda terhubung. Detak jantung tercatat $bpm BPM$spo2Str, suhu tubuh $temp derajat Celcius, dan status jatuh aman. '
+        'Alhamdulillah gelang Smartband Anda terhubung. Detak jantung tercatat $bpm BPM, suhu tubuh $temp derajat Celcius, dan status jatuh aman. '
         '$distStr';
     return AiReply(
       speech: speech,
